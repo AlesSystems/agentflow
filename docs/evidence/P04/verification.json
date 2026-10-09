@@ -1,0 +1,112 @@
+{
+  "runtimeSource": "1cb71db033aabec211afd6ce86728a33561f1974",
+  "fullCandidate": "1cb71db033aabec211afd6ce86728a33561f1974",
+  "base": "cf44dd9103c091c10c9608468e5956e506c6705c",
+  "host": {
+    "node": "v24.15.0",
+    "npm": "11.12.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "swVers": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "hostname": "Altans-MacBook-Pro.local"
+  },
+  "files": {
+    "migrations/0002_registration_order.sql": "6c64b1822e49c727adcf231611b820ef3711a8d712abab5229281ae3117723c6",
+    "migrations/0003_run_identity.sql": "50c5ab8a405a543f7bf30d4448435fdaa5f9b7ea0bb3d3979117fd11181350d3",
+    "migrations/0004_observations.sql": "39d038a476f92433d88486d612dd12aea0d20a253b76337eca6a944d65d4a192",
+    "migrations/0005_uuid_lookup.sql": "82e6f245929b38e3b206f5ed75d0eb85ffbd1d2e9a38bf99b60d60a54dbf0037",
+    "src/contracts/common.ts": "72ae70fdf1bf334666375e6b41fabb320ba7a72b657caa7ac17ce418cb922d9e",
+    "src/contracts/examples.ts": "171b61bdd342e1cb9da947712469fec0f2d0d57ccba7dba23d25b856ab30be6f",
+    "src/contracts/observations.ts": "40872b42455cb878b13dc4d651903f32f0b15b5552ffa056099baa5e7b2f33c9",
+    "src/contracts/openapi.ts": "351d5e987f9f9c905d1a97ffb422340a38449379e3cd644f90ba03c74e5a9fd4",
+    "src/contracts/routes.ts": "78654e5ab0dc77b6c787e672a536df6775628067a871ab8006ad7e182664093f",
+    "src/contracts/tasks.ts": "eee16582d377c71d910d89f6c106cecc0ab449eac93f1c8a01986b20254a4e07",
+    "src/db/application.ts": "c40bedd3a2ffacf1ee24ddd00c89a3118a48c300717921dda1b891f1be44b5c8",
+    "src/db/index.ts": "612fd5baface0921927180cf549877ce4852e33b67d16428514fe3070ebf0617",
+    "src/db/migration-sql.ts": "ec3664822e98fc52e9e7e8fd649c049a363817885537dc72e0f4c26d494d6cdc",
+    "src/db/registration-order.ts": "9814deb8a7a10c3d224f76e915e9a05b3e56e35ce630a0f18e5f5fd8a0e7854e",
+    "src/db/schema.ts": "f4d473af53882b66fd129f90c995d3e67ee0221eb65a15185cfef139da814d49",
+    "src/domain/runs.ts": "5543ee077ace33c8736cc49decef4457873a9fe77c36e057f6c5b89c77d63af2",
+    "src/domain/tasks.ts": "f188c12fa610e9c42257512f48a2fd2eb88d68847a6f59a0ffa391175d026da0",
+    "src/server/application-api.ts": "b62efd35901702f9f5fa829419816a443861dce4b0d6808863cdcf0c8b24acd4",
+    "src/server/next-boundary.ts": "dccd1916d672ba9b617af2ce1864ea9667f9f1cfc4ae3cc946d68683a73b31fa",
+    "src/server/security.ts": "687380423797aff92572eeb291b0a0dda8536988eea7c7cf7b66cfb65761ed50",
+    "tests/fixtures/application.ts": "3899bb2d62077e6fb304f47c66d7901ae66ed546242d52fc99855b5da3634b24",
+    "tests/fixtures/p04-producer.ts": "89eea0a523dd57842abe593cd8b22606dbdfbf81c0d2eb50d484468f7318025e",
+    "tests/integration/migration-validator.test.ts": "832a6068c7254851b271d29a2785e3e730544a570811d65ae3a9bbd5895b62be",
+    "tests/integration/observations.test.ts": "f8038a171ac43dd4952cf53ff0f7d7689461bd28881e5cfb87c567744fcf0181",
+    "tests/integration/p04-crash.test.ts": "4dd9d7e3f80dd68fba088eb36b22732bbb9129f7860d25b56f31d2e0c9d6bf6a",
+    "tests/integration/p04-http.test.ts": "66e9a5d9be1bca3f40de969743229277e4758da5c816ab6fbf00e1d3b24f604d",
+    "tests/integration/p04-legacy-roundtrip.test.ts": "a2e9ef28cac501fc94cb91097f68d5148dbddf877f71470fc2166b3bb2093b04",
+    "tests/integration/p04-migration.test.ts": "e4733dbe0d999987fb64a0186d8f73a17edc89d45e5d1cd8a5c744e7f96ad237",
+    "tests/integration/p04-performance-helper.test.ts": "df83e44f1314fbaee25b811d8cfb9e57f2be2885090a2d03da9344be57e1fda9",
+    "tests/integration/p04-producer.test.ts": "2733da1ed872af52a5638b963607f4112d24219a29c74a99fd793877d6160a14",
+    "tests/integration/p04-restore.test.ts": "455c10485e0fc3459e1792783bb82664f4651c4ed83b110c78a6576944d75d87",
+    "tests/integration/p04-uuid.test.ts": "c21481f74c6b9cedb6fa56680fb1f513610bccdb6bb17d8a3215634916650348",
+    "tests/integration/recovery.test.ts": "b27062ae99c5f00b0c6d384ab86347832c6a4a2a087878db3ad22ad258d31dca",
+    "tests/integration/registration-order.test.ts": "ad6286527726c561932e795960be03965fb7d02dd44fac1e6de21801aeb88f4a",
+    "tests/performance/p04.ts": "b1593eb98f31b29456627a934fd771c98bb7aeb19fb292bcad3695d95b67bbd1",
+    "tests/performance/public-projection.ts": "9ae47e298223c102bc6c236db8856be1d19c3eb757696910ddf2fd6340dae6c3",
+    "tests/unit/observations.test.ts": "3e4e070047a8e266d78efe188cbcdc22015e63c877da5c07ea12b5f35d112c61",
+    "tests/unit/openapi.test.ts": "a5e7e5688426700a4daf026843ee5b32844f76b1c4bc60c0aac4d3159d6a892d",
+    "tests/unit/schema-parity.test.ts": "21d35ead8185f57a4c63b697aaeefd67d6179458e116d7d5df9ce76afb3010ef"
+  },
+  "lockSha256": "f87f27acb470eb86cbcbdd4ded750df327a46def7d2f52a91956c4f59f0b06fc",
+  "migrations": {
+    "0000_foundation.sql": "be9ac32137776ddb7fe9017042fd58faa7410ef1addb36222d17cf725a364f54",
+    "0001_application.sql": "6a11176b457b764a31232a39a1a37b48996748632a22a6133fff3383912e5a3f",
+    "0002_registration_order.sql": "6c64b1822e49c727adcf231611b820ef3711a8d712abab5229281ae3117723c6",
+    "0003_run_identity.sql": "50c5ab8a405a543f7bf30d4448435fdaa5f9b7ea0bb3d3979117fd11181350d3",
+    "0004_observations.sql": "39d038a476f92433d88486d612dd12aea0d20a253b76337eca6a944d65d4a192",
+    "0005_uuid_lookup.sql": "82e6f245929b38e3b206f5ed75d0eb85ffbd1d2e9a38bf99b60d60a54dbf0037"
+  },
+  "buildId": "3jbIY1hbVYr6oo8ONSqS_",
+  "buildTreeSha256": "f636b3693e88e85252089d62b73f6c1d4f729f71b4fb2e65470711255e05b393",
+  "baselineQuerySource": "ced1c1be7dd9d170fc6139b77578f4159c9ebf80",
+  "baseApplicationSha256": "005d8347c65c022f741fccc6167e6bfb15bed3f1a63adf1934d7f313cd698f8b",
+  "performanceHelperSha256": "b1593eb98f31b29456627a934fd771c98bb7aeb19fb292bcad3695d95b67bbd1",
+  "publicProjectionHelperSha256": "9ae47e298223c102bc6c236db8856be1d19c3eb757696910ddf2fd6340dae6c3",
+  "checks": [
+    {
+      "command": "npm run test:unit",
+      "exitCode": 0,
+      "files": 12,
+      "tests": 60
+    },
+    {
+      "command": "npm run test:integration",
+      "exitCode": 0,
+      "files": 25,
+      "tests": 164
+    },
+    {
+      "command": "AGENTFLOW_TEST_BROWSER=chrome npm run test:e2e",
+      "exitCode": 0,
+      "tests": 22
+    },
+    {
+      "command": "npm run openapi:check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    }
+  ],
+  "fileScope": "Exact tested runtime/source/helper candidate 1cb71db. Final documentation/evidence candidate is a later commit with these source bytes unchanged.",
+  "buildFileCount": 316,
+  "performance": {
+    "exitCode": 0,
+    "artifact": "performance.json",
+    "rss": "performance-rss.json",
+    "facts": "performance-facts.json"
+  }
+}

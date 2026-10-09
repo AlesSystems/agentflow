@@ -1,0 +1,97 @@
+{
+  "operation": "registration",
+  "mode": "before",
+  "signal": "SIGKILL",
+  "request": {
+    "id": "1c105f23-2734-48ca-b201-6bc8c2b1b8aa",
+    "projectId": "164fb007-29df-49c3-92b4-4014e4560243",
+    "taskId": "6550c2ac-e0da-444e-8a49-c97edcc45aa4",
+    "agentId": "9985fa90-4baf-4de2-8c68-e9479d3de0d8",
+    "purpose": "implementation",
+    "expectedTaskVersion": 1
+  },
+  "before": {
+    "runs": [],
+    "task": {
+      "status": "backlog",
+      "version": 1,
+      "work_revision": 1
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 0,
+      "receipts": 3,
+      "changes": 3
+    },
+    "allocator": {
+      "last_value": 0
+    }
+  },
+  "killed": {
+    "runs": [],
+    "task": {
+      "status": "backlog",
+      "version": 1,
+      "work_revision": 1
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 0,
+      "receipts": 3,
+      "changes": 3
+    },
+    "allocator": {
+      "last_value": 0
+    }
+  },
+  "recovered": {
+    "runs": [
+      {
+        "state": "queued",
+        "version": 1,
+        "last_sequence": 0,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "backlog",
+      "version": 2,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 5
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "retryBody": {
+    "data": {
+      "id": "1c105f23-2734-48ca-b201-6bc8c2b1b8aa",
+      "projectId": "164fb007-29df-49c3-92b4-4014e4560243",
+      "agentId": "9985fa90-4baf-4de2-8c68-e9479d3de0d8",
+      "taskId": "6550c2ac-e0da-444e-8a49-c97edcc45aa4",
+      "purpose": "implementation",
+      "model": null,
+      "workRevision": 2,
+      "state": "queued",
+      "lastSequence": 0,
+      "lastReceivedAt": "2026-10-09T22:40:25.511Z",
+      "startedAt": null,
+      "endedAt": null,
+      "version": 1,
+      "createdAt": "2026-10-09T22:40:25.511Z",
+      "freshness": {
+        "stale": false,
+        "reporting": "no_report_received"
+      }
+    },
+    "snapshotCursor": "5",
+    "generation": "15e7e69b-5f61-45bf-b65a-e75ecf585a79"
+  },
+  "retryStatus": 201,
+  "currentGeneration": "15e7e69b-5f61-45bf-b65a-e75ecf585a79"
+}

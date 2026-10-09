@@ -11,7 +11,7 @@ export class HttpError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
-    readonly details?: { currentVersion: number },
+    readonly details?: { currentVersion?: number; expectedSequence?: number },
   ) {
     super(code);
   }
@@ -156,7 +156,7 @@ export function publicError(error: unknown) {
       code: error.code,
       details:
         error.currentVersion === undefined
-          ? undefined
+          ? error.details
           : { currentVersion: error.currentVersion },
     };
   if (error instanceof HttpError)

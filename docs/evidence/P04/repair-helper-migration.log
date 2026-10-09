@@ -1,0 +1,9 @@
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  01:32:56
+   Duration  501ms (tests 68%, import 20%, transform 12%, worker 1%)
+

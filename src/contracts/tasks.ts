@@ -11,6 +11,7 @@ import {
   status,
   timestamp,
   uuid,
+  inputUuid,
   version,
 } from "./common";
 const editable = {
@@ -27,15 +28,19 @@ const editable = {
   blockedReason: nullableText(4000),
 };
 export const taskCreate = z.strictObject({
-  projectId: uuid,
+  projectId: inputUuid,
   ...z.strictObject(editable).partial().shape,
   title: editable.title,
+  assignedAgentId: inputUuid.nullable().optional(),
+  parentTaskId: inputUuid.nullable().optional(),
 });
 export const taskPatch = z
   .strictObject({
     ...z.strictObject(editable).partial().shape,
     expectedVersion: version,
     status: manualStatus.optional(),
+    assignedAgentId: inputUuid.nullable().optional(),
+    parentTaskId: inputUuid.nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 1);
 export const task = z.strictObject({
@@ -85,11 +90,11 @@ export const reopen = z.strictObject({
   createdAt: timestamp,
 });
 export const taskFilters = {
-  projectId: uuid.optional(),
+  projectId: inputUuid.optional(),
   status: status.optional(),
   priority: priority.optional(),
   tag: requiredText(40).optional(),
-  assignedAgentId: uuid.optional(),
+  assignedAgentId: inputUuid.optional(),
   q: requiredText(200).optional(),
 };
 export const taskQuery = z.strictObject({ ...pageQuery, ...taskFilters });

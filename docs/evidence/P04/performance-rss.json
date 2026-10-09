@@ -1,0 +1,254 @@
+{
+  "runtimeSource": "1cb71db033aabec211afd6ce86728a33561f1974",
+  "startedAt": "2026-10-09T22:45:13.354Z",
+  "updatedAt": "2026-10-09T22:50:54.811Z",
+  "units": "KiB from macOS ps RSS; observational, 10-second interval",
+  "observations": [
+    {
+      "capturedAt": "2026-10-09T22:45:13.378Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1181472,
+      "serverPid": 13152,
+      "serverRssKiB": 370128
+    },
+    {
+      "capturedAt": "2026-10-09T22:45:23.416Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1184880,
+      "serverPid": 13152,
+      "serverRssKiB": 386672
+    },
+    {
+      "capturedAt": "2026-10-09T22:45:33.463Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1209552,
+      "serverPid": 13152,
+      "serverRssKiB": 394992
+    },
+    {
+      "capturedAt": "2026-10-09T22:45:43.510Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1211312,
+      "serverPid": 13152,
+      "serverRssKiB": 262496
+    },
+    {
+      "capturedAt": "2026-10-09T22:45:53.543Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1222688,
+      "serverPid": 13152,
+      "serverRssKiB": 245936
+    },
+    {
+      "capturedAt": "2026-10-09T22:46:03.584Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1029968,
+      "serverPid": 13152,
+      "serverRssKiB": 259520
+    },
+    {
+      "capturedAt": "2026-10-09T22:46:13.631Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1036960,
+      "serverPid": 13152,
+      "serverRssKiB": 261872
+    },
+    {
+      "capturedAt": "2026-10-09T22:46:23.660Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1042336,
+      "serverPid": 13152,
+      "serverRssKiB": 277248
+    },
+    {
+      "capturedAt": "2026-10-09T22:46:33.702Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1048576,
+      "serverPid": 13152,
+      "serverRssKiB": 288720
+    },
+    {
+      "capturedAt": "2026-10-09T22:46:43.740Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1042480,
+      "serverPid": 13152,
+      "serverRssKiB": 289936
+    },
+    {
+      "capturedAt": "2026-10-09T22:46:53.782Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1044512,
+      "serverPid": 13152,
+      "serverRssKiB": 290192
+    },
+    {
+      "capturedAt": "2026-10-09T22:47:03.828Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1046560,
+      "serverPid": 13152,
+      "serverRssKiB": 316832
+    },
+    {
+      "capturedAt": "2026-10-09T22:47:13.871Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1051280,
+      "serverPid": 13152,
+      "serverRssKiB": 344176
+    },
+    {
+      "capturedAt": "2026-10-09T22:47:23.916Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1059360,
+      "serverPid": 13152,
+      "serverRssKiB": 345184
+    },
+    {
+      "capturedAt": "2026-10-09T22:47:33.955Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1069552,
+      "serverPid": 13152,
+      "serverRssKiB": 345248
+    },
+    {
+      "capturedAt": "2026-10-09T22:47:44.001Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1073120,
+      "serverPid": 13152,
+      "serverRssKiB": 345280
+    },
+    {
+      "capturedAt": "2026-10-09T22:47:54.049Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1073248,
+      "serverPid": 13152,
+      "serverRssKiB": 345360
+    },
+    {
+      "capturedAt": "2026-10-09T22:48:04.099Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1073280,
+      "serverPid": 13152,
+      "serverRssKiB": 345376
+    },
+    {
+      "capturedAt": "2026-10-09T22:48:14.138Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1077920,
+      "serverPid": 13152,
+      "serverRssKiB": 345520
+    },
+    {
+      "capturedAt": "2026-10-09T22:48:24.173Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1077920,
+      "serverPid": 13152,
+      "serverRssKiB": 345520
+    },
+    {
+      "capturedAt": "2026-10-09T22:48:34.219Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1087232,
+      "serverPid": 13152,
+      "serverRssKiB": 345568
+    },
+    {
+      "capturedAt": "2026-10-09T22:48:44.266Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1099824,
+      "serverPid": 13152,
+      "serverRssKiB": 345552
+    },
+    {
+      "capturedAt": "2026-10-09T22:48:54.304Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1102848,
+      "serverPid": 13152,
+      "serverRssKiB": 345616
+    },
+    {
+      "capturedAt": "2026-10-09T22:49:04.342Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1113920,
+      "serverPid": 13152,
+      "serverRssKiB": 346640
+    },
+    {
+      "capturedAt": "2026-10-09T22:49:14.390Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1126384,
+      "serverPid": 13152,
+      "serverRssKiB": 346656
+    },
+    {
+      "capturedAt": "2026-10-09T22:49:24.433Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1136576,
+      "serverPid": 13152,
+      "serverRssKiB": 347328
+    },
+    {
+      "capturedAt": "2026-10-09T22:49:34.481Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1136576,
+      "serverPid": 13152,
+      "serverRssKiB": 347328
+    },
+    {
+      "capturedAt": "2026-10-09T22:49:44.529Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1136656,
+      "serverPid": 13152,
+      "serverRssKiB": 347344
+    },
+    {
+      "capturedAt": "2026-10-09T22:49:54.567Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1136656,
+      "serverPid": 13152,
+      "serverRssKiB": 347344
+    },
+    {
+      "capturedAt": "2026-10-09T22:50:04.615Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1136656,
+      "serverPid": 13152,
+      "serverRssKiB": 347344
+    },
+    {
+      "capturedAt": "2026-10-09T22:50:14.651Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1136672,
+      "serverPid": 13152,
+      "serverRssKiB": 347344
+    },
+    {
+      "capturedAt": "2026-10-09T22:50:24.693Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1137072,
+      "serverPid": 13152,
+      "serverRssKiB": 347360
+    },
+    {
+      "capturedAt": "2026-10-09T22:50:34.738Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1137072,
+      "serverPid": 13152,
+      "serverRssKiB": 347360
+    },
+    {
+      "capturedAt": "2026-10-09T22:50:44.769Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": 1137104,
+      "serverPid": 13152,
+      "serverRssKiB": 357296
+    },
+    {
+      "capturedAt": "2026-10-09T22:50:54.811Z",
+      "benchmarkPid": 13148,
+      "benchmarkRssKiB": null,
+      "serverPid": null,
+      "serverRssKiB": null
+    }
+  ],
+  "benchmarkExited": true
+}

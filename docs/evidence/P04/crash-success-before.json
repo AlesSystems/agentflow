@@ -1,0 +1,100 @@
+{
+  "operation": "success",
+  "mode": "before",
+  "signal": "SIGKILL",
+  "request": {
+    "schemaVersion": 1,
+    "eventId": "8bc1f4c1-39f5-4b5b-9458-e7a587587345",
+    "runId": "69f8f699-a3eb-4916-951a-780b78f28d1a",
+    "sequence": 2,
+    "type": "run.succeeded",
+    "occurredAt": "2099-01-01T00:00:00Z",
+    "payload": {
+      "summary": "Synthetic finished"
+    }
+  },
+  "before": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 2,
+        "last_sequence": 1,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 1,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 8
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "killed": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 2,
+        "last_sequence": 1,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 1,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 8
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "recovered": {
+    "runs": [
+      {
+        "state": "succeeded",
+        "version": 3,
+        "last_sequence": 2,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "review",
+      "version": 4,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 2,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 11
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "retryBody": {
+    "data": {
+      "eventId": "8bc1f4c1-39f5-4b5b-9458-e7a587587345",
+      "runId": "69f8f699-a3eb-4916-951a-780b78f28d1a",
+      "acceptedSequence": 2,
+      "receivedAt": "2026-10-09T22:40:28.238Z"
+    },
+    "snapshotCursor": "11",
+    "generation": "3512fdb0-40f9-47a2-bc7e-dc47a69fa25b"
+  },
+  "retryStatus": 201,
+  "currentGeneration": "3512fdb0-40f9-47a2-bc7e-dc47a69fa25b"
+}

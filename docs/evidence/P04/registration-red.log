@@ -1,0 +1,32 @@
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+ ❯ tests/integration/observations.test.ts (1 test | 1 failed) 30ms
+   × registers stable identities and immutable attempts without adopting legacy registration identity 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/observations.test.ts > registers stable identities and immutable attempts without adopting legacy registration identity
+Error: resource_not_found
+ ❯ ApplicationData.one src/db/application.ts:105:21
+    103|       | Row
+    104|       | undefined;
+    105|     if (!row) throw new Conflict("resource_not_found");
+       |                     ^
+    106|     return serialize(row);
+    107|   }
+ ❯ sqliteTransaction.<anonymous> src/db/application.ts:325:41
+ ❯ sqliteTransaction node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ ApplicationData.command src/db/application.ts:417:8
+ ❯ Store.command src/db/index.ts:74:55
+ ❯ send tests/integration/observations.test.ts:15:81
+ ❯ tests/integration/observations.test.ts:18:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:06:26
+   Duration  155ms (import 38%, transform 33%, tests 28%, worker 1%)
+

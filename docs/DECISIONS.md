@@ -138,3 +138,46 @@ revision gates, restart, backup/restore, VACUUM and a representative table rebui
 P04 Astra approval must include that prerequisite. PLAN and BACKEND retain it.
 Earlier registration, deletion, VACUUM or a runs rebuild would invalidate the
 bounded approval and require the durable field first.
+
+## ADR-010. Preserve registration order within retained history
+
+P04 Stage 1 follows the exact approved Astra plan recorded by the coordinator.
+Add migration 0002 without changing 0000 or 0001. Dense backfill preserves prior
+rowid order, including negative or sparse legacy rowids. Explicit immutable unique
+positive safe integers drive both latest-run detail and implementation acceptance.
+Legacy records remain observations without invented registration identity.
+
+A durable singleton high-water outlives deletion of any run. Immediate write
+transactions read its next value; database insert guards and an AFTER INSERT
+trigger advance it atomically. This also rejects direct reuse of a deleted order
+and replacement of an existing run identity. Allocator insertion, deletion,
+reset, decrease and overflow fail. Failed transactions may reuse uncommitted
+values. No external allocator or generic persistence framework is introduced.
+
+An older stopped-service restore reinstates retained orders and high-water under
+a new generation, with session revocation. It cannot preserve discarded later
+history; order values in that discarded history may recur. UUIDs remain public
+identities. Registration/event receipt recovery awaits the public Stage 2 paths.
+
+Reviewed trigger SQL requires body BEGIN/END. Replace the blanket keyword guard
+with a bounded conservative token recognizer, rejecting top-level transaction
+escapes and all body controls while respecting quotes/comments and CASE END.
+The runner retains its outer immediate transaction and backup-before-upgrade.
+Independent exact-candidate migration review must pass before public registration
+implementation begins.
+
+Independent Stage 1 review found that UPDATE OR REPLACE could rebind a successful
+run's immutable order to a later failed run's ID, bypassing acceptance facts.
+Additive migration 0003 makes existing run IDs immutable through UPDATE triggers,
+including replacement collisions. It preserves migration 0002's reviewed bytes.
+Connected Store regressions prove that failed latest evidence still blocks
+acceptance after rejected identity changes, while lifecycle updates remain valid.
+
+
+### P04 observation identity and recovery
+
+The approved Stage 2 plan preserves original new-registration identity independently of mutable run state. Legacy identity remains unavailable rather than adopting a guessed request. Globally unique event identity resolves exact valid retries before sequence/lifecycle checks. New reports check sequence before terminal state. Original parsed JSON, before transforms/defaults, defines digest identity consistently with P02.
+
+Human closure ends stale tracking only and records an immutable reason. It cannot stop the external process or fabricate producer events. Freshness uses one captured server receipt clock and strictly greater than 60 seconds; producer time is metadata. Older restore renews generation and preserves only retained facts and high-water, not discarded acknowledgements. These are bounded completions of ADR-002/004/005/007/010, not process-control authority.
+
+Independent P04 review reproduced accepted uppercase UUIDs becoming unreachable because routes canonicalized casing while storage did not. Normalize UUID input identities/references without transforming response validation or historical acknowledgements. Indexed case-insensitive resolution preserves actual legacy IDs and foreign keys; actual casing collisions reject explicitly. Additive 0005 adds nonunique lookup indexes and leaves every prior migration and identity/order byte unchanged. Original JSON casing remains digest identity, so a differently cased body is a changed retry body even when its resolved resource is the same.

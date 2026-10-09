@@ -33,7 +33,9 @@ export function failure(error: unknown, generation?: string) {
           ? { details: result.details }
           : {}),
         message:
-          "The request could not be completed. Check the local service and request.",
+          result.code === "run_conflict"
+            ? "The run ID conflicts or its original registration identity is unavailable."
+            : "The request could not be completed. Check the local service and request.",
       },
     },
     result.status,

@@ -1,0 +1,98 @@
+{
+  "operation": "start",
+  "mode": "before",
+  "signal": "SIGKILL",
+  "request": {
+    "schemaVersion": 1,
+    "eventId": "de6a8ef5-1f22-49de-9bba-d18e442e911d",
+    "runId": "e529f845-e861-4f5b-8bb7-d560343c44a4",
+    "sequence": 1,
+    "type": "run.started",
+    "occurredAt": "2099-01-01T00:00:00Z",
+    "payload": {}
+  },
+  "before": {
+    "runs": [
+      {
+        "state": "queued",
+        "version": 1,
+        "last_sequence": 0,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "backlog",
+      "version": 2,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 5
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "killed": {
+    "runs": [
+      {
+        "state": "queued",
+        "version": 1,
+        "last_sequence": 0,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "backlog",
+      "version": 2,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 5
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "recovered": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 2,
+        "last_sequence": 1,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 1,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 8
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "retryBody": {
+    "data": {
+      "eventId": "de6a8ef5-1f22-49de-9bba-d18e442e911d",
+      "runId": "e529f845-e861-4f5b-8bb7-d560343c44a4",
+      "acceptedSequence": 1,
+      "receivedAt": "2026-10-09T22:40:26.420Z"
+    },
+    "snapshotCursor": "8",
+    "generation": "a2f43ef3-dc76-479a-b39b-c448b1955851"
+  },
+  "retryStatus": 201,
+  "currentGeneration": "a2f43ef3-dc76-479a-b39b-c448b1955851"
+}

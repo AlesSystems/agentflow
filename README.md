@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01 and P02 integrated; P03 manual Work board implemented and awaiting final integration.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable. Agent reporting, live tracking, CLI hooks and workflow packages remain gated by PLAN.md.
+**Status: P01–P03 integrated; manual Work board available.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable. P04 agent/run reporting APIs are implemented and awaiting verified integration. Live tracking, CLI hooks and workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -37,7 +37,7 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 Impeccable initialization records the existing product plan and a code-first
 workflow in `.impeccable/config.json`. P03 now has extracted DESIGN.md tokens and its design sidecar. The
 [P03 receipt](docs/implementation/P03.md) records actual browser evidence, repairs
-and the remaining final review/integration gate.
+and its verified integration.
 
 ## Run the local application
 

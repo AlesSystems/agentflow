@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+ ❯ tests/integration/p04-performance-helper.test.ts (1 test | 1 failed) 81ms
+   × compares the unchanged extracted baseline against only its validated public task-detail projection 80ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/p04-performance-helper.test.ts > compares the unchanged extracted baseline against only its validated public task-detail projection
+AssertionError: expected { task: { …(19) }, …(3) } to deeply equal { task: { …(19) }, …(3) }
+
+- Expected
++ Received
+
+@@ -21,10 +21,11 @@
+      "lastReceivedAt": "1970-01-01T00:00:01.000Z",
+      "lastSequence": 0,
+      "model": null,
+      "projectId": "b192e09a-fd1c-4189-8ed4-c85df3675117",
+      "purpose": "implementation",
++     "registrationOrder": 1,
+      "startedAt": null,
+      "state": "queued",
+      "taskId": "ab3d9b88-fc08-440e-81c7-6468db95bc79",
+      "version": 1,
+      "workRevision": 2,
+
+ ❯ tests/integration/p04-performance-helper.test.ts:19:279
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:31:10
+   Duration  232ms (tests 49%, transform 25%, import 25%, worker 1%)
+

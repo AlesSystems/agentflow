@@ -1,0 +1,13 @@
+
+> agentflow@0.0.0 test:integration
+> vitest run tests/integration
+
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+
+ Test Files  25 passed (25)
+      Tests  164 passed (164)
+   Start at  01:40:11
+   Duration  48.46s (tests 98%, import 2%)
+

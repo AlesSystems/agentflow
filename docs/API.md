@@ -1,14 +1,14 @@
 # Local API contract
 
-Status: P01 foundation routes are integrated. P02 project/task/settings/overview
-routes are implemented as a candidate awaiting independent review and integration.
-[Generated OpenAPI](openapi.json) describes implemented operations only. P04/P05
-reporting routes below remain planned. W01–W03c add the
+Status: P01–P03 are integrated. P04 observation routes are implemented and verified;
+final documentation/evidence review and integration remain the coordinator gate.
+[Generated OpenAPI](openapi.json) describes implemented operations only. P05
+Activity/SSE routes remain planned. W01–W03c add the
 [Phase 3 contracts](V1_WORKFLOWS.md).
 
 ## Conventions
 
-The base URL is `http://127.0.0.1:3000/api/v1`. UUIDs identify records. Fields use camelCase. Timestamps are RFC 3339 UTC strings. Unknown request fields and unknown event schema versions are rejected.
+The base URL is `http://127.0.0.1:3000/api/v1`. UUIDs identify records. New client UUID identities and input references normalize to lowercase; original parsed JSON casing remains part of request digest identity. Stored legacy identities and historical acknowledgements retain their original bytes. Case-insensitive lookups preserve those actual stored IDs for references and projection writes. An existing casing collision rejects with `409 identity_ambiguous` rather than merging records. Fields use camelCase. Timestamps are RFC 3339 UTC strings. Unknown request fields and unknown event schema versions are rejected.
 
 Browser sessions and CLI bearer credentials use the authentication rules in [BACKEND.md](BACKEND.md). Every endpoint except health and session creation requires authentication. Complete, reopen, and close-run commands require a browser session. The reporter token cannot pair a browser session or call human-only commands. Pairing and reporter credentials are distinct.
 
@@ -98,12 +98,21 @@ The completion command verifies the task-state conditions in [BACKEND.md](BACKEN
 | `POST /runs/{id}/events` | Accept one event atomically; `201` new, `200` exact duplicate |
 | `GET /runs/{id}/events` | Paginate by sequence ascending |
 | `POST /runs/{id}/close` | Browser-only close of stale active tracking; reason and `expectedVersion` |
-| `GET /activity` | Paginated user-facing history, optional project/task/agent filters |
-| `GET /changes/stream` | Authenticated SSE invalidations with replay |
+| `GET /activity` (P05) | Planned paginated user-facing history, optional project/task/agent filters |
+| `GET /changes/stream` (P05) | Planned authenticated SSE invalidations with replay |
 
-Run creation requires `id`, `projectId`, `agentId`, `purpose`, and, except for planning, `taskId`. `model` is optional display metadata. A task-linked request also includes `expectedTaskVersion`. The server captures the current work revision, incrementing it first for implementation attempts. Reusing an existing run ID with a different request returns `409 run_conflict`. An identical registration with a different idempotency key returns the stored registration result with `200`, without incrementing any revision. Authentication and credential-role checks still apply to all retries.
+Run creation requires `id`, `projectId`, `agentId`, `purpose`, and, except for planning, `taskId`. `model` is optional display metadata. A task-linked request also includes `expectedTaskVersion`. The server captures the current work revision, incrementing it first for implementation attempts. Reusing an existing run ID with a different request returns `409 run_conflict`. An identical new P04 registration with a different idempotency key returns the stored original registration result with `200`, without incrementing any revision. Legacy runs from migration 0001 have no original registration identity. Every registration POST using an existing legacy ID returns `409 run_conflict`, even if the body looks identical; it creates no receipt or identity and changes no order, version, revision, or projection. Legacy reads, permitted events and stale closure continue normally. Authentication and credential-role checks still apply to all retries.
 
 Register the project, task, agent, and run before reporting events. Missing references return `404 resource_not_found`; no partial records are created. Lifecycle conflicts and an existing active run return `409`. A second agent can work in parallel on a separate task.
+
+
+Agent creation accepts an optional UUID `id`, otherwise the server assigns one. `displayName` and `source` are nonempty and bounded to 200 characters; `defaultRole` uses orchestrator, implementation, reviewer, or verifier. PATCH changes only these metadata fields with `expectedVersion`. Changing an agent's default role does not alter an existing run. `model` is optional nonempty metadata bounded to 200 characters. Project/task creation schemas remain unchanged and cannot adopt supplied IDs.
+
+Agents and runs use bounded snapshots with `snapshotCursor` and `generation`. Agent reporting is derived from fresh running observations, never process liveness. Agent detail supplies separate queued/running list links and a history link. Lists default to 50, maximum 100; runs sort by internal immutable registration order descending and accept `projectId`, `agentId`, `taskId`, `state`, and `stale=true|false`. Raw events sort by sequence ascending and retain heartbeats. Cursors bind generation, filters, limit and order. Totals and derived freshness use one captured server time in the same read transaction. Stale-filter pages describe observations at their individual capture times, not a frozen historical multi-page snapshot. Internal order is never a public identity or response field. Task detail's `latestRun` retains its P03 shape.
+
+Run responses add `freshness` with `stale` and `reporting` (`no_report_received`, `fresh`, `stale`, or `terminal`). Queued sequence zero has no report received. An active run is stale only when server receipt age exceeds 60,000 ms; exactly 60,000 is fresh. Producer occurrence time cannot refresh an observation. A terminal observation is never labeled stale or reporting.
+
+Browser closure requires `reason`, `expectedVersion`, and an idempotency key. Only stale queued/running records can close. It records an immutable operator closure fact, changes tracking to interrupted, and increments run version. It does not invent a producer event/sequence, move the task column, change work revision, or send a process signal. **The external process may still run.** P05 supplies the confirmation UI. Exact authenticated closure receipt retries return the original body before current lifecycle checks.
 
 ## Event envelope
 
@@ -121,7 +130,7 @@ Each run has one ordered producer. `sequence` starts at 1 and increments for eve
 }
 ```
 
-The body run ID must match the route. Identity and purpose come from the registered run. A client cannot change the agent or task through an event.
+The strict schemaVersion 1 envelope rejects unknown fields. Sequence is a positive safe integer. The offset-bearing occurrence timestamp is normalized to UTC for storage. Authentication, transport guards and typed validation precede identity lookup. The body run ID must match the route. Identity and purpose come from the registered run. A client cannot change the agent or task through an event.
 
 | Type | Payload | Valid input state and effect |
 | --- | --- | --- |
@@ -149,7 +158,7 @@ Example new-event acknowledgement.
 }
 ```
 
-An exact retry returns this same body with `200`. A sequence gap returns the expected next sequence and makes no changes. A delayed event cannot regress the task. An unknown schema version returns `422 unsupported_schema_version`.
+An exact valid retry returns this same body with `200`, including after termination or interruption, without refreshing receive time, run version, sequence, order, cursor or projection. Event IDs are globally unique across runs; a changed canonical body or different run returns `409 idempotency_conflict`. Original parsed JSON supplies the digest before normalization. JSON key order and formatting whitespace are irrelevant, while omitted versus explicit fields and string whitespace remain distinct. A sequence gap returns `409 sequence_gap` with `details.expectedSequence` and makes no changes. A lower/reused sequence under a new event ID returns `409 sequence_conflict`. Sequence checks precede lifecycle guards, so a terminal report at the expected sequence returns `409 run_terminal` while a gap remains a sequence error. A delayed event cannot regress the task. An unknown schema version returns `422 unsupported_schema_version`.
 
 ## Error contract
 
@@ -177,7 +186,7 @@ An exact retry returns this same body with `200`. A sequence gap returns the exp
 | `429` | Local request/connection limit; includes `Retry-After` |
 | `503` | Database busy or service not ready; includes `Retry-After` |
 
-Successful idempotency receipts and run-event deduplication survive restarts. Validation failures do not leave receipts. Rate limits start at 100 mutation requests/second with a burst of 200 per installation and are a P07 tuning target. Reads have bounded result size.
+Successful idempotency receipts and run-event deduplication survive restarts. An older stopped restore retains only the backup's identities, event acknowledgements, closure facts and allocator high-water under a renewed generation and revoked browser sessions. Retained retries return historical bodies with the current generation header. Discarded post-backup acknowledgements do not survive. A missing run can be registered again only if its references and current task version permit it; an event for a missing run returns 404. Missing project/task references require explicit recreation/remapping because their creation schemas do not accept original IDs. Validation failures do not leave receipts. Rate limits start at 100 mutation requests/second with a burst of 200 per installation and are a P07 tuning target. Reads have bounded result size.
 
 ## SSE contract
 
@@ -243,7 +252,8 @@ GET task query `TaskDetailQueryV1` accepts `history=both|completion|reopen`,
 both histories and 50 records each. Each nextUrl is a working GET task URL with
 its independent cursor, history selector and limit. A supplied cursor for an
 unrequested kind rejects. Empty/exhausted requested pages have an empty items
-array and null continuation values. Run/event history links await P04.
+array and null continuation values. P04 supplies run lists and raw event-history
+endpoints; task detail keeps its P03 history shape.
 
 Comments append immutably to tasks in unarchived projects, including completed
 tasks. They change neither task version nor work revision nor current acceptance.
@@ -273,5 +283,5 @@ fallback and literal feasibility fixtures are recorded in [P02](implementation/P
 All resource reads and writes return snapshot metadata. Completed command receipts
 remain historical after newer versions or restore. Clients compare the current
 response generation header and refetch authoritative state; an old receipt never
-advances a future subscription cursor. No P04 reporting, activity or SSE endpoint
-is executable in P02.
+advances a future subscription cursor. P04 adds explicit observation routes;
+Activity and SSE remain P05.

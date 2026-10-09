@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+ ❯ tests/unit/observations.test.ts (30 tests | 1 failed) 11ms
+   × preserves immutable legacy UUID casing when validating raw event-history output 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/observations.test.ts > preserves immutable legacy UUID casing when validating raw event-history output
+AssertionError: expected { schemaVersion: 1, …(7) } to deeply equal { schemaVersion: 1, …(7) }
+
+- Expected
++ Received
+
+  {
+-   "eventId": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
++   "eventId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    "occurredAt": "2026-10-10T00:00:00.000Z",
+    "payload": {},
+    "receivedAt": "2026-10-10T00:00:01.000Z",
+-   "runId": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
++   "runId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "schemaVersion": 1,
+    "sequence": 1,
+    "type": "run.started",
+  }
+
+ ❯ tests/unit/observations.test.ts:173:299
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 29 passed (30)
+   Start at  01:34:28
+   Duration  155ms (transform 45%, import 39%, tests 14%, worker 2%)
+

@@ -1,3 +1,4 @@
+import { validateMigrationSql } from "./migration-sql";
 import {
   ApplicationData,
   type ApplicationCommand,
@@ -30,6 +31,10 @@ export type StoredSession = {
 export const migrations: Migration[] = [
   "0000_foundation",
   "0001_application",
+  "0002_registration_order",
+  "0003_run_identity",
+  "0004_observations",
+  "0005_uuid_lookup",
 ].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),
@@ -172,13 +177,7 @@ export class Store {
     return history.map((row) => row.id);
   }
   async migrate(registry = migrations) {
-    for (const migration of registry)
-      if (
-        /\b(VACUUM|ATTACH|DETACH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i.test(
-          migration.sql,
-        )
-      )
-        throw new Error("NONTRANSACTIONAL_MIGRATION");
+    for (const migration of registry) validateMigrationSql(migration.sql);
     const applied = this.validateMigrations(registry);
     if (applied.length === registry.length) {
       this.integrity();
@@ -191,26 +190,28 @@ export class Store {
           `pre-migration-${randomUUID()}.sqlite`,
         ),
       );
-    this.transaction(() => {
-      this.db.exec(
-        "CREATE TABLE IF NOT EXISTS migration_history (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at INTEGER NOT NULL)",
-      );
-      for (const migration of registry.slice(applied.length)) {
-        this.db.exec(migration.sql);
-        this.db
-          .prepare("INSERT INTO migration_history VALUES (?, ?, ?)")
-          .run(migration.id, migration.sha256, Date.now());
-      }
-      if (!applied.length)
-        this.db
-          .prepare("INSERT INTO instance_metadata VALUES (1, ?, ?)")
-          .run(randomUUID(), registry.length);
-      else
-        this.db
-          .prepare("UPDATE instance_metadata SET schema_version = ?")
-          .run(registry.length);
-      this.integrity();
-    });
+    this.db
+      .transaction(() => {
+        this.db.exec(
+          "CREATE TABLE IF NOT EXISTS migration_history (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at INTEGER NOT NULL)",
+        );
+        for (const migration of registry.slice(applied.length)) {
+          this.db.exec(migration.sql);
+          this.db
+            .prepare("INSERT INTO migration_history VALUES (?, ?, ?)")
+            .run(migration.id, migration.sha256, Date.now());
+        }
+        if (!applied.length)
+          this.db
+            .prepare("INSERT INTO instance_metadata VALUES (1, ?, ?)")
+            .run(randomUUID(), registry.length);
+        else
+          this.db
+            .prepare("UPDATE instance_metadata SET schema_version = ?")
+            .run(registry.length);
+        this.integrity();
+      })
+      .immediate();
   }
   backup(destination: string) {
     const pending = this.writeBackup(destination).finally(() =>

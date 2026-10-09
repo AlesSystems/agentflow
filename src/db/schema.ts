@@ -43,6 +43,7 @@ export const projects = sqliteTable(
   (t) => [
     check("projects_version", sql`${t.version}>0`),
     index("projects_created").on(t.createdAt, t.id),
+    index("projects_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const agents = sqliteTable(
@@ -61,6 +62,7 @@ export const agents = sqliteTable(
       sql`${t.defaultRole} IN ('orchestrator','implementation','reviewer','verifier')`,
     ),
     check("agents_version", sql`${t.version}>0`),
+    index("agents_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const tasks = sqliteTable(
@@ -118,6 +120,7 @@ export const tasks = sqliteTable(
       t.id,
     ),
     index("tasks_created").on(t.createdAt, t.id),
+    index("tasks_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const runs = sqliteTable(
@@ -141,8 +144,19 @@ export const runs = sqliteTable(
     endedAt: integer("ended_at"),
     version: integer("version").notNull(),
     createdAt: integer("created_at").notNull(),
+    // Additive SQLite column is physically nullable; reviewed triggers enforce required immutable order.
+    registrationOrder: integer("registration_order").notNull(),
   },
   (t) => [
+    uniqueIndex("runs_registration_order").on(t.registrationOrder),
+    index("runs_task_registration").on(
+      t.taskId,
+      sql`${t.registrationOrder} DESC`,
+    ),
+    check(
+      "runs_registration_order",
+      sql`${t.registrationOrder} IS NULL OR (typeof(${t.registrationOrder})='integer' AND ${t.registrationOrder} BETWEEN 1 AND 9007199254740991)`,
+    ),
     foreignKey({
       columns: [t.taskId, t.projectId],
       foreignColumns: [tasks.id, tasks.projectId],
@@ -169,6 +183,7 @@ export const runs = sqliteTable(
     ),
     index("runs_task_created").on(t.taskId, t.createdAt, t.id),
     index("runs_agent_received").on(t.agentId, t.lastReceivedAt),
+    index("runs_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const comments = sqliteTable(
@@ -261,5 +276,79 @@ export const receipts = sqliteTable(
   (t) => [
     primaryKey({ columns: [t.principal, t.method, t.path, t.key] }),
     check("receipts_body", sql`json_valid(${t.body})`),
+  ],
+);
+
+export const runOrderAllocator = sqliteTable(
+  "run_order_allocator",
+  {
+    singleton: integer("singleton").primaryKey(),
+    lastValue: integer("last_value").notNull(),
+  },
+  (t) => [
+    check("run_order_allocator_singleton", sql`${t.singleton}=1`),
+    check(
+      "run_order_allocator_value",
+      sql`typeof(${t.lastValue})='integer' AND ${t.lastValue} BETWEEN 0 AND 9007199254740991`,
+    ),
+  ],
+);
+
+export const runRegistrations = sqliteTable(
+  "run_registrations",
+  {
+    runId: text("run_id")
+      .primaryKey()
+      .notNull()
+      .references(() => runs.id),
+    digest: text("digest").notNull(),
+    body: text("body").notNull(),
+  },
+  (t) => [check("run_registrations_body", sql`json_valid(${t.body})`)],
+);
+export const runEvents = sqliteTable(
+  "run_events",
+  {
+    eventId: text("event_id").primaryKey().notNull(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    sequence: integer("sequence").notNull(),
+    type: text("type").notNull(),
+    digest: text("digest").notNull(),
+    body: text("body").notNull(),
+    acknowledgement: text("acknowledgement").notNull(),
+    occurredAt: integer("occurred_at").notNull(),
+    receivedAt: integer("received_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("run_events_run_sequence").on(t.runId, t.sequence),
+    index("run_events_id_case").on(sql`${t.eventId} COLLATE NOCASE`),
+    check(
+      "run_events_sequence",
+      sql`typeof(${t.sequence})='integer' AND ${t.sequence} BETWEEN 1 AND 9007199254740991`,
+    ),
+    check(
+      "run_events_type",
+      sql`${t.type} IN ('run.started','run.heartbeat','run.progress','run.succeeded','run.failed','run.cancelled')`,
+    ),
+    check("run_events_body", sql`json_valid(${t.body})`),
+    check("run_events_acknowledgement", sql`json_valid(${t.acknowledgement})`),
+  ],
+);
+export const runClosures = sqliteTable(
+  "run_closures",
+  {
+    id: text("id").primaryKey().notNull(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    reason: text("reason").notNull(),
+    actor: text("actor").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("run_closures_run").on(t.runId),
+    check("run_closures_actor", sql`${t.actor}='operator'`),
   ],
 );

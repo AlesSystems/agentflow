@@ -1,0 +1,98 @@
+{
+  "operation": "heartbeat",
+  "mode": "before",
+  "signal": "SIGKILL",
+  "request": {
+    "schemaVersion": 1,
+    "eventId": "1a36827d-11cd-4a5f-9e2e-6510075c2926",
+    "runId": "d2906ac2-3d56-47b2-a486-f3e34193edb0",
+    "sequence": 2,
+    "type": "run.heartbeat",
+    "occurredAt": "2099-01-01T00:00:00Z",
+    "payload": {}
+  },
+  "before": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 2,
+        "last_sequence": 1,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 1,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 8
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "killed": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 2,
+        "last_sequence": 1,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 1,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 8
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "recovered": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 3,
+        "last_sequence": 2,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 2,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 10
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "retryBody": {
+    "data": {
+      "eventId": "1a36827d-11cd-4a5f-9e2e-6510075c2926",
+      "runId": "d2906ac2-3d56-47b2-a486-f3e34193edb0",
+      "acceptedSequence": 2,
+      "receivedAt": "2026-10-09T22:40:27.326Z"
+    },
+    "snapshotCursor": "10",
+    "generation": "5f6d41de-0cbc-48e9-93e0-587b4e104709"
+  },
+  "retryStatus": 201,
+  "currentGeneration": "5f6d41de-0cbc-48e9-93e0-587b4e104709"
+}

@@ -176,3 +176,58 @@ representative table rebuild. P04's independent Astra plan approval must include
 this prerequisite. If registration, deletion, VACUUM or rebuild moves into P02/P03,
 the durable field must precede that expanded scope. PLAN retains this unchecked
 acceptance item; the P02 receipt records the adjudication provenance.
+
+### P04 Stage 1 migration candidate
+
+Migration 0002 adds `runs.registration_order`, backfilled densely in prior rowid
+order. Existing run facts remain unchanged. No registration identity, historical
+request, event, or receipt is fabricated. Both latest queries use this explicit
+order. It stays internal and is excluded from task-detail run serialization.
+
+SQLite's additive column is physically nullable. Its CHECK rejects noninteger,
+nonpositive, and unsafe values when present; reviewed insert/immutability triggers
+require a value, forbid replacing an existing run identity, and reject order
+changes. A unique index protects order identity. Drizzle declares effective
+requiredness; real SQL guard and schema-parity tests cover the additive limitation.
+
+The singleton `run_order_allocator` starts at the backfill maximum, or zero on a
+fresh database. Internal code reads its next value within an immediate write
+transaction. A run insert must exceed the retained high-water; its AFTER INSERT
+trigger advances the allocator in the same transaction. Failed transactions
+restore both. The database forbids allocator insertion, deletion, identity change,
+reset, decrease, noninteger values and overflow. Deleting a highest run cannot
+permit reuse. This allocator is not derived again from surviving run rows.
+
+Non-reuse applies within retained database history. An older backup restores its
+high-water and exact retained orders under a renewed generation, revoking browser
+sessions. Values assigned only in discarded later history may recur. Numeric order
+is not a public identity across generations. Public registration and observation
+receipt restoration remain Stage 2 verification because those capabilities do not
+yet exist in this candidate.
+
+Migration validation conservatively tokenizes quotes, identifiers and comments,
+recognizes the reviewed trigger header/body delimiters and CASE END expressions,
+and rejects transaction or connection controls, including bare top-level END.
+Unsupported or ambiguous lexical forms fail closed. SQLite remains the complete
+SQL grammar authority inside the runner-owned immediate transaction. Existing
+pre-migration backup, checksum, integrity and stopped-service restore behavior
+remain required. This bounded recognizer is not a general SQL parser.
+
+Stage 1 review repair adds migration 0003 without changing migration 0002.
+`runs_id_immutable` rejects every change to an existing run ID, including an
+UPDATE OR REPLACE collision that would otherwise delete a later failure and
+rebind older success evidence to its identity. Same-ID updates and lifecycle
+projection updates remain valid. Existing insert guards also reject replacement
+and UPSERT attempts for an existing run identity.
+
+
+## P04 public observations
+
+P04 adds migration 0004 without editing reviewed 0000–0003 bytes. `run_registrations` records the original canonical request digest and committed registration envelope for new public attempts. Legacy runs retain unavailable original identity. `run_events` records global event ID, unique run/sequence, typed payload envelope, original acknowledgement, producer occurrence metadata and authoritative server receipt time. `run_closures` records one immutable operator reason/time per closed tracking record. Effective SQLite triggers reject update, deletion and replacement of all three fact kinds. Phase 2 retains them; future retention requires an explicit reviewed migration and policy.
+
+Owned Store command transactions keep registration order, task revision capture, active ownership, events, permitted task transitions, durable changes and acknowledgements atomic. Resource receipts stay scoped by principal/method/path/key. Event identity is separate from resource receipts and does not require an Idempotency-Key. Identity replay follows authentication and validation and precedes current state guards. Only implementation start/success changes task status, always for the current registered work revision. Other purposes and stale closure never change task column or work revision. Heartbeats are actual stored ordered observations and never evidence of process liveness.
+
+Read snapshots capture freshness and cursor/generation together. Agent list reporting uses a bounded correlated indexed existence query rather than one query per identity. Latest task detail stays compatible with P03. Registration order remains internal and restore non-reuse remains limited to retained history. Activity/SSE, CLI outbox and workflow surfaces are later packages.
+
+
+P04 review repair adds migration 0005 with nonunique NOCASE lookup indexes for UUID identities. New client identities/input references normalize at the request boundary, while response schemas and historical acknowledgements preserve stored casing. A lookup reads at most two indexed matches and rejects actual casing collisions explicitly. Legacy ID/order bytes remain unchanged; successful projections use their actual stored FK identity. The original parsed JSON digest still distinguishes supplied casing. Migration 0004 and earlier reviewed bytes are preserved.
