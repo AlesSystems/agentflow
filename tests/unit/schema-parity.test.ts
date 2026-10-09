@@ -20,8 +20,7 @@ const expected = {
 function checks(sql: string): string[] {
   const found: string[] = [];
   const pattern = /\bCHECK\s*\(/gi;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(sql))) {
+  while (pattern.exec(sql) !== null) {
     const start = pattern.lastIndex;
     let depth = 1;
     let end = start;
