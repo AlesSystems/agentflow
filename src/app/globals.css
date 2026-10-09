@@ -1,0 +1,144 @@
+@import "tailwindcss";
+:root {
+  color-scheme: light;
+  --canvas: #f6f7f9;
+  --ink: #202939;
+  --muted: #526071;
+  --action: #2457d6;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font:
+    16px/1.5 system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #cbd2dc;
+  gap: 16px;
+}
+header a {
+  font-size: 22px;
+  font-weight: 750;
+  text-decoration: none;
+  color: var(--ink);
+}
+header span {
+  color: var(--muted);
+  font-size: 14px;
+}
+main {
+  max-width: 720px;
+  margin: 64px auto;
+  padding: 0 24px;
+}
+h1 {
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 750;
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+p {
+  max-width: 65ch;
+  margin: 0 0 24px;
+}
+form {
+  display: grid;
+  gap: 12px;
+  max-width: 480px;
+}
+label {
+  font-weight: 650;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #526071;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  caret-color: var(--action);
+}
+button {
+  width: fit-content;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--action);
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+button:hover {
+  background: #1946b5;
+}
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+a {
+  color: var(--action);
+  text-underline-offset: 3px;
+}
+:focus-visible {
+  outline: 3px solid var(--action);
+  outline-offset: 4px;
+}
+::selection {
+  background: #dcebff;
+  color: var(--ink);
+}
+.error {
+  color: #9b2c2c;
+  margin: 4px 0;
+}
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 24px;
+  margin: 32px 0;
+  font-variant-numeric: tabular-nums;
+}
+dt {
+  color: var(--muted);
+}
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  header {
+    padding: 16px;
+  }
+  header span {
+    font-size: 12px;
+  }
+  main {
+    margin: 40px auto;
+    padding: 0 16px;
+  }
+  h1 {
+    font-size: 28px;
+  }
+  dl {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  dd {
+    margin-bottom: 12px;
+  }
+}
