@@ -1,0 +1,50 @@
+[
+  {
+    "name": "body",
+    "foreground": "rgb(32, 41, 57)",
+    "background": "rgb(246, 247, 249)",
+    "ratio": 13.626739757356422
+  },
+  {
+    "name": "metadata",
+    "foreground": "rgb(82, 96, 113)",
+    "background": "rgb(246, 247, 249)",
+    "ratio": 5.990392692344101
+  },
+  {
+    "name": "card title",
+    "foreground": "rgb(32, 41, 57)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 14.60694774275227
+  },
+  {
+    "name": "primary action",
+    "foreground": "rgb(255, 255, 255)",
+    "background": "rgb(36, 87, 214)",
+    "ratio": 6.159623091836944
+  },
+  {
+    "name": "Backlog 1",
+    "foreground": "rgb(32, 41, 57)",
+    "background": "rgb(232, 237, 244)",
+    "ratio": 12.416716920041862
+  },
+  {
+    "name": "In progress 0",
+    "foreground": "rgb(32, 41, 57)",
+    "background": "rgb(220, 235, 255)",
+    "ratio": 12.082353204073373
+  },
+  {
+    "name": "Review 0",
+    "foreground": "rgb(32, 41, 57)",
+    "background": "rgb(255, 231, 163)",
+    "ratio": 11.971600009164492
+  },
+  {
+    "name": "Completed 0",
+    "foreground": "rgb(32, 41, 57)",
+    "background": "rgb(221, 241, 223)",
+    "ratio": 12.326936612685035
+  }
+]
