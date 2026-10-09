@@ -545,3 +545,39 @@ it("rejects replace attempts that would change an existing run identity's immuta
     owned.close();
   }
 });
+it("rejects UPSERT bypasses of run order and allocator high-water", async () => {
+  const { dir, owned } = await upgradedFixture();
+  try {
+    connection(dir, (db) => {
+      expect(() =>
+        db.exec(
+          `INSERT INTO runs SELECT id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at,4 FROM runs WHERE id='${failedId}' ON CONFLICT(id) DO UPDATE SET registration_order=excluded.registration_order`,
+        ),
+      ).toThrow();
+      for (const value of [0, 2, 4]) {
+        expect(() =>
+          db
+            .prepare(
+              "INSERT INTO run_order_allocator VALUES(1,?) ON CONFLICT(singleton) DO UPDATE SET last_value=excluded.last_value",
+            )
+            .run(value),
+        ).toThrow();
+      }
+      expect(highwater(db)).toEqual({ last_value: 3 });
+      expect(
+        db
+          .prepare("SELECT registration_order FROM runs WHERE id=?")
+          .get(failedId),
+      ).toEqual({ registration_order: 2 });
+    });
+    const detail = owned.store.snapshot({
+      kind: "task",
+      id: taskId,
+      input: { history: "both", historyLimit: 50 },
+    }).body.data as { latestRun: Record<string, unknown> };
+    expect(detail.latestRun).not.toHaveProperty("registrationOrder");
+    expect(detail.latestRun).not.toHaveProperty("registration_order");
+  } finally {
+    owned.close();
+  }
+});
