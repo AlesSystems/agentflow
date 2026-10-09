@@ -54,7 +54,9 @@ Run `setup` in your interactive terminal before starting the service. It display
 
 `npm run dev` uses the same ownership and security gates. `PORT` selects a port from 1024 through 65535. The launcher binds only `127.0.0.1`; accepted Host/Origin values use `127.0.0.1` or `localhost` and that exact port. Use `npm start`, because direct `next start` cannot initialize or access private storage.
 
-The default directory is `~/Library/Application Support/AgentFlow`. `AGENTFLOW_DATA_DIR` must be an absolute, real local directory. Directories require owner-only permissions (0700), files 0600, and current-user ownership. Unsafe existing files fail with a repair code. Use canonical paths; symlinks, including parent aliases such as macOS `/tmp`, are rejected. Network filesystems are unsupported; reliable portable network-volume detection is not claimed.
+The default directory is `~/Library/Application Support/AgentFlow`. `AGENTFLOW_DATA_DIR` must be an absolute, real local directory. The data directory and backup destinations must be outside the active application
+root (the canonical directory used by Next), including public/ and build/scratch
+folders. Contained paths fail before private files are created. Directories require owner-only permissions (0700), files 0600, and current-user ownership. Unsafe existing files fail with a repair code. Use canonical paths; symlinks, including parent aliases such as macOS `/tmp`, are rejected. Network filesystems are unsupported; reliable portable network-volume detection is not claimed.
 
 Sessions expire after 12 hours. Cookie reads accept same-origin and direct navigation; a different localhost port is rejected as same-site. Direct clients without Fetch Metadata remain compatible when supplied Origin is allowed.
 

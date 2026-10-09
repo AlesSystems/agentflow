@@ -6,25 +6,25 @@
     "architecture": "arm64"
   },
   "lockSha256": "b5950cee5c94352a73b1795efa50134b930b62f2e3a57cd1c6b8ffdad8e4547f",
-  "shippingBuildId": "hQ09mSjr3AU0hymCmT09K",
+  "shippingBuildId": "wgd21gSuvi-dW6ficx8kO",
   "samples": [
     {
-      "readyMs": 581,
-      "idleRssKiB": 102176
+      "readyMs": 445,
+      "idleRssKiB": 202848
     },
     {
-      "readyMs": 549,
-      "idleRssKiB": 137408
+      "readyMs": 428,
+      "idleRssKiB": 199520
     },
     {
-      "readyMs": 534,
-      "idleRssKiB": 115200
+      "readyMs": 427,
+      "idleRssKiB": 202880
     }
   ],
   "evidence": [
     {
       "listener": [
-        "TCP 127.0.0.1:64076 (LISTEN)"
+        "TCP 127.0.0.1:55642 (LISTEN)"
       ],
       "health": {
         "status": 200,
@@ -46,7 +46,7 @@
         "status": 200,
         "body": {
           "ready": true,
-          "generation": "4d9e6139-6af2-40df-ba61-0466594cf4ce",
+          "generation": "94c7d7e3-e0f1-4852-a223-9fe06f77de85",
           "schemaVersion": 1
         }
       },
@@ -66,7 +66,7 @@
     },
     {
       "listener": [
-        "TCP 127.0.0.1:64159 (LISTEN)"
+        "TCP 127.0.0.1:55663 (LISTEN)"
       ],
       "health": {
         "status": 200,
@@ -88,7 +88,7 @@
         "status": 200,
         "body": {
           "ready": true,
-          "generation": "7b73c6d4-d1da-4868-ab5c-ff65b46b0fc3",
+          "generation": "0d07fc0a-384e-46c2-94e0-3466ed2404e2",
           "schemaVersion": 1
         }
       },
@@ -108,7 +108,7 @@
     },
     {
       "listener": [
-        "TCP 127.0.0.1:64220 (LISTEN)"
+        "TCP 127.0.0.1:55675 (LISTEN)"
       ],
       "health": {
         "status": 200,
@@ -130,7 +130,7 @@
         "status": 200,
         "body": {
           "ready": true,
-          "generation": "163c6443-2c0b-45bb-9719-134043a1c2b0",
+          "generation": "434da928-bbff-4b66-8c10-2e2e751dbd5f",
           "schemaVersion": 1
         }
       },
@@ -150,16 +150,16 @@
     }
   ],
   "browserBundleScan": "no matches",
-  "sourceCommit": "68c64dd2e335da3453c46778dca968d992e9256d",
+  "sourceCommit": "af3cc1d2356492a502df68edd958768202004d0c",
   "stream": {
-    "fixtureBuildId": "5ZF0nsgBPG5z3CwEkr62E",
-    "shippingBuildId": "hQ09mSjr3AU0hymCmT09K",
+    "fixtureBuildId": "RZw4QmS2ELS6ZWPqtbv4w",
+    "shippingBuildId": "wgd21gSuvi-dW6ficx8kO",
     "fixtureRouteSha256": "00ee7508a3cc0a763d67c6b89351a0b35e085e87d5a6aa65177bb1a4acbd8fda",
     "first": "first\\n",
     "second": "second\\n",
-    "firstAt": 1791571743811,
-    "releaseAt": 1791571743892,
-    "secondAt": 1791571743928,
+    "firstAt": 1791573392624,
+    "releaseAt": 1791573392707,
+    "secondAt": 1791573392744,
     "cancelled": 1,
     "timestampMeaning": {
       "firstAt": "first read started",
@@ -186,12 +186,12 @@
     "build": 0,
     "buildDataDirectoryUntouched": true,
     "unit": {
-      "files": 3,
-      "passed": 6
+      "files": 4,
+      "passed": 10
     },
     "integration": {
-      "files": 8,
-      "passed": 42
+      "files": 9,
+      "passed": 47
     },
     "runtime": {
       "files": 5,
@@ -203,13 +203,24 @@
       "isolatedProfile": true,
       "externalNetwork": "denied by Playwright routing",
       "crossPortRsc": "custom-header fetch rejected at preflight; direct same-site GET separately tested",
-      "disconnect": "actual validation failure, delayed real retry, one outstanding request, successful revocation"
+      "disconnect": "actual validation failure, delayed real retry, one outstanding request, successful revocation",
+      "captureSourceCommit": "68c64dd2e335da3453c46778dca968d992e9256d",
+      "captureReuse": "immutable published UI captures reused; src/app unchanged since scoped independent UI ship verdict"
     },
     "impeccableDetect": {
       "exit": 0,
       "findings": [],
       "sourceCommit": "52e684f35fbd7779f5ef79f5bca6e205ffe753ba",
       "note": "historical mechanical scan; reviewer requested no rerun after bounded pending-state fix"
+    },
+    "installBaselineSourceCommit": "ebc2391b64639c0865e5d2776ba6d2b9258931ce",
+    "installReplay": "fresh npm ci then fast-forward same-lockfile checkout to af3cc1d and rebuild/replay all checks",
+    "privatePath": {
+      "supplementalPlanSha256": "a4589e4f768f79bc9062e3d343a82fabbc980d67ddaac2c92426a1c56ccbeb3c",
+      "approval": "Astra medium APPROVED",
+      "exposureRegression": "inside-public configuration refused before private directory creation; no listener",
+      "outsideDirectory": "normal operation and normalized CLI rotation pass",
+      "aliases": "raw symlink/dot, dangling symlink, existing case identity, prefix sibling, missing descendant covered"
     }
   }
 }

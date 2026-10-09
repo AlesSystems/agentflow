@@ -78,7 +78,11 @@ One custom Next HTTP server process owns a data directory. Before migrations, th
 
 `AGENTFLOW_DATA_DIR` can select an absolute local path. The default is `~/Library/Application Support/AgentFlow` on macOS and `$XDG_DATA_HOME/agentflow` on Linux, falling back to `~/.local/share/agentflow`. The first release targets macOS; Linux support depends on the same clean-install checks. Windows is deferred.
 
-The directory holds `agentflow.sqlite`, its WAL files, the versioned `credentials.json` token set, and eventually the CLI outbox. Directory permissions are user-only and sensitive files use mode `0600`. No data belongs in the public checkout. The application rejects a relative override and documents that network filesystems are unsupported.
+The directory holds `agentflow.sqlite`, its WAL files, the versioned `credentials.json` token set, and eventually the CLI outbox. Directory permissions are user-only and sensitive files use mode `0600`. Managed data, explicit Store candidates and backup destinations are rejected
+inside the canonical active application root before writes. The instance freezes
+that CWD root and Next uses it; case aliases are recognized by directory identity,
+raw symlinks are rejected before dot normalization, and no global repository scan
+or root override is introduced. No data belongs in the public checkout. The application rejects a relative override and documents that network filesystems are unsupported.
 
 Normal use works without internet after dependencies are installed. External links open only after a user action. No repository scanning, transcript discovery, remote analytics, or provider credential storage is part of the first release.
 
