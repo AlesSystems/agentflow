@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). This PR delivers documentation only. All implementation boxes remain unchecked. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 foundation implementation is under review. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -11,7 +11,8 @@ Use the accepted [architecture](docs/ARCHITECTURE.md) and [API contract](docs/AP
 The operator changed the release target to v1 on 2026-10-09. The
 [execution policy](docs/EXECUTION_POLICY.md) preserves the earlier approved
 P01–P07 controls and supplies an explicit one-prompt activation for the expanded
-scope. This document is a planning artifact; it does not start implementation.
+scope. The operator activated the implementation run on 2026-10-09; this plan
+records its sequential gates.
 Use relevant skills for each package, including Poteto for implementation and
 Impeccable for UI work; do not invoke every installed skill indiscriminately.
 
@@ -274,4 +275,4 @@ Unit tests cover transitions and validation. Integration tests cover the actual 
 
 For each PR, record the head SHA, test commands/results, scenario logs, screenshots where UI changes, source of synthetic data, and known limitations. Store runtime evidence outside the tracked data directory and upload only synthetic, redacted artifacts. Keep provider credentials, real repository paths, prompts, and private task text out of public PRs.
 
-Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The current documentation PR does not claim any of them has run.
+Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The P01 receipt records foundation verification; later package gates have not run.

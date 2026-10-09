@@ -1,0 +1,212 @@
+{
+  "host": {
+    "node": "v24.15.0",
+    "npm": "11.12.1",
+    "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428",
+    "architecture": "arm64"
+  },
+  "lockSha256": "b5950cee5c94352a73b1795efa50134b930b62f2e3a57cd1c6b8ffdad8e4547f",
+  "shippingBuildId": "FHuTnVtBX1fijLgWAHEBw",
+  "samples": [
+    {
+      "readyMs": 447,
+      "idleRssKiB": 201632
+    },
+    {
+      "readyMs": 425,
+      "idleRssKiB": 203328
+    },
+    {
+      "readyMs": 425,
+      "idleRssKiB": 201280
+    }
+  ],
+  "evidence": [
+    {
+      "listener": [
+        "TCP 127.0.0.1:56523 (LISTEN)"
+      ],
+      "health": {
+        "status": 200,
+        "body": {
+          "ready": true,
+          "apiVersion": "v1"
+        }
+      },
+      "unauthenticated": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "authentication_required",
+            "message": "The request could not be completed. Check the local service and request."
+          }
+        }
+      },
+      "authenticated": {
+        "status": 200,
+        "body": {
+          "ready": true,
+          "generation": "b88a05db-5daf-435f-bf31-e2c3a531f3ac",
+          "schemaVersion": 1
+        }
+      },
+      "idleSeconds": 3
+    },
+    {
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      },
+      "pragmas": {
+        "journal_mode": "wal",
+        "synchronous": 2,
+        "foreign_keys": 1,
+        "busy_timeout": 250
+      }
+    },
+    {
+      "listener": [
+        "TCP 127.0.0.1:56536 (LISTEN)"
+      ],
+      "health": {
+        "status": 200,
+        "body": {
+          "ready": true,
+          "apiVersion": "v1"
+        }
+      },
+      "unauthenticated": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "authentication_required",
+            "message": "The request could not be completed. Check the local service and request."
+          }
+        }
+      },
+      "authenticated": {
+        "status": 200,
+        "body": {
+          "ready": true,
+          "generation": "707ff231-74a6-4eff-9bb1-2765eb1b5364",
+          "schemaVersion": 1
+        }
+      },
+      "idleSeconds": 3
+    },
+    {
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      },
+      "pragmas": {
+        "journal_mode": "wal",
+        "synchronous": 2,
+        "foreign_keys": 1,
+        "busy_timeout": 250
+      }
+    },
+    {
+      "listener": [
+        "TCP 127.0.0.1:56547 (LISTEN)"
+      ],
+      "health": {
+        "status": 200,
+        "body": {
+          "ready": true,
+          "apiVersion": "v1"
+        }
+      },
+      "unauthenticated": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "authentication_required",
+            "message": "The request could not be completed. Check the local service and request."
+          }
+        }
+      },
+      "authenticated": {
+        "status": 200,
+        "body": {
+          "ready": true,
+          "generation": "87015447-85fb-43b9-9152-71a8dcef7dca",
+          "schemaVersion": 1
+        }
+      },
+      "idleSeconds": 3
+    },
+    {
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      },
+      "pragmas": {
+        "journal_mode": "wal",
+        "synchronous": 2,
+        "foreign_keys": 1,
+        "busy_timeout": 250
+      }
+    }
+  ],
+  "browserBundleScan": "no matches",
+  "sourceCommit": "52e684f35fbd7779f5ef79f5bca6e205ffe753ba",
+  "stream": {
+    "fixtureBuildId": "W1wt6P9IwqMskKKO3lztq",
+    "shippingBuildId": "FHuTnVtBX1fijLgWAHEBw",
+    "fixtureRouteSha256": "00ee7508a3cc0a763d67c6b89351a0b35e085e87d5a6aa65177bb1a4acbd8fda",
+    "first": "first\\n",
+    "second": "second\\n",
+    "firstAt": 1791570834831,
+    "releaseAt": 1791570834913,
+    "secondAt": 1791570834950,
+    "cancelled": 1,
+    "timestampMeaning": {
+      "firstAt": "first read started",
+      "releaseAt": "latch release requested",
+      "secondAt": "verification including abort cleanup completed"
+    }
+  },
+  "native": {
+    "binding": "better-sqlite3/prebuilds/darwin-arm64.node",
+    "sqliteVersion": "3.53.4",
+    "sourceCompilation": false,
+    "availableTooling": {
+      "nodeGyp": "12.2.0",
+      "Python": "3.14.7",
+      "AppleClang": "21.0.0",
+      "Make": "3.81"
+    }
+  },
+  "checks": {
+    "npmCi": 0,
+    "npmLsAll": 0,
+    "lint": 0,
+    "typecheck": 0,
+    "build": 0,
+    "buildDataDirectoryUntouched": true,
+    "unit": {
+      "files": 3,
+      "passed": 6
+    },
+    "integration": {
+      "files": 8,
+      "passed": 41
+    },
+    "runtime": {
+      "files": 5,
+      "passed": 27
+    },
+    "browser": {
+      "passed": 2,
+      "browser": "Google Chrome 154.0.8037.99",
+      "isolatedProfile": true,
+      "externalNetwork": "denied by Playwright routing",
+      "crossPortRsc": "custom-header fetch rejected at preflight; direct same-site GET separately tested"
+    },
+    "impeccableDetect": {
+      "exit": 0,
+      "findings": []
+    }
+  }
+}

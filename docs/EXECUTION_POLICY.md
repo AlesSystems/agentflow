@@ -1,17 +1,16 @@
 # AgentFlow v1 execution policy
 
-Status: v1 scope requested by the operator on 2026-10-09; expanded delivery
-contract prepared for activation by the single prompt below. Implementation has
-not started. The earlier P01–P07 policy was approved on 2026-10-09 via “Approve
-the full policy”. This revision carries those controls into a proposed v1 run;
-it does not pretend the earlier approval covered Phase 3.
+Status: the operator activated the complete v1 implementation run on 2026-10-09,
+including scoped installation, worktrees, commits/pushes, package PRs, verified
+merges, and the final source release. P01 is in implementation; no package is
+complete until its exact candidate passes independent review and integration.
+The earlier P01–P07 controls and expanded v1 scope below govern this active run.
 
 ## Scope and activation
 
 The operator now wants all three phases completed in order for v1. This supersedes
-the old v0.1 release boundary. The current task remains a documentation PR. The
-starting prompt below explicitly activates implementation and the expanded
-integration/release authority; editing or merging these documents alone does not.
+the old v0.1 release boundary. The operator used the activation contract for this implementation run. Recording
+or merging the policy alone would not have supplied that authority.
 
 1. **Scope and design.** Implement P01–P07, W01–W02, W03a–W03c, and W04 in
    [PLAN.md](../PLAN.md), with [V1_WORKFLOWS.md](V1_WORKFLOWS.md) for the new
@@ -72,7 +71,9 @@ The coordinator may delegate bounded implementation and review tasks using the
 available harness tools. Workers use `gpt-6.1-sol` with low reasoning; reviewers
 use `gpt-6.1-sol` with high reasoning, preferably named roles. Supply complete
 scope, dependencies, write boundaries, acceptance gates, and return evidence to
-fresh workers. A reviewer is independent of the implementation it reviews. The
+fresh workers. Every package also requires an approved Astra medium implementation plan before
+its worker starts. P01 received that gate for the exact plan recorded in
+[the P01 receipt](implementation/P01.md). A reviewer is independent of the implementation it reviews. The
 coordinator verifies returned evidence and owns integration.
 
 Use Poteto and Impeccable where applicable, plus relevant planning, testing,
