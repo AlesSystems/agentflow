@@ -814,21 +814,22 @@ export class ApplicationData {
     ] as const) {
       if (filters[key] !== undefined) {
         clauses.push(column + "=?");
-        params.push(
-          column.endsWith("_id")
-            ? (this.find(
-                (
-                  {
-                    projectId: "projects",
-                    taskId: "tasks",
-                    assignedAgentId: "agents",
-                    agentId: "agents",
-                  } as Record<string, string>
-                )[key],
-                filters[key] as string,
-              )?.id ?? filters[key])
-            : filters[key],
-        );
+        const resolvedFilter = column.endsWith("_id")
+          ? (this.find(
+              (
+                {
+                  projectId: "projects",
+                  taskId: "tasks",
+                  assignedAgentId: "agents",
+                  agentId: "agents",
+                } as Record<string, string>
+              )[key],
+              filters[key] as string,
+            )?.id ?? filters[key])
+          : filters[key];
+        params.push(resolvedFilter);
+        if (column.endsWith("_id"))
+          Object.assign(filters, { [key]: resolvedFilter });
       }
     }
     if (filters.tag) {
@@ -972,21 +973,22 @@ export class ApplicationData {
         ] as const)
           if (filters[key]) {
             clauses.push(column + "=?");
-            params.push(
-              column.endsWith("_id")
-                ? (this.find(
-                    (
-                      {
-                        projectId: "projects",
-                        taskId: "tasks",
-                        assignedAgentId: "agents",
-                        agentId: "agents",
-                      } as Record<string, string>
-                    )[key],
-                    filters[key] as string,
-                  )?.id ?? filters[key])
-                : filters[key],
-            );
+            const resolvedFilter = column.endsWith("_id")
+              ? (this.find(
+                  (
+                    {
+                      projectId: "projects",
+                      taskId: "tasks",
+                      assignedAgentId: "agents",
+                      agentId: "agents",
+                    } as Record<string, string>
+                  )[key],
+                  filters[key] as string,
+                )?.id ?? filters[key])
+              : filters[key];
+            params.push(resolvedFilter);
+            if (column.endsWith("_id"))
+              Object.assign(filters, { [key]: resolvedFilter });
           }
         if (filters.stale !== undefined) {
           clauses.push(
@@ -1020,7 +1022,7 @@ export class ApplicationData {
           "run_id=?",
           [value.id],
           "events",
-          { runId: query.id },
+          { runId: value.id },
           query.input.limit,
           query.input.cursor,
           "sequence",
@@ -1049,25 +1051,25 @@ export class ApplicationData {
         );
       } else if (query.kind === "tasks") data = this.taskList(query.input);
       else if (query.kind === "comments") {
-        this.one("tasks", query.id);
+        const value = this.one("tasks", query.id);
         data = this.page(
           "comments",
           "task_id=?",
-          [query.id],
+          [value.id],
           "comments",
-          { taskId: query.id },
+          { taskId: value.id },
           query.input.limit,
           query.input.cursor,
         );
       } else if (query.kind === "board") {
-        this.one("projects", query.id);
+        const value = this.one("projects", query.id);
         data = {
           columns: ["backlog", "in_progress", "review", "completed"].map(
             (status) => ({
               status,
               ...this.taskList({
                 ...query.input,
-                projectId: query.id,
+                projectId: value.id as string,
                 status: status as z.infer<typeof task>["status"],
               }),
             }),
