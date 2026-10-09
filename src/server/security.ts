@@ -90,6 +90,15 @@ export function requireBrowserMutation(headers: Headers) {
   if (site && !["same-origin", "none"].includes(site))
     throw new HttpError(403, "fetch_site_rejected");
 }
+export function rejectReadBody(request: IncomingMessage) {
+  if (!["GET", "HEAD"].includes(request.method || "GET")) return;
+  const length = request.headers["content-length"];
+  if (length && !/^\d+$/.test(length)) throw new HttpError(400, "body_invalid");
+  if (length && Number(length) > 65536)
+    throw new HttpError(413, "body_too_large");
+  if (request.headers["transfer-encoding"] || Number(length || 0) !== 0)
+    throw new HttpError(400, "body_not_allowed");
+}
 export async function boundedBody(request: IncomingMessage): Promise<Buffer> {
   const length = request.headers["content-length"];
   if (length && (!/^\d+$/.test(length) || Number(length) > 65536))

@@ -10,6 +10,7 @@ import {
   boundedBody,
   HttpError,
   publicError,
+  rejectReadBody,
   validateEnvelope,
 } from "./security";
 
@@ -82,6 +83,7 @@ export async function startRuntime(
           { host: request.headers.host, origin: request.headers.origin },
           config.port,
         );
+        rejectReadBody(request);
         response.setHeader("Cache-Control", "no-store");
         const pathname = new URL(
           request.url || "/",
