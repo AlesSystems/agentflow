@@ -24,7 +24,11 @@
     "test:performance:p02": "tsx tests/performance/p02.ts"
   },
   "dependencies": {
+    "@dnd-kit/react": "0.5.0",
     "@js-temporal/polyfill": "0.5.1",
+    "@radix-ui/react-dialog": "1.2.0",
+    "@radix-ui/react-dropdown-menu": "2.1.25",
+    "@tanstack/react-query": "5.104.1",
     "better-sqlite3": "13.0.3",
     "drizzle-orm": "0.45.4",
     "next": "16.4.0",
@@ -35,6 +39,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.64.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/better-sqlite3": "9.6.0",
