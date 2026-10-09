@@ -1,0 +1,100 @@
+{
+  "operation": "success",
+  "mode": "after",
+  "signal": "SIGKILL",
+  "request": {
+    "schemaVersion": 1,
+    "eventId": "317a5f75-1e65-48cf-8d67-f88c3f92dc13",
+    "runId": "90119bce-9448-4c6f-816f-412610879baa",
+    "sequence": 2,
+    "type": "run.succeeded",
+    "occurredAt": "2099-01-01T00:00:00Z",
+    "payload": {
+      "summary": "Synthetic finished"
+    }
+  },
+  "before": {
+    "runs": [
+      {
+        "state": "running",
+        "version": 2,
+        "last_sequence": 1,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 1,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 8
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "killed": {
+    "runs": [
+      {
+        "state": "succeeded",
+        "version": 3,
+        "last_sequence": 2,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "review",
+      "version": 4,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 2,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 11
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "recovered": {
+    "runs": [
+      {
+        "state": "succeeded",
+        "version": 3,
+        "last_sequence": 2,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "review",
+      "version": 4,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 2,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 11
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "retryBody": {
+    "data": {
+      "eventId": "317a5f75-1e65-48cf-8d67-f88c3f92dc13",
+      "runId": "90119bce-9448-4c6f-816f-412610879baa",
+      "acceptedSequence": 2,
+      "receivedAt": "2026-10-09T22:40:31.423Z"
+    },
+    "snapshotCursor": "11",
+    "generation": "ffeac23f-25c0-4309-83b1-eaa6b3ab4a63"
+  },
+  "retryStatus": 200,
+  "currentGeneration": "ffeac23f-25c0-4309-83b1-eaa6b3ab4a63"
+}

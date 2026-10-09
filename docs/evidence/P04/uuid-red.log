@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+ ❯ tests/integration/p04-uuid.test.ts (2 tests | 2 failed) 509ms
+   × normalizes public input UUIDs while exact retries retain original JSON casing identity 472ms
+   × preserves uppercase legacy IDs and rejects casing collisions without rewriting identity or order 37ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/p04-uuid.test.ts > normalizes public input UUIDs while exact retries retain original JSON casing identity
+AssertionError: expected 'AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA' to be 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' // Object.is equality
+
+Expected: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+Received: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA"
+
+ ❯ tests/integration/p04-uuid.test.ts:15:240
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/integration/p04-uuid.test.ts > preserves uppercase legacy IDs and rejects casing collisions without rewriting identity or order
+Error: resource_not_found
+ ❯ ApplicationData.one src/db/application.ts:134:21
+    132|       | Row
+    133|       | undefined;
+    134|     if (!row) throw new Conflict("resource_not_found");
+       |                     ^
+    135|     return serialize(row);
+    136|   }
+ ❯ ApplicationData.run src/db/application.ts:567:24
+ ❯ src/db/application.ts:876:58
+ ❯ sqliteTransaction node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ ApplicationData.snapshot src/db/application.ts:1034:7
+ ❯ Store.snapshot src/db/index.ts:78:55
+ ❯ tests/integration/p04-uuid.test.ts:36:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  01:29:18
+   Duration  643ms (tests 85%, transform 7%, import 7%)
+

@@ -1,9 +1,9 @@
 # Local API contract
 
-Status: P01 foundation routes are integrated. P02 project/task/settings/overview
-routes are implemented as a candidate awaiting independent review and integration.
-[Generated OpenAPI](openapi.json) describes implemented operations only. P04/P05
-reporting routes below remain planned. W01–W03c add the
+Status: P01–P03 are integrated. P04 observation routes are implemented and verified;
+final documentation/evidence review and integration remain the coordinator gate.
+[Generated OpenAPI](openapi.json) describes implemented operations only. P05
+Activity/SSE routes remain planned. W01–W03c add the
 [Phase 3 contracts](V1_WORKFLOWS.md).
 
 ## Conventions
@@ -252,7 +252,8 @@ GET task query `TaskDetailQueryV1` accepts `history=both|completion|reopen`,
 both histories and 50 records each. Each nextUrl is a working GET task URL with
 its independent cursor, history selector and limit. A supplied cursor for an
 unrequested kind rejects. Empty/exhausted requested pages have an empty items
-array and null continuation values. Run/event history links await P04.
+array and null continuation values. P04 supplies run lists and raw event-history
+endpoints; task detail keeps its P03 history shape.
 
 Comments append immutably to tasks in unarchived projects, including completed
 tasks. They change neither task version nor work revision nor current acceptance.
@@ -282,5 +283,5 @@ fallback and literal feasibility fixtures are recorded in [P02](implementation/P
 All resource reads and writes return snapshot metadata. Completed command receipts
 remain historical after newer versions or restore. Clients compare the current
 response generation header and refetch authoritative state; an old receipt never
-advances a future subscription cursor. No P04 reporting, activity or SSE endpoint
-is executable in P02.
+advances a future subscription cursor. P04 adds explicit observation routes;
+Activity and SSE remain P05.

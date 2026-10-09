@@ -1,0 +1,34 @@
+
+> agentflow@0.0.0 test:e2e
+> playwright test
+
+
+Running 22 tests using 1 worker
+
+(node:12162) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/p03-accessibility.spec.ts:19:1 › board, task, settings and narrow layouts retain accessible controls (2.0s)
+{"proof":"native Chrome profile 200% zoom","before":{"width":1440,"dpr":1},"after":{"width":720,"dpr":2,"cssZoom":"1"}}
+  ✓   2 tests/e2e/p03-accessibility.spec.ts:120:1 › actual Chrome profile zoom at 200 percent reflows the board (1.7s)
+  ✓   3 tests/e2e/p03-journey.spec.ts:3:1 › synthetic manual acceptance journey persists across a production restart (2.2s)
+  ✓   4 tests/e2e/p03-journey.spec.ts:115:1 › keyboard alone creates, edits, accepts, comments and reopens a synthetic task (1.7s)
+  ✓   5 tests/e2e/p03-recovery.spec.ts:4:1 › independently paired browsers expose conflict and retain a draft through re-pairing (1.7s)
+  ✓   6 tests/e2e/p03-recovery.spec.ts:75:1 › lost command responses retry the same identity without overwriting a newer task (1.1s)
+  ✓   7 tests/e2e/p03-recovery.spec.ts:125:1 › dirty close stays in place, archived history is read-only, and filters reset pages (1.3s)
+  ✓   8 tests/e2e/p03-recovery.spec.ts:176:1 › pointer drag moves only across lanes and Completed opens acceptance (2.5s)
+  ✓   9 tests/e2e/p03-recovery.spec.ts:238:1 › lane, comments and both task-history continuations load beyond fifty records (4.9s)
+  ✓  10 tests/e2e/p03-recovery.spec.ts:328:1 › a generation reset discards a historical body but preserves the mounted edit (1.0s)
+  ✓  11 tests/e2e/p03-recovery.spec.ts:393:1 › service errors keep drafts and missing private records offer recovery (1.1s)
+  ✓  12 tests/e2e/p03-recovery.spec.ts:441:1 › UTC browser initialization records version two once and settings conflicts retain input (944ms)
+  ✓  13 tests/e2e/p03-recovery.spec.ts:494:1 › project metadata editing, archive confirmation and unarchive use persistent commands (1.1s)
+  ✓  14 tests/e2e/p03-recovery.spec.ts:551:1 › acceptance cannot discard an editable draft and saving fields keeps its evidence note (1.1s)
+  ✓  15 tests/e2e/p03-recovery.spec.ts:613:1 › cancelling acceptance preserves an unrelated comment draft and its dirty-close protection (1.1s)
+  ✓  16 tests/e2e/p03-recovery.spec.ts:651:1 › addressable task reload and Back preserve validated board filters (936ms)
+  ✓  17 tests/e2e/p03-recovery.spec.ts:682:1 › generation reset clears accumulated comment pages while retaining a comment draft (1.1s)
+  ✓  18 tests/e2e/p03-recovery.spec.ts:774:1 › Overview authoritative refresh clears obsolete loaded attention pages (15.9s)
+  ✓  19 tests/e2e/p03-recovery.spec.ts:830:1 › narrow direct task entry and reload focus the heading without stealing later editor focus (1.1s)
+  ✓  20 tests/e2e/pairing.spec.ts:6:1 › pairs with the keyboard and reads SQLite while external network is denied (953ms)
+  ✓  21 tests/e2e/pairing.spec.ts:85:1 › a paired browser on a second localhost port cannot read pages, RSC or prefetch (811ms)
+  ✓  22 tests/e2e/pairing.spec.ts:143:1 › disconnect clears errors and permits only one delayed request until it finishes (858ms)
+
+  22 passed (47.8s)

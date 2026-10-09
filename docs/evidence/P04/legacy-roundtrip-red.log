@@ -1,0 +1,38 @@
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+ ❯ tests/integration/p04-legacy-roundtrip.test.ts (1 test | 1 failed) 503ms
+   × carries actual legacy identity through related public FK queries writes and paginated histories 502ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/p04-legacy-roundtrip.test.ts > carries actual legacy identity through related public FK queries writes and paginated histories
+AssertionError: expected { items: [], total: +0, …(1) } to match object { total: 1, items: [ { …(2) } ] }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "items": [
+-     {
+-       "id": "f9c6db3e-bfea-47a4-ac4a-d0275f65627b",
+-       "taskId": "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE",
+-     },
+-   ],
+-   "total": 1,
++   "items": [],
++   "total": 0,
+  }
+
+ ❯ tests/integration/p04-legacy-roundtrip.test.ts:13:119
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:38:09
+   Duration  640ms (tests 85%, transform 8%, import 7%)
+

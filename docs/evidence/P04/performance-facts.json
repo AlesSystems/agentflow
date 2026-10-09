@@ -1,0 +1,182 @@
+{
+  "runtimeSource": "1cb71db033aabec211afd6ce86728a33561f1974",
+  "fixtureDirectory": "/private/var/folders/ks/fhc_wz2110n8x2713thh_m580000gn/T/agentflow-p04-performance-2mnDrD",
+  "counts": {
+    "projects": 1,
+    "tasks": 1000,
+    "agents": 1,
+    "runs": 10,
+    "run_registrations": 10,
+    "run_events": 20300,
+    "run_closures": 0,
+    "receipts": 1012,
+    "changes": 41632
+  },
+  "runs": [
+    {
+      "id": "d4779ce5-5c67-4b8c-8a92-458e41a0b222",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 1,
+      "work_revision": 2
+    },
+    {
+      "id": "a1f72927-1822-4b20-9de0-1f5a4c9c72c1",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 2,
+      "work_revision": 2
+    },
+    {
+      "id": "87353ce3-1089-4631-b81a-dc6ececad91f",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "8876ca22-d877-4ede-bc6a-f330f70b8d34",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 4,
+      "work_revision": 2
+    },
+    {
+      "id": "78826186-98e6-44a7-a551-fc5e07d24a37",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 5,
+      "work_revision": 2
+    },
+    {
+      "id": "f5aca2d8-cb7e-429a-ace5-c87685bf2fbf",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 6,
+      "work_revision": 2
+    },
+    {
+      "id": "129cb4c4-6ea0-407e-ae74-c12201269f0f",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 7,
+      "work_revision": 2
+    },
+    {
+      "id": "775b6243-8735-474a-9913-1b5116652b1c",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 8,
+      "work_revision": 2
+    },
+    {
+      "id": "2f3f0da4-c373-4411-b54e-974da4015f11",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 9,
+      "work_revision": 2
+    },
+    {
+      "id": "e0cbaec5-ef5a-4e21-803c-8e019e6a7695",
+      "state": "running",
+      "version": 2031,
+      "last_sequence": 2030,
+      "registration_order": 10,
+      "work_revision": 2
+    }
+  ],
+  "linkedTasks": [
+    {
+      "id": "16f83cd4-67f2-420f-ae84-5d97610861b3",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "482565a2-4ed8-455e-bc51-08c79e291630",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "51e96144-6387-43ca-91c2-7fdd4182cb81",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "6670272a-175f-4199-87a7-f8fda55b56f7",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "7bfaf61f-292b-43e5-857a-fcaf2d833d1e",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "88922b6f-6f61-40ba-a321-0b4c6073a5d5",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "89948a7f-5439-40f4-b758-7ec1a1de0c12",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "aecc57a7-19a5-4cb5-9d56-75b07eec1f6a",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "cf8396e3-4f11-4f23-8569-c7cbd22a5b6c",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    },
+    {
+      "id": "f2d758e0-3ff5-46a2-aa00-01771b277696",
+      "status": "in_progress",
+      "version": 3,
+      "work_revision": 2
+    }
+  ],
+  "allocator": {
+    "singleton": 1,
+    "last_value": 10
+  },
+  "sqlite": {
+    "version": "3.53.4"
+  },
+  "metadata": {
+    "generation": "297a533a-27ab-4ac0-b106-0e85143bd500",
+    "schemaVersion": 6
+  },
+  "integrity": {
+    "integrity": "ok",
+    "foreignKeys": []
+  },
+  "pragmas": {
+    "journal_mode": "wal",
+    "synchronous": 2,
+    "foreign_keys": 1,
+    "busy_timeout": 250
+  },
+  "ownerReacquisition": "succeeded after production graceful shutdown",
+  "processesClosed": true
+}

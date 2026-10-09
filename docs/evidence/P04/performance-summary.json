@@ -1,0 +1,29 @@
+{
+  "runtimeSource": "1cb71db033aabec211afd6ce86728a33561f1974",
+  "exitCode": 0,
+  "startedAt": "2026-10-09T22:44:51.157Z",
+  "finishedAt": "2026-10-09T22:50:45.600Z",
+  "serverRssKiB": {
+    "first": 370128,
+    "last": 357296,
+    "peak": 394992,
+    "samples": 34
+  },
+  "fixtureRssKiB": {
+    "first": 1181472,
+    "last": 1137104,
+    "peak": 1222688
+  },
+  "pids": [
+    13148,
+    13152
+  ],
+  "liveAfterCompletion": [],
+  "benchmarkExited": true,
+  "fixtureDirectory": {
+    "dir": "/private/var/folders/ks/fhc_wz2110n8x2713thh_m580000gn/T/agentflow-p04-performance-2mnDrD",
+    "createdAt": "2026-10-09T22:44:51.158Z",
+    "deltaMs": 0.857421875
+  },
+  "notes": "RSS is observational 10-second sampling; fixture seed process is separate from production server. Closed-process checks confirm no benchmark/server PID remains. External synthetic DB retained briefly for final independent count/integrity/owner inspection; then disposable fixture cleanup."
+}

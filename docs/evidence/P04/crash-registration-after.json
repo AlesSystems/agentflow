@@ -1,0 +1,104 @@
+{
+  "operation": "registration",
+  "mode": "after",
+  "signal": "SIGKILL",
+  "request": {
+    "id": "67aa2ff9-0f8c-4874-b990-2475f7d6185a",
+    "projectId": "c5306d39-fb1c-4a1d-b0a6-438cd1d0a299",
+    "taskId": "7cbe0d08-2395-4187-b950-9b5c9c74d853",
+    "agentId": "f46979e6-3870-434e-afe5-c524d9b3d640",
+    "purpose": "implementation",
+    "expectedTaskVersion": 1
+  },
+  "before": {
+    "runs": [],
+    "task": {
+      "status": "backlog",
+      "version": 1,
+      "work_revision": 1
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 0,
+      "receipts": 3,
+      "changes": 3
+    },
+    "allocator": {
+      "last_value": 0
+    }
+  },
+  "killed": {
+    "runs": [
+      {
+        "state": "queued",
+        "version": 1,
+        "last_sequence": 0,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "backlog",
+      "version": 2,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 5
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "recovered": {
+    "runs": [
+      {
+        "state": "queued",
+        "version": 1,
+        "last_sequence": 0,
+        "registration_order": 1
+      }
+    ],
+    "task": {
+      "status": "backlog",
+      "version": 2,
+      "work_revision": 2
+    },
+    "counts": {
+      "run_events": 0,
+      "run_registrations": 1,
+      "receipts": 4,
+      "changes": 5
+    },
+    "allocator": {
+      "last_value": 1
+    }
+  },
+  "retryBody": {
+    "data": {
+      "id": "67aa2ff9-0f8c-4874-b990-2475f7d6185a",
+      "projectId": "c5306d39-fb1c-4a1d-b0a6-438cd1d0a299",
+      "agentId": "f46979e6-3870-434e-afe5-c524d9b3d640",
+      "taskId": "7cbe0d08-2395-4187-b950-9b5c9c74d853",
+      "purpose": "implementation",
+      "model": null,
+      "workRevision": 2,
+      "state": "queued",
+      "lastSequence": 0,
+      "lastReceivedAt": "2026-10-09T22:40:28.699Z",
+      "startedAt": null,
+      "endedAt": null,
+      "version": 1,
+      "createdAt": "2026-10-09T22:40:28.699Z",
+      "freshness": {
+        "stale": false,
+        "reporting": "no_report_received"
+      }
+    },
+    "snapshotCursor": "5",
+    "generation": "5c39b0e9-e20e-48aa-933e-dd19d8e726f0"
+  },
+  "retryStatus": 201,
+  "currentGeneration": "5c39b0e9-e20e-48aa-933e-dd19d8e726f0"
+}

@@ -1,0 +1,524 @@
+{
+  "schemaVersion": 1,
+  "synthetic": true,
+  "records": [
+    {
+      "path": "/projects",
+      "request": {
+        "name": "Synthetic external producer"
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "id": "d43db69d-3000-423c-8c25-cf770b6e0574",
+          "name": "Synthetic external producer",
+          "repositoryPath": null,
+          "archivedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T22:40:56.823Z",
+          "updatedAt": "2026-10-09T22:40:56.823Z"
+        },
+        "snapshotCursor": "1",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/tasks",
+      "request": {
+        "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+        "title": "Synthetic external producer"
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+          "title": "Synthetic external producer",
+          "id": "21ae0816-f27c-429c-b118-e60df2f4b524",
+          "status": "backlog",
+          "version": 1,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T22:40:56.829Z",
+          "updatedAt": "2026-10-09T22:40:56.829Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "2",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/agents",
+      "request": {
+        "displayName": "Synthetic external producer",
+        "source": "deterministic fixture subprocess",
+        "defaultRole": "implementation"
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "displayName": "Synthetic external producer",
+          "source": "deterministic fixture subprocess",
+          "defaultRole": "implementation",
+          "id": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+          "version": 1,
+          "createdAt": "2026-10-09T22:40:56.833Z",
+          "reporting": false,
+          "queuedRunsUrl": "/api/v1/runs?agentId=a1955615-05d1-4af7-b7f8-c66f99497a65&state=queued",
+          "activeRunsUrl": "/api/v1/runs?agentId=a1955615-05d1-4af7-b7f8-c66f99497a65&state=running",
+          "historyUrl": "/api/v1/runs?agentId=a1955615-05d1-4af7-b7f8-c66f99497a65"
+        },
+        "snapshotCursor": "3",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs",
+      "request": {
+        "id": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+        "taskId": "21ae0816-f27c-429c-b118-e60df2f4b524",
+        "agentId": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+        "purpose": "implementation",
+        "expectedTaskVersion": 1
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "id": "5b1bd193-649c-4756-9645-5e98e8b52111",
+          "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+          "agentId": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+          "taskId": "21ae0816-f27c-429c-b118-e60df2f4b524",
+          "purpose": "implementation",
+          "model": null,
+          "workRevision": 2,
+          "state": "queued",
+          "lastSequence": 0,
+          "lastReceivedAt": "2026-10-09T22:40:56.836Z",
+          "startedAt": null,
+          "endedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T22:40:56.836Z",
+          "freshness": {
+            "stale": false,
+            "reporting": "no_report_received"
+          }
+        },
+        "snapshotCursor": "5",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "415fdb44-aff3-45ed-8da4-1168c11dc396",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 1,
+        "type": "run.started",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {}
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "eventId": "415fdb44-aff3-45ed-8da4-1168c11dc396",
+          "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+          "acceptedSequence": 1,
+          "receivedAt": "2026-10-09T22:40:56.840Z"
+        },
+        "snapshotCursor": "8",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "8bafde0e-f6f1-4e55-b4eb-8e5113ec8207",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 2,
+        "type": "run.heartbeat",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {}
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "eventId": "8bafde0e-f6f1-4e55-b4eb-8e5113ec8207",
+          "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+          "acceptedSequence": 2,
+          "receivedAt": "2026-10-09T22:40:56.843Z"
+        },
+        "snapshotCursor": "10",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "886f698a-d260-4cce-ad67-eedcc8894e68",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 3,
+        "type": "run.progress",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {
+          "message": "Synthetic progress",
+          "percent": 50
+        }
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "eventId": "886f698a-d260-4cce-ad67-eedcc8894e68",
+          "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+          "acceptedSequence": 3,
+          "receivedAt": "2026-10-09T22:40:56.846Z"
+        },
+        "snapshotCursor": "12",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "147d5c5d-9463-4134-805b-b7cd697af871",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 4,
+        "type": "run.succeeded",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {
+          "summary": "Synthetic artifact complete",
+          "evidenceUrl": "https://example.com/synthetic"
+        }
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "eventId": "147d5c5d-9463-4134-805b-b7cd697af871",
+          "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+          "acceptedSequence": 4,
+          "receivedAt": "2026-10-09T22:40:56.848Z"
+        },
+        "snapshotCursor": "15",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "8bafde0e-f6f1-4e55-b4eb-8e5113ec8207",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 2,
+        "type": "run.heartbeat",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {}
+      },
+      "status": 200,
+      "body": {
+        "data": {
+          "eventId": "8bafde0e-f6f1-4e55-b4eb-8e5113ec8207",
+          "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+          "acceptedSequence": 2,
+          "receivedAt": "2026-10-09T22:40:56.843Z"
+        },
+        "snapshotCursor": "10",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "8bafde0e-f6f1-4e55-b4eb-8e5113ec8207",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 2,
+        "type": "run.heartbeat",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {
+          "unknown": true
+        }
+      },
+      "status": 422,
+      "body": {
+        "error": {
+          "code": "validation_failed",
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/5b1bd193-649c-4756-9645-5e98e8b52111/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "b4d1c462-b624-4fc0-a536-222bd7f58c77",
+        "runId": "5b1bd193-649c-4756-9645-5e98e8b52111",
+        "sequence": 5,
+        "type": "run.failed",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {
+          "message": "invalid terminal regression"
+        }
+      },
+      "status": 409,
+      "body": {
+        "error": {
+          "code": "run_terminal",
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/tasks/21ae0816-f27c-429c-b118-e60df2f4b524",
+      "request": null,
+      "status": 200,
+      "body": {
+        "data": {
+          "task": {
+            "title": "Synthetic external producer",
+            "description": "",
+            "acceptanceCriteria": "",
+            "priority": "normal",
+            "tags": [],
+            "assignedAgentId": null,
+            "targetRole": null,
+            "parentTaskId": null,
+            "branch": null,
+            "pullRequestUrl": null,
+            "blockedReason": null,
+            "id": "21ae0816-f27c-429c-b118-e60df2f4b524",
+            "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+            "status": "review",
+            "version": 4,
+            "workRevision": 2,
+            "createdAt": "2026-10-09T22:40:56.829Z",
+            "updatedAt": "2026-10-09T22:40:56.848Z",
+            "completedAt": null
+          },
+          "currentCompletion": null,
+          "latestRun": {
+            "id": "5b1bd193-649c-4756-9645-5e98e8b52111",
+            "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+            "agentId": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+            "taskId": "21ae0816-f27c-429c-b118-e60df2f4b524",
+            "purpose": "implementation",
+            "model": null,
+            "workRevision": 2,
+            "state": "succeeded",
+            "lastSequence": 4,
+            "lastReceivedAt": "2026-10-09T22:40:56.848Z",
+            "startedAt": "2026-10-09T22:40:56.840Z",
+            "endedAt": "2026-10-09T22:40:56.848Z",
+            "version": 5,
+            "createdAt": "2026-10-09T22:40:56.836Z"
+          },
+          "history": {
+            "commentsUrl": "/api/v1/tasks/21ae0816-f27c-429c-b118-e60df2f4b524/comments",
+            "completions": {
+              "items": [],
+              "nextCursor": null,
+              "nextUrl": null
+            },
+            "reopens": {
+              "items": [],
+              "nextCursor": null,
+              "nextUrl": null
+            }
+          }
+        },
+        "snapshotCursor": "15",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs",
+      "request": {
+        "id": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+        "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+        "taskId": "21ae0816-f27c-429c-b118-e60df2f4b524",
+        "agentId": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+        "purpose": "verification",
+        "expectedTaskVersion": 4
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "id": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+          "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+          "agentId": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+          "taskId": "21ae0816-f27c-429c-b118-e60df2f4b524",
+          "purpose": "verification",
+          "model": null,
+          "workRevision": 2,
+          "state": "queued",
+          "lastSequence": 0,
+          "lastReceivedAt": "2026-10-09T22:40:56.857Z",
+          "startedAt": null,
+          "endedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T22:40:56.857Z",
+          "freshness": {
+            "stale": false,
+            "reporting": "no_report_received"
+          }
+        },
+        "snapshotCursor": "17",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/31d8e7c7-5e26-49a6-ac17-d6a9c779ad22/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "fb986115-7564-4a64-8e5f-c42b7e61a42a",
+        "runId": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+        "sequence": 1,
+        "type": "run.started",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {}
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "eventId": "fb986115-7564-4a64-8e5f-c42b7e61a42a",
+          "runId": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+          "acceptedSequence": 1,
+          "receivedAt": "2026-10-09T22:40:56.859Z"
+        },
+        "snapshotCursor": "19",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/runs/31d8e7c7-5e26-49a6-ac17-d6a9c779ad22/events",
+      "request": {
+        "schemaVersion": 1,
+        "eventId": "5d9d2ae7-4c02-4d77-95f6-f7bf6ea99142",
+        "runId": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+        "sequence": 2,
+        "type": "run.succeeded",
+        "occurredAt": "2026-10-10T00:00:00Z",
+        "payload": {
+          "summary": "Synthetic independent verification report"
+        }
+      },
+      "status": 201,
+      "body": {
+        "data": {
+          "eventId": "5d9d2ae7-4c02-4d77-95f6-f7bf6ea99142",
+          "runId": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+          "acceptedSequence": 2,
+          "receivedAt": "2026-10-09T22:40:56.861Z"
+        },
+        "snapshotCursor": "21",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    },
+    {
+      "path": "/tasks/21ae0816-f27c-429c-b118-e60df2f4b524",
+      "request": null,
+      "status": 200,
+      "body": {
+        "data": {
+          "task": {
+            "title": "Synthetic external producer",
+            "description": "",
+            "acceptanceCriteria": "",
+            "priority": "normal",
+            "tags": [],
+            "assignedAgentId": null,
+            "targetRole": null,
+            "parentTaskId": null,
+            "branch": null,
+            "pullRequestUrl": null,
+            "blockedReason": null,
+            "id": "21ae0816-f27c-429c-b118-e60df2f4b524",
+            "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+            "status": "review",
+            "version": 5,
+            "workRevision": 2,
+            "createdAt": "2026-10-09T22:40:56.829Z",
+            "updatedAt": "2026-10-09T22:40:56.857Z",
+            "completedAt": null
+          },
+          "currentCompletion": null,
+          "latestRun": {
+            "id": "31d8e7c7-5e26-49a6-ac17-d6a9c779ad22",
+            "projectId": "d43db69d-3000-423c-8c25-cf770b6e0574",
+            "agentId": "a1955615-05d1-4af7-b7f8-c66f99497a65",
+            "taskId": "21ae0816-f27c-429c-b118-e60df2f4b524",
+            "purpose": "verification",
+            "model": null,
+            "workRevision": 2,
+            "state": "succeeded",
+            "lastSequence": 2,
+            "lastReceivedAt": "2026-10-09T22:40:56.861Z",
+            "startedAt": "2026-10-09T22:40:56.859Z",
+            "endedAt": "2026-10-09T22:40:56.861Z",
+            "version": 3,
+            "createdAt": "2026-10-09T22:40:56.857Z"
+          },
+          "history": {
+            "commentsUrl": "/api/v1/tasks/21ae0816-f27c-429c-b118-e60df2f4b524/comments",
+            "completions": {
+              "items": [],
+              "nextCursor": null,
+              "nextUrl": null
+            },
+            "reopens": {
+              "items": [],
+              "nextCursor": null,
+              "nextUrl": null
+            }
+          }
+        },
+        "snapshotCursor": "21",
+        "generation": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+      },
+      "currentGeneration": "0c0a6898-de1c-4963-ba5e-66a079723ec9"
+    }
+  ],
+  "exitCode": 0,
+  "counts": {
+    "projects": 1,
+    "tasks": 1,
+    "agents": 1,
+    "runs": 2,
+    "run_registrations": 2,
+    "run_events": 6,
+    "run_closures": 0,
+    "receipts": 5,
+    "changes": 21
+  },
+  "task": {
+    "status": "review",
+    "version": 5,
+    "work_revision": 2
+  }
+}

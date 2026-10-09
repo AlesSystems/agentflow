@@ -1,0 +1,16 @@
+
+> agentflow@0.0.0 test:unit
+> vitest run tests/unit
+
+
+ RUN  v5.0.3 /Users/altanesmer/.codex/worktrees/v1-p01-runtime/agentflow
+
+
+ Test Files  12 passed (12)
+      Tests  60 passed (60)
+   Start at  01:39:56
+   Duration  1.02s (import 65%, tests 17%, transform 15%, worker 3%)
+
+    Isolate  12 workers spawned · ~42ms startup each (spawn + environment, per file)
+             at least ~459ms faster with isolate: false — reuses workers across files instead of one per file
+
