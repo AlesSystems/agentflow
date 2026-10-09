@@ -70,3 +70,40 @@ it("mirrors all ten reviewed CHECK names, counts and exact constraint expression
     ).toEqual(migrated);
   }
 });
+
+it("mirrors additive order checks and allocator checks while documenting trigger-enforced requiredness", async () => {
+  const { runs, runOrderAllocator } = await import("../../src/db/schema");
+  const migration = readFileSync(
+    "migrations/0002_registration_order.sql",
+    "utf8",
+  );
+  const dialect = new SQLiteSyncDialect();
+  const runConfig = getTableConfig(runs);
+  const orderColumn = runConfig.columns.find(
+    (column) => column.name === "registration_order",
+  );
+  expect(orderColumn?.notNull).toBe(true);
+  const orderCheck = runConfig.checks.find(
+    (check) => check.name === "runs_registration_order",
+  );
+  expect(normalize(dialect.sqlToQuery(orderCheck!.value).sql)).toBe(
+    normalize(checks(migration.slice(0, migration.indexOf(";")))[0]),
+  );
+  expect(
+    runConfig.indexes
+      .filter((index) => index.config.name === "runs_registration_order")
+      .map((index) => index.config.unique),
+  ).toEqual([true]);
+  const allocator = getTableConfig(runOrderAllocator);
+  const start = migration.indexOf("CREATE TABLE run_order_allocator");
+  const statement = migration.slice(start, migration.indexOf(";", start));
+  expect(
+    allocator.checks
+      .map((check) => normalize(dialect.sqlToQuery(check.value).sql))
+      .sort(),
+  ).toEqual(checks(statement).map(normalize).sort());
+  expect(allocator.columns.map((column) => column.name)).toEqual([
+    "singleton",
+    "last_value",
+  ]);
+});
