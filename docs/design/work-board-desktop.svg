@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc"><title id="title">AgentFlow Work board — desktop design study</title><desc id="desc">Static proposal with synthetic data. Four lanes: Backlog, In progress, Review, Completed. Colored rounded lane tabs, bold paper cards, explicit stale reporting, and human acceptance. No application UI implemented.</desc><g font-family="system-ui, -apple-system, sans-serif">
+<rect x="0" y="0" width="1440" height="900" rx="0" fill="#F6F7F9" stroke="none" stroke-width="1"/>
+<rect x="0" y="0" width="1440" height="52" rx="0" fill="#202939" stroke="none" stroke-width="1"/>
+<text x="24" y="33" font-size="13" font-weight="750" fill="#FFFFFF">DESIGN STUDY</text>
+<text x="169" y="33" font-size="13" font-weight="400" fill="#DCEBFF">Static illustration · synthetic data · no implemented UI</text>
+<rect x="0" y="52" width="192" height="738" rx="0" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="24" y="99" font-size="23" font-weight="800" fill="#202939">AgentFlow</text>
+<text x="26" y="151" font-size="15" font-weight="500" fill="#202939">Overview</text>
+<rect x="12" y="172" width="168" height="40" rx="10" fill="#DCEBFF" stroke="none" stroke-width="1"/>
+<text x="26" y="199" font-size="15" font-weight="700" fill="#202939">Projects</text>
+<text x="26" y="247" font-size="15" font-weight="500" fill="#202939">Agents</text>
+<text x="26" y="295" font-size="15" font-weight="500" fill="#202939">Activity</text>
+<text x="26" y="343" font-size="15" font-weight="500" fill="#202939">Settings</text>
+<text x="24" y="459" font-size="12" font-weight="650" fill="#526071">PROJECT</text>
+<text x="24" y="488" font-size="15" font-weight="650" fill="#202939">Local tools</text>
+<text x="24" y="737" font-size="12" font-weight="400" fill="#526071">Reports from your</text>
+<text x="24" y="755" font-size="12" font-weight="400" fill="#526071">external harness</text>
+<text x="224" y="106" font-size="28" font-weight="750" fill="#202939">Local tools</text>
+<text x="224" y="135" font-size="14" font-weight="500" fill="#526071">Work board</text>
+<rect x="1122" y="78" width="112" height="32" rx="16" fill="#DDF1DF" stroke="#202939" stroke-width="1.3"/>
+<text x="1134" y="99" font-size="13" font-weight="650" fill="#202939">Connected</text>
+<rect x="1250" y="76" width="158" height="40" rx="10" fill="#2457D6" stroke="#202939" stroke-width="1.5"/>
+<text x="1267" y="102" font-size="15" font-weight="650" fill="#FFFFFF">+ Create task</text>
+<rect x="224" y="159" width="400" height="42" rx="10" fill="#FFFFFF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="240" y="185" font-size="14" font-weight="400" fill="#526071">Search tasks…</text>
+<rect x="640" y="164" width="90" height="32" rx="16" fill="#FFFFFF" stroke="#202939" stroke-width="1.3"/>
+<text x="652" y="185" font-size="13" font-weight="650" fill="#202939">Filters</text>
+<text x="748" y="185" font-size="13" font-weight="400" fill="#526071">All matching tasks · 7</text>
+<rect x="224" y="231" width="180" height="32" rx="16" fill="#E8EDF4" stroke="#202939" stroke-width="1.3"/>
+<text x="236" y="252" font-size="13" font-weight="650" fill="#202939">Backlog · 2</text>
+<text x="489" y="253" font-size="21" font-weight="600" fill="#202939">+</text>
+<rect x="524" y="231" width="180" height="32" rx="16" fill="#DCEBFF" stroke="#202939" stroke-width="1.3"/>
+<text x="536" y="252" font-size="13" font-weight="650" fill="#202939">In progress · 2</text>
+<text x="789" y="253" font-size="21" font-weight="600" fill="#202939">+</text>
+<rect x="824" y="231" width="180" height="32" rx="16" fill="#FFE7A3" stroke="#202939" stroke-width="1.3"/>
+<text x="836" y="252" font-size="13" font-weight="650" fill="#202939">Review · 2</text>
+<text x="1089" y="253" font-size="21" font-weight="600" fill="#202939">+</text>
+<rect x="1124" y="231" width="180" height="32" rx="16" fill="#DDF1DF" stroke="#202939" stroke-width="1.3"/>
+<text x="1136" y="252" font-size="13" font-weight="650" fill="#202939">Completed · 1</text>
+<text x="1389" y="253" font-size="21" font-weight="600" fill="#202939">+</text>
+<rect x="224" y="288" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="224" y="285" width="284" height="170" rx="12" fill="#FFFFFF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="240" y="310" font-size="12" font-weight="500" fill="#526071">AF-014 · Normal</text>
+<text x="240" y="339" font-size="16" font-weight="750" fill="#202939">Document local setup</text>
+<line x1="240" y1="391" x2="492" y2="391" stroke="#CBD2DC" stroke-width="1"/>
+<text x="240" y="414" font-size="12" font-weight="650" fill="#202939">Unassigned</text>
+<text x="240" y="437" font-size="12" font-weight="400" fill="#526071">No run reports</text>
+<rect x="224" y="476" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="224" y="473" width="284" height="170" rx="12" fill="#FFFFFF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="240" y="498" font-size="12" font-weight="500" fill="#526071">AF-018 · Normal</text>
+<text x="240" y="527" font-size="16" font-weight="750" fill="#202939">Write backup checklist</text>
+<line x1="240" y1="579" x2="492" y2="579" stroke="#CBD2DC" stroke-width="1"/>
+<text x="240" y="602" font-size="12" font-weight="650" fill="#202939">Unassigned</text>
+<text x="240" y="625" font-size="12" font-weight="400" fill="#526071">No run reports</text>
+<rect x="524" y="288" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="524" y="285" width="284" height="170" rx="12" fill="#F4F8FF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="540" y="310" font-size="12" font-weight="500" fill="#526071">AF-011 · High</text>
+<text x="540" y="339" font-size="16" font-weight="750" fill="#202939">Add task search</text>
+<line x1="540" y1="391" x2="792" y2="391" stroke="#CBD2DC" stroke-width="1"/>
+<text x="540" y="414" font-size="12" font-weight="650" fill="#202939">Running · Builder</text>
+<text x="540" y="437" font-size="12" font-weight="400" fill="#526071">Last report 8 seconds ago</text>
+<rect x="524" y="476" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="524" y="473" width="284" height="170" rx="12" fill="#FFFFFF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="540" y="498" font-size="12" font-weight="500" fill="#526071">AF-012 · High</text>
+<text x="540" y="527" font-size="16" font-weight="750" fill="#202939">Handle retry safely</text>
+<line x1="540" y1="579" x2="792" y2="579" stroke="#CBD2DC" stroke-width="1"/>
+<text x="540" y="602" font-size="12" font-weight="650" fill="#202939">Last reported running</text>
+<text x="540" y="625" font-size="12" font-weight="400" fill="#526071">4 minutes ago · stale report</text>
+<rect x="824" y="288" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="824" y="285" width="284" height="170" rx="12" fill="#FFFDF4" stroke="#AAB4C1" stroke-width="1"/>
+<text x="840" y="310" font-size="12" font-weight="500" fill="#526071">AF-009 · High</text>
+<text x="840" y="339" font-size="16" font-weight="750" fill="#202939">Retain acceptance notes</text>
+<line x1="840" y1="391" x2="1092" y2="391" stroke="#CBD2DC" stroke-width="1"/>
+<text x="840" y="414" font-size="12" font-weight="650" fill="#202939">Succeeded · Builder</text>
+<text x="840" y="437" font-size="12" font-weight="400" fill="#526071">Awaiting human review</text>
+<rect x="824" y="476" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="824" y="473" width="284" height="170" rx="12" fill="#FFFFFF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="840" y="498" font-size="12" font-weight="500" fill="#526071">AF-010 · Normal</text>
+<text x="840" y="527" font-size="16" font-weight="750" fill="#202939">Clarify stale reports</text>
+<line x1="840" y1="579" x2="1092" y2="579" stroke="#CBD2DC" stroke-width="1"/>
+<text x="840" y="602" font-size="12" font-weight="650" fill="#202939">Succeeded · Builder</text>
+<text x="840" y="625" font-size="12" font-weight="400" fill="#526071">Awaiting human review</text>
+<rect x="1124" y="288" width="284" height="170" rx="12" fill="#D9DFE7" stroke="none" stroke-width="1"/>
+<rect x="1124" y="285" width="284" height="170" rx="12" fill="#FFFFFF" stroke="#AAB4C1" stroke-width="1"/>
+<text x="1140" y="310" font-size="12" font-weight="500" fill="#526071">AF-007 · Normal</text>
+<text x="1140" y="339" font-size="16" font-weight="750" fill="#202939">Show task history</text>
+<line x1="1140" y1="391" x2="1392" y2="391" stroke="#CBD2DC" stroke-width="1"/>
+<text x="1140" y="414" font-size="12" font-weight="650" fill="#202939">Succeeded · Builder</text>
+<rect x="1138" y="422" width="145" height="24" rx="6" fill="#DDF1DF" stroke="#202939" stroke-width="1"/>
+<text x="1147" y="438" font-size="12" font-weight="650" fill="#202939">✓ Human accepted</text>
+<text x="224" y="709" font-size="17" font-weight="700" fill="#202939">Titles first. Evidence one click away.</text>
+<text x="224" y="735" font-size="14" font-weight="400" fill="#526071">Card → addressable task record → reported attempts → human acceptance</text>
+<rect x="0" y="790" width="1440" height="110" rx="0" fill="#E8EDF4" stroke="none" stroke-width="1"/>
+<text x="24" y="823" font-size="15" font-weight="750" fill="#202939">01  A little cartoon character</text>
+<text x="24" y="849" font-size="13" font-weight="400" fill="#526071">Rounded lane tabs, ink outlines, paper depth.</text>
+<text x="510" y="823" font-size="15" font-weight="750" fill="#202939">02  Clear observation</text>
+<text x="510" y="849" font-size="13" font-weight="400" fill="#526071">Report age is separate from browser connection.</text>
+<text x="1000" y="823" font-size="15" font-weight="750" fill="#202939">03  Acceptance stays human</text>
+<text x="1000" y="849" font-size="13" font-weight="400" fill="#526071">Run success reaches Review first.</text>
+</g></svg>

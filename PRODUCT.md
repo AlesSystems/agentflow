@@ -57,7 +57,10 @@ behavior, not shipped features. The v0.1 boundary is P01-P07 in [PLAN.md](PLAN.m
 Use the AgentFlow name. The implementation and visual design are original.
 Fizzy is a reference for a lightweight board experience, with no reused source
 or assets. Preserve the frontend plan's light neutral canvas, readable dark text,
-thin borders, one action accent, and offline system fonts.
+readable card outlines, one blue action accent, and offline system fonts. The user
+selected the Work board prototype and requested a slightly cartoonish Fizzy-like
+refinement on 2026-10-09: rounded colored lane tabs, bold titles, and small
+acceptance stamps. See [DESIGN.md](DESIGN.md) for proposed values.
 
 ## Evidence on Hand
 

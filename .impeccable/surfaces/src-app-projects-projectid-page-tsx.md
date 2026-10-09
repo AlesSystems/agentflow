@@ -22,11 +22,11 @@ Domain rules and authoritative responses remain as defined in the frontend/API p
 
 ## Direction contract
 
-**THESIS:** A classic Kanban work board makes tasks and the evidence behind them
-readable. Task titles lead; charts do not displace the working board.
+**THESIS:** A friendly Kanban work board keeps task titles and their evidence
+readable, with a little cartoon character in lane tabs and controls.
 
-**OWN-WORLD:** Light opaque surfaces, dark system sans, thin neutral borders,
-one blue action accent, rectangular task records, restrained metadata.
+**OWN-WORLD:** Light paper cards, bold system-sans titles, rounded colored lane
+tabs, restrained ink outlines, one blue action accent, and human-acceptance stamps.
 
 **STORY:** Scan work, inspect a reported attempt, read evidence, and record human
 acceptance. A successful implementation reaches Review; acceptance reaches Completed.
@@ -36,9 +36,10 @@ and filters above four equal lanes: Backlog, In progress, Review, Completed.
 Titles dominate cards; counts belong beside lane headings. Selecting a card opens
 its evidence panel beside the board and retains the board's filter context.
 
-**FORM:** Engineering issue ledger, grounded candidate 1, selected by the user
-on 2026-10-09. Direction seed: `73cf6fb7`; choice kind: `pick`. The user chose
-classic Kanban over the assigned inspection-bench direction. Build path: code-first.
+**FORM:** User-selected Work board, refined toward Fizzy with a slightly cartoonish
+character on 2026-10-09. This explicit refinement supersedes the earlier issue-ledger
+material treatment while preserving its composition. Original seed: `73cf6fb7`;
+choice kind: `pick`. Build path remains code-first. This delivery is documentation.
 
 **FINISH:** unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
@@ -71,5 +72,8 @@ pointer; focus restoration, dirty drafts, errors, reduced motion, 200% zoom, and
 375 px layout. Inspect desktop board, detail, failed/conflicting save, and narrow
 layout together. Screenshots and browser evidence belong to that implementation PR.
 
-Tokens, sizing, panel width, breakpoints, and the selected control-library
-combinations remain unresolved. No runnable UI or accessibility pass is claimed.
+[DESIGN.md](../../DESIGN.md) now proposes visual values and starting dimensions.
+The [design brief](../../docs/design/WORK_BOARD.md) supplies static studies and
+tracking scope: event timelines in P05, workflow graph in future W01. Final
+breakpoints and control-library combinations require runtime validation. No
+application UI or accessibility pass is claimed.

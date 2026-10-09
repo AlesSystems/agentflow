@@ -34,12 +34,24 @@ An implementation run that succeeds places its task in Review. A human reads the
 
 ## Visual direction
 
-The user selected the classic engineering issue-ledger direction on 2026-10-09.
-[DESIGN.md](../DESIGN.md) records its global visual seed; the
-[board surface brief](../.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) records the first
-composition and states. Exact tokens remain unresolved until P03 implementation.
+The user selected the Work board prototype and requested a slightly cartoonish,
+Fizzy-like refinement on 2026-10-09. [DESIGN.md](../DESIGN.md) records proposed
+palette, typography, shape, and motion targets. The
+[Work board design brief](design/WORK_BOARD.md) includes static desktop/narrow
+studies and tracking-component scope; the
+[board surface brief](../.impeccable/surfaces/src-app-projects-projectid-page-tsx.md)
+records composition and states. Values remain unverified until P03 implementation.
 
-Use a light neutral canvas, dark readable text, thin borders, and a single accent for actions. Status colors supplement explicit labels. Cards use generous title space and restrained metadata. A system font keeps the app offline. The design is original; Fizzy supplies a simplicity reference, not a component template.
+Use light paper surfaces, bold readable card titles, rounded colored lane tabs,
+and restrained outlines. Keep technical evidence plain and human acceptance
+explicit. One blue action accent is separate from labeled lifecycle colors.
+System fonts and original local assets preserve offline use. Fizzy informs the
+lightness and character; no source or assets are reused.
+
+v0.1 tracking uses status counts, attempt timelines, freshness labels, and
+attention/activity lists in P05. Timelines display ordered reports rather than
+inferred stages or percent complete. Connected workflow graphs remain W01;
+no workflow tab or graph dependency is added to v0.1 by this design proposal.
 
 Use selected shadcn/ui controls for dialogs, menus, fields, and focus behavior, then verify the actual combinations. Library defaults are not evidence that a complete interaction is accessible. The implementation includes a documented visual review of the board, task panel, failure state, and narrow layout.
 

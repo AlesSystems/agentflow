@@ -20,8 +20,9 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 | Document | Purpose |
 | --- | --- |
 | [Product context](PRODUCT.md) | Confirmed users, purpose, constraints, and accessibility targets |
-| [Design seed](DESIGN.md) | User-selected classic Kanban visual direction; implementation tokens remain open |
+| [Design seed](DESIGN.md) | Lightly cartoonish Work board direction and proposed visual values |
 | [Board surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) | First board composition, states, and P03 acceptance targets |
+| [Work board design brief](docs/design/WORK_BOARD.md) | Static visual studies, evidence hierarchy, and v0.1 tracking scope |
 | [Roadmap](ROADMAP.md) | Product milestones, release boundaries, and exit criteria |
 | [Implementation plan](PLAN.md) | Ordered work packages and verification requirements |
 | [Architecture](docs/ARCHITECTURE.md) | System boundaries, stack, and proposed source layout |
