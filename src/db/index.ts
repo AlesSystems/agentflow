@@ -1,3 +1,4 @@
+import { validateMigrationSql } from "./migration-sql";
 import {
   ApplicationData,
   type ApplicationCommand,
@@ -172,13 +173,7 @@ export class Store {
     return history.map((row) => row.id);
   }
   async migrate(registry = migrations) {
-    for (const migration of registry)
-      if (
-        /\b(VACUUM|ATTACH|DETACH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i.test(
-          migration.sql,
-        )
-      )
-        throw new Error("NONTRANSACTIONAL_MIGRATION");
+    for (const migration of registry) validateMigrationSql(migration.sql);
     const applied = this.validateMigrations(registry);
     if (applied.length === registry.length) {
       this.integrity();
@@ -191,7 +186,7 @@ export class Store {
           `pre-migration-${randomUUID()}.sqlite`,
         ),
       );
-    this.transaction(() => {
+    this.db.transaction(() => {
       this.db.exec(
         "CREATE TABLE IF NOT EXISTS migration_history (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at INTEGER NOT NULL)",
       );
@@ -210,7 +205,7 @@ export class Store {
           .prepare("UPDATE instance_metadata SET schema_version = ?")
           .run(registry.length);
       this.integrity();
-    });
+    }).immediate();
   }
   backup(destination: string) {
     const pending = this.writeBackup(destination).finally(() =>

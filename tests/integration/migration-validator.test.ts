@@ -41,3 +41,38 @@ it("real Store rolls back trigger creation and data when subsequent SQL fails", 
     expect(db.prepare("SELECT count(*) n FROM migration_history").get()).toEqual({ n: migrations.length });
   });
 });
+it("admits mixed case, comments, quoted identifiers and nested CASE expressions", async () => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-lexical-"));
+  const sql = `CREATE TABLE "BEGIN" ("END" TEXT); -- COMMIT;
+  INSERT INTO "BEGIN" VALUES ('ROLLBACK '' END'); /* PRAGMA */
+  cReAtE tEmPoRaRy tRiGgEr IF NOT EXISTS "COMMIT" AFTER INSERT ON "BEGIN"
+  WHEN CASE WHEN NEW."END"='x' THEN 1 ELSE 0 END = 1
+  bEgIn SELECT CASE WHEN 1 THEN CASE WHEN 1 THEN 'END' END ELSE 'BEGIN' END; eNd;`;
+  const owned = await openOwnedStore(dir, [...migrations, candidate(sql)]);
+  try { expect(owned.store.integrity().integrity).toBe("ok"); } finally { owned.close(); }
+});
+it.each([
+  "CREATE TABLE x(a); END;", "CREATE TABLE x(a); /* unterminated", "CREATE TABLE x(a); 'unterminated",
+  'CREATE TABLE "unterminated(a);', "CREATE TABLE [unterminated(a);", "CREATE TABLE `unterminated(a);",
+  "CREATE TABLE x(a); /* nested /* comment */ COMMIT;", "CREATE TABLE x(a)\u0000;",
+  "CREATE TRIGGER x BEGIN SELECT 1; END;", "CREATE TRIGGER x ON guarded BEGIN SELECT 1; END;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN COMMIT; END;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT 1; ROLLBACK; END;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT CASE WHEN 1 THEN 1; END;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT 1 END;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT 1; END",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT 1; END TRANSACTION;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded WHEN BEGIN SELECT 1; END;",
+  "CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT 1; END; sAvEpOiNt hidden;",
+])("fails closed for malformed or ambiguous SQL %s", async sql => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-malformed-"));
+  const old = await openOwnedStore(dir); old.close();
+  await expect(openOwnedStore(dir, [...migrations, candidate(sql)])).rejects.toThrow("NONTRANSACTIONAL_MIGRATION");
+  inspect(dir, db => expect(db.prepare("SELECT name FROM sqlite_schema WHERE name='x'").all()).toEqual([]));
+});
+it("SQLite remains authority for syntactically invalid allowed DML and rolls it back", async () => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-parser-"));
+  const old = await openOwnedStore(dir); old.close();
+  await expect(openOwnedStore(dir, [...migrations, candidate("CREATE TABLE guarded(value); CREATE TRIGGER x AFTER INSERT ON guarded BEGIN SELECT FROM; END;")])).rejects.toThrow("syntax error");
+  inspect(dir, db => expect(db.prepare("SELECT name FROM sqlite_schema WHERE name='guarded'").all()).toEqual([]));
+});
