@@ -19,6 +19,9 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 
 | Document | Purpose |
 | --- | --- |
+| [Product context](PRODUCT.md) | Confirmed users, purpose, constraints, and accessibility targets |
+| [Design seed](DESIGN.md) | User-selected classic Kanban visual direction; implementation tokens remain open |
+| [Board surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) | First board composition, states, and P03 acceptance targets |
 | [Roadmap](ROADMAP.md) | Product milestones, release boundaries, and exit criteria |
 | [Implementation plan](PLAN.md) | Ordered work packages and verification requirements |
 | [Architecture](docs/ARCHITECTURE.md) | System boundaries, stack, and proposed source layout |
@@ -26,6 +29,11 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 | [Frontend](docs/FRONTEND.md) | Pages, interactions, accessibility, and live updates |
 | [API](docs/API.md) | Versioned HTTP contract, execution events, and CLI behavior |
 | [Decisions](docs/DECISIONS.md) | Accepted choices, alternatives, and remaining evidence gaps |
+
+Impeccable initialization records the existing product plan and a code-first
+workflow in `.impeccable/config.json`. The design seed does not implement P03.
+After the UI exists, run `$impeccable document` to extract real tokens and generate
+the design sidecar; browser verification is still required by the plan.
 
 ## Local runtime target
 

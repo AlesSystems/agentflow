@@ -34,6 +34,11 @@ An implementation run that succeeds places its task in Review. A human reads the
 
 ## Visual direction
 
+The user selected the classic engineering issue-ledger direction on 2026-10-09.
+[DESIGN.md](../DESIGN.md) records its global visual seed; the
+[board surface brief](../.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) records the first
+composition and states. Exact tokens remain unresolved until P03 implementation.
+
 Use a light neutral canvas, dark readable text, thin borders, and a single accent for actions. Status colors supplement explicit labels. Cards use generous title space and restrained metadata. A system font keeps the app offline. The design is original; Fizzy supplies a simplicity reference, not a component template.
 
 Use selected shadcn/ui controls for dialogs, menus, fields, and focus behavior, then verify the actual combinations. Library defaults are not evidence that a complete interaction is accessible. The implementation includes a documented visual review of the board, task panel, failure state, and narrow layout.
