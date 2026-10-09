@@ -13,7 +13,7 @@ v0.1 is a local task manager with reliable observation of an external agent harn
 | Phase 3. Workflow tracking | Inspect orchestrator plans, assignments, dependencies, review cycles, and reported workflow state | Future W01-W03 | A branching workflow and rework cycle can be traced without implying that AgentFlow executes it |
 | Optional control release | Launch or stop approved agent processes through explicit operator actions | Separate proposal | Approved execution and credential design, then isolation and cancellation evidence |
 
-The ordered work packages and their verification requirements are in [PLAN.md](PLAN.md).
+The ordered work packages and their verification requirements are in [PLAN.md](PLAN.md). The operator-approved [execution policy](docs/EXECUTION_POLICY.md) defines delivery authority and the amended review and installation gates. Implementation remains unstarted.
 
 ## Phase 1. Foundation
 
@@ -34,7 +34,7 @@ Foundation acceptance requires create, edit, move, complete, and reopen through 
 
 Success means an implementation run moves a task to Review and a human can accept it with evidence. Retried events do not duplicate activity. A stale reporter remains visibly uncertain. Closing its record does not stop the external agent.
 
-v0.1 ships when every P01-P07 acceptance gate passes on a fresh macOS installation and a production build. Linux support is advertised only after the same checks pass there. The app remains usable without internet after installation.
+v0.1 ships when every P01-P07 acceptance gate passes on a production build using the execution policy's isolated installation on a named macOS host, with independent review at the release commit. This establishes support for the tested configuration, not a pristine-OS claim. Linux support is advertised only after equivalent checks pass there. The app remains usable without internet after installation.
 
 ## Phase 3. Workflow tracking
 
@@ -50,4 +50,4 @@ Sequence these as separate proposals after observing real v0.1 use. Parent-task 
 
 Multiple users, LAN access, cloud synchronization, custom columns, arbitrary command execution, transcript indexing, mobile clients, a plugin marketplace, and desktop packaging are outside v0.1. A Tauri shell may follow once browser workflows are stable.
 
-The repository license must be selected before a software release. Exact dependency versions and runtime support are resolved in P01. Neither decision blocks review of these design documents.
+The operator selected MIT for AgentFlow-owned material; see [LICENSE](LICENSE). Exact dependency versions and the tested runtime configuration are resolved in P01. Their acceptance evidence remains required before release.

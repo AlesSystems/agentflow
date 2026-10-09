@@ -25,6 +25,7 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 | [Work board design brief](docs/design/WORK_BOARD.md) | Static visual studies, evidence hierarchy, and v0.1 tracking scope |
 | [Roadmap](ROADMAP.md) | Product milestones, release boundaries, and exit criteria |
 | [Implementation plan](PLAN.md) | Ordered work packages and verification requirements |
+| [Execution policy](docs/EXECUTION_POLICY.md) | Approved v0.1 delivery authority, review gates, and future-run prompt |
 | [Architecture](docs/ARCHITECTURE.md) | System boundaries, stack, and proposed source layout |
 | [Backend](docs/BACKEND.md) | Domain model, persistence, state transitions, and recovery |
 | [Frontend](docs/FRONTEND.md) | Pages, interactions, accessibility, and live updates |
@@ -48,4 +49,6 @@ Runtime data stays outside the checkout. A public source repository does not pub
 
 The first release combines the foundation and agent-integration milestones. Workflow graphs, dependency enforcement, GitHub synchronization, usage analytics, and agent controls are later work. See the [roadmap](ROADMAP.md).
 
-No project license has been selected yet. Public repository visibility is not a license grant. Select a license before the first software release.
+AgentFlow-owned material is licensed under [MIT](LICENSE), copyright 2026 AlesSystems. Retain applicable third-party licenses and notices.
+
+The operator approved the [execution policy](docs/EXECUTION_POLICY.md) for a future v0.1 implementation run. It permits verified package merges and source release without repeated operator sign-off. Its final section contains the activation prompt. Implementation remains unstarted.

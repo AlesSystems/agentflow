@@ -58,7 +58,7 @@ At most one queued or running run references a task in v0.1. A partial unique in
 
 A browser user can close a stale run record with a reason, producing terminal state `interrupted`. This changes tracking only and never signals the external process. The confirmation explains that the process may still be executing. Further reports for that run are rejected; a surviving producer needs a new run ID.
 
-Harnesses send a heartbeat every 15 seconds while a run is active. Registration initializes `lastReceivedAt` to server registration time. A queued run with `lastSequence=0` displays "No report received." More than 60 seconds without a new accepted report makes the observation stale, including a queued run that never starts. Staleness is computed from server receipt time and is separate from persisted run state. A stale run is not declared dead or failed. Duplicate retries do not refresh its last-seen time.
+Harnesses send a heartbeat every 15 seconds while a run is running. Queued runs reject heartbeats; their permitted events are start or cancellation. Registration initializes `lastReceivedAt` to server registration time. A queued run with `lastSequence=0` displays "No report received." More than 60 seconds without a new accepted report makes the observation stale, including a queued run that never starts. Staleness is computed from server receipt time and is separate from persisted run state. A stale run is not declared dead or failed. Duplicate retries do not refresh its last-seen time.
 
 ## Event ingestion
 

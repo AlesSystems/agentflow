@@ -8,7 +8,7 @@ Implement one work package per reviewable PR. Record its commit, commands, actua
 
 Use the accepted [architecture](docs/ARCHITECTURE.md) and [API contract](docs/API.md). Changes to task acceptance, local trust, event order, or the observer boundary require an updated [decision record](docs/DECISIONS.md).
 
-Execution can use Poteto's Feature playbook for each package and Opening a PR for delivery. Stop each package at a reviewed PR; merging is an operator action unless separately authorized. This plan does not start implementation, create a goal, schedule recurring work, or authorize agent execution from AgentFlow.
+The operator approved the [v0.1 execution policy](docs/EXECUTION_POLICY.md) on 2026-10-09. Read it before implementation: it authorizes package integration after passing checks and independent review, replaces operator browser sign-off with verified evidence, and defines release authority and stopping conditions. Execution can use Poteto's Feature playbook for each package and Opening a PR for delivery, alongside other relevant available skills. Saving this approval does not start implementation, create a goal, schedule recurring work, or authorize agent execution from AgentFlow.
 
 ## Dependencies and ownership
 
@@ -32,7 +32,7 @@ The critical path is runtime proof, domain/API, ingestion and board, live tracki
 
 Depends on no earlier package. Proposed files include `package.json`, lockfile, Node version pin, Next.js configuration, `src/db/`, local launcher/auth modules, and initial integration tests.
 
-- [ ] Select exact supported versions. Record Node and better-sqlite3 compatibility on a clean macOS installation.
+- [ ] Select exact supported versions. Record Node and better-sqlite3 compatibility using the isolated macOS installation procedure in the execution policy.
 - [ ] Scaffold Next.js, TypeScript, Tailwind, lint, type checking, Vitest, and Playwright. Define the commands used below.
 - [ ] Prove SQLite transactions and a streamed response in `npm run build && npm start` before selecting the driver permanently.
 - [ ] Implement data-directory permissions, loopback binding, exact Host/Origin checks, separate pairing/reporter credentials, protected page/API reads, and session revocation. Prove a reporter token cannot create a session or call human-only commands.
@@ -67,9 +67,9 @@ Depends on P02. Proposed files include page layouts, project/board/task componen
 - [ ] Implement filters, load-more controls, empty/loading/error states, and version-conflict recovery.
 - [ ] Verify keyboard navigation, focus restoration, reduced motion, contrast, zoom, and a 375 px layout.
 
-Pass when an operator completes the full manual journey and its records survive restart. Two tabs editing the same task must expose a conflict rather than lose an edit. Dropping into Completed must open acceptance, not bypass it.
+Pass when automated real-browser tests complete the full manual journey and its records survive restart. Synthetic acceptance fixtures exercise the human-only browser command without claiming an actual human attestation. Two tabs editing the same task must expose a conflict rather than lose an edit. Dropping into Completed must open acceptance, not bypass it.
 
-Run the focused browser suite plus lint, type checking, and build. Attach board, task-panel, conflict, and narrow-layout screenshots and a short journey recording to the PR. Record board-load timing using the P07 fixture. Have the operator inspect the interaction before merge.
+Run the focused browser suite plus lint, type checking, and build. Attach board, task-panel, conflict, and narrow-layout screenshots and a short journey recording to the PR. Record board-load timing using the P07 fixture. Obtain independent review of the interaction evidence and exact candidate commit before merge under the execution policy.
 
 ## P04. Accept reliable agent observations
 
@@ -107,7 +107,7 @@ Depends on P04. Proposed files include `src/cli/`, outbox modules, CLI integrati
 - [ ] Allocate IDs and per-run sequences under a lock, then preserve reports before delivery.
 - [ ] Implement bounded outbox storage, flush, retry/backoff, exit codes, and actionable non-retryable errors.
 - [ ] Document token access without URL/query secrets or shell-history examples containing real credentials.
-- [ ] Demonstrate one implementation attempt and a separate review or verification attempt on the same task.
+- [ ] Provide an executable external producer walkthrough demonstrating one implementation attempt and a separate review or verification attempt on the same task, including heartbeats, retry, and flush.
 
 Pass when a real CLI report appears in the API and SQLite, including after server downtime and a CLI restart. Replay the same queued item after a lost response and observe no duplicate. Test concurrent report calls, permissions, full disk/outbox, authentication failure, missing sequence data, and restored-database limitations.
 
@@ -122,9 +122,9 @@ Depends on P05 and P06. Proposed files include release walkthroughs, load scenar
 - [ ] Check unauthenticated reads/SSE, cross-origin mutation, spoofed Host, oversized payloads, invalid links, and non-loopback access.
 - [ ] Verify migration failure recovery, backup restoration, generation reset, permissions, and the documented outbox recovery limits.
 - [ ] Run the load scenario below and inspect resource cleanup.
-- [ ] Run a fresh-install walkthrough, keyboard journey, production build, full relevant tests, lint, and type checking.
-- [ ] Select the repository license and record supported operating systems and exact dependency versions.
-- [ ] Obtain independent review at the release commit and operator review of the browser journey.
+- [ ] Run the execution policy's isolated-install walkthrough, keyboard journey, production build, full relevant tests, lint, and type checking.
+- [ ] Verify the approved MIT license and notices, set package license metadata, and record the tested macOS configuration and exact dependency versions.
+- [ ] Obtain independent review at the release commit, including browser journey evidence, then integrate and publish the v0.1.0 source release under the execution policy.
 
 ## Performance acceptance targets
 

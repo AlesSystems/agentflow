@@ -49,8 +49,9 @@ behavior, not shipped features. The v0.1 boundary is P01-P07 in [PLAN.md](PLAN.m
   remote fonts, or external asset requests are part of the product design.
 - Workflow graphs, dependency enforcement, GitHub synchronization, analytics,
   agent controls, multiple users, and LAN access are deferred.
-- License selection and exact runtime/dependency versions remain open before
-  release. Linux support requires its own acceptance evidence.
+- MIT is selected for AgentFlow-owned material. Exact runtime/dependency versions
+  remain open until P01. Installation evidence follows the approved
+  [execution policy](docs/EXECUTION_POLICY.md); Linux support requires its own evidence.
 
 ## Brand Commitments
 
