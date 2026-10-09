@@ -1,4 +1,10 @@
-import { realpathSync, mkdtempSync, readFileSync, existsSync } from "node:fs";
+import {
+  realpathSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  existsSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -30,6 +36,20 @@ it("rolls failed migration DDL and history back without serving", async () => {
   const owned = await openOwnedStore(dir);
   owned.store.createSession("kept", 1, 9999999999999);
   owned.close();
+  const Database = (await import("better-sqlite3")).default;
+  const inspect = new Database(join(dir, "agentflow.sqlite"), {
+    readonly: true,
+  });
+  const beforeSchema = inspect
+    .prepare("SELECT type,name,sql FROM sqlite_master ORDER BY name")
+    .all();
+  const beforeHistory = inspect
+    .prepare("SELECT * FROM migration_history ORDER BY id")
+    .all();
+  const beforeSessions = inspect
+    .prepare("SELECT * FROM sessions ORDER BY id")
+    .all();
+  inspect.close();
   const sql =
     "CREATE TABLE must_rollback (id TEXT); INSERT INTO absent VALUES (1);";
   await expect(
@@ -42,6 +62,39 @@ it("rolls failed migration DDL and history back without serving", async () => {
       },
     ]),
   ).rejects.toThrow();
+  const after = new Database(join(dir, "agentflow.sqlite"), { readonly: true });
+  expect(
+    after
+      .prepare("SELECT type,name,sql FROM sqlite_master ORDER BY name")
+      .all(),
+  ).toEqual(beforeSchema);
+  expect(
+    after.prepare("SELECT * FROM migration_history ORDER BY id").all(),
+  ).toEqual(beforeHistory);
+  expect(after.prepare("SELECT * FROM sessions ORDER BY id").all()).toEqual(
+    beforeSessions,
+  );
+  expect(
+    after
+      .prepare("SELECT name FROM sqlite_master WHERE name = 'must_rollback'")
+      .get(),
+  ).toBeUndefined();
+  after.close();
+  const files = readdirSync(join(dir, "backups")).filter((file) =>
+    file.endsWith(".sqlite"),
+  );
+  expect(files).toHaveLength(1);
+  const backup = new Database(join(dir, "backups", files[0]), {
+    readonly: true,
+  });
+  expect(backup.pragma("integrity_check", { simple: true })).toBe("ok");
+  expect(backup.prepare("SELECT * FROM sessions ORDER BY id").all()).toEqual(
+    beforeSessions,
+  );
+  expect(
+    backup.prepare("SELECT * FROM migration_history ORDER BY id").all(),
+  ).toEqual(beforeHistory);
+  backup.close();
   const reopened = await openOwnedStore(dir);
   expect(reopened.store.sessionCount()).toBe(1);
   expect(reopened.store.metadata().schemaVersion).toBe(1);
@@ -167,4 +220,50 @@ it("WAL backup retains earlier synthetic rows and restore loses only known later
     { note: "before backup" },
   ]);
   inspected.close();
+});
+it("applies an existing fixture pending migration and restarts unchanged", async () => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-upgrade-"));
+  const first = await openOwnedStore(dir);
+  const generation = first.store.metadata().generation;
+  first.store.createSession("survives-upgrade", 1, 9999999999999);
+  first.close();
+  const sql = "CREATE TABLE upgrade_fixture (id TEXT PRIMARY KEY);";
+  const registry = [
+    ...migrations,
+    {
+      id: "0001_fixture",
+      sql,
+      sha256: createHash("sha256").update(sql).digest("hex"),
+    },
+  ];
+  const upgraded = await openOwnedStore(dir, registry);
+  expect(upgraded.store.metadata()).toEqual({ generation, schemaVersion: 2 });
+  expect(upgraded.store.sessionCount()).toBe(1);
+  expect(upgraded.store.validateMigrations(registry)).toEqual([
+    "0000_foundation",
+    "0001_fixture",
+  ]);
+  upgraded.close();
+  const reopened = await openOwnedStore(dir, registry);
+  expect(reopened.store.metadata()).toEqual({ generation, schemaVersion: 2 });
+  expect(reopened.store.sessionCount()).toBe(1);
+  reopened.close();
+  const files = readdirSync(join(dir, "backups")).filter((file) =>
+    file.endsWith(".sqlite"),
+  );
+  expect(files).toHaveLength(1);
+  const Database = (await import("better-sqlite3")).default;
+  const backup = new Database(join(dir, "backups", files[0]), {
+    readonly: true,
+  });
+  expect(backup.pragma("integrity_check", { simple: true })).toBe("ok");
+  expect(
+    backup.prepare("SELECT schema_version FROM instance_metadata").get(),
+  ).toEqual({ schema_version: 1 });
+  expect(
+    backup
+      .prepare("SELECT name FROM sqlite_master WHERE name='upgrade_fixture'")
+      .get(),
+  ).toBeUndefined();
+  backup.close();
 });
