@@ -16,3 +16,10 @@ export function validatedChange(id: string, data: string, after: string): string
   const frame = changeFrame.parse({ id, data: JSON.parse(data) });
   return BigInt(frame.id) > BigInt(after) ? frame.id : null;
 }
+export class ReplayCursor {
+  constructor(public after: string) {}
+  offer(id: string, data: string) { const next = validatedChange(id, data, this.after); if (next) this.after = next; return next; }
+  discardPending() {}
+  flush(invalidate: () => void) { invalidate(); }
+  rebase(_snapshots: unknown[], _generation: string) {}
+}

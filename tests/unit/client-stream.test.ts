@@ -12,3 +12,22 @@ test("only strict change frames can advance replay and duplicate cursors are ine
   expect(() => validatedChange("01", data, "0")).toThrow();
   expect(() => validatedChange("1", '{"entityType":"run"}', "0")).toThrow();
 });
+
+test("closing a source before scheduled invalidation keeps the earlier replay cursor", async () => {
+  const { ReplayCursor } = await import("../../src/client/tracking");
+  const cursor = new ReplayCursor("100");
+  cursor.offer("101", JSON.stringify({ entityType: "task", entityId: "another-query", kind: "updated" }));
+  cursor.discardPending();
+  expect(cursor.after).toBe("100");
+  let invalidated = false;
+  cursor.offer("101", JSON.stringify({ entityType: "task", entityId: "another-query", kind: "updated" }));
+  cursor.flush(() => { expect(cursor.after).toBe("100"); invalidated = true; });
+  expect(invalidated).toBe(true);
+  expect(cursor.after).toBe("101");
+});
+test("a supported same-generation ahead reset rebases only after the cache recovery barrier", async () => {
+  const { ReplayCursor } = await import("../../src/client/tracking");
+  const cursor = new ReplayCursor("100");
+  cursor.rebase([{ generation, snapshotCursor: "80" }, { generation, snapshotCursor: "79" }], generation);
+  expect(cursor.after).toBe("79");
+});
