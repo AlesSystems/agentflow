@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
+import { ChangeStreams } from "./change-stream";
 import { matchEndpoint } from "../contracts/routes";
 import { readConfig, type RuntimeConfig } from "./config";
 import { openOwnedStore } from "../db";
@@ -33,12 +34,14 @@ export async function startRuntime(
   let app: Awaited<ReturnType<(typeof import("next"))["default"]>> | undefined;
   let server: ReturnType<typeof createServer> | undefined;
   const mutationBudget = new MutationBudget();
+  const streams = new ChangeStreams(owned.store, owned.credentials);
   const sockets = new Set<Socket>();
   const requests = new Set<Promise<void>>();
   let shutdownPromise: Promise<void> | undefined;
   async function shutdown() {
     if (shutdownPromise) return shutdownPromise;
     beginClosing();
+    streams.close();
     shutdownPromise = (async () => {
       if (server) {
         const closed = new Promise<void>((resolve) =>
@@ -88,11 +91,12 @@ export async function startRuntime(
           { host: request.headers.host, origin: request.headers.origin },
           config.port,
         );
+        for (let i = 0; i < request.rawHeaders.length; i += 2)
+          if (request.rawHeaders[i].toLowerCase() === "origin")
+            validateEnvelope({ host: request.headers.host, origin: request.rawHeaders[i + 1] }, config.port);
         response.setHeader("Cache-Control", "no-store");
-        const pathname = new URL(
-          request.url || "/",
-          `http://127.0.0.1:${config.port}`,
-        ).pathname;
+        const url = new URL(request.url || "/", `http://127.0.0.1:${config.port}`);
+        const pathname = url.pathname;
         const matched = matchEndpoint(request.method || "GET", pathname);
         if (
           (pathname.startsWith("/api/v1/") &&
@@ -135,6 +139,13 @@ export async function startRuntime(
           }
         }
         rejectReadBody(request);
+        if (matched?.endpoint.kind === "stream") {
+          const headers = new Headers();
+          for (const [key, value] of Object.entries(request.headers))
+            if (typeof value === "string") headers.set(key, value);
+          await streams.serve(request, response, headers, url);
+          return;
+        }
         await hooks.beforeDispatch?.(request);
         if (!["GET", "HEAD"].includes(request.method || "GET")) {
           const body = await boundedBody(request);
@@ -191,7 +202,7 @@ export async function startRuntime(
       server!.once("error", reject);
       server!.listen(config.port, config.host, resolve);
     });
-    return { shutdown, owned, server };
+    return { shutdown, owned, server, streams, diagnostics: () => ({ requests: requests.size, sockets: sockets.size, activeSockets: [...sockets].filter(socket => !socket.destroyed).length }) };
   } catch (error) {
     await shutdown();
     throw error;

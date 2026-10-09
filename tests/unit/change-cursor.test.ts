@@ -10,7 +10,7 @@ it("accepts only canonical signed SQLite range cursors losslessly", () => {
 it("validates both cursor sources before choosing Last-Event-ID", () => {
   const generation = "10000000-0000-4000-8000-000000000001";
   expect(parseStreamRequest(new URL(`http://localhost/changes?after=1&generation=${generation}`), ["2"]).after).toBe("2");
-  for (const query of ["after=00", "after=1&after=2", "after=1&secret=x", "after=1", "generation=" + generation])
+  for (const query of ["after=00", "after=1&after=2", "after=1&secret=x", "after=1&__proto__=x", "", "generation=" + generation])
     expect(() => parseStreamRequest(new URL(`http://localhost/changes?${query}&generation=${generation}`), ["2"])).toThrow();
   expect(() => parseStreamRequest(new URL(`http://localhost/changes?after=1&generation=${generation}`), ["00"])).toThrow();
   expect(() => parseStreamRequest(new URL(`http://localhost/changes?after=1&generation=${generation}`), ["1", "1"])).toThrow();

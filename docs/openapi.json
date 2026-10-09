@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "AgentFlow local API",
-    "version": "v1-p04",
-    "description": "Implemented P01–P04 operations. Activity, SSE and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200."
+    "version": "v1-p05-transport",
+    "description": "Implemented P01–P04 operations and the P05 native stream transport. Activity, browser live tracking and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200."
   },
   "servers": [
     {
@@ -11,6 +11,185 @@
     }
   ],
   "paths": {
+    "/api/v1/changes/stream": {
+      "get": {
+        "operationId": "changeStream",
+        "description": "Browser-cookie invalidations; Last-Event-ID overrides a valid after. Canonical signed SQLite cursor range. Finite HEAD. 20 streams; 1 MiB buffer cap and 5 second stalled-drain close.",
+        "security": [
+          {
+            "browserSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "generation",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invalidation frames or finite reset then close",
+            "headers": {
+              "AgentFlow-Generation": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              }
+            },
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "id: 1\nevent: change\ndata: {\"entityType\":\"task\",\"entityId\":\"example\",\"kind\":\"updated\"}\n\n"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "409": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "415": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "422": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RetryableError"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
+      },
+      "head": {
+        "operationId": "changeStreamHead",
+        "security": [
+          {
+            "browserSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "generation",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Finite bodyless stream status",
+            "headers": {
+              "AgentFlow-Generation": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "409": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "415": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "422": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RetryableError"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
+      }
+    },
     "/api/v1/agents": {
       "get": {
         "operationId": "listAgents",
@@ -148,7 +327,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -418,7 +597,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -590,7 +769,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -851,7 +1030,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -1210,7 +1389,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -1660,7 +1839,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -1874,7 +2053,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -2148,7 +2327,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -2729,7 +2908,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -3291,7 +3470,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -3369,7 +3548,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -3668,7 +3847,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -3891,7 +4070,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -4154,7 +4333,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -4319,7 +4498,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -4573,7 +4752,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -4991,7 +5170,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -5543,7 +5722,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -6097,7 +6276,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -6856,7 +7035,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -7403,7 +7582,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -7641,7 +7820,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -7972,7 +8151,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -8176,7 +8355,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -8416,7 +8595,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -8546,7 +8725,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -8738,7 +8917,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",
@@ -9037,7 +9216,7 @@
                     },
                     "snapshotCursor": {
                       "type": "string",
-                      "pattern": "^\\d+$"
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
                     },
                     "generation": {
                       "type": "string",

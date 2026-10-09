@@ -1,5 +1,8 @@
 import { z } from "zod";
 export const uuid = z.uuid();
+export const changeCursor = z.string().regex(/^(0|[1-9][0-9]{0,18})$/).refine(
+  (value) => value.length < 19 || (value.length === 19 && value <= "9223372036854775807"),
+);
 export const inputUuid = uuid.toLowerCase();
 export const version = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 export const timestamp = z.iso.datetime();
@@ -34,7 +37,7 @@ export const pageQuery = {
 export const envelope = <T extends z.ZodType>(data: T) =>
   z.strictObject({
     data,
-    snapshotCursor: z.string().regex(/^\d+$/),
+    snapshotCursor: changeCursor,
     generation: uuid,
   });
 export const timezone = z

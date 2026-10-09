@@ -9,6 +9,7 @@ it("publishes every implemented registry operation and validates every example",
   const doc = openapiDocument();
   expect(doc.openapi).toBe("3.1.0");
   for (const endpoint of endpoints) {
+    if (endpoint.kind === "stream") continue;
     expect(endpoint.input.safeParse(requestExamples[endpoint.id]).success).toBe(
       true,
     );
@@ -21,7 +22,7 @@ it("publishes every implemented registry operation and validates every example",
   }
   expect(doc.paths["/api/v1/runs"].post).toBeDefined();
   expect(doc.paths["/api/v1/activity"]).toBeUndefined();
-  expect(doc.paths["/api/v1/changes/stream"]).toBeUndefined();
+  expect(doc.paths["/api/v1/changes/stream"]).toBeDefined();
   const event = doc.paths["/api/v1/runs/{id}/events"].post as {
     parameters: { name: string }[];
     responses: Record<string, unknown>;

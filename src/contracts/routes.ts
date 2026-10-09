@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { streamQuery, changeNotice } from "./stream";
 import { pageQuery, uuid } from "./common";
 import { projectCreate, projectPatch, projectQuery } from "./projects";
 import {
@@ -44,19 +45,21 @@ type EndpointBase = {
 export type EndpointAction =
   | { kind: "command"; command: ApplicationCommand }
   | { kind: "query"; query: ApplicationQuery };
-export type Endpoint = EndpointBase & {
+type ResourceEndpoint = EndpointBase & {
   kind: "command" | "query";
   parseRequest: (
     original: unknown,
     id: string,
   ) => { success: true; action: EndpointAction } | { success: false };
 };
+export type StreamEndpoint = EndpointBase & { kind: "stream" };
+export type Endpoint = ResourceEndpoint | StreamEndpoint;
 function defineCommand<S extends z.ZodType>(
   definition: EndpointBase & {
     input: S;
     command: (input: z.output<S>, id: string) => ApplicationCommand;
   },
-): Endpoint {
+): ResourceEndpoint {
   const { command, ...base } = definition;
   return {
     ...base,
@@ -77,7 +80,7 @@ function defineQuery<S extends z.ZodType>(
     input: S;
     query: (input: z.output<S>, id: string) => ApplicationQuery;
   },
-): Endpoint {
+): ResourceEndpoint {
   const { query, ...base } = definition;
   return {
     ...base,
@@ -94,6 +97,7 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  { id: "changeStream", method: "GET", path: "/changes/stream", access: "human", input: streamQuery, response: changeNotice, status: 200, kind: "stream", description: "Browser-cookie invalidations; Last-Event-ID overrides a valid after. Canonical signed SQLite cursor range. Finite HEAD. 20 streams; 1 MiB buffer cap and 5 second stalled-drain close." },
   defineQuery({
     id: "listAgents",
     method: "GET",

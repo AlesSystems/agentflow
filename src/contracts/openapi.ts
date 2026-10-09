@@ -1,7 +1,7 @@
 import { foundationSchemas } from "./foundation";
 import { z } from "zod";
 import { endpoints } from "./routes";
-import { uuid, version } from "./common";
+import { uuid, version, changeCursor } from "./common";
 import {
   requestExamples,
   responseExamples,
@@ -73,6 +73,50 @@ function responses(
 export function openapiDocument() {
   const paths: Record<string, Record<string, unknown>> = {};
   for (const endpoint of endpoints) {
+    if (endpoint.kind === "stream") {
+      const properties = (schema(endpoint.input, "input") as {
+        properties: Record<string, unknown>;
+      }).properties;
+      const parameters = [
+        ...Object.entries(properties).map(([name, value]) => ({
+          in: "query", name, required: true, schema: value,
+        })),
+        { in: "header", name: "Last-Event-ID", schema: schema(changeCursor) },
+      ];
+      const streamResponses = responses(200, endpoint.response, undefined);
+      const headers = { "AgentFlow-Generation": { schema: schema(uuid) } };
+      paths["/api/v1" + endpoint.path] = {
+        get: {
+          operationId: endpoint.id,
+          description: endpoint.description,
+          security: [{ browserSession: [] }],
+          parameters,
+          responses: {
+            ...streamResponses,
+            200: {
+              description: "Invalidation frames or finite reset then close",
+              headers,
+              content: {
+                "text/event-stream": {
+                  schema: { type: "string" },
+                  example: 'id: 1\nevent: change\ndata: {"entityType":"task","entityId":"example","kind":"updated"}\n\n',
+                },
+              },
+            },
+          },
+        },
+        head: {
+          operationId: endpoint.id + "Head",
+          security: [{ browserSession: [] }],
+          parameters,
+          responses: {
+            ...streamResponses,
+            200: { description: "Finite bodyless stream status", headers },
+          },
+        },
+      };
+      continue;
+    }
     endpoint.input.parse(requestExamples[endpoint.id]);
     endpoint.response.parse(responseExamples[endpoint.id]);
     const path = "/api/v1" + endpoint.path;
@@ -247,9 +291,9 @@ export function openapiDocument() {
     openapi: "3.1.0",
     info: {
       title: "AgentFlow local API",
-      version: "v1-p04",
+      version: "v1-p05-transport",
       description:
-        "Implemented P01–P04 operations. Activity, SSE and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
+        "Implemented P01–P04 operations and the P05 native stream transport. Activity, browser live tracking and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
     },
     servers: [{ url: "http://127.0.0.1:3000" }],
     paths,
