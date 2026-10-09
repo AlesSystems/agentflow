@@ -1,0 +1,21 @@
+import { privateContext, failure, json } from '../../../../server/next-boundary';
+import { requireBrowserMutation } from '../../../../server/security';
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
+type FixtureState={release?:()=>void;cancelled:number};
+const key=Symbol.for('agentflow.test-stream');
+const shared=globalThis as typeof globalThis&{[key]?:FixtureState};
+function state(){return shared[key]||=( {cancelled:0} );}
+export function GET(request:Request){
+ try{
+  const context=privateContext(request.headers,'human');const fixture=state();let stopped=false;
+  const stream=new ReadableStream<Uint8Array>({
+   start(controller){controller.enqueue(new TextEncoder().encode('first\n'));fixture.release=()=>{if(!stopped){controller.enqueue(new TextEncoder().encode('second\n'));controller.close();stopped=true;}};},
+   cancel(){stopped=true;fixture.cancelled++;fixture.release=undefined;}
+  });
+  return new Response(stream,{headers:{'Content-Type':'text/plain','Cache-Control':'no-store','AgentFlow-Generation':context.owned.store.metadata().generation}});
+ }catch(error){return failure(error);}
+}
+export async function POST(request:Request){
+ try{privateContext(request.headers,'human');requireBrowserMutation(request.headers);const body=await request.json();if(body.action==='release')state().release?.();return json({cancelled:state().cancelled});}catch(error){return failure(error);}
+}
