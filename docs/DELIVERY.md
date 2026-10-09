@@ -1,10 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: the operator activated the full v1 run on 2026-10-09. P01 passed its
-acceptance gates, independent review, coordinator verification and integration.
-[PR #4](https://github.com/AlesSystems/agentflow/pull/4) merged at
-`a2e5170879602faff706e1aa2e5e7a1905d63b47`. P02 is being planned; implementation
-awaits its Astra medium plan approval. Packages P03 through W04 have not started.
+Status: two packages passed acceptance, independent review, coordinator verification
+and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
+P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
+[PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
+`f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. P03 is being planned and requires
+Astra medium approval before UI implementation. P04 through W04 have not started.
 
 ## Package state
 
@@ -14,8 +15,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | Package | Deliverable | State | Candidate / integrated SHA | Evidence |
 | --- | --- | --- | --- | --- |
 | P01 | Runtime/storage | Integrated | Candidate `8e0e0c78f1c6579b3f2aed4dfbc065e1ca92a59b`; merge `a2e5170879602faff706e1aa2e5e7a1905d63b47`, PR #4 | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
-| P02 | Task contracts | Planning | Baseline `a2e5170`; branch `codex/v1-p02-contracts` | Astra plan gate pending |
-| P03 | Work board | Not started | — | — |
+| P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
+| P03 | Work board | Planning | Baseline `f0b3cf2`; branch `codex/v1-p03-work-board` | Astra plan gate pending |
 | P04 | Agent ingestion | Not started | — | — |
 | P05 | Live tracking | Not started | — | — |
 | P06 | CLI hooks | Not started | — | — |
@@ -83,8 +84,8 @@ reran 28 production runtime and 9 private-path tests, all passed, then verified
 PR #4's merged state and candidate ancestry on main. No required GitHub checks
 were configured; no protection bypass was used.
 
-Next action: finish the P02 plan, obtain Astra medium approval, implement task
-contracts, and review its exact candidate before integration.
+Next action: finish the P03 plan, obtain Astra medium approval, implement the
+selected Work board, then review its exact candidate and browser evidence.
 
 The P1 application-contained data exposure was repaired under supplemental Astra
 medium plan approval `a4589e4f768f79bc9062e3d343a82fabbc980d67ddaac2c92426a1c56ccbeb3c`.
@@ -103,8 +104,8 @@ Implementation candidate `71bc5a51f1522dbcc06c093dad1d31ba1aab568e` on
 `codex/v1-p02-contracts` extends integrated P01 receipt base
 `fb507181b13999dea46acfde08f07bb9dbb4847d`. Astra medium approved plan
 `9ed89f3489762f8e23bed29b426f953eb5c56956593c8c45f7fcc6ee07cea451`.
-P02 remains in review with unchecked PLAN boxes. The coordinator owns independent
-exact-candidate standards/spec/security review, CI, PR creation and integration.
+P02 subsequently passed independent exact-candidate review and integration. Its
+PLAN boxes are complete; the verified integration receipt below owns the result.
 No worker push, PR or merge occurred. The final handoff commit is docs/evidence only.
 
 Unchanged source passed 24 unit, 63 integration and 3 retained P01 Chrome browser
@@ -139,3 +140,15 @@ Astra approved bounded P02 rowid ordering with the mandatory explicit durable
 P04 registration-order prerequisite now recorded as an unchecked PLAN item and
 in BACKEND/DECISIONS. No P04 code was added. P02 still awaits final independent
 exact-candidate review, CI and integration; no worker publication or merge occurred.
+
+## Verified P02 integration
+
+Independent Standards and Spec reviewers approved exact final candidate
+`6cdf65da4a6ef73ff28b267492b2a993a6729a47`. The coordinator replayed 13 focused
+HTTP/storage/query/schema/crash-helper tests and OpenAPI verification, checked the
+unchanged patch and current PR head, merged PR #5 with the match-head guard, and
+verified the candidate is on main at `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`.
+No required GitHub checks were configured and no protections were bypassed.
+The merged branch was removed. The mandatory durable registration-order condition
+remains unchecked in P04; P03 does not expose agent reporting. Next gate is P03
+Astra plan approval, followed by the selected UI and real browser acceptance.
