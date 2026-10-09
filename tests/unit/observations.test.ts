@@ -169,3 +169,6 @@ it("registration excludes unowned taskless and projection fields", () => {
   ])
     expect(runRegister.safeParse({ ...input, ...patch }).success).toBe(false);
 });
+it('preserves immutable legacy UUID casing when validating raw event-history output',async()=>{
+ const {eventRecord}=await import('../../src/contracts/observations');const record={...event(),eventId:'CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC',runId:'BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB',occurredAt:'2026-10-10T00:00:00.000Z',receivedAt:'2026-10-10T00:00:01.000Z'};expect(eventRecord.parse(record)).toEqual(record);
+});
