@@ -281,3 +281,140 @@ it("counts local-day current acceptance, distinct reports, exact freshness and g
     owned.close();
   }
 });
+it("binds task and history cursors to kind, filters, generation and board continuations", async () => {
+  const owned = await openOwnedStore(
+    mkdtempSync(join(realpathSync(tmpdir()), "agentflow-binding-")),
+  );
+  try {
+    let now = 1000;
+    const send = (command: ApplicationCommand) =>
+      owned.store.command(command, {
+        principal: "operator",
+        method: "POST",
+        path: command.kind,
+        key: randomUUID(),
+        digest: canonicalDigest(command),
+        now: now++,
+      });
+    const projectId = (
+      send({ kind: "project.create", input: { name: "Synthetic cursor" } }).body
+        .data as { id: string }
+    ).id;
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++)
+      ids.push(
+        (
+          send({
+            kind: "task.create",
+            input: { projectId, title: "task " + i, tags: ["fixture"] },
+          }).body.data as { id: string }
+        ).id,
+      );
+    const board = owned.store.snapshot(
+      { kind: "board", id: projectId, input: { limit: 1, tag: "fixture" } },
+      now,
+    ).body.data as { columns: { status: string; nextCursor: string | null }[] };
+    const cursor = board.columns.find(
+      (c) => c.status === "backlog",
+    )!.nextCursor!;
+    expect(
+      (
+        owned.store.snapshot(
+          {
+            kind: "tasks",
+            input: {
+              projectId,
+              status: "backlog",
+              tag: "fixture",
+              limit: 1,
+              cursor,
+            },
+          },
+          now,
+        ).body.data as { items: unknown[] }
+      ).items,
+    ).toHaveLength(1);
+    expect(() =>
+      owned.store.snapshot(
+        {
+          kind: "tasks",
+          input: {
+            projectId,
+            status: "review",
+            tag: "fixture",
+            limit: 1,
+            cursor,
+          },
+        },
+        now,
+      ),
+    ).toThrow("cursor_invalid");
+    for (let i = 0; i < 2; i++) {
+      send({
+        kind: "task.patch",
+        id: ids[0],
+        input: { expectedVersion: 1 + i * 3, status: "review" },
+      });
+      send({
+        kind: "task.complete",
+        id: ids[0],
+        input: {
+          expectedVersion: 2 + i * 3,
+          evidenceNote: "Synthetic acceptance",
+        },
+      });
+      send({
+        kind: "task.reopen",
+        id: ids[0],
+        input: { expectedVersion: 3 + i * 3, reason: "Synthetic rework" },
+      });
+    }
+    const detail = owned.store.snapshot(
+      { kind: "task", id: ids[0], input: { history: "both", historyLimit: 1 } },
+      now,
+    ).body.data as {
+      history: {
+        completions: { nextCursor: string };
+        reopens: { nextCursor: string };
+      };
+    };
+    const completionCursor = detail.history.completions.nextCursor;
+    expect(() =>
+      owned.store.snapshot(
+        {
+          kind: "task",
+          id: ids[1],
+          input: { history: "completion", historyLimit: 1, completionCursor },
+        },
+        now,
+      ),
+    ).toThrow("cursor_invalid");
+    expect(() =>
+      owned.store.snapshot(
+        {
+          kind: "task",
+          id: ids[0],
+          input: {
+            history: "reopen",
+            historyLimit: 1,
+            reopenCursor: completionCursor,
+          },
+        },
+        now,
+      ),
+    ).toThrow("cursor_invalid");
+    owned.store.renewGeneration();
+    expect(() =>
+      owned.store.snapshot(
+        {
+          kind: "task",
+          id: ids[0],
+          input: { history: "completion", historyLimit: 1, completionCursor },
+        },
+        now,
+      ),
+    ).toThrow("cursor_invalid");
+  } finally {
+    owned.close();
+  }
+});
