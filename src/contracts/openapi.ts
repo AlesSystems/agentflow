@@ -13,7 +13,12 @@ export const errorSchema = z.strictObject({
   error: z.strictObject({
     code: z.string(),
     message: z.string(),
-    details: z.strictObject({ currentVersion: version.optional(), expectedSequence: version.optional() }).optional(),
+    details: z
+      .strictObject({
+        currentVersion: version.optional(),
+        expectedSequence: version.optional(),
+      })
+      .optional(),
   }),
 });
 const errorExample = {
@@ -100,7 +105,7 @@ export function openapiDocument() {
         });
     const operation = {
       operationId: endpoint.id,
-      ...(endpoint.description ? {description:endpoint.description}:{}),
+      ...(endpoint.description ? { description: endpoint.description } : {}),
       security:
         endpoint.access === "human" ? [{ browserSession: [] }] : security,
       parameters,
@@ -117,7 +122,28 @@ export function openapiDocument() {
             },
           }
         : {}),
-      responses: { ...responses(endpoint.status,endpoint.response,responseExamples[endpoint.id]), ...(["registerRun","ingestEvent"].includes(endpoint.id)?{200:{description:"Exact identity replay; historical body and current generation header.",content:{"application/json":{schema:schema(endpoint.response),example:responseExamples[endpoint.id]}}}}:{}) },
+      responses: {
+        ...responses(
+          endpoint.status,
+          endpoint.response,
+          responseExamples[endpoint.id],
+        ),
+        ...(["registerRun", "ingestEvent"].includes(endpoint.id)
+          ? {
+              200: {
+                description:
+                  "Exact identity replay; historical body and current generation header.",
+                headers: { "AgentFlow-Generation": { schema: schema(uuid) } },
+                content: {
+                  "application/json": {
+                    schema: schema(endpoint.response),
+                    example: responseExamples[endpoint.id],
+                  },
+                },
+              },
+            }
+          : {}),
+      },
     };
     paths[path] ??= {};
     paths[path][endpoint.method.toLowerCase()] = operation;
