@@ -2,8 +2,8 @@
 
 Status: the operator activated the complete v1 implementation run on 2026-10-09,
 including scoped installation, worktrees, commits/pushes, package PRs, verified
-merges, and the final source release. P01 is in implementation; no package is
-complete until its exact candidate passes independent review and integration.
+merges, and the final source release. P01 is integrated through PR #4. Every package must pass its exact-candidate
+review and verification gates before integration.
 The earlier P01–P07 controls and expanded v1 scope below govern this active run.
 
 ## Scope and activation

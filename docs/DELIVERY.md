@@ -1,9 +1,10 @@
 # AgentFlow v1 delivery ledger
 
-Status: the operator activated the full v1 run on 2026-10-09. P01 implementation
-and automated acceptance are ready for independent candidate review. No package
-has been integrated from this implementation run. P01 remains open until review,
-coordinator verification and merge succeed. Downstream packages have not started.
+Status: the operator activated the full v1 run on 2026-10-09. P01 passed its
+acceptance gates, independent review, coordinator verification and integration.
+[PR #4](https://github.com/AlesSystems/agentflow/pull/4) merged at
+`a2e5170879602faff706e1aa2e5e7a1905d63b47`. P02 is being planned; implementation
+awaits its Astra medium plan approval. Packages P03 through W04 have not started.
 
 ## Package state
 
@@ -12,8 +13,8 @@ independent review of the candidate SHA, and verified integration all pass.
 
 | Package | Deliverable | State | Candidate / integrated SHA | Evidence |
 | --- | --- | --- | --- | --- |
-| P01 | Runtime/storage | Review pending | `af3cc1d2356492a502df68edd958768202004d0c` source evidence; final receipt HEAD awaits review | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
-| P02 | Task contracts | Not started | — | — |
+| P01 | Runtime/storage | Integrated | Candidate `8e0e0c78f1c6579b3f2aed4dfbc065e1ca92a59b`; merge `a2e5170879602faff706e1aa2e5e7a1905d63b47`, PR #4 | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
+| P02 | Task contracts | Planning | Baseline `a2e5170`; branch `codex/v1-p02-contracts` | Astra plan gate pending |
 | P03 | Work board | Not started | — | — |
 | P04 | Agent ingestion | Not started | — | — |
 | P05 | Live tracking | Not started | — | — |
@@ -75,10 +76,15 @@ readiness/RSS samples, screenshots, historical failed checks and limitations.
 Owned test servers and the incomplete browser download were stopped. Fixture
 clones and synthetic data are retained for review; no operator data was used.
 
-Next action: review the exact final branch HEAD on standards and specification,
-resolve any blocking findings, independently verify critical production evidence,
-then integrate under the activated policy. Do not mark P01 complete or start P02
-before its reviewed integration; P02 also needs its own Astra medium plan gate.
+Integration verified by the coordinator. Standards and Spec reviewers approved
+exact candidate `8e0e0c78f1c6579b3f2aed4dfbc065e1ca92a59b`; scoped Impeccable review
+scored the disconnect fix resolved at unchanged UI source `68c64dd`. The coordinator
+reran 28 production runtime and 9 private-path tests, all passed, then verified
+PR #4's merged state and candidate ancestry on main. No required GitHub checks
+were configured; no protection bypass was used.
+
+Next action: finish the P02 plan, obtain Astra medium approval, implement task
+contracts, and review its exact candidate before integration.
 
 The P1 application-contained data exposure was repaired under supplemental Astra
 medium plan approval `a4589e4f768f79bc9062e3d343a82fabbc980d67ddaac2c92426a1c56ccbeb3c`.
@@ -87,4 +93,5 @@ and backup destinations. Final source `af3cc1d` was rebuilt and fully replayed i
 the same-lockfile clean-private clone, reusing its documented fresh install at
 `ebc2391`. Updated evidence is 10 unit / 47 integration / 3 browser tests;
 published UI captures and the scoped UI verdict are unchanged. Independent final
-code review remains required; every package checkbox remains open.
+code review and integration passed; P01 checkboxes are complete and later package
+checkboxes remain open.

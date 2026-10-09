@@ -1,7 +1,7 @@
 # AgentFlow architecture
 
 Status: accepted v1 design direction. P01 runtime/storage has automated verification
-and awaits independent review; task, agent and workflow modules remain planned. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
+and passed independent review and integration through PR #4; task, agent and workflow modules remain planned. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
 
 ## System boundary
 
@@ -38,7 +38,7 @@ All boxes except the existing harness are part of the local application. No queu
 Next.js Route Handlers support HTTP handlers and streaming responses. The self-hosting guide describes operation as a Node server. This supports the proposed single-application boundary, subject to the production-build spike in P01. [Route Handlers](https://nextjs.org/docs/app/api-reference/file-conventions/route), [self-hosting](https://nextjs.org/docs/app/guides/self-hosting).
 
 Drizzle documents SQLite drivers including better-sqlite3. P01 verifies better-sqlite3 13.0.3 installation and production loading on Node
-24.15.0, pending independent review. See [the receipt](implementation/P01.md). [Drizzle SQLite](https://orm.drizzle.team/docs/sqlite/get-started-sqlite).
+24.15.0, independently reviewed and integrated in PR #4. See [the receipt](implementation/P01.md). [Drizzle SQLite](https://orm.drizzle.team/docs/sqlite/get-started-sqlite).
 
 Pin exact package versions and the Node runtime in P01. Do not copy old dnd-kit examples without checking the selected release's API. Its current documentation separates the current toolkit from legacy examples. [dnd-kit](https://dndkit.com/).
 
