@@ -64,7 +64,10 @@ export function loadCredentials(dataDir: string) {
     syncDirectory(dataDir);
     return credentials;
   }
-  const result = schema.safeParse(JSON.parse(readFileSync(path, "utf8")));
+  let input: unknown;
+  try { input = JSON.parse(readFileSync(path, "utf8")); }
+  catch { throw new Error("INVALID_CREDENTIALS: Repair credentials.json before starting."); }
+  const result = schema.safeParse(input);
   if (!result.success)
     throw new Error(
       "INVALID_CREDENTIALS: Repair credentials.json before starting.",

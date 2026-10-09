@@ -219,6 +219,7 @@ export async function openOwnedStore(path: string, registry = migrations) {
       throw new Error(
         "RESTORE_INTERRUPTED: Run local restore repair before starting.",
       );
+    validateFile(join(instance.dataDir, "credentials.json"));
     store = new Store(instance.dataDir);
     await store.migrate(registry);
     const credentials = loadCredentials(instance.dataDir);
