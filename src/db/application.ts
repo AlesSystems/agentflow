@@ -487,7 +487,7 @@ export class ApplicationData {
     ).total;
     const rows = this.db
       .prepare(
-        `SELECT * FROM ${source} WHERE ${where}${boundary} ORDER BY ${timeColumn} DESC,id DESC LIMIT ?`,
+        `SELECT * FROM ${source} WHERE (${where})${boundary} ORDER BY ${timeColumn} DESC,id DESC LIMIT ?`,
       )
       .all(...params, ...boundParams, limit + 1) as Row[];
     const more = rows.length > limit;
