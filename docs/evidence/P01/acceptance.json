@@ -6,25 +6,25 @@
     "architecture": "arm64"
   },
   "lockSha256": "b5950cee5c94352a73b1795efa50134b930b62f2e3a57cd1c6b8ffdad8e4547f",
-  "shippingBuildId": "FHuTnVtBX1fijLgWAHEBw",
+  "shippingBuildId": "hQ09mSjr3AU0hymCmT09K",
   "samples": [
     {
-      "readyMs": 447,
-      "idleRssKiB": 201632
+      "readyMs": 581,
+      "idleRssKiB": 102176
     },
     {
-      "readyMs": 425,
-      "idleRssKiB": 203328
+      "readyMs": 549,
+      "idleRssKiB": 137408
     },
     {
-      "readyMs": 425,
-      "idleRssKiB": 201280
+      "readyMs": 534,
+      "idleRssKiB": 115200
     }
   ],
   "evidence": [
     {
       "listener": [
-        "TCP 127.0.0.1:56523 (LISTEN)"
+        "TCP 127.0.0.1:64076 (LISTEN)"
       ],
       "health": {
         "status": 200,
@@ -46,7 +46,7 @@
         "status": 200,
         "body": {
           "ready": true,
-          "generation": "b88a05db-5daf-435f-bf31-e2c3a531f3ac",
+          "generation": "4d9e6139-6af2-40df-ba61-0466594cf4ce",
           "schemaVersion": 1
         }
       },
@@ -66,7 +66,7 @@
     },
     {
       "listener": [
-        "TCP 127.0.0.1:56536 (LISTEN)"
+        "TCP 127.0.0.1:64159 (LISTEN)"
       ],
       "health": {
         "status": 200,
@@ -88,7 +88,7 @@
         "status": 200,
         "body": {
           "ready": true,
-          "generation": "707ff231-74a6-4eff-9bb1-2765eb1b5364",
+          "generation": "7b73c6d4-d1da-4868-ab5c-ff65b46b0fc3",
           "schemaVersion": 1
         }
       },
@@ -108,7 +108,7 @@
     },
     {
       "listener": [
-        "TCP 127.0.0.1:56547 (LISTEN)"
+        "TCP 127.0.0.1:64220 (LISTEN)"
       ],
       "health": {
         "status": 200,
@@ -130,7 +130,7 @@
         "status": 200,
         "body": {
           "ready": true,
-          "generation": "87015447-85fb-43b9-9152-71a8dcef7dca",
+          "generation": "163c6443-2c0b-45bb-9719-134043a1c2b0",
           "schemaVersion": 1
         }
       },
@@ -150,16 +150,16 @@
     }
   ],
   "browserBundleScan": "no matches",
-  "sourceCommit": "52e684f35fbd7779f5ef79f5bca6e205ffe753ba",
+  "sourceCommit": "68c64dd2e335da3453c46778dca968d992e9256d",
   "stream": {
-    "fixtureBuildId": "W1wt6P9IwqMskKKO3lztq",
-    "shippingBuildId": "FHuTnVtBX1fijLgWAHEBw",
+    "fixtureBuildId": "5ZF0nsgBPG5z3CwEkr62E",
+    "shippingBuildId": "hQ09mSjr3AU0hymCmT09K",
     "fixtureRouteSha256": "00ee7508a3cc0a763d67c6b89351a0b35e085e87d5a6aa65177bb1a4acbd8fda",
     "first": "first\\n",
     "second": "second\\n",
-    "firstAt": 1791570834831,
-    "releaseAt": 1791570834913,
-    "secondAt": 1791570834950,
+    "firstAt": 1791571743811,
+    "releaseAt": 1791571743892,
+    "secondAt": 1791571743928,
     "cancelled": 1,
     "timestampMeaning": {
       "firstAt": "first read started",
@@ -191,22 +191,25 @@
     },
     "integration": {
       "files": 8,
-      "passed": 41
+      "passed": 42
     },
     "runtime": {
       "files": 5,
-      "passed": 27
+      "passed": 28
     },
     "browser": {
-      "passed": 2,
+      "passed": 3,
       "browser": "Google Chrome 154.0.8037.99",
       "isolatedProfile": true,
       "externalNetwork": "denied by Playwright routing",
-      "crossPortRsc": "custom-header fetch rejected at preflight; direct same-site GET separately tested"
+      "crossPortRsc": "custom-header fetch rejected at preflight; direct same-site GET separately tested",
+      "disconnect": "actual validation failure, delayed real retry, one outstanding request, successful revocation"
     },
     "impeccableDetect": {
       "exit": 0,
-      "findings": []
+      "findings": [],
+      "sourceCommit": "52e684f35fbd7779f5ef79f5bca6e205ffe753ba",
+      "note": "historical mechanical scan; reviewer requested no rerun after bounded pending-state fix"
     }
   }
 }

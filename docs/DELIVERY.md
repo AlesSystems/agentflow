@@ -12,7 +12,7 @@ independent review of the candidate SHA, and verified integration all pass.
 
 | Package | Deliverable | State | Candidate / integrated SHA | Evidence |
 | --- | --- | --- | --- | --- |
-| P01 | Runtime/storage | Review pending | `52e684f35fbd7779f5ef79f5bca6e205ffe753ba` source evidence; final receipt HEAD awaits review | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
+| P01 | Runtime/storage | Review pending | `68c64dd2e335da3453c46778dca968d992e9256d` source evidence; final receipt HEAD awaits review | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
 | P02 | Task contracts | Not started | — | — |
 | P03 | Work board | Not started | — | — |
 | P04 | Agent ingestion | Not started | — | — |
@@ -56,15 +56,15 @@ report progress precisely; a partial demo or documentation PR is not v1 completi
 
 Branch `codex/v1-p01-runtime`; baseline `e4d7b84`. The approved Astra medium
 plan hash is `07278b67c601f931b2972f86566fec3c388db4b1aa85eb34b310105de8f3d912`.
-Source proof is tied to `52e684f35fbd7779f5ef79f5bca6e205ffe753ba`; the final
+Source proof is tied to `68c64dd2e335da3453c46778dca968d992e9256d`; the final
 receipt commit changes only docs/evidence. Small commits preserve regression
 red/green loops; no reset, rebase, force push, PR or merge was performed by the
 writer. The coordinator owns independent review, PR creation and integration.
 
 Final clean-clone commands passed installation, dependency-tree validation,
-lint, types, production build, 6 unit tests, 41 integration tests, 2 Chrome
+lint, types, production build, 6 unit tests, 42 integration tests, 3 Chrome
 browser journeys and listener/HTTP/integrity/resource checks. The focused runtime
-suite passed 27 tests. Production audit has zero findings; two dev-tool advisory
+suite passed 28 tests. Production audit has zero findings; two dev-tool advisory
 chains remain explicitly qualified in the receipt. Browser default Chromium
 installation was cancelled after slow download; installed Chrome 154 was tested
 in temporary profiles. Native use is the bundled darwin-arm64 prebuild, not a
