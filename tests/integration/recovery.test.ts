@@ -103,6 +103,7 @@ it("rolls failed migration DDL and history back without serving", async () => {
     "0001_application",
     "0002_registration_order",
     "0003_run_identity",
+    "0004_observations",
   ]);
   reopened.close();
 });
@@ -252,6 +253,7 @@ it("applies an existing fixture pending migration and restarts unchanged", async
     "0001_application",
     "0002_registration_order",
     "0003_run_identity",
+    "0004_observations",
     "9999_fixture",
   ]);
   upgraded.close();

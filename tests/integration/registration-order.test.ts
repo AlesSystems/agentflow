@@ -72,7 +72,7 @@ it("upgrades 0001 preserving dense legacy rowid order and all run facts", async 
       expect(
         db
           .prepare(
-            "SELECT name FROM sqlite_schema WHERE name LIKE '%registration_identity%' OR name LIKE '%event%'",
+            "SELECT run_id AS name FROM run_registrations UNION ALL SELECT event_id AS name FROM run_events",
           )
           .all(),
       ).toEqual([]);
@@ -523,7 +523,7 @@ it("preserves linked active, terminal and taskless legacy facts without inventin
       expect(
         db
           .prepare(
-            "SELECT name FROM sqlite_schema WHERE name LIKE '%registration_identity%' OR name LIKE '%event%'",
+            "SELECT run_id AS name FROM run_registrations UNION ALL SELECT event_id AS name FROM run_events",
           )
           .all(),
       ).toEqual([]);

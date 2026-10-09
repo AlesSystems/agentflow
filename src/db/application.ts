@@ -29,7 +29,16 @@ import {
   type TaskCommand,
   type TaskFacts,
 } from "../domain/tasks";
+import { agentCreate, agentPatch, runRegister, runQuery, agentQuery, eventQuery, closeInput, eventInput, type Run } from "../contracts/observations";
+import { run } from "../contracts/tasks";
+import { nextRegistrationOrder } from "./registration-order";
+import { decideRegistration, decideEvent, decideClose, observationFreshness } from "../domain/runs";
 export type ApplicationCommand =
+  | { kind: "agent.create"; input: z.infer<typeof agentCreate> }
+  | { kind: "agent.patch"; id: string; input: z.infer<typeof agentPatch> }
+  | { kind: "run.register"; input: z.infer<typeof runRegister> }
+  | { kind: "run.close"; id: string; input: z.infer<typeof closeInput> }
+  | { kind: "run.event"; id: string; input: z.infer<typeof eventInput> }
   | { kind: "project.create"; input: z.infer<typeof projectCreate> }
   | { kind: "project.patch"; id: string; input: z.infer<typeof projectPatch> }
   | { kind: "task.create"; input: z.infer<typeof taskCreate> }
@@ -39,6 +48,11 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | { kind: "agents"; input: z.infer<typeof agentQuery> }
+  | { kind: "agent"; id: string }
+  | { kind: "runs"; input: z.infer<typeof runQuery> }
+  | { kind: "run"; id: string }
+  | { kind: "events"; id: string; input: z.infer<typeof eventQuery> }
   | { kind: "projects"; input: z.infer<typeof projectQuery> }
   | { kind: "project"; id: string }
   | { kind: "tasks"; input: z.infer<typeof taskQuery> }
@@ -198,12 +212,13 @@ export class ApplicationData {
       .transaction(() => {
         const { principal, method, path, key, digest, now } = context;
         if (
-          ["task.complete", "task.reopen", "settings.patch"].includes(
+          ["task.complete", "task.reopen", "settings.patch", "run.close"].includes(
             command.kind,
           ) &&
           principal !== "operator"
         )
           throw new Conflict("human_required");
+        if (command.kind === "run.event") return this.event(command, context);
         const receipt = this.db
           .prepare(
             "SELECT digest,status,body FROM receipts WHERE principal=? AND method=? AND path=? AND key=?",
@@ -222,7 +237,46 @@ export class ApplicationData {
         const time = new Date(now).toISOString();
         let data: unknown;
         let status = 200;
-        if (command.kind === "project.create") {
+        if (command.kind === "agent.create") {
+          const id=command.input.id ?? randomUUID();
+          if(this.db.prepare("SELECT 1 FROM agents WHERE id=?").get(id)) throw new Conflict("agent_conflict");
+          const value={...command.input,id,version:1,createdAt:time};
+          this.insert("agents",value);
+          this.change("agent",id,null,"created",now);
+          data=this.agentView(value,now); status=201;
+        } else if(command.kind === "agent.patch") {
+          const value=this.one("agents",command.id);
+          if(value.version!==command.input.expectedVersion) throw new Conflict("version_conflict",value.version as number);
+          const {expectedVersion,...patch}=command.input; void expectedVersion;
+          const next={...value,...patch,version:(value.version as number)+1};
+          this.update("agents",next);this.change("agent",command.id,null,"updated",now);data=this.agentView(next,now);
+        } else if(command.kind === "run.register") {
+          const input=command.input;
+          const existing=this.db.prepare("SELECT 1 FROM runs WHERE id=?").get(input.id);
+          if(existing) {
+            const identity=this.db.prepare("SELECT digest,body FROM run_registrations WHERE run_id=?").get(input.id) as {digest:string;body:string}|undefined;
+            if(!identity || identity.digest!==digest) throw new Conflict("run_conflict");
+            const body=JSON.parse(identity.body) as SnapshotBody;
+            this.receipt(context,200,body); return {status:200,body};
+          }
+          this.activeProject(input.projectId);this.one("agents",input.agentId);
+          const taskValue=input.taskId?task.parse(this.one("tasks",input.taskId)):null;
+          const active=!!this.db.prepare("SELECT 1 FROM runs WHERE task_id=? AND state IN ('queued','running')").get(input.taskId??null);
+          const nextTask=decideRegistration(input,taskValue,active,now);
+          if(nextTask){this.update("tasks",nextTask);this.change("task",nextTask.id,input.projectId,"run_registered",now);}
+          const value:Run={id:input.id,projectId:input.projectId,agentId:input.agentId,taskId:input.taskId??null,purpose:input.purpose,model:input.model??null,workRevision:nextTask?.workRevision??null,state:"queued",lastSequence:0,lastReceivedAt:time,startedAt:null,endedAt:null,version:1,createdAt:time};
+          this.insert("runs",{...value,registrationOrder:nextRegistrationOrder(this.db)});
+          this.change("run",value.id,value.projectId,"registered",now);
+          data=this.runView(value,now);status=201;
+          const original=this.body(data);
+          this.db.prepare("INSERT INTO run_registrations VALUES(?,?,?)").run(value.id,digest,JSON.stringify(original));
+        } else if(command.kind === "run.close") {
+          const value=this.run(command.id);
+          const next=decideClose(value,command.input.expectedVersion,now);
+          this.update("runs",next);
+          this.insert("run_closures",{id:randomUUID(),runId:value.id,reason:command.input.reason,actor:"operator",createdAt:time});
+          this.change("run",value.id,value.projectId,"closed",now);data=this.runView(next,now);
+        } else if (command.kind === "project.create") {
           data = {
             id: randomUUID(),
             name: command.input.name,
@@ -416,6 +470,37 @@ export class ApplicationData {
       })
       .immediate();
   }
+  private receipt(context:CommandContext,status:number,body:SnapshotBody) {
+    this.db.prepare("INSERT INTO receipts VALUES(?,?,?,?,?,?,?)").run(context.principal,context.method,context.path,context.key,context.digest,status,JSON.stringify(body));
+  }
+  private run(id:string):Run {
+    const value=this.one("runs",id);delete value.registrationOrder;
+    return run.parse(value);
+  }
+  private runView(value:Run,now:number) {return {...value,freshness:observationFreshness(value,now)};}
+  private agentView(value:Row,now:number) {
+    return {...value,reporting:!!this.db.prepare("SELECT 1 FROM runs WHERE agent_id=? AND state='running' AND last_received_at>=? LIMIT 1").get(value.id,now-60000),activeRunsUrl:`/api/v1/runs?agentId=${value.id}&state=running`,historyUrl:`/api/v1/runs?agentId=${value.id}`};
+  }
+  private event(command:Extract<ApplicationCommand,{kind:"run.event"}>,context:CommandContext):CommittedReply {
+    const {input,id}=command;
+    if(input.runId!==id) throw new Conflict("validation_failed");
+    const existing=this.db.prepare("SELECT digest,acknowledgement FROM run_events WHERE event_id=?").get(input.eventId) as {digest:string;acknowledgement:string}|undefined;
+    if(existing) {
+      if(existing.digest!==context.digest) throw new Conflict("idempotency_conflict");
+      return {status:200,body:JSON.parse(existing.acknowledgement) as SnapshotBody};
+    }
+    const value=this.run(id);
+    const taskValue=value.taskId?task.parse(this.one("tasks",value.taskId)):null;
+    const decision=decideEvent(value,input,taskValue,context.now);
+    this.update("runs",decision.run);
+    if(decision.task){this.update("tasks",decision.task);this.change("task",decision.task.id,value.projectId,input.type,context.now);}
+    this.change("run",id,value.projectId,input.type,context.now);
+    this.change("event",input.eventId,value.projectId,"accepted",context.now);
+    const receivedAt=new Date(context.now).toISOString();
+    const body=this.body({eventId:input.eventId,runId:id,acceptedSequence:input.sequence,receivedAt});
+    this.db.prepare("INSERT INTO run_events VALUES(?,?,?,?,?,?,?,?,?)").run(input.eventId,id,input.sequence,input.type,context.digest,JSON.stringify({...input,receivedAt}),JSON.stringify(body),Date.parse(input.occurredAt),context.now);
+    return {status:201,body};
+  }
   private settings() {
     const value = this.db
       .prepare("SELECT timezone,version FROM settings WHERE singleton=1")
@@ -446,13 +531,14 @@ export class ApplicationData {
     limit: number,
     cursor?: string,
     timeColumn = "created_at",
+    ascending = false,
   ) {
     const generation = this.body(null).generation;
     const fingerprint = canonicalDigest({
       kind,
       filters,
       limit,
-      order: timeColumn + "-id-desc",
+      order: timeColumn + (ascending ? "-id-asc" : "-id-desc"),
     });
     let boundary = "";
     const boundParams: unknown[] = [];
@@ -474,7 +560,8 @@ export class ApplicationData {
           parsed.fingerprint !== fingerprint
         )
           throw new Error("binding");
-        boundary = ` AND (${timeColumn}<? OR (${timeColumn}=? AND id<?))`;
+        const comparison=ascending?">":"<";
+        boundary = ` AND (${timeColumn}${comparison}? OR (${timeColumn}=? AND id${comparison}?))`;
         boundParams.push(parsed.time, parsed.time, parsed.id);
       } catch {
         throw new Conflict("cursor_invalid");
@@ -487,7 +574,7 @@ export class ApplicationData {
     ).total;
     const rows = this.db
       .prepare(
-        `SELECT * FROM ${source} WHERE (${where})${boundary} ORDER BY ${timeColumn} DESC,id DESC LIMIT ?`,
+        `SELECT * FROM ${source} WHERE (${where})${boundary} ORDER BY ${timeColumn} ${ascending ? "ASC" : "DESC"},id ${ascending ? "ASC" : "DESC"} LIMIT ?`,
       )
       .all(...params, ...boundParams, limit + 1) as Row[];
     const more = rows.length > limit;
@@ -634,7 +721,23 @@ export class ApplicationData {
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "settings") data = this.settings();
+      if(query.kind === "run") data=this.runView(this.run(query.id),now);
+      else if(query.kind === "agent") data=this.agentView(this.one("agents",query.id),now);
+      else if(query.kind === "agents") {
+        const page=this.page("agents","1",[],"agents",{},query.input.limit,query.input.cursor);
+        data={...page,items:page.items.map(value=>this.agentView(value,now))};
+      } else if(query.kind === "runs") {
+        const {limit,cursor,...filters}=query.input;
+        const clauses:string[]=[];const params:unknown[]=[];
+        for(const [key,column] of [["projectId","project_id"],["agentId","agent_id"],["taskId","task_id"],["state","state"]] as const) if(filters[key]){clauses.push(column+"=?");params.push(filters[key]);}
+        if(filters.stale!==undefined){clauses.push(filters.stale==="true"?"(state IN ('queued','running') AND last_received_at<?)":"NOT (state IN ('queued','running') AND last_received_at<?)");params.push(now-60000);}
+        const page=this.page("runs",clauses.join(" AND ")||"1",params,"runs",filters,limit,cursor,"registration_order");
+        data={...page,items:page.items.map(value=>{delete value.registrationOrder;return this.runView(run.parse(value),now);})};
+      } else if(query.kind === "events") {
+        this.run(query.id);
+        const page=this.page("(SELECT event_id AS id,run_id,sequence,body FROM run_events)","run_id=?",[query.id],"events",{runId:query.id},query.input.limit,query.input.cursor,"sequence",true);
+        data={...page,items:page.items.map(value=>JSON.parse(value.body as string))};
+      } else if (query.kind === "settings") data = this.settings();
       else if (query.kind === "project") data = this.one("projects", query.id);
       else if (query.kind === "projects") {
         const { limit, cursor, ...filters } = query.input;

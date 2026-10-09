@@ -150,3 +150,11 @@ export const detailContinuationExample = {
   snapshotCursor: "0",
   generation: "10000000-0000-4000-8000-000000000004",
 };
+const agentId='10000000-0000-4000-8000-000000000005';
+const runId='20000000-0000-4000-8000-000000000001';
+const eventId='30000000-0000-4000-8000-000000000001';
+const observedAgent={id:agentId,displayName:'Synthetic agent',source:'fixture',defaultRole:'implementation',version:1,createdAt:time,reporting:false,activeRunsUrl:`/api/v1/runs?agentId=${agentId}&state=running`,historyUrl:`/api/v1/runs?agentId=${agentId}`};
+const observedRun={id:runId,projectId,agentId,taskId,purpose:'implementation',model:null,workRevision:2,state:'queued',lastSequence:0,lastReceivedAt:time,startedAt:null,endedAt:null,version:1,createdAt:time,freshness:{stale:false,reporting:'no_report_received'}};
+const event={schemaVersion:1,eventId,runId,sequence:1,type:'run.started',occurredAt:time,payload:{}};
+Object.assign(requestExamples,{listAgents:{},createAgent:{displayName:'Synthetic agent',source:'fixture',defaultRole:'implementation'},getAgent:{},patchAgent:{expectedVersion:1,displayName:'Updated agent'},listRuns:{},registerRun:{id:runId,projectId,agentId,taskId,purpose:'implementation',expectedTaskVersion:1},getRun:{},listEvents:{},ingestEvent:event,closeRun:{expectedVersion:1,reason:'Synthetic stale tracking closure'}});
+Object.assign(responseExamples,{listAgents:snapshot(list(observedAgent)),createAgent:snapshot(observedAgent),getAgent:snapshot(observedAgent),patchAgent:snapshot({...observedAgent,version:2,displayName:'Updated agent'}),listRuns:snapshot(list(observedRun)),registerRun:snapshot(observedRun),getRun:snapshot(observedRun),listEvents:snapshot(list({...event,receivedAt:time})),ingestEvent:snapshot({eventId,runId,acceptedSequence:1,receivedAt:time}),closeRun:snapshot({...observedRun,state:'interrupted',version:2,endedAt:time,freshness:{stale:false,reporting:'terminal'}})});

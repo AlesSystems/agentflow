@@ -13,7 +13,7 @@ export const errorSchema = z.strictObject({
   error: z.strictObject({
     code: z.string(),
     message: z.string(),
-    details: z.strictObject({ currentVersion: version }).optional(),
+    details: z.strictObject({ currentVersion: version.optional(), expectedSequence: version.optional() }).optional(),
   }),
 });
 const errorExample = {
@@ -83,7 +83,7 @@ export function openapiDocument() {
         required: true,
         schema: schema(uuid),
       });
-    if (endpoint.kind === "command")
+    if (endpoint.kind === "command" && !endpoint.eventIdentity)
       parameters.push({
         in: "header",
         name: "Idempotency-Key",
@@ -100,6 +100,7 @@ export function openapiDocument() {
         });
     const operation = {
       operationId: endpoint.id,
+      ...(endpoint.description ? {description:endpoint.description}:{}),
       security:
         endpoint.access === "human" ? [{ browserSession: [] }] : security,
       parameters,
@@ -116,11 +117,7 @@ export function openapiDocument() {
             },
           }
         : {}),
-      responses: responses(
-        endpoint.status,
-        endpoint.response,
-        responseExamples[endpoint.id],
-      ),
+      responses: { ...responses(endpoint.status,endpoint.response,responseExamples[endpoint.id]), ...(["registerRun","ingestEvent"].includes(endpoint.id)?{200:{description:"Exact identity replay; historical body and current generation header.",content:{"application/json":{schema:schema(endpoint.response),example:responseExamples[endpoint.id]}}}}:{}) },
     };
     paths[path] ??= {};
     paths[path][endpoint.method.toLowerCase()] = operation;
@@ -224,9 +221,9 @@ export function openapiDocument() {
     openapi: "3.1.0",
     info: {
       title: "AgentFlow local API",
-      version: "v1-p02",
+      version: "v1-p04",
       description:
-        "Implemented P01 and P02 operations. Reporting, activity, SSE and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
+        "Implemented P01–P04 operations. Activity, SSE and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
     },
     servers: [{ url: "http://127.0.0.1:3000" }],
     paths,

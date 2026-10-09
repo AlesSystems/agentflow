@@ -5,6 +5,7 @@ export class Conflict extends Error {
   constructor(
     readonly code: string,
     readonly currentVersion?: number,
+    readonly details?: { expectedSequence: number },
   ) {
     super(code);
   }
