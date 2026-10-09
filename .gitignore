@@ -1,0 +1,6 @@
+# Local Impeccable sessions and generated build/review evidence.
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/build/
+.impeccable/review/
+.impeccable/config.local.json
