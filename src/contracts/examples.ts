@@ -153,7 +153,7 @@ export const detailContinuationExample = {
 const agentId='10000000-0000-4000-8000-000000000005';
 const runId='20000000-0000-4000-8000-000000000001';
 const eventId='30000000-0000-4000-8000-000000000001';
-const observedAgent={id:agentId,displayName:'Synthetic agent',source:'fixture',defaultRole:'implementation',version:1,createdAt:time,reporting:false,activeRunsUrl:`/api/v1/runs?agentId=${agentId}&state=running`,historyUrl:`/api/v1/runs?agentId=${agentId}`};
+const observedAgent={id:agentId,displayName:'Synthetic agent',source:'fixture',defaultRole:'implementation',version:1,createdAt:time,reporting:false,activeRunsUrl:`/api/v1/runs?agentId=${agentId}&state=running`,queuedRunsUrl:`/api/v1/runs?agentId=${agentId}&state=queued`,historyUrl:`/api/v1/runs?agentId=${agentId}`};
 const observedRun={id:runId,projectId,agentId,taskId,purpose:'implementation',model:null,workRevision:2,state:'queued',lastSequence:0,lastReceivedAt:time,startedAt:null,endedAt:null,version:1,createdAt:time,freshness:{stale:false,reporting:'no_report_received'}};
 const event={schemaVersion:1,eventId,runId,sequence:1,type:'run.started',occurredAt:time,payload:{}};
 Object.assign(requestExamples,{listAgents:{},createAgent:{displayName:'Synthetic agent',source:'fixture',defaultRole:'implementation'},getAgent:{},patchAgent:{expectedVersion:1,displayName:'Updated agent'},listRuns:{},registerRun:{id:runId,projectId,agentId,taskId,purpose:'implementation',expectedTaskVersion:1},getRun:{},listEvents:{},ingestEvent:event,closeRun:{expectedVersion:1,reason:'Synthetic stale tracking closure'}});

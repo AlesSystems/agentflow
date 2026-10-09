@@ -105,6 +105,9 @@
                               "activeRunsUrl": {
                                 "type": "string"
                               },
+                              "queuedRunsUrl": {
+                                "type": "string"
+                              },
                               "historyUrl": {
                                 "type": "string"
                               }
@@ -118,6 +121,7 @@
                               "createdAt",
                               "reporting",
                               "activeRunsUrl",
+                              "queuedRunsUrl",
                               "historyUrl"
                             ],
                             "additionalProperties": false
@@ -171,6 +175,7 @@
                         "createdAt": "2026-10-09T00:00:00.000Z",
                         "reporting": false,
                         "activeRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=running",
+                        "queuedRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=queued",
                         "historyUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005"
                       }
                     ],
@@ -390,6 +395,9 @@
                         "activeRunsUrl": {
                           "type": "string"
                         },
+                        "queuedRunsUrl": {
+                          "type": "string"
+                        },
                         "historyUrl": {
                           "type": "string"
                         }
@@ -403,6 +411,7 @@
                         "createdAt",
                         "reporting",
                         "activeRunsUrl",
+                        "queuedRunsUrl",
                         "historyUrl"
                       ],
                       "additionalProperties": false
@@ -434,6 +443,7 @@
                     "createdAt": "2026-10-09T00:00:00.000Z",
                     "reporting": false,
                     "activeRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=running",
+                    "queuedRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=queued",
                     "historyUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005"
                   },
                   "snapshotCursor": "0",
@@ -557,6 +567,9 @@
                         "activeRunsUrl": {
                           "type": "string"
                         },
+                        "queuedRunsUrl": {
+                          "type": "string"
+                        },
                         "historyUrl": {
                           "type": "string"
                         }
@@ -570,6 +583,7 @@
                         "createdAt",
                         "reporting",
                         "activeRunsUrl",
+                        "queuedRunsUrl",
                         "historyUrl"
                       ],
                       "additionalProperties": false
@@ -601,6 +615,7 @@
                     "createdAt": "2026-10-09T00:00:00.000Z",
                     "reporting": false,
                     "activeRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=running",
+                    "queuedRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=queued",
                     "historyUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005"
                   },
                   "snapshotCursor": "0",
@@ -813,6 +828,9 @@
                         "activeRunsUrl": {
                           "type": "string"
                         },
+                        "queuedRunsUrl": {
+                          "type": "string"
+                        },
                         "historyUrl": {
                           "type": "string"
                         }
@@ -826,6 +844,7 @@
                         "createdAt",
                         "reporting",
                         "activeRunsUrl",
+                        "queuedRunsUrl",
                         "historyUrl"
                       ],
                       "additionalProperties": false
@@ -857,6 +876,7 @@
                     "createdAt": "2026-10-09T00:00:00.000Z",
                     "reporting": false,
                     "activeRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=running",
+                    "queuedRunsUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005&state=queued",
                     "historyUrl": "/api/v1/runs?agentId=10000000-0000-4000-8000-000000000005"
                   },
                   "snapshotCursor": "0",

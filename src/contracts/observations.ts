@@ -11,7 +11,7 @@ export const eventQuery=z.strictObject(pageQuery);
 export const closeInput=z.strictObject({expectedVersion:version,reason:requiredText(4000)});
 export const freshness=z.strictObject({stale:z.boolean(),reporting:z.enum(['no_report_received','fresh','stale','terminal'])});
 export const observedRun=run.extend({freshness});
-export const observedAgent=agent.extend({reporting:z.boolean(),activeRunsUrl:z.string(),historyUrl:z.string()});
+export const observedAgent=agent.extend({reporting:z.boolean(),activeRunsUrl:z.string(),queuedRunsUrl:z.string(),historyUrl:z.string()});
 const eventBase={schemaVersion:z.literal(1),eventId:uuid,runId:uuid,sequence:version,occurredAt:z.iso.datetime({offset:true}).transform(v=>new Date(v).toISOString())};
 export const eventInput=z.discriminatedUnion('type',[
  z.strictObject({...eventBase,type:z.literal('run.started'),payload:z.strictObject({})}),
@@ -22,8 +22,6 @@ export const eventInput=z.discriminatedUnion('type',[
  z.strictObject({...eventBase,type:z.literal('run.cancelled'),payload:z.strictObject({reason:requiredText(4000)})}),
 ]);
 export const acknowledgement=z.strictObject({eventId:uuid,runId:uuid,acceptedSequence:version,receivedAt:timestamp});
-export const storedEvent=z.intersection(eventInput,z.strictObject({receivedAt:timestamp}));
-// The event envelope is extended per variant so unknown fields remain rejected.
 export const eventRecord=z.union(eventInput.options.map(option=>option.extend({receivedAt:timestamp})));
 const list=<S extends z.ZodType>(item:S)=>z.strictObject({items:z.array(item),total:z.number().int().nonnegative(),nextCursor:z.string().nullable()});
 export const agentResponse=envelope(observedAgent);

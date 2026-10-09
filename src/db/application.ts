@@ -479,7 +479,8 @@ export class ApplicationData {
   }
   private runView(value:Run,now:number) {return {...value,freshness:observationFreshness(value,now)};}
   private agentView(value:Row,now:number) {
-    return {...value,reporting:!!this.db.prepare("SELECT 1 FROM runs WHERE agent_id=? AND state='running' AND last_received_at>=? LIMIT 1").get(value.id,now-60000),activeRunsUrl:`/api/v1/runs?agentId=${value.id}&state=running`,historyUrl:`/api/v1/runs?agentId=${value.id}`};
+    const {reporting:reported,...identity}=value;
+    return {...identity,reporting:reported===undefined?!!this.db.prepare("SELECT 1 FROM runs WHERE agent_id=? AND state='running' AND last_received_at>=? LIMIT 1").get(value.id,now-60000):!!reported,queuedRunsUrl:`/api/v1/runs?agentId=${value.id}&state=queued`,activeRunsUrl:`/api/v1/runs?agentId=${value.id}&state=running`,historyUrl:`/api/v1/runs?agentId=${value.id}`};
   }
   private event(command:Extract<ApplicationCommand,{kind:"run.event"}>,context:CommandContext):CommittedReply {
     const {input,id}=command;
@@ -724,7 +725,7 @@ export class ApplicationData {
       if(query.kind === "run") data=this.runView(this.run(query.id),now);
       else if(query.kind === "agent") data=this.agentView(this.one("agents",query.id),now);
       else if(query.kind === "agents") {
-        const page=this.page("agents","1",[],"agents",{},query.input.limit,query.input.cursor);
+        const page=this.page(`(SELECT agents.*,EXISTS(SELECT 1 FROM runs WHERE agent_id=agents.id AND state='running' AND last_received_at>=${now-60000}) AS reporting FROM agents)`,"1",[],"agents",{},query.input.limit,query.input.cursor);
         data={...page,items:page.items.map(value=>this.agentView(value,now))};
       } else if(query.kind === "runs") {
         const {limit,cursor,...filters}=query.input;
