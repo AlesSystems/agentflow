@@ -101,3 +101,70 @@ it("rejects checksum drift and nontransactional migrations before altering state
   expect(recovered.store.metadata().generation).toBe(generation);
   recovered.close();
 });
+for (const phase of ["staged", "archived", "replaced"])
+  it(`SIGKILL at restore ${phase} keeps crash marker and repairs safely`, async () => {
+    const { spawn } = await import("node:child_process");
+    const dir = mkdtempSync(
+      join(realpathSync(tmpdir()), "agentflow-restore-kill-"),
+    );
+    const owned = await openOwnedStore(dir);
+    const backup = join(dir, "backups", "known.sqlite");
+    const generation = owned.store.metadata().generation;
+    await owned.store.backup(backup);
+    owned.close();
+    const child = spawn(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        "tests/fixtures/maintenance.ts",
+        "restore",
+        dir,
+        phase,
+        backup,
+      ],
+      { stdio: ["ignore", "pipe", "pipe"] },
+    );
+    await new Promise<void>((resolve, reject) => {
+      child.stdout.on("data", (chunk) => {
+        if (String(chunk).includes("phase " + phase)) resolve();
+      });
+      child.once("exit", () =>
+        reject(new Error("fixture exited before phase")),
+      );
+    });
+    const exited = new Promise<void>((resolve) =>
+      child.once("exit", () => resolve()),
+    );
+    child.kill("SIGKILL");
+    await exited;
+    await expect(openOwnedStore(dir)).rejects.toThrow("RESTORE_INTERRUPTED");
+    await repairRestore(dir);
+    const restored = await openOwnedStore(dir);
+    expect(restored.store.metadata().generation).not.toBe(generation);
+    expect(restored.store.sessionCount()).toBe(0);
+    expect(restored.store.integrity().integrity).toBe("ok");
+    restored.close();
+  });
+it("WAL backup retains earlier synthetic rows and restore loses only known later rows", async () => {
+  const Database = (await import("better-sqlite3")).default;
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-wal-"));
+  const owned = await openOwnedStore(dir);
+  const fixture = new Database(join(dir, "agentflow.sqlite"));
+  fixture.exec(
+    "CREATE TABLE recovery_fixture (note TEXT); INSERT INTO recovery_fixture VALUES ('before backup');",
+  );
+  const backup = join(dir, "backups", "wal.sqlite");
+  await owned.store.backup(backup);
+  fixture.exec("INSERT INTO recovery_fixture VALUES ('after backup');");
+  fixture.close();
+  owned.close();
+  await restore(dir, backup);
+  const inspected = new Database(join(dir, "agentflow.sqlite"), {
+    readonly: true,
+  });
+  expect(inspected.prepare("SELECT note FROM recovery_fixture").all()).toEqual([
+    { note: "before backup" },
+  ]);
+  inspected.close();
+});

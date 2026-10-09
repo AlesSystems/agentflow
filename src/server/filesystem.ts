@@ -59,7 +59,11 @@ export function validateFile(path: string) {
     }
   }
 }
-export function createFile(path: string, contents: string | Uint8Array = "") {
+export function createFile(
+  path: string,
+  contents: string | Uint8Array = "",
+  beforeWrite?: () => void,
+) {
   const fd = openSync(
     path,
     constants.O_WRONLY |
@@ -70,6 +74,7 @@ export function createFile(path: string, contents: string | Uint8Array = "") {
   );
   try {
     inspectManaged(fstatSync(fd), false);
+    beforeWrite?.();
     writeFileSync(fd, contents);
     fsyncSync(fd);
   } finally {

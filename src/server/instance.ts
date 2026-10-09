@@ -31,12 +31,17 @@ export function acquireInstance(path: string) {
     dataDir,
     inode,
     assertOwned() {
-      if (!lock.open || !lock.inTransaction) throw new Error("OWNERSHIP_REQUIRED");
+      if (!lock.open || !lock.inTransaction)
+        throw new Error("OWNERSHIP_REQUIRED");
     },
     registerConnection() {
-      if (!lock.open || !lock.inTransaction) throw new Error("OWNERSHIP_REQUIRED");
-      const id = Symbol(); connections.add(id);
-      return () => { connections.delete(id); };
+      if (!lock.open || !lock.inTransaction)
+        throw new Error("OWNERSHIP_REQUIRED");
+      const id = Symbol();
+      connections.add(id);
+      return () => {
+        connections.delete(id);
+      };
     },
     release() {
       if (connections.size) throw new Error("CONNECTIONS_OPEN");

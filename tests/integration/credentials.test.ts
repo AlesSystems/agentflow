@@ -28,7 +28,7 @@ async function interrupt(dir: string, phase: string) {
   child.kill("SIGKILL");
   await exit;
 }
-for (const phase of ["staged", "revoked", "published"])
+for (const phase of ["writing", "staged", "revoked", "published"])
   it(`rotation crash at ${phase} preserves one complete credential set and correct sessions`, async () => {
     const dir = mkdtempSync(
       join(realpathSync(tmpdir()), "agentflow-rotation-"),
@@ -49,7 +49,9 @@ for (const phase of ["staged", "revoked", "published"])
       expect(current.pairingToken).not.toBe(original.pairingToken);
       expect(current.reporterToken).not.toBe(original.reporterToken);
     } else expect(current).toEqual(original);
-    expect(owned.store.sessionCount()).toBe(phase === "staged" ? 1 : 0);
+    expect(owned.store.sessionCount()).toBe(
+      ["writing", "staged"].includes(phase) ? 1 : 0,
+    );
     owned.close();
   });
 it("rejects invalid authoritative credentials but removes unpublished partial staging files", async () => {
@@ -71,6 +73,13 @@ it("rejects invalid authoritative credentials but removes unpublished partial st
   await expect(openOwnedStore(dir)).rejects.toThrow("INVALID_CREDENTIALS");
   expect(readFileSync(join(dir, "credentials.json"), "utf8")).toBe("{}");
 });
-it('malformed credential JSON is rejected with a safe repair code',async()=>{
- const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-json-'));const owned=await openOwnedStore(dir);owned.close();writeFileSync(join(dir,'credentials.json'),'{"pairingToken":"synthetic-secret');await expect(openOwnedStore(dir)).rejects.toThrow('INVALID_CREDENTIALS');
+it("malformed credential JSON is rejected with a safe repair code", async () => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-json-"));
+  const owned = await openOwnedStore(dir);
+  owned.close();
+  writeFileSync(
+    join(dir, "credentials.json"),
+    '{"pairingToken":"synthetic-secret',
+  );
+  await expect(openOwnedStore(dir)).rejects.toThrow("INVALID_CREDENTIALS");
 });

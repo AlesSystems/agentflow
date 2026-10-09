@@ -97,6 +97,9 @@ it("managed database and credential symlinks and permissive files fail without c
   chmodSync(join(dir, "credentials.json"), 0o644);
   await expect(openOwnedStore(dir)).rejects.toThrow("UNSAFE_PERMISSIONS");
 });
-it('cannot release ownership while an application connection remains open',async()=>{
- const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-owner-'));const owned=await openOwnedStore(dir);expect(()=>owned.instance.release()).toThrow('CONNECTIONS_OPEN');owned.close();
+it("cannot release ownership while an application connection remains open", async () => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-owner-"));
+  const owned = await openOwnedStore(dir);
+  expect(() => owned.instance.release()).toThrow("CONNECTIONS_OPEN");
+  owned.close();
 });

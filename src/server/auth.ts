@@ -42,9 +42,15 @@ function newCredentials(): Credentials {
     reporterToken: randomBytes(32).toString("hex"),
   };
 }
-function stageCredentials(dataDir: string, credentials: Credentials) {
+function stageCredentials(
+  dataDir: string,
+  credentials: Credentials,
+  phase?: (phase: RotationPhase) => void,
+) {
   const path = join(dataDir, `credentials-stage-${randomUUID()}.json`);
-  createFile(path, JSON.stringify(credentials) + "\n");
+  createFile(path, JSON.stringify(credentials) + "\n", () =>
+    phase?.("writing"),
+  );
   return path;
 }
 export function loadCredentials(dataDir: string) {
@@ -65,8 +71,13 @@ export function loadCredentials(dataDir: string) {
     return credentials;
   }
   let input: unknown;
-  try { input = JSON.parse(readFileSync(path, "utf8")); }
-  catch { throw new Error("INVALID_CREDENTIALS: Repair credentials.json before starting."); }
+  try {
+    input = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    throw new Error(
+      "INVALID_CREDENTIALS: Repair credentials.json before starting.",
+    );
+  }
   const result = schema.safeParse(input);
   if (!result.success)
     throw new Error(
@@ -74,7 +85,7 @@ export function loadCredentials(dataDir: string) {
     );
   return result.data;
 }
-export type RotationPhase = "staged" | "revoked" | "published";
+export type RotationPhase = "writing" | "staged" | "revoked" | "published";
 export function rotateCredentials(
   dataDir: string,
   store: Store,
@@ -82,7 +93,7 @@ export function rotateCredentials(
 ) {
   validateFile(join(dataDir, "credentials.json"));
   const credentials = newCredentials();
-  const staged = stageCredentials(dataDir, credentials);
+  const staged = stageCredentials(dataDir, credentials, phase);
   phase?.("staged");
   store.revokeAll();
   phase?.("revoked");

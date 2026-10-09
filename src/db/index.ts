@@ -30,8 +30,12 @@ export class Store {
   private db: Database.Database;
   readonly dataDir: string;
   private unregister: (() => void) | undefined;
-  constructor(owner: InstanceOwner, file = join(owner.dataDir, "agentflow.sqlite")) {
-    owner.assertOwned(); this.dataDir = owner.dataDir;
+  constructor(
+    owner: InstanceOwner,
+    file = join(owner.dataDir, "agentflow.sqlite"),
+  ) {
+    owner.assertOwned();
+    this.dataDir = owner.dataDir;
     for (const suffix of ["", "-wal", "-shm", "-journal"])
       validateFile(file + suffix);
     if (!existsSync(file)) createFile(file);
