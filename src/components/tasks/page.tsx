@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TaskDetail } from "./detail";
 import { useRead } from "../../client/provider";
@@ -15,6 +15,10 @@ export function TaskPage({
   boardSearch?: string;
 }) {
   const router = useRouter();
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    heading.current?.focus();
+  }, [taskId]);
   const project = useRead(`/projects/${projectId}`, projectResponse);
   const [dirty, setDirty] = useState(false),
     [confirm, setConfirm] = useState(false);
@@ -25,7 +29,9 @@ export function TaskPage({
       <button onClick={() => (dirty ? setConfirm(true) : back())}>
         Back to work board
       </button>
-      <h1 tabIndex={-1}>Task details</h1>
+      <h1 ref={heading} tabIndex={-1}>
+        Task details
+      </h1>
       <div className="task-page">
         <TaskDetail
           id={taskId}
