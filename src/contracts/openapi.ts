@@ -226,7 +226,7 @@ export function openapiDocument() {
       title: "AgentFlow local API",
       version: "v1-p02",
       description:
-        "Implemented P01 and P02 operations. Reporting, activity, SSE and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations require an originless bearer request. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
+        "Implemented P01 and P02 operations. Reporting, activity, SSE and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
     },
     servers: [{ url: "http://127.0.0.1:3000" }],
     paths,

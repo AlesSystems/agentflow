@@ -173,7 +173,6 @@ export function requireResourceMutation(
 ) {
   if (principal.kind === "browser") requireBrowserMutation(headers);
   else {
-    if (headers.get("origin")) throw new HttpError(403, "origin_rejected");
     if (
       (headers.get("content-type") || "").split(";")[0].trim().toLowerCase() !==
       "application/json"
