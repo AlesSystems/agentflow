@@ -1,6 +1,7 @@
 # Local API contract
 
-Status: planned v1 contract. These endpoints do not exist yet. P02 publishes generated OpenAPI from shared Zod schemas; P04 and P05 extend it with the reporting contracts below. W01–W03c add the
+Status: P01 health, session and foundation routes are implemented and under
+independent review. Task, reporting and workflow endpoints below remain planned. P02 publishes generated OpenAPI from shared Zod schemas; P04 and P05 extend it with the reporting contracts below. W01–W03c add the
 [Phase 3 contracts](V1_WORKFLOWS.md), including workflow reports, dependency/review
 commands, opt-in GitHub observation, export/retention, and usage.
 
@@ -10,11 +11,15 @@ The base URL is `http://127.0.0.1:3000/api/v1`. UUIDs identify records. Fields u
 
 Browser sessions and CLI bearer credentials use the authentication rules in [BACKEND.md](BACKEND.md). Every endpoint except health and session creation requires authentication. Complete, reopen, and close-run commands require a browser session. The reporter token cannot pair a browser session or call human-only commands. Pairing and reporter credentials are distinct.
 
+GET/HEAD requests must be bodyless or declare Content-Length 0. Other body
+framing returns 400; a declared length over 64 KiB returns 413. Mutation bodies
+are limited while streaming, with a five-second completion timeout.
+
 JSON mutations require `Content-Type: application/json`. Resource mutations require an `Idempotency-Key` UUID, except session creation/deletion and run/workflow event ingestion. Those events use their own `eventId`. The receipt key is scoped to stable principal, HTTP method, path, and key. Session renewal does not change the operator principal. Exact retries return the original status and body, including after a later version change. A different body returns `409 idempotency_conflict`. Failed requests do not consume a key.
 
 PATCH bodies and complete, reopen, and close-run action bodies require `expectedVersion`. The server checks it in the mutation transaction. A mismatch returns `409 version_conflict` and `currentVersion`; the caller reads the resource before retrying an intentional change with a new key. Empty PATCH objects and unsupported fields return `422`.
 
-Successful JSON responses use `data`, `snapshotCursor`, and `generation`; session creation and deletion are exceptions. Session creation returns `200` with a Set-Cookie header and no private data, and deletion returns `204`. Every authenticated response carries the current `AgentFlow-Generation` header. Exact-retry bodies retain the original receipt generation and cursor as historical metadata. If the header differs from the client snapshot or receipt generation, the client obtains a fresh snapshot before using the result. Mutation replies never advance the subscription cursor. Even within one generation, an old receipt must not overwrite a newer cached entity version; commands trigger an authoritative refetch. List `data` contains `items` and `nextCursor`. Cursors are opaque, bound to filters and sort order, with a default page size of 50 and maximum of 100. Mutable lists use stable creation-time/ID order so edits do not move the pagination boundary. The client refetches after change notifications.
+Successful JSON responses use `data`, `snapshotCursor`, and `generation`; session creation, deletion, and the P01 foundation readiness read are exceptions. Session creation returns `200` with a Set-Cookie header and no private data, and deletion returns `204`. Every authenticated response carries the current `AgentFlow-Generation` header. Exact-retry bodies retain the original receipt generation and cursor as historical metadata. If the header differs from the client snapshot or receipt generation, the client obtains a fresh snapshot before using the result. Mutation replies never advance the subscription cursor. Even within one generation, an old receipt must not overwrite a newer cached entity version; commands trigger an authoritative refetch. List `data` contains `items` and `nextCursor`. Cursors are opaque, bound to filters and sort order, with a default page size of 50 and maximum of 100. Mutable lists use stable creation-time/ID order so edits do not move the pagination boundary. The client refetches after change notifications.
 
 All private responses use `Cache-Control: no-store`. Health returns only readiness and API version. Command responses are acknowledged only after commit. No route starts a process. Foundation/reporting routes make no outbound requests;
 W03a alone adds explicit, opt-in, allowlisted GitHub PR metadata refresh under
@@ -26,6 +31,7 @@ Paths below are relative to `/api/v1`.
 
 | Method and path | Behavior |
 | --- | --- |
+| `GET /foundation` | P01 authenticated readiness `{ "ready": true, "generation": "UUID", "schemaVersion": 1 }`; no task snapshot/cursor |
 | `GET /health` | `200` ready or `503` not ready; no private metadata |
 | `POST /session` | Exchange the pairing token for a browser session; body `{ "token": "..." }` |
 | `DELETE /session` | Revoke the current session, body `{}`; `204` |
@@ -160,6 +166,7 @@ An exact retry returns this same body with `200`. A sequence gap returns the exp
 | --- | --- |
 | `400` | Malformed JSON, invalid cursor, or malformed query |
 | `401` | Missing, invalid, or expired credential |
+| `408` | Request body did not finish within five seconds |
 | `403` | Invalid Host/Origin or action requiring a browser session |
 | `404` | Missing project, task, agent, or run |
 | `409` | Version, idempotency, sequence, lifecycle, or archive conflict |

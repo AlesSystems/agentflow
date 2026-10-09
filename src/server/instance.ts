@@ -1,0 +1,64 @@
+import Database from "better-sqlite3";
+import { existsSync, lstatSync } from "node:fs";
+import { join } from "node:path";
+import {
+  activeAppRoot,
+  privateDestination,
+  createFile,
+  secureDirectory,
+  validateFile,
+} from "./filesystem";
+
+export function acquireInstance(path: string) {
+  const appRoot = activeAppRoot();
+  const dataDir = secureDirectory(privateDestination(path, appRoot));
+  const lockPath = join(dataDir, "instance-lock.sqlite");
+  validateFile(lockPath);
+  if (!existsSync(lockPath)) {
+    try {
+      createFile(lockPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    }
+  }
+  validateFile(lockPath);
+  validateFile(lockPath + "-journal");
+  const inode = lstatSync(lockPath).ino;
+  const lock = new Database(lockPath);
+  try {
+    lock.pragma("busy_timeout = 0");
+    lock.pragma("journal_mode = DELETE");
+    lock.exec("BEGIN EXCLUSIVE");
+  } catch {
+    lock.close();
+    throw new Error("INSTANCE_BUSY: Stop the existing AgentFlow instance.");
+  }
+  const connections = new Set<symbol>();
+  return {
+    dataDir,
+    appRoot,
+    inode,
+    assertOwned() {
+      if (!lock.open || !lock.inTransaction)
+        throw new Error("OWNERSHIP_REQUIRED");
+    },
+    registerConnection() {
+      if (!lock.open || !lock.inTransaction)
+        throw new Error("OWNERSHIP_REQUIRED");
+      const id = Symbol();
+      connections.add(id);
+      return () => {
+        connections.delete(id);
+      };
+    },
+    release() {
+      if (connections.size) throw new Error("CONNECTIONS_OPEN");
+      if (lock.open) {
+        lock.exec("ROLLBACK");
+        lock.close();
+      }
+    },
+  };
+}
+
+export type InstanceOwner = ReturnType<typeof acquireInstance>;

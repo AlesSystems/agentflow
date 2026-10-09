@@ -5,8 +5,9 @@ description: A lightly cartoonish work board with clear tasks and reported evide
 
 # Design System: AgentFlow
 
-Status: proposed design specification, updated 2026-10-09. No application UI has
-been implemented. Values below are design targets, not extracted runtime tokens.
+Status: proposed design specification, updated 2026-10-09. P01 implements
+a minimal pairing/readiness surface; board and workflow UI remain planned. Values
+below remain the selected design targets, not extracted board/runtime tokens.
 
 ## Direction
 

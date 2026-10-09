@@ -1,8 +1,8 @@
 # AgentFlow
 
-AgentFlow is a planned local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
+AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: design only.** This repository contains the architecture and delivery plan. There is no runnable application yet. The commands and API examples in the documents describe the implementation target.
+**Status: P01 foundation implemented, pending independent review and integration.** Browser pairing, protected SQLite readiness, backup, and restore are runnable. Task boards and agent/workflow reporting remain planned packages.
 
 ## Product direction
 
@@ -39,9 +39,40 @@ workflow in `.impeccable/config.json`. The design seed does not implement P03.
 After the UI exists, run `$impeccable document` to extract real tokens and generate
 the design sidecar; browser verification is still required by the plan.
 
-## Local runtime target
+## Run the local foundation
 
-After implementation, `npm run dev` starts development mode and `npm run build` followed by `npm start` starts the production build. Both bind to `127.0.0.1:3000`. The browser opens `http://localhost:3000`.
+Use Node **24.15.0** and npm **11.12.1**. The verified host is macOS 27.0 arm64. Install dependencies and build:
+
+```sh
+npm ci
+npm run build
+npm run local -- setup
+npm start
+```
+
+Run `setup` in your interactive terminal before starting the service. It displays the separate pairing and reporter tokens. Open `http://127.0.0.1:3000/pair` and enter the pairing token. The reporter token cannot pair a browser. If the service is already running, stop it before using local maintenance commands.
+
+`npm run dev` uses the same ownership and security gates. `PORT` selects a port from 1024 through 65535. The launcher binds only `127.0.0.1`; accepted Host/Origin values use `127.0.0.1` or `localhost` and that exact port. Use `npm start`, because direct `next start` cannot initialize or access private storage.
+
+The default directory is `~/Library/Application Support/AgentFlow`. `AGENTFLOW_DATA_DIR` must be an absolute, real local directory. The data directory and backup destinations must be outside the active application
+root (the canonical directory used by Next), including public/ and build/scratch
+folders. Contained paths fail before private files are created. Directories require owner-only permissions (0700), files 0600, and current-user ownership. Unsafe existing files fail with a repair code. Use canonical paths; symlinks, including parent aliases such as macOS `/tmp`, are rejected. Network filesystems are unsupported; reliable portable network-volume detection is not claimed.
+
+Sessions expire after 12 hours. Cookie reads accept same-origin and direct navigation; a different localhost port is rejected as same-site. Direct clients without Fetch Metadata remain compatible when supplied Origin is allowed.
+
+Stop the service before maintenance:
+
+```sh
+npm run local -- credentials rotate
+npm run local -- backup --output /absolute/protected/backups/snapshot.sqlite
+npm run local -- restore --from /absolute/protected/backups/snapshot.sqlite
+```
+
+Backup refuses an existing destination. Restore verifies the backup, preserves the current database/WAL/SHM in a damaged bundle, replaces the database, changes its generation, and revokes every browser session. Credentials stay in the current external `credentials.json`; backups exclude them. Later observations absent from the backup cannot be recovered by restore. Never copy a live main SQLite file alone.
+
+An interrupted restore refuses startup. Run `npm run local -- restore repair` while stopped to finish the recorded replacement. Preserve the marker and damaged bundle if repair fails. Do not delete the database or lock file to make startup succeed.
+
+Verify with `npm run test:unit`, `npm run test:integration`, `npm run lint`, `npm run typecheck`, `npm run build`, and `npm run test:e2e`. Install the default test browser with `npx playwright install chromium`. On a host with supported Google Chrome installed, `AGENTFLOW_TEST_BROWSER=chrome npm run test:e2e` uses a fresh Playwright profile. It does not use your personal browser profile. [P01 evidence](docs/implementation/P01.md) records the exact tested configuration and limitations.
 
 The app requires no cloud account, hosted database, Docker, or paid infrastructure. Package installation requires network access. Agent providers used by an external harness may have their own network requirements and costs.
 
@@ -58,6 +89,5 @@ reported usage are included. Agent process controls remain separate. See the
 AgentFlow-owned material is licensed under [MIT](LICENSE), copyright 2026 AlesSystems. Retain applicable third-party licenses and notices.
 
 The earlier approved P01–P07 execution controls are retained in the revised
-[execution policy](docs/EXECUTION_POLICY.md). Its single prompt explicitly activates
-the expanded v1 implementation, sequential verified integration, and source
-release. This documentation PR does not activate implementation.
+[execution policy](docs/EXECUTION_POLICY.md). The operator activated the expanded v1 implementation on 2026-10-09. Sequential
+verified integration and the source release remain gated by independent review.

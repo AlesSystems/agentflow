@@ -1,9 +1,9 @@
 # AgentFlow v1 delivery ledger
 
-Status: planning only. No implementation package has started. This ledger is a
-resume contract for the future [one-prompt run](EXECUTION_POLICY.md#starting-the-future-run).
-PR #3 contains the design and expanded delivery proposal; its documentation review
-is not evidence of application implementation.
+Status: the operator activated the full v1 run on 2026-10-09. P01 implementation
+and automated acceptance are ready for independent candidate review. No package
+has been integrated from this implementation run. P01 remains open until review,
+coordinator verification and merge succeed. Downstream packages have not started.
 
 ## Package state
 
@@ -12,7 +12,7 @@ independent review of the candidate SHA, and verified integration all pass.
 
 | Package | Deliverable | State | Candidate / integrated SHA | Evidence |
 | --- | --- | --- | --- | --- |
-| P01 | Runtime/storage | Not started | — | — |
+| P01 | Runtime/storage | Review pending | `af3cc1d2356492a502df68edd958768202004d0c` source evidence; final receipt HEAD awaits review | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
 | P02 | Task contracts | Not started | — | — |
 | P03 | Work board | Not started | — | — |
 | P04 | Agent ingestion | Not started | — | — |
@@ -51,3 +51,40 @@ databases out of this public ledger. Store redacted or synthetic evidence only.
 Final receipt must name `v1.0.0`, the reviewed release SHA, every package PR,
 installation instructions, actual checks, and remaining limitations. Until then,
 report progress precisely; a partial demo or documentation PR is not v1 completion.
+
+## Current P01 handoff
+
+Branch `codex/v1-p01-runtime`; baseline `e4d7b84`. The approved Astra medium
+plan hash is `07278b67c601f931b2972f86566fec3c388db4b1aa85eb34b310105de8f3d912`.
+Source proof is tied to `af3cc1d2356492a502df68edd958768202004d0c`; the final
+receipt commit changes only docs/evidence. Small commits preserve regression
+red/green loops; no reset, rebase, force push, PR or merge was performed by the
+writer. The coordinator owns independent review, PR creation and integration.
+
+The clean-private installation baseline and final-source replay passed dependency-tree validation,
+lint, types, production build, 10 unit tests, 47 integration tests, 3 Chrome
+browser journeys and listener/HTTP/integrity/resource checks. The focused runtime
+suite passed 28 tests. Production audit has zero findings; two dev-tool advisory
+chains remain explicitly qualified in the receipt. Browser default Chromium
+installation was cancelled after slow download; installed Chrome 154 was tested
+in temporary profiles. Native use is the bundled darwin-arm64 prebuild, not a
+claimed source compilation.
+
+See the receipt and acceptance JSON for exact build identities, lock hash,
+readiness/RSS samples, screenshots, historical failed checks and limitations.
+Owned test servers and the incomplete browser download were stopped. Fixture
+clones and synthetic data are retained for review; no operator data was used.
+
+Next action: review the exact final branch HEAD on standards and specification,
+resolve any blocking findings, independently verify critical production evidence,
+then integrate under the activated policy. Do not mark P01 complete or start P02
+before its reviewed integration; P02 also needs its own Astra medium plan gate.
+
+The P1 application-contained data exposure was repaired under supplemental Astra
+medium plan approval `a4589e4f768f79bc9062e3d343a82fabbc980d67ddaac2c92426a1c56ccbeb3c`.
+Active-root containment now precedes writes for runtime, maintenance, candidate
+and backup destinations. Final source `af3cc1d` was rebuilt and fully replayed in
+the same-lockfile clean-private clone, reusing its documented fresh install at
+`ebc2391`. Updated evidence is 10 unit / 47 integration / 3 browser tests;
+published UI captures and the scoped UI verdict are unchanged. Independent final
+code review remains required; every package checkbox remains open.

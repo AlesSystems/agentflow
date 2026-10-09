@@ -1,0 +1,48 @@
+{
+  "name": "agentflow",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": "24.15.0",
+    "npm": "11.12.1"
+  },
+  "packageManager": "npm@11.12.1",
+  "scripts": {
+    "dev": "NEXT_TELEMETRY_DISABLED=1 tsx src/server/launcher.ts --development",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "start": "NEXT_TELEMETRY_DISABLED=1 tsx src/server/launcher.ts --production",
+    "local": "tsx src/cli/local.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:runtime": "vitest run tests/integration/runtime.test.ts tests/integration/auth.test.ts tests/integration/recovery.test.ts tests/integration/lock.test.ts tests/integration/stream.test.ts"
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.4",
+    "zod": "4.6.5",
+    "server-only": "0.0.1",
+    "tsx": "4.23.15"
+  },
+  "devDependencies": {
+    "eslint-config-next": "16.4.0",
+    "drizzle-kit": "0.31.11",
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/postcss": "4.3.3",
+    "typescript": "5.9.3",
+    "eslint": "9.39.4",
+    "vitest": "5.0.3",
+    "@playwright/test": "1.64.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "24.19.1"
+  },
+  "type": "module"
+}

@@ -1,6 +1,7 @@
 # AgentFlow architecture
 
-Status: accepted design direction, pending implementation validation. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
+Status: accepted v1 design direction. P01 runtime/storage has automated verification
+and awaits independent review; task, agent and workflow modules remain planned. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
 
 ## System boundary
 
@@ -36,7 +37,8 @@ All boxes except the existing harness are part of the local application. No queu
 
 Next.js Route Handlers support HTTP handlers and streaming responses. The self-hosting guide describes operation as a Node server. This supports the proposed single-application boundary, subject to the production-build spike in P01. [Route Handlers](https://nextjs.org/docs/app/api-reference/file-conventions/route), [self-hosting](https://nextjs.org/docs/app/guides/self-hosting).
 
-Drizzle documents SQLite drivers including better-sqlite3. The selected driver remains provisional until P01 verifies installation and production packaging on the supported Node version. [Drizzle SQLite](https://orm.drizzle.team/docs/sqlite/get-started-sqlite).
+Drizzle documents SQLite drivers including better-sqlite3. P01 verifies better-sqlite3 13.0.3 installation and production loading on Node
+24.15.0, pending independent review. See [the receipt](implementation/P01.md). [Drizzle SQLite](https://orm.drizzle.team/docs/sqlite/get-started-sqlite).
 
 Pin exact package versions and the Node runtime in P01. Do not copy old dnd-kit examples without checking the selected release's API. Its current documentation separates the current toolkit from legacy examples. [dnd-kit](https://dndkit.com/).
 
@@ -50,7 +52,8 @@ The database is authoritative. Run events and the change feed are audit records 
 
 ## Proposed source layout
 
-These paths are implementation targets and do not exist yet.
+P01 runtime/auth/storage and minimal page/route files exist. Task, reporting and
+workflow paths in this target layout remain planned.
 
 ```text
 src/app/                       Pages, layouts, login, and /api/v1 routes
@@ -71,11 +74,15 @@ Server-only imports keep filesystem access, credentials, and database code out o
 
 ## Runtime and data ownership
 
-One application instance owns a data directory. The launcher takes an exclusive process lock before migrations and refuses a second instance, including one on a different port. A stale lock is recovered only after checking process identity. P01 must prove this behavior through crashes and restarts.
+One custom Next HTTP server process owns a data directory. Before migrations, the launcher holds an exclusive SQLite transaction on the stable `instance-lock.sqlite` inode. A different port still competes for the same directory. OS locking is authority; PID metadata cannot reclaim a live lock. Crashes release the OS lock. Shutdown rejects new work, drains tracked handlers, closes Next and application connections, then releases ownership last. Application connections require the live owner and private routes/pages require the same-process runtime guard.
 
 `AGENTFLOW_DATA_DIR` can select an absolute local path. The default is `~/Library/Application Support/AgentFlow` on macOS and `$XDG_DATA_HOME/agentflow` on Linux, falling back to `~/.local/share/agentflow`. The first release targets macOS; Linux support depends on the same clean-install checks. Windows is deferred.
 
-The directory holds `agentflow.sqlite`, its WAL files, authentication material, and the CLI outbox. Directory permissions are user-only and sensitive files use mode `0600`. No data belongs in the public checkout. The application rejects a relative override and documents that network filesystems are unsupported.
+The directory holds `agentflow.sqlite`, its WAL files, the versioned `credentials.json` token set, and eventually the CLI outbox. Directory permissions are user-only and sensitive files use mode `0600`. Managed data, explicit Store candidates and backup destinations are rejected
+inside the canonical active application root before writes. The instance freezes
+that CWD root and Next uses it; case aliases are recognized by directory identity,
+raw symlinks are rejected before dot normalization, and no global repository scan
+or root override is introduced. No data belongs in the public checkout. The application rejects a relative override and documents that network filesystems are unsupported.
 
 Normal use works without internet after dependencies are installed. External links open only after a user action. No repository scanning, transcript discovery, remote analytics, or provider credential storage is part of the first release.
 

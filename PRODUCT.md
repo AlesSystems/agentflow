@@ -73,8 +73,10 @@ acceptance stamps. See [DESIGN.md](DESIGN.md) for proposed values.
 [docs/DECISIONS.md](docs/DECISIONS.md) establish the delivery boundary and decisions.
 [docs/FRONTEND.md](docs/FRONTEND.md) specifies routes, interactions, recovery,
 freshness, metrics, and accessibility. Backend/API/architecture documents define
-the planned contracts. There is no runnable UI, visual verification, customer
-proof, or performance evidence yet.
+the planned contracts. [P01](docs/implementation/P01.md) adds runnable pairing and
+storage readiness, browser captures, runtime/recovery verification and initial
+host measurements. Board and workflow interfaces remain planned; no customer
+acceptance is claimed.
 
 ## Product Principles
 
