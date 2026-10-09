@@ -99,3 +99,13 @@ export/retention, and usage contracts. These remain modules in the same local
 application and SQLite database. The sole optional outbound application adapter
 is read-only GitHub PR metadata observation for explicitly selected repositories;
 it is disabled by default. No workflow graph or dependency module owns processes.
+
+### P05 native stream ownership
+
+The first P05 transport slice registers the browser-only stream capability in
+the shared endpoint registry. The native launcher owns SSE delivery and bounded
+leases to observe real Node write/drain pressure and avoid framework response
+compression. Next's fallback returns unavailable for this capability. Shutdown
+closes stream leases and resolves their dispatches before storage drain/closure.
+See [the transport receipt](implementation/P05-transport.md); client/UI gates
+remain open.

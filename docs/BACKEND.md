@@ -231,3 +231,12 @@ Read snapshots capture freshness and cursor/generation together. Agent list repo
 
 
 P04 review repair adds migration 0005 with nonunique NOCASE lookup indexes for UUID identities. New client identities/input references normalize at the request boundary, while response schemas and historical acknowledgements preserve stored casing. A lookup reads at most two indexed matches and rejects actual casing collisions explicitly. Legacy ID/order bytes remain unchanged; successful projections use their actual stored FK identity. The original parsed JSON digest still distinguishes supplied casing. Migration 0004 and earlier reviewed bytes are preserved.
+
+### P05 committed change batches
+
+The first transport slice adds owned `Store.changeBatch(after)`: a validated,
+lossless decimal cursor and one short consistent read transaction for generation,
+minimum/maximum and at most 100 ascending committed change notices. Cursor SQL
+uses TEXT outputs and an INTEGER cast of the validated input; it never converts
+through JavaScript Number. The read transaction ends before socket delivery,
+polling or drain waits. Changes carry entity type, identity and kind only.
