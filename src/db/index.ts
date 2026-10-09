@@ -9,7 +9,7 @@ import {
   syncDirectory,
   validateFile,
 } from "../server/filesystem";
-import { acquireInstance } from "../server/instance";
+import { acquireInstance, type InstanceOwner } from "../server/instance";
 import { loadCredentials } from "../server/auth";
 
 export type Migration = Readonly<{ id: string; sql: string; sha256: string }>;
@@ -28,14 +28,15 @@ export const migrations: Migration[] = ["0000_foundation"].map((id) => {
 });
 export class Store {
   private db: Database.Database;
-  constructor(
-    readonly dataDir: string,
-    file = join(dataDir, "agentflow.sqlite"),
-  ) {
+  readonly dataDir: string;
+  private unregister: (() => void) | undefined;
+  constructor(owner: InstanceOwner, file = join(owner.dataDir, "agentflow.sqlite")) {
+    owner.assertOwned(); this.dataDir = owner.dataDir;
     for (const suffix of ["", "-wal", "-shm", "-journal"])
       validateFile(file + suffix);
     if (!existsSync(file)) createFile(file);
     this.db = new Database(file);
+    this.unregister = owner.registerConnection();
     try {
       this.db.pragma("foreign_keys = ON");
       this.db.pragma("journal_mode = WAL");
@@ -43,6 +44,7 @@ export class Store {
       this.db.pragma("busy_timeout = 250");
     } catch (error) {
       this.db.close();
+      this.unregister();
       throw error;
     }
   }
@@ -209,6 +211,7 @@ export class Store {
   }
   close() {
     if (this.db.open) this.db.close();
+    this.unregister?.();
   }
 }
 export async function openOwnedStore(path: string, registry = migrations) {
@@ -220,7 +223,7 @@ export async function openOwnedStore(path: string, registry = migrations) {
         "RESTORE_INTERRUPTED: Run local restore repair before starting.",
       );
     validateFile(join(instance.dataDir, "credentials.json"));
-    store = new Store(instance.dataDir);
+    store = new Store(instance);
     await store.migrate(registry);
     const credentials = loadCredentials(instance.dataDir);
     const ownedStore = store;

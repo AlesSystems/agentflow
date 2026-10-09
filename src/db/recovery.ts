@@ -4,7 +4,7 @@ import { existsSync, readFileSync, renameSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { z } from "zod";
 import { Store, migrations } from "./index";
-import { acquireInstance } from "../server/instance";
+import { acquireInstance, type InstanceOwner } from "../server/instance";
 import {
   createFile,
   secureDirectory,
@@ -52,10 +52,11 @@ function archiveCurrent(dir: string, marker: Marker) {
   syncDirectory(dir);
 }
 async function finishRestore(
-  dir: string,
+  owner: InstanceOwner,
   marker: Marker,
   phase?: (phase: RestorePhase) => void,
 ) {
+  const dir = owner.dataDir;
   if (marker.phase === "staged") {
     archiveCurrent(dir, marker);
     marker = { ...marker, phase: "archived" };
@@ -71,7 +72,7 @@ async function finishRestore(
     } else {
       if (!existsSync(join(dir, "agentflow.sqlite")))
         throw new Error("RESTORE_CANDIDATE_MISSING");
-      const restored = new Store(dir);
+      const restored = new Store(owner);
       try {
         if (
           restored.metadata().generation !== marker.generation ||
@@ -87,7 +88,7 @@ async function finishRestore(
     writeMarker(dir, marker);
     phase?.("replaced");
   }
-  const restored = new Store(dir);
+  const restored = new Store(owner);
   try {
     restored.validateMigrations();
     if (
@@ -135,7 +136,7 @@ export async function restore(
     } finally {
       input.close();
     }
-    const candidate = new Store(dir, candidatePath);
+    const candidate = new Store(owner, candidatePath);
     let generation: string;
     try {
       const history = candidate.validateMigrations();
@@ -159,7 +160,7 @@ export async function restore(
     };
     writeMarker(dir, marker);
     phase?.("staged");
-    return await finishRestore(dir, marker, phase);
+    return await finishRestore(owner, marker, phase);
   } finally {
     owner.release();
   }
@@ -167,7 +168,7 @@ export async function restore(
 export async function repairRestore(path: string) {
   const owner = acquireInstance(path);
   try {
-    return await finishRestore(owner.dataDir, readMarker(owner.dataDir));
+    return await finishRestore(owner, readMarker(owner.dataDir));
   } finally {
     owner.release();
   }

@@ -26,10 +26,20 @@ export function acquireInstance(path: string) {
     lock.close();
     throw new Error("INSTANCE_BUSY: Stop the existing AgentFlow instance.");
   }
+  const connections = new Set<symbol>();
   return {
     dataDir,
     inode,
+    assertOwned() {
+      if (!lock.open || !lock.inTransaction) throw new Error("OWNERSHIP_REQUIRED");
+    },
+    registerConnection() {
+      if (!lock.open || !lock.inTransaction) throw new Error("OWNERSHIP_REQUIRED");
+      const id = Symbol(); connections.add(id);
+      return () => { connections.delete(id); };
+    },
     release() {
+      if (connections.size) throw new Error("CONNECTIONS_OPEN");
       if (lock.open) {
         lock.exec("ROLLBACK");
         lock.close();
@@ -37,3 +47,5 @@ export function acquireInstance(path: string) {
     },
   };
 }
+
+export type InstanceOwner = ReturnType<typeof acquireInstance>;
