@@ -165,3 +165,10 @@ escapes and all body controls while respecting quotes/comments and CASE END.
 The runner retains its outer immediate transaction and backup-before-upgrade.
 Independent exact-candidate migration review must pass before public registration
 implementation begins.
+
+Independent Stage 1 review found that UPDATE OR REPLACE could rebind a successful
+run's immutable order to a later failed run's ID, bypassing acceptance facts.
+Additive migration 0003 makes existing run IDs immutable through UPDATE triggers,
+including replacement collisions. It preserves migration 0002's reviewed bytes.
+Connected Store regressions prove that failed latest evidence still blocks
+acceptance after rejected identity changes, while lifecycle updates remain valid.

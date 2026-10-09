@@ -212,3 +212,10 @@ Unsupported or ambiguous lexical forms fail closed. SQLite remains the complete
 SQL grammar authority inside the runner-owned immediate transaction. Existing
 pre-migration backup, checksum, integrity and stopped-service restore behavior
 remain required. This bounded recognizer is not a general SQL parser.
+
+Stage 1 review repair adds migration 0003 without changing migration 0002.
+`runs_id_immutable` rejects every change to an existing run ID, including an
+UPDATE OR REPLACE collision that would otherwise delete a later failure and
+rebind older success evidence to its identity. Same-ID updates and lifecycle
+projection updates remain valid. Existing insert guards also reject replacement
+and UPSERT attempts for an existing run identity.
