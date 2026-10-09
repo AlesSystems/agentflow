@@ -197,3 +197,18 @@ it("same-site page and RSC/prefetch GET requests are forbidden", async () => {
     expect(await response.text()).not.toContain("generation");
   }
 });
+it("rejects a genuinely expired persisted session through production HTTP", async () => {
+  const cookie = await pair(server);
+  const { hashSecret } = await import("../../src/server/auth");
+  const Database = (await import("better-sqlite3")).default;
+  const { join } = await import("node:path");
+  const fixture = new Database(join(server.dir, "agentflow.sqlite"));
+  fixture
+    .prepare("UPDATE sessions SET expires_at=? WHERE secret_hash=?")
+    .run(Date.now() - 1, hashSecret(cookie.slice(cookie.indexOf("=") + 1)));
+  fixture.close();
+  for (const path of ["/api/v1/foundation", "/"])
+    expect(
+      (await fetch(server.url + path, { headers: { Cookie: cookie } })).status,
+    ).toBe(401);
+});
