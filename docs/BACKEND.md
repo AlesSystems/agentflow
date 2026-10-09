@@ -42,9 +42,9 @@ The board has four fixed statuses.
 
 Manual moves among the first three statuses require the current task version and no queued or running run on that task. Registering any task-linked run increments task `version`. Registering an implementation run also increments `workRevision`; `run.started` moves the task to `in_progress`, and `run.succeeded` moves it to `review`. Both transitions increment task version. Failure, cancellation, or interruption leaves the column unchanged and adds an attention signal.
 
-A completed task rejects edits and new runs until it is reopened. Reopen moves it to `backlog`, increments both revisions, and clears the current completion timestamp. Historical completion records remain immutable.
+A completed task rejects work/metadata edits and new runs until it is reopened. Immutable comments may append in an unarchived project without changing task revisions or current acceptance. Reopen moves it to `backlog`, increments both revisions, and clears the current completion timestamp. Historical completion records remain immutable.
 
-Description and acceptance-criteria edits increment both revisions. Title, tags, priority, assignee, parent grouping, links, and blocker edits increment only `version`. Work edits are rejected while a run is queued or running. Editing the work of a task in `review` returns it to `backlog`; its earlier execution evidence remains visible.
+Changed description and acceptance-criteria values increment both revisions. Supplying unchanged values does not change workRevision. Title, tags, priority, assignee, parent grouping, links, and blocker edits increment only `version`. Work edits are rejected while a run is queued or running. Editing the work of a task in `review` returns it to `backlog`; its earlier execution evidence remains visible.
 
 Completion is a distinct command. It requires `review`, the current task version, no queued or running run, and a nonempty human acceptance note. If the task has any implementation-run history, its latest implementation run must have succeeded for the current work revision. A task with no implementation-run history can be accepted as manual work. The UI labels both paths as human acceptance.
 
@@ -116,3 +116,63 @@ Request bodies are limited to 64 KiB. Progress text is limited to 4,000 characte
 Hook text is untrusted text, never HTML. Repository paths and evidence paths are metadata only. The server does not execute or open them. URL fields allow only `https:` or `http:` links and never trigger server-side fetching. The harness must omit secrets and full prompts before reporting. Redaction patterns alone cannot guarantee secrecy.
 
 This protects against unintended network access and hostile browser origins. It does not protect data from another program running with the same operating-system user privileges.
+
+
+## P02 persistence implementation
+
+P02 is an implementation candidate under review. Its [receipt](implementation/P02.md)
+records source, commands, proof and pending integration. `Store.command` owns
+immediate transactions and exact receipts; `Store.snapshot` owns short bounded
+read transactions. Driver operations, cursor representation, SQL and transaction
+mechanics stay in database modules. HTTP carries typed commands/queries from the
+strict endpoint registry. Plain task decisions own lifecycle and work revisions.
+
+Migration 0001 supplies real prerequisite agents/runs with foreign keys,
+same-project task agreement, an active-task partial unique index, positive
+versions, nonnegative lastSequence and nullable workRevision only for taskless
+planning. Latest implementation evidence follows server insertion order,
+including registrations sharing the same millisecond. Public registration/events
+remain P04 work. W01 adds active-workflow archive rejection once workflow records
+exist; P02 already rejects queued/running taskless planning runs on archive.
+
+Comments and completion/reopen facts are append-only through production commands.
+Each fact and the affected task receive durable changes in the same transaction.
+Comments do not change task version or workRevision. Completion changes version
+through the task transition; reopen increments both and retains acceptance history.
+Parent checks and optimistic versions are transactional. Exact retries resolve
+before current state checks, but credential-role authorization precedes replay.
+
+Snapshot lists, board totals, histories, metrics, generation and feed maximum
+share one read transaction. A captured server time supplies all freshness/day
+calculations. Settings storage size is explicitly observational. The timezone
+feasibility gate selected the approved exact-pinned Temporal fallback rather than
+claiming that finite Intl probes establish all historical transitions. Six literal
+boundary/membership cases passed before metric queries. The receipt links primary
+library/Temporal documentation and qualifies host ICU availability.
+
+A stopped-service restore validates any nonempty known checksum-valid migration
+prefix and upgrades its private candidate before replacement. Historical P01
+markers at staged/archived/replaced phases also upgrade before continuing. Migration
+backup/drain, integrity, checkpoint/fsync, generation renewal and session revocation
+remain owned operations. Invalid/newer/tampered schemas fail closed. No foundation
+migration checksum was changed.
+
+
+### Mandatory P04 registration-order prerequisite
+
+Astra approved implicit rowid ordering only for bounded P02, which has no public
+run registration/deletion, VACUUM or runs-table rebuild. Implicit rowid is not a
+full-v1 durability contract. Before the first P04 public registration, add an
+explicit immutable registration-order field with a uniqueness constraint in a
+reviewed additive migration. Preserve migration 0001's checksum and backfill in
+existing rowid order before any operation can change it. Allocate later values
+transactionally with registration, using a durable monotonic allocator that does
+not reuse order after pruning; exact retries retain the stored value.
+
+Move both latest-run detail and latest-implementation acceptance queries to that
+field. Prove tied timestamps and reversed UUID ordering, later failure superseding
+success, current-revision acceptance, restart, backup/restore, VACUUM and a
+representative table rebuild. P04's independent Astra plan approval must include
+this prerequisite. If registration, deletion, VACUUM or rebuild moves into P02/P03,
+the durable field must precede that expanded scope. PLAN retains this unchecked
+acceptance item; the P02 receipt records the adjudication provenance.

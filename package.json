@@ -18,31 +18,35 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
-    "test:runtime": "vitest run tests/integration/runtime.test.ts tests/integration/auth.test.ts tests/integration/recovery.test.ts tests/integration/lock.test.ts tests/integration/stream.test.ts"
+    "test:runtime": "vitest run tests/integration/runtime.test.ts tests/integration/auth.test.ts tests/integration/recovery.test.ts tests/integration/lock.test.ts tests/integration/stream.test.ts",
+    "openapi:generate": "tsx scripts/openapi.ts",
+    "openapi:check": "tsx scripts/openapi.ts --check",
+    "test:performance:p02": "tsx tests/performance/p02.ts"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "0.5.1",
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.4",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "better-sqlite3": "13.0.3",
-    "drizzle-orm": "0.45.4",
-    "zod": "4.6.5",
     "server-only": "0.0.1",
-    "tsx": "4.23.15"
+    "tsx": "4.23.15",
+    "zod": "4.6.5"
   },
   "devDependencies": {
-    "eslint-config-next": "16.4.0",
-    "drizzle-kit": "0.31.11",
-    "tailwindcss": "4.3.3",
-    "@tailwindcss/postcss": "4.3.3",
-    "typescript": "5.9.3",
-    "eslint": "9.39.4",
-    "vitest": "5.0.3",
     "@playwright/test": "1.64.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "24.19.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@types/better-sqlite3": "9.6.0",
-    "@types/node": "24.19.1"
+    "drizzle-kit": "0.31.11",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.4.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
   },
   "type": "module"
 }

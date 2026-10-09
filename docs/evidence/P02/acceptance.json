@@ -1,0 +1,559 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "9735ea7126bd6a330aa73fe3a6d9cda6c4c7b906",
+  "fixture": "Synthetic public HTTP requests with synthetic browser acceptance; no actual human attestation",
+  "observations": [
+    {
+      "path": "/projects",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "id": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+          "name": "Synthetic evidence project",
+          "repositoryPath": null,
+          "archivedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T20:26:28.167Z",
+          "updatedAt": "2026-10-09T20:26:28.167Z"
+        },
+        "snapshotCursor": "1",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/projects",
+      "method": "POST",
+      "credentialKind": "reporter",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "id": "3aa49b38-5c02-4a07-9c1b-d09c75f848fb",
+          "name": "Synthetic allowed-Origin reporter evidence",
+          "repositoryPath": null,
+          "archivedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T20:26:28.171Z",
+          "updatedAt": "2026-10-09T20:26:28.171Z"
+        },
+        "snapshotCursor": "2",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+          "title": "Synthetic evidence task",
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "status": "backlog",
+          "version": 1,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.173Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "3",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
+      "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "title": "Synthetic evidence task",
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+          "status": "review",
+          "version": 2,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.177Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "4",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/complete",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+          "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "workRevision": 1,
+          "implementationRunId": null,
+          "actor": "operator",
+          "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+          "evidenceUrl": null,
+          "acceptedAt": "2026-10-09T20:26:28.180Z"
+        },
+        "snapshotCursor": "6",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "id": "d6d33f2d-305e-4adc-8e66-17b916e3c000",
+          "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "text": "Synthetic immutable comment after acceptance",
+          "actor": "operator",
+          "createdAt": "2026-10-09T20:26:28.182Z"
+        },
+        "snapshotCursor": "8",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
+      "method": "GET",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "task": {
+            "title": "Synthetic evidence task",
+            "description": "",
+            "acceptanceCriteria": "",
+            "priority": "normal",
+            "tags": [],
+            "assignedAgentId": null,
+            "targetRole": null,
+            "parentTaskId": null,
+            "branch": null,
+            "pullRequestUrl": null,
+            "blockedReason": null,
+            "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+            "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+            "status": "completed",
+            "version": 3,
+            "workRevision": 1,
+            "createdAt": "2026-10-09T20:26:28.173Z",
+            "updatedAt": "2026-10-09T20:26:28.180Z",
+            "completedAt": "2026-10-09T20:26:28.180Z"
+          },
+          "currentCompletion": {
+            "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+            "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
+            "workRevision": 1,
+            "implementationRunId": null,
+            "actor": "operator",
+            "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+            "evidenceUrl": null,
+            "acceptedAt": "2026-10-09T20:26:28.180Z"
+          },
+          "latestRun": null,
+          "history": {
+            "commentsUrl": "/api/v1/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
+            "completions": {
+              "items": [
+                {
+                  "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+                  "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
+                  "workRevision": 1,
+                  "implementationRunId": null,
+                  "actor": "operator",
+                  "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+                  "evidenceUrl": null,
+                  "acceptedAt": "2026-10-09T20:26:28.180Z"
+                }
+              ],
+              "nextCursor": null,
+              "nextUrl": null
+            },
+            "reopens": {
+              "items": [],
+              "nextCursor": null,
+              "nextUrl": null
+            }
+          }
+        },
+        "snapshotCursor": "8",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/reopen",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "title": "Synthetic evidence task",
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+          "status": "backlog",
+          "version": 4,
+          "workRevision": 2,
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.187Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "10",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
+      "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 409,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "error": {
+          "code": "version_conflict",
+          "details": {
+            "currentVersion": 4
+          },
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      }
+    },
+    {
+      "path": "/projects/f8a17cc3-e471-4609-a364-efbd33099bc5",
+      "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "id": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+          "name": "Synthetic evidence project",
+          "repositoryPath": null,
+          "archivedAt": "2026-10-09T20:26:28.190Z",
+          "version": 2,
+          "createdAt": "2026-10-09T20:26:28.167Z",
+          "updatedAt": "2026-10-09T20:26:28.190Z"
+        },
+        "snapshotCursor": "11",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 409,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "error": {
+          "code": "project_archived",
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      }
+    },
+    {
+      "path": "/settings",
+      "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "timezone": "Europe/London",
+          "version": 2,
+          "dataLocation": "<redacted synthetic private directory>",
+          "storageBytes": 477928,
+          "storageMeasurement": "observational"
+        },
+        "snapshotCursor": "12",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/complete",
+      "method": "POST",
+      "credentialKind": "reporter",
+      "originPolicy": "originless",
+      "status": 403,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "error": {
+          "code": "human_required",
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      }
+    },
+    {
+      "path": "/projects/f8a17cc3-e471-4609-a364-efbd33099bc5/board",
+      "method": "GET",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "columns": [
+            {
+              "status": "backlog",
+              "items": [
+                {
+                  "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+                  "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+                  "parentTaskId": null,
+                  "title": "Synthetic evidence task",
+                  "description": "",
+                  "acceptanceCriteria": "",
+                  "status": "backlog",
+                  "priority": "normal",
+                  "tags": [],
+                  "assignedAgentId": null,
+                  "targetRole": null,
+                  "branch": null,
+                  "pullRequestUrl": null,
+                  "blockedReason": null,
+                  "version": 4,
+                  "workRevision": 2,
+                  "createdAt": "2026-10-09T20:26:28.173Z",
+                  "updatedAt": "2026-10-09T20:26:28.187Z",
+                  "completedAt": null
+                }
+              ],
+              "total": 1,
+              "nextCursor": null
+            },
+            {
+              "status": "in_progress",
+              "items": [],
+              "total": 0,
+              "nextCursor": null
+            },
+            {
+              "status": "review",
+              "items": [],
+              "total": 0,
+              "nextCursor": null
+            },
+            {
+              "status": "completed",
+              "items": [],
+              "total": 0,
+              "nextCursor": null
+            }
+          ]
+        },
+        "snapshotCursor": "12",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks",
+      "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d",
+      "body": {
+        "data": {
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+          "title": "Synthetic evidence task",
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "status": "backlog",
+          "version": 1,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.173Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "3",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
+      "method": "GET",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
+      "status": 200,
+      "generationHeader": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d",
+      "body": {
+        "data": {
+          "task": {
+            "title": "Synthetic evidence task",
+            "description": "",
+            "acceptanceCriteria": "",
+            "priority": "normal",
+            "tags": [],
+            "assignedAgentId": null,
+            "targetRole": null,
+            "parentTaskId": null,
+            "branch": null,
+            "pullRequestUrl": null,
+            "blockedReason": null,
+            "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+            "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
+            "status": "backlog",
+            "version": 4,
+            "workRevision": 2,
+            "createdAt": "2026-10-09T20:26:28.173Z",
+            "updatedAt": "2026-10-09T20:26:28.187Z",
+            "completedAt": null
+          },
+          "currentCompletion": null,
+          "latestRun": null,
+          "history": {
+            "commentsUrl": "/api/v1/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
+            "completions": {
+              "items": [
+                {
+                  "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+                  "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
+                  "workRevision": 1,
+                  "implementationRunId": null,
+                  "actor": "operator",
+                  "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+                  "evidenceUrl": null,
+                  "acceptedAt": "2026-10-09T20:26:28.180Z"
+                }
+              ],
+              "nextCursor": null,
+              "nextUrl": null
+            },
+            "reopens": {
+              "items": [
+                {
+                  "id": "4e4b0693-228a-4882-89c5-c95dbf2ee93f",
+                  "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
+                  "workRevision": 2,
+                  "actor": "operator",
+                  "reason": "Synthetic rework fixture",
+                  "createdAt": "2026-10-09T20:26:28.187Z"
+                }
+              ],
+              "nextCursor": null,
+              "nextUrl": null
+            }
+          }
+        },
+        "snapshotCursor": "12",
+        "generation": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d"
+      }
+    }
+  ],
+  "restore": {
+    "before": {
+      "generation": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "schemaVersion": 2,
+      "sessionCount": 1,
+      "counts": {
+        "projects": 2,
+        "tasks": 1,
+        "comments": 1,
+        "completions": 1,
+        "reopens": 1,
+        "receipts": 9,
+        "changes": 12,
+        "runs": 0
+      },
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      }
+    },
+    "after": {
+      "generation": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d",
+      "schemaVersion": 2,
+      "sessionCount": 0,
+      "counts": {
+        "projects": 2,
+        "tasks": 1,
+        "comments": 1,
+        "completions": 1,
+        "reopens": 1,
+        "receipts": 9,
+        "changes": 12,
+        "runs": 0
+      },
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      }
+    },
+    "integrity": "ok",
+    "generationRenewed": true,
+    "backupPreserved": true,
+    "backupDigest": "8bd4367f2b433aa3c865162ae93d4526eba1ede9e839442b9277297822405d99"
+  },
+  "finalCandidateRevision": "baf0bffcf79baf6268133fc3c8b1dd20b2ab967b",
+  "evidenceReuse": "Captured at sourceRevision. Runtime unchanged in final candidate; only fixture signal cleanup and its regression were added afterward.",
+  "redactions": [
+    "Credential values and cookie/bearer headers omitted.",
+    "Settings dataLocation is a labeled synthetic-directory placeholder."
+  ]
+}

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { foundationSchemas } from "../../../../contracts/foundation";
 import { guard } from "../../../../server/runtime";
 import {
   privateContext,
@@ -26,10 +26,7 @@ export async function POST(request: Request) {
     } catch {
       throw new HttpError(400, "json_invalid");
     }
-    const parsed = z
-      .object({ token: z.string().max(128) })
-      .strict()
-      .safeParse(body);
+    const parsed = foundationSchemas.pairInput.safeParse(body);
     if (!parsed.success) throw new HttpError(422, "fields_invalid");
     if (!equalSecret(parsed.data.token, state.owned.credentials.pairingToken))
       throw new HttpError(401, "authentication_required");
@@ -56,7 +53,7 @@ export async function DELETE(request: Request) {
     } catch {
       throw new HttpError(400, "json_invalid");
     }
-    if (!z.object({}).strict().safeParse(body).success)
+    if (!foundationSchemas.revokeInput.safeParse(body).success)
       throw new HttpError(422, "fields_invalid");
     state.owned.store.revoke(
       hashSecret(cookieSecret(request.headers.get("cookie"))!),

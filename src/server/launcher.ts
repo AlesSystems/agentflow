@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
+import { matchEndpoint } from "../contracts/routes";
 import { readConfig, type RuntimeConfig } from "./config";
 import { openOwnedStore } from "../db";
 import { beginClosing, clearRuntime, publishRuntime } from "./runtime";
@@ -12,6 +13,8 @@ import {
   publicError,
   rejectReadBody,
   validateEnvelope,
+  requireResourceMutation,
+  MutationBudget,
 } from "./security";
 
 type LifecycleHooks = {
@@ -29,6 +32,7 @@ export async function startRuntime(
   const owned = await openOwnedStore(config.dataDir);
   let app: Awaited<ReturnType<(typeof import("next"))["default"]>> | undefined;
   let server: ReturnType<typeof createServer> | undefined;
+  const mutationBudget = new MutationBudget();
   const sockets = new Set<Socket>();
   const requests = new Set<Promise<void>>();
   let shutdownPromise: Promise<void> | undefined;
@@ -84,13 +88,20 @@ export async function startRuntime(
           { host: request.headers.host, origin: request.headers.origin },
           config.port,
         );
-        rejectReadBody(request);
         response.setHeader("Cache-Control", "no-store");
         const pathname = new URL(
           request.url || "/",
           `http://127.0.0.1:${config.port}`,
         ).pathname;
+        const matched = matchEndpoint(request.method || "GET", pathname);
         if (
+          (pathname.startsWith("/api/v1/") &&
+            !(
+              pathname === "/api/v1/health" &&
+              ["GET", "HEAD"].includes(request.method || "GET")
+            ) &&
+            !(pathname === "/api/v1/session" && request.method === "POST")) ||
+          matched ||
           pathname === "/" ||
           pathname === "/api/v1/foundation" ||
           (pathname === "/api/v1/session" && request.method === "DELETE")
@@ -99,18 +110,31 @@ export async function startRuntime(
           for (const [key, value] of Object.entries(request.headers)) {
             if (typeof value === "string") headers.set(key, value);
           }
-          authenticate(
+          const principal = authenticate(
             headers,
             owned.store,
             owned.credentials,
-            pathname === "/api/v1/foundation" ? "read" : "human",
+            matched?.endpoint.access ??
+              (pathname === "/" || pathname === "/api/v1/session"
+                ? "human"
+                : "read"),
             () =>
               response.setHeader(
                 "AgentFlow-Generation",
                 owned.store.metadata().generation,
               ),
           );
+          if (
+            matched?.endpoint.kind === "command" ||
+            (pathname.startsWith("/api/v1/") &&
+              pathname !== "/api/v1/session" &&
+              !["GET", "HEAD"].includes(request.method || "GET"))
+          ) {
+            requireResourceMutation(headers, principal);
+            mutationBudget.charge();
+          }
         }
+        rejectReadBody(request);
         await hooks.beforeDispatch?.(request);
         if (!["GET", "HEAD"].includes(request.method || "GET")) {
           const body = await boundedBody(request);
@@ -136,11 +160,15 @@ export async function startRuntime(
         response.setHeader("Content-Type", "application/json");
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("Connection", "close");
-        if (failure.status === 503) response.setHeader("Retry-After", "1");
+        if ([429, 503].includes(failure.status))
+          response.setHeader("Retry-After", "1");
         response.end(
           JSON.stringify({
             error: {
               code: failure.code,
+              ...("details" in failure && failure.details
+                ? { details: failure.details }
+                : {}),
               message:
                 "The request could not be completed. Check the local service and request.",
             },

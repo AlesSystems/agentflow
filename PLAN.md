@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 foundation implementation is under review. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 is integrated through PR #4; P02 planning is underway. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -43,12 +43,12 @@ the package open. Follow [DELIVERY.md](docs/DELIVERY.md) to resume after interru
 
 Depends on no earlier package. Proposed files include `package.json`, lockfile, Node version pin, Next.js configuration, `src/db/`, local launcher/auth modules, and initial integration tests.
 
-- [ ] Select exact supported versions. Record Node and better-sqlite3 compatibility using the isolated macOS installation procedure in the execution policy.
-- [ ] Scaffold Next.js, TypeScript, Tailwind, lint, type checking, Vitest, and Playwright. Define the commands used below.
-- [ ] Prove SQLite transactions and a streamed response in `npm run build && npm start` before selecting the driver permanently.
-- [ ] Implement data-directory permissions, loopback binding, exact Host/Origin checks, separate pairing/reporter credentials, protected page/API reads, and session revocation. Prove a reporter token cannot create a session or call human-only commands.
-- [ ] Implement the single-instance lock, migrations, integrity-checked backup, and stopped-service restore with generation renewal.
-- [ ] Disable framework telemetry and remove external font/asset dependencies.
+- [x] Select exact supported versions. Record Node and better-sqlite3 compatibility using the isolated macOS installation procedure in the execution policy.
+- [x] Scaffold Next.js, TypeScript, Tailwind, lint, type checking, Vitest, and Playwright. Define the commands used below.
+- [x] Prove SQLite transactions and a streamed response in `npm run build && npm start` before selecting the driver permanently.
+- [x] Implement data-directory permissions, loopback binding, exact Host/Origin checks, separate pairing/reporter credentials, protected page/API reads, and session revocation. Prove a reporter token cannot create a session or call human-only commands.
+- [x] Implement the single-instance lock, migrations, integrity-checked backup, and stopped-service restore with generation renewal.
+- [x] Disable framework telemetry and remove external font/asset dependencies.
 
 Pass when a clean production launch binds only to loopback, an unauthenticated private read fails, and authenticated reads work. A second instance must fail safely. Restart, a failed migration, and restore must preserve the documented data state. Capture listener output, HTTP responses, and the integrity check.
 
@@ -86,6 +86,7 @@ Run the focused browser suite plus lint, type checking, and build. Attach board,
 
 Depends on P02. Proposed files include agent/run schemas, run state rules, event ingestion, migrations, HTTP handlers, and integration fixtures.
 
+- [ ] Before public run registration, add explicit immutable unique registration order in a reviewed additive migration, preserve migration 0001's checksum and existing rowid order in backfill, allocate durable non-reusing values transactionally, and move both latest queries to it. Prove tied timestamps, reversed UUID order, later failure/current-revision gates, restart, backup/restore, VACUUM and table-rebuild preservation. Include this mandatory prerequisite in P04 Astra plan approval; see [BACKEND.md](docs/BACKEND.md).
 - [ ] Implement agent registration and per-attempt runs, including active-run uniqueness and task version checks.
 - [ ] Implement the event envelope, strict sequence policy, exact-duplicate recovery, and terminal-state protection.
 - [ ] Commit events, run/task projections, receipts, and change records together.

@@ -29,13 +29,16 @@ export function failure(error: unknown, generation?: string) {
     {
       error: {
         code: result.code,
+        ...("details" in result && result.details
+          ? { details: result.details }
+          : {}),
         message:
           "The request could not be completed. Check the local service and request.",
       },
     },
     result.status,
     {
-      ...(result.status === 503 ? { "Retry-After": "1" } : {}),
+      ...([429, 503].includes(result.status) ? { "Retry-After": "1" } : {}),
       ...(generation ? { "AgentFlow-Generation": generation } : {}),
     },
   );
