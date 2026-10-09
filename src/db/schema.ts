@@ -290,12 +290,60 @@ export const runOrderAllocator = sqliteTable(
   ],
 );
 
-export const runRegistrations=sqliteTable('run_registrations',{
- runId:text('run_id').primaryKey().notNull().references(()=>runs.id),digest:text('digest').notNull(),body:text('body').notNull(),
-},t=>[check('run_registrations_body',sql`json_valid(${t.body})`)]);
-export const runEvents=sqliteTable('run_events',{
- eventId:text('event_id').primaryKey().notNull(),runId:text('run_id').notNull().references(()=>runs.id),sequence:integer('sequence').notNull(),type:text('type').notNull(),digest:text('digest').notNull(),body:text('body').notNull(),acknowledgement:text('acknowledgement').notNull(),occurredAt:integer('occurred_at').notNull(),receivedAt:integer('received_at').notNull(),
-},t=>[uniqueIndex('run_events_run_sequence').on(t.runId,t.sequence),check('run_events_sequence',sql`typeof(${t.sequence})='integer' AND ${t.sequence} BETWEEN 1 AND 9007199254740991`),check('run_events_type',sql`${t.type} IN ('run.started','run.heartbeat','run.progress','run.succeeded','run.failed','run.cancelled')`),check('run_events_body',sql`json_valid(${t.body})`),check('run_events_acknowledgement',sql`json_valid(${t.acknowledgement})`)]);
-export const runClosures=sqliteTable('run_closures',{
- id:text('id').primaryKey().notNull(),runId:text('run_id').notNull().references(()=>runs.id),reason:text('reason').notNull(),actor:text('actor').notNull(),createdAt:integer('created_at').notNull(),
-},t=>[uniqueIndex('run_closures_run').on(t.runId),check('run_closures_actor',sql`${t.actor}='operator'`)]);
+export const runRegistrations = sqliteTable(
+  "run_registrations",
+  {
+    runId: text("run_id")
+      .primaryKey()
+      .notNull()
+      .references(() => runs.id),
+    digest: text("digest").notNull(),
+    body: text("body").notNull(),
+  },
+  (t) => [check("run_registrations_body", sql`json_valid(${t.body})`)],
+);
+export const runEvents = sqliteTable(
+  "run_events",
+  {
+    eventId: text("event_id").primaryKey().notNull(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    sequence: integer("sequence").notNull(),
+    type: text("type").notNull(),
+    digest: text("digest").notNull(),
+    body: text("body").notNull(),
+    acknowledgement: text("acknowledgement").notNull(),
+    occurredAt: integer("occurred_at").notNull(),
+    receivedAt: integer("received_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("run_events_run_sequence").on(t.runId, t.sequence),
+    check(
+      "run_events_sequence",
+      sql`typeof(${t.sequence})='integer' AND ${t.sequence} BETWEEN 1 AND 9007199254740991`,
+    ),
+    check(
+      "run_events_type",
+      sql`${t.type} IN ('run.started','run.heartbeat','run.progress','run.succeeded','run.failed','run.cancelled')`,
+    ),
+    check("run_events_body", sql`json_valid(${t.body})`),
+    check("run_events_acknowledgement", sql`json_valid(${t.acknowledgement})`),
+  ],
+);
+export const runClosures = sqliteTable(
+  "run_closures",
+  {
+    id: text("id").primaryKey().notNull(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id),
+    reason: text("reason").notNull(),
+    actor: text("actor").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("run_closures_run").on(t.runId),
+    check("run_closures_actor", sql`${t.actor}='operator'`),
+  ],
+);

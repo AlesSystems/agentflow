@@ -45,11 +45,24 @@ it("documents static Next API methods and bodyless foundation exceptions", async
   expect(doc.paths["/api/v1/health"].head).toBeDefined();
   expect(doc.paths["/api/v1/foundation"].head).toBeDefined();
 });
-it('publishes normalized event occurrence strings and generation headers on identity replay',()=>{
- const doc=openapiDocument();const events=doc.paths['/api/v1/runs/{id}/events'].get as {responses:Record<string,{content?:Record<string,{schema:unknown}>}>};
- const output=JSON.stringify(events.responses['200'].content!['application/json'].schema);
- expect(output).not.toContain('"occurredAt":{}');
- for(const path of ['/api/v1/runs','/api/v1/runs/{id}/events']){
- const operation=doc.paths[path].post as {responses:Record<string,{headers?:Record<string,unknown>}>};expect(operation.responses['200'].headers?.['AgentFlow-Generation']).toBeDefined();
- }
+it("publishes normalized event occurrence strings and generation headers on identity replay", () => {
+  const doc = openapiDocument();
+  const events = doc.paths["/api/v1/runs/{id}/events"].get as {
+    responses: Record<
+      string,
+      { content?: Record<string, { schema: unknown }> }
+    >;
+  };
+  const output = JSON.stringify(
+    events.responses["200"].content!["application/json"].schema,
+  );
+  expect(output).not.toContain('"occurredAt":{}');
+  for (const path of ["/api/v1/runs", "/api/v1/runs/{id}/events"]) {
+    const operation = doc.paths[path].post as {
+      responses: Record<string, { headers?: Record<string, unknown> }>;
+    };
+    expect(
+      operation.responses["200"].headers?.["AgentFlow-Generation"],
+    ).toBeDefined();
+  }
 });

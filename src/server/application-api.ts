@@ -22,7 +22,10 @@ export async function applicationApi(request: Request) {
     if (endpoint.kind === "command") {
       if (url.searchParams.size) throw new HttpError(400, "query_invalid");
       requireResourceMutation(request.headers, state.principal);
-      if (!endpoint.eventIdentity && !uuid.safeParse(request.headers.get("idempotency-key")).success)
+      if (
+        !endpoint.eventIdentity &&
+        !uuid.safeParse(request.headers.get("idempotency-key")).success
+      )
         throw new HttpError(422, "idempotency_key_invalid");
       try {
         original = await request.json();
@@ -37,14 +40,27 @@ export async function applicationApi(request: Request) {
       }
       original = params;
     }
-    if(endpoint.eventIdentity && typeof original === "object" && original!==null && "schemaVersion" in original && original.schemaVersion!==1) throw new HttpError(422,"unsupported_schema_version");
+    if (
+      endpoint.eventIdentity &&
+      typeof original === "object" &&
+      original !== null &&
+      "schemaVersion" in original &&
+      original.schemaVersion !== 1
+    )
+      throw new HttpError(422, "unsupported_schema_version");
     const parsed = endpoint.parseRequest(original, id ?? "");
     if (!parsed.success)
       throw new HttpError(
         endpoint.kind === "command" ? 422 : 400,
         endpoint.kind === "command" ? "validation_failed" : "query_invalid",
       );
-    if(parsed.success && parsed.action.kind==="command" && parsed.action.command.kind==="run.event" && parsed.action.command.input.runId!==id) throw new HttpError(422,"validation_failed");
+    if (
+      parsed.success &&
+      parsed.action.kind === "command" &&
+      parsed.action.command.kind === "run.event" &&
+      parsed.action.command.input.runId !== id
+    )
+      throw new HttpError(422, "validation_failed");
     const reply =
       parsed.action.kind === "command"
         ? state.owned.store.command(parsed.action.command, {
