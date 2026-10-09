@@ -34,7 +34,9 @@ export function seedRun(
       db.prepare(
         "INSERT OR IGNORE INTO agents VALUES(?, 'Synthetic fixture agent','test','implementation',1,?)",
       ).run(agentId, input.createdAt ?? 0);
-      db.prepare("INSERT INTO runs(id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at,registration_order) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(
+      db.prepare(
+        "INSERT INTO runs(id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at,registration_order) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      ).run(
         id,
         input.projectId,
         agentId,

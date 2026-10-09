@@ -187,26 +187,28 @@ export class Store {
           `pre-migration-${randomUUID()}.sqlite`,
         ),
       );
-    this.db.transaction(() => {
-      this.db.exec(
-        "CREATE TABLE IF NOT EXISTS migration_history (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at INTEGER NOT NULL)",
-      );
-      for (const migration of registry.slice(applied.length)) {
-        this.db.exec(migration.sql);
-        this.db
-          .prepare("INSERT INTO migration_history VALUES (?, ?, ?)")
-          .run(migration.id, migration.sha256, Date.now());
-      }
-      if (!applied.length)
-        this.db
-          .prepare("INSERT INTO instance_metadata VALUES (1, ?, ?)")
-          .run(randomUUID(), registry.length);
-      else
-        this.db
-          .prepare("UPDATE instance_metadata SET schema_version = ?")
-          .run(registry.length);
-      this.integrity();
-    }).immediate();
+    this.db
+      .transaction(() => {
+        this.db.exec(
+          "CREATE TABLE IF NOT EXISTS migration_history (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at INTEGER NOT NULL)",
+        );
+        for (const migration of registry.slice(applied.length)) {
+          this.db.exec(migration.sql);
+          this.db
+            .prepare("INSERT INTO migration_history VALUES (?, ?, ?)")
+            .run(migration.id, migration.sha256, Date.now());
+        }
+        if (!applied.length)
+          this.db
+            .prepare("INSERT INTO instance_metadata VALUES (1, ?, ?)")
+            .run(randomUUID(), registry.length);
+        else
+          this.db
+            .prepare("UPDATE instance_metadata SET schema_version = ?")
+            .run(registry.length);
+        this.integrity();
+      })
+      .immediate();
   }
   backup(destination: string) {
     const pending = this.writeBackup(destination).finally(() =>

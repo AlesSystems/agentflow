@@ -21,6 +21,7 @@ CREATE TRIGGER runs_registration_order_insert BEFORE INSERT ON runs
 WHEN NEW.registration_order IS NULL OR typeof(NEW.registration_order)!='integer'
  OR NEW.registration_order<1 OR NEW.registration_order>9007199254740991
  OR NEW.registration_order<=(SELECT last_value FROM run_order_allocator WHERE singleton=1)
+ OR EXISTS(SELECT 1 FROM runs WHERE id=NEW.id)
 BEGIN SELECT RAISE(ABORT,'runs_registration_order_invalid'); END;
 CREATE TRIGGER runs_registration_order_immutable BEFORE UPDATE OF registration_order ON runs
 WHEN NEW.registration_order IS NOT OLD.registration_order

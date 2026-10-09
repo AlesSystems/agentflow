@@ -528,10 +528,20 @@ it("preserves linked active, terminal and taskless legacy facts without inventin
 it("rejects replace attempts that would change an existing run identity's immutable order", async () => {
   const { dir, owned } = await upgradedFixture();
   try {
-    connection(dir, db => {
-      expect(() => db.exec(`INSERT OR REPLACE INTO runs SELECT id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at,4 FROM runs WHERE id='${failedId}'`)).toThrow();
+    connection(dir, (db) => {
+      expect(() =>
+        db.exec(
+          `INSERT OR REPLACE INTO runs SELECT id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at,4 FROM runs WHERE id='${failedId}'`,
+        ),
+      ).toThrow();
       expect(highwater(db)).toEqual({ last_value: 3 });
-      expect(db.prepare('SELECT registration_order FROM runs WHERE id=?').get(failedId)).toEqual({registration_order:2});
+      expect(
+        db
+          .prepare("SELECT registration_order FROM runs WHERE id=?")
+          .get(failedId),
+      ).toEqual({ registration_order: 2 });
     });
-  } finally { owned.close(); }
+  } finally {
+    owned.close();
+  }
 });

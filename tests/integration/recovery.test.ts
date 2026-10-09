@@ -241,7 +241,10 @@ it("applies an existing fixture pending migration and restarts unchanged", async
     },
   ];
   const upgraded = await openOwnedStore(dir, registry);
-  expect(upgraded.store.metadata()).toEqual({ generation, schemaVersion: migrations.length + 1 });
+  expect(upgraded.store.metadata()).toEqual({
+    generation,
+    schemaVersion: migrations.length + 1,
+  });
   expect(upgraded.store.sessionCount()).toBe(1);
   expect(upgraded.store.validateMigrations(registry)).toEqual([
     "0000_foundation",
@@ -251,7 +254,10 @@ it("applies an existing fixture pending migration and restarts unchanged", async
   ]);
   upgraded.close();
   const reopened = await openOwnedStore(dir, registry);
-  expect(reopened.store.metadata()).toEqual({ generation, schemaVersion: migrations.length + 1 });
+  expect(reopened.store.metadata()).toEqual({
+    generation,
+    schemaVersion: migrations.length + 1,
+  });
   expect(reopened.store.sessionCount()).toBe(1);
   reopened.close();
   const files = readdirSync(join(dir, "backups")).filter((file) =>
@@ -329,7 +335,10 @@ for (const phase of ["staged", "archived", "replaced"] as const)
     );
     await repairRestore(dir);
     const restored = await openOwnedStore(dir);
-    expect(restored.store.metadata()).toEqual({ generation, schemaVersion: migrations.length });
+    expect(restored.store.metadata()).toEqual({
+      generation,
+      schemaVersion: migrations.length,
+    });
     expect(restored.store.sessionCount()).toBe(0);
     expect(restored.store.integrity().integrity).toBe("ok");
     restored.close();
