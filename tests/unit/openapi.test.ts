@@ -21,7 +21,7 @@ it("publishes every implemented registry operation and validates every example",
     ).toBeDefined();
   }
   expect(doc.paths["/api/v1/runs"].post).toBeDefined();
-  expect(doc.paths["/api/v1/activity"]).toBeUndefined();
+  expect(doc.paths["/api/v1/activity"].get).toBeDefined();
   expect(doc.paths["/api/v1/changes/stream"]).toBeDefined();
   const event = doc.paths["/api/v1/runs/{id}/events"].post as {
     parameters: { name: string }[];

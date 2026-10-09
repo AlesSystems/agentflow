@@ -241,3 +241,11 @@ Object.assign(responseExamples, {
     freshness: { stale: false, reporting: "terminal" },
   }),
 });
+const runSummary = { ...observedRun, agentName: observedAgent.displayName, agentSource: observedAgent.source, projectName: project.name, taskTitle: task.title, message: null, evidenceUrl: null };
+Object.assign(requestExamples, { trackingAgents: {}, trackingRuns: {}, trackingRun: {}, trackingTasks: { projectId }, trackingBoard: {}, activity: { projectId } });
+Object.assign(responseExamples, {
+  trackingAgents: snapshot(list({ id: agentId, displayName: observedAgent.displayName, source: observedAgent.source, defaultRole: observedAgent.defaultRole, version: 1, createdAt: time, freshRunning: 0, queuedNoReport: 1, staleActive: 0 })),
+  trackingRuns: snapshot(list(runSummary)), trackingRun: snapshot(runSummary), trackingTasks: snapshot(list({ ...task, latestAttempt: runSummary })),
+  trackingBoard: snapshot({ columns: ["backlog", "in_progress", "review", "completed"].map(status => ({ status, items: status === "backlog" ? [{ ...task, latestAttempt: null }] : [], total: status === "backlog" ? 1 : 0, nextCursor: null })) }),
+  activity: snapshot(list({ id: "event:" + eventId, kind: "report", runId, projectId, agentId, taskId, agentName: observedAgent.displayName, agentSource: observedAgent.source, projectName: project.name, taskTitle: task.title, purpose: observedRun.purpose, model: null, receivedAt: time, occurredAt: time, event: { ...event, receivedAt: time }, reason: null })),
+});

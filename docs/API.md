@@ -285,3 +285,22 @@ remain historical after newer versions or restore. Clients compare the current
 response generation header and refetch authoritative state; an old receipt never
 advances a future subscription cursor. P04 adds explicit observation routes;
 Activity and browser live tracking remain P05; native SSE is implemented in the first transport slice.
+
+### P05 tracking reads
+
+Additive bounded reads preserve every original task/command/receipt shape.
+`GET /tracking/projects/{id}/board` and `/tracking/tasks` accept the original
+board/task filters and return tasks with nullable `latestAttempt`. Its stored
+run, freshness, agent/source, project/task names and latest non-heartbeat message
+are joined/batched at the snapshot boundary. No registered attempt means null.
+`GET /tracking/agents` pages identities with fresh-running, queued-no-report and
+stale-active counts. `/tracking/runs` accepts run filters; `/tracking/runs/{id}`
+returns the same joined attempt summary. These labels describe received reports.
+
+`GET /activity` accepts limit/cursor and optional projectId/agentId/taskId.
+Stable descending receipt-time/identity pagination binds generation and filters,
+resolving UUID aliases to actual stored foreign keys. The joined feed contains
+stored producer reports except heartbeat noise, plus separately typed human
+tracking closure facts with reason and no producer event/occurred time. Raw
+`/runs/{id}/events` remains ascending sequence and retains every heartbeat.
+All endpoints share registered read authentication, strict schemas and OpenAPI.

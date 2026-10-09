@@ -1,0 +1,44 @@
+import { mkdtempSync, realpathSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { expect, test } from "vitest";
+import { openOwnedStore } from "../../src/db";
+import type { ApplicationCommand } from "../../src/db/application";
+import { canonicalDigest } from "../../src/domain/request-digest";
+import { activityResponse, trackingBoardResponse, trackingRunsResponse, trackingAgentsResponse } from "../../src/contracts/tracking";
+import { eventsResponse } from "../../src/contracts/observations";
+test("tracking reads show actual attempts and filter heartbeat noise without losing raw reports", async () => {
+  const owned = await openOwnedStore(mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p05-query-")));
+  let now = 100000;
+  const send = (command: ApplicationCommand) => owned.store.command(command, { principal: "operator", method: "POST", path: command.kind, key: randomUUID(), digest: canonicalDigest(command), now: now++ }).body.data as { id: string };
+  try {
+    const projectId = send({ kind: "project.create", input: { name: "Synthetic tracking" } }).id;
+    const taskId = send({ kind: "task.create", input: { projectId, title: "Reported task" } }).id;
+    send({ kind: "task.create", input: { projectId, title: "Unreported task" } });
+    const agentId = send({ kind: "agent.create", input: { displayName: "Fixture producer", source: "public-http", defaultRole: "implementation" } }).id;
+    const runId = randomUUID();
+    send({ kind: "run.register", input: { id: runId, projectId, taskId, agentId, purpose: "implementation", expectedTaskVersion: 1 } });
+    for (const [index, type] of ["run.started", "run.heartbeat", "run.progress"].entries()) send({ kind: "run.event", id: runId, input: { schemaVersion: 1, eventId: randomUUID(), runId, sequence: index + 1, occurredAt: new Date(now - 50).toISOString(), type, payload: type === "run.progress" ? { message: "Real stored progress" } : {} } as Extract<ApplicationCommand, { kind: "run.event" }>["input"] });
+    const board = trackingBoardResponse.parse(owned.store.snapshot({ kind: "tracking.board", id: projectId, input: { limit: 50 } }, now).body);
+    const tasks = board.data.columns.flatMap(c => c.items);
+    expect(tasks.find(t => t.id === taskId)?.latestAttempt).toMatchObject({ agentName: "Fixture producer", message: "Real stored progress", model: null, freshness: { reporting: "fresh" } });
+    expect(tasks.find(t => t.title === "Unreported task")?.latestAttempt).toBeNull();
+    const activity = activityResponse.parse(owned.store.snapshot({ kind: "activity", input: { limit: 1, taskId: taskId.toUpperCase() } }, now).body);
+    expect(activity.data.total).toBe(2);
+    expect(activity.data.items[0].event?.type).toBe("run.progress");
+    const next = activityResponse.parse(owned.store.snapshot({ kind: "activity", input: { limit: 1, taskId, cursor: activity.data.nextCursor! } }, now).body);
+    expect(next.data.items[0].event?.type).toBe("run.started");
+    expect(() => owned.store.snapshot({ kind: "activity", input: { limit: 1, agentId, cursor: activity.data.nextCursor! } }, now)).toThrow("cursor_invalid");
+    const raw = eventsResponse.parse(owned.store.snapshot({ kind: "events", id: runId, input: { limit: 50 } }, now).body);
+    expect(raw.data.items.map(e => e.sequence)).toEqual([1, 2, 3]);
+    now += 60001;
+    const agents = trackingAgentsResponse.parse(owned.store.snapshot({ kind: "tracking.agents", input: { limit: 50 } }, now).body);
+    expect(agents.data.items[0]).toMatchObject({ freshRunning: 0, staleActive: 1 });
+    send({ kind: "run.close", id: runId, input: { expectedVersion: 4, reason: "Synthetic tracking closure" } });
+    const closed = activityResponse.parse(owned.store.snapshot({ kind: "activity", input: { limit: 50 } }, now).body);
+    expect(closed.data.items[0]).toMatchObject({ kind: "tracking_closed", event: null, reason: "Synthetic tracking closure", occurredAt: null });
+    const runs = trackingRunsResponse.parse(owned.store.snapshot({ kind: "tracking.runs", input: { limit: 50, agentId: agentId.toUpperCase() } }, now).body);
+    expect(runs.data.items[0]).toMatchObject({ state: "interrupted", lastSequence: 3 });
+  } finally { owned.close(); }
+});
