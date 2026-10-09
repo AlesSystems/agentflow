@@ -176,3 +176,39 @@ representative table rebuild. P04's independent Astra plan approval must include
 this prerequisite. If registration, deletion, VACUUM or rebuild moves into P02/P03,
 the durable field must precede that expanded scope. PLAN retains this unchecked
 acceptance item; the P02 receipt records the adjudication provenance.
+
+### P04 Stage 1 migration candidate
+
+Migration 0002 adds `runs.registration_order`, backfilled densely in prior rowid
+order. Existing run facts remain unchanged. No registration identity, historical
+request, event, or receipt is fabricated. Both latest queries use this explicit
+order. It stays internal and is excluded from task-detail run serialization.
+
+SQLite's additive column is physically nullable. Its CHECK rejects noninteger,
+nonpositive, and unsafe values when present; reviewed insert/immutability triggers
+require a value, forbid replacing an existing run identity, and reject order
+changes. A unique index protects order identity. Drizzle declares effective
+requiredness; real SQL guard and schema-parity tests cover the additive limitation.
+
+The singleton `run_order_allocator` starts at the backfill maximum, or zero on a
+fresh database. Internal code reads its next value within an immediate write
+transaction. A run insert must exceed the retained high-water; its AFTER INSERT
+trigger advances the allocator in the same transaction. Failed transactions
+restore both. The database forbids allocator insertion, deletion, identity change,
+reset, decrease, noninteger values and overflow. Deleting a highest run cannot
+permit reuse. This allocator is not derived again from surviving run rows.
+
+Non-reuse applies within retained database history. An older backup restores its
+high-water and exact retained orders under a renewed generation, revoking browser
+sessions. Values assigned only in discarded later history may recur. Numeric order
+is not a public identity across generations. Public registration and observation
+receipt restoration remain Stage 2 verification because those capabilities do not
+yet exist in this candidate.
+
+Migration validation conservatively tokenizes quotes, identifiers and comments,
+recognizes the reviewed trigger header/body delimiters and CASE END expressions,
+and rejects transaction or connection controls, including bare top-level END.
+Unsupported or ambiguous lexical forms fail closed. SQLite remains the complete
+SQL grammar authority inside the runner-owned immediate transaction. Existing
+pre-migration backup, checksum, integrity and stopped-service restore behavior
+remain required. This bounded recognizer is not a general SQL parser.

@@ -138,3 +138,30 @@ revision gates, restart, backup/restore, VACUUM and a representative table rebui
 P04 Astra approval must include that prerequisite. PLAN and BACKEND retain it.
 Earlier registration, deletion, VACUUM or a runs rebuild would invalidate the
 bounded approval and require the durable field first.
+
+## ADR-010. Preserve registration order within retained history
+
+P04 Stage 1 follows the exact approved Astra plan recorded by the coordinator.
+Add migration 0002 without changing 0000 or 0001. Dense backfill preserves prior
+rowid order, including negative or sparse legacy rowids. Explicit immutable unique
+positive safe integers drive both latest-run detail and implementation acceptance.
+Legacy records remain observations without invented registration identity.
+
+A durable singleton high-water outlives deletion of any run. Immediate write
+transactions read its next value; database insert guards and an AFTER INSERT
+trigger advance it atomically. This also rejects direct reuse of a deleted order
+and replacement of an existing run identity. Allocator insertion, deletion,
+reset, decrease and overflow fail. Failed transactions may reuse uncommitted
+values. No external allocator or generic persistence framework is introduced.
+
+An older stopped-service restore reinstates retained orders and high-water under
+a new generation, with session revocation. It cannot preserve discarded later
+history; order values in that discarded history may recur. UUIDs remain public
+identities. Registration/event receipt recovery awaits the public Stage 2 paths.
+
+Reviewed trigger SQL requires body BEGIN/END. Replace the blanket keyword guard
+with a bounded conservative token recognizer, rejecting top-level transaction
+escapes and all body controls while respecting quotes/comments and CASE END.
+The runner retains its outer immediate transaction and backup-before-upgrade.
+Independent exact-candidate migration review must pass before public registration
+implementation begins.
