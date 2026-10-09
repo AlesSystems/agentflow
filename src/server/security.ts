@@ -52,6 +52,7 @@ export function authenticate(
   store: Store,
   credentials: Credentials,
   access: Access,
+  authenticated?: () => void,
 ): Principal {
   const bearer = headers.get("authorization");
   let secret: string | undefined;
@@ -68,10 +69,12 @@ export function authenticate(
       !equalSecret(bearer.slice(7), credentials.reporterToken)
     )
       throw new HttpError(401, "authentication_required");
+    authenticated?.();
     return authorize({ kind: "reporter", id: "reporter" }, access);
   }
   const session = secret ? store.session(hashSecret(secret)) : null;
   if (!session) throw new HttpError(401, "authentication_required");
+  authenticated?.();
   return authorize(
     { kind: "browser", id: "operator", sessionId: session.id },
     access,

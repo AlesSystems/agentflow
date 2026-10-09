@@ -2,13 +2,18 @@ import "server-only";
 import { guard } from "./runtime";
 import { authenticate, publicError } from "./security";
 import type { Access } from "./security";
-export function privateContext(headers: Headers, access: Access = "read") {
+export function privateContext(
+  headers: Headers,
+  access: Access = "read",
+  authenticated?: (generation: string) => void,
+) {
   const state = guard(headers);
   const principal = authenticate(
     headers,
     state.owned.store,
     state.owned.credentials,
     access,
+    () => authenticated?.(state.owned.store.metadata().generation),
   );
   return { ...state, principal };
 }
@@ -18,7 +23,7 @@ export function json(value: unknown, status = 200, extra: HeadersInit = {}) {
     headers: { "Cache-Control": "no-store", ...extra },
   });
 }
-export function failure(error: unknown) {
+export function failure(error: unknown, generation?: string) {
   const result = publicError(error);
   return json(
     {
@@ -29,6 +34,9 @@ export function failure(error: unknown) {
       },
     },
     result.status,
-    result.status === 503 ? { "Retry-After": "1" } : {},
+    {
+      ...(result.status === 503 ? { "Retry-After": "1" } : {}),
+      ...(generation ? { "AgentFlow-Generation": generation } : {}),
+    },
   );
 }

@@ -89,7 +89,11 @@ export async function startRuntime(
           request.url || "/",
           `http://127.0.0.1:${config.port}`,
         ).pathname;
-        if (pathname === "/" || pathname === "/api/v1/foundation") {
+        if (
+          pathname === "/" ||
+          pathname === "/api/v1/foundation" ||
+          (pathname === "/api/v1/session" && request.method === "DELETE")
+        ) {
           const headers = new Headers();
           for (const [key, value] of Object.entries(request.headers)) {
             if (typeof value === "string") headers.set(key, value);
@@ -98,11 +102,12 @@ export async function startRuntime(
             headers,
             owned.store,
             owned.credentials,
-            pathname === "/" ? "human" : "read",
-          );
-          response.setHeader(
-            "AgentFlow-Generation",
-            owned.store.metadata().generation,
+            pathname === "/api/v1/foundation" ? "read" : "human",
+            () =>
+              response.setHeader(
+                "AgentFlow-Generation",
+                owned.store.metadata().generation,
+              ),
           );
         }
         await hooks.beforeDispatch?.(request);

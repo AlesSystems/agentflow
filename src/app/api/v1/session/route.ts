@@ -16,6 +16,7 @@ import { HttpError, requireBrowserMutation } from "../../../../server/security";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
+  let generation: string | undefined;
   try {
     const state = guard(request.headers);
     requireBrowserMutation(request.headers);
@@ -32,19 +33,23 @@ export async function POST(request: Request) {
     if (!parsed.success) throw new HttpError(422, "fields_invalid");
     if (!equalSecret(parsed.data.token, state.owned.credentials.pairingToken))
       throw new HttpError(401, "authentication_required");
+    generation = state.owned.store.metadata().generation;
     const session = createSession(state.owned.store);
     return json({ paired: true }, 200, {
       "Set-Cookie": sessionCookie(session.secret),
       "AgentFlow-Generation": state.owned.store.metadata().generation,
     });
   } catch (error) {
-    return failure(error);
+    return failure(error, generation);
   }
 }
 export async function DELETE(request: Request) {
+  let generation: string | undefined;
   try {
+    const state = privateContext(request.headers, "human", (current) => {
+      generation = current;
+    });
     requireBrowserMutation(request.headers);
-    const state = privateContext(request.headers, "human");
     let body: unknown;
     try {
       body = await request.json();
@@ -65,6 +70,6 @@ export async function DELETE(request: Request) {
       },
     });
   } catch (error) {
-    return failure(error);
+    return failure(error, generation);
   }
 }
