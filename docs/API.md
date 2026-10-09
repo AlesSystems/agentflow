@@ -8,7 +8,7 @@ reporting routes below remain planned. W01–W03c add the
 
 ## Conventions
 
-The base URL is `http://127.0.0.1:3000/api/v1`. UUIDs identify records. Fields use camelCase. Timestamps are RFC 3339 UTC strings. Unknown request fields and unknown event schema versions are rejected.
+The base URL is `http://127.0.0.1:3000/api/v1`. UUIDs identify records. New client UUID identities and input references normalize to lowercase; original parsed JSON casing remains part of request digest identity. Stored legacy identities and historical acknowledgements retain their original bytes. Case-insensitive lookups preserve those actual stored IDs for references and projection writes. An existing casing collision rejects with `409 identity_ambiguous` rather than merging records. Fields use camelCase. Timestamps are RFC 3339 UTC strings. Unknown request fields and unknown event schema versions are rejected.
 
 Browser sessions and CLI bearer credentials use the authentication rules in [BACKEND.md](BACKEND.md). Every endpoint except health and session creation requires authentication. Complete, reopen, and close-run commands require a browser session. The reporter token cannot pair a browser session or call human-only commands. Pairing and reporter credentials are distinct.
 
