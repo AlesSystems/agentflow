@@ -40,16 +40,29 @@ export const projects = sqliteTable(
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  (t) => [index("projects_created").on(t.createdAt, t.id)],
+  (t) => [
+    check("projects_version", sql`${t.version}>0`),
+    index("projects_created").on(t.createdAt, t.id),
+  ],
 );
-export const agents = sqliteTable("agents", {
-  id: text("id").primaryKey(),
-  displayName: text("display_name").notNull(),
-  source: text("source").notNull(),
-  defaultRole: text("default_role").notNull(),
-  version: integer("version").notNull(),
-  createdAt: integer("created_at").notNull(),
-});
+export const agents = sqliteTable(
+  "agents",
+  {
+    id: text("id").primaryKey(),
+    displayName: text("display_name").notNull(),
+    source: text("source").notNull(),
+    defaultRole: text("default_role").notNull(),
+    version: integer("version").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    check(
+      "agents_default_role",
+      sql`${t.defaultRole} IN ('orchestrator','implementation','reviewer','verifier')`,
+    ),
+    check("agents_version", sql`${t.version}>0`),
+  ],
+);
 export const tasks = sqliteTable(
   "tasks",
   {
@@ -169,7 +182,10 @@ export const comments = sqliteTable(
     actor: text("actor").notNull(),
     createdAt: integer("created_at").notNull(),
   },
-  (t) => [index("comments_task_created").on(t.taskId, t.createdAt, t.id)],
+  (t) => [
+    check("comments_actor", sql`${t.actor} IN ('operator','reporter')`),
+    index("comments_task_created").on(t.taskId, t.createdAt, t.id),
+  ],
 );
 export const completions = sqliteTable(
   "completions",
@@ -187,7 +203,11 @@ export const completions = sqliteTable(
     evidenceUrl: text("evidence_url"),
     acceptedAt: integer("accepted_at").notNull(),
   },
-  (t) => [index("completions_task_accepted").on(t.taskId, t.acceptedAt, t.id)],
+  (t) => [
+    check("completions_actor", sql`${t.actor}='operator'`),
+    check("completions_work_revision", sql`${t.workRevision}>0`),
+    index("completions_task_accepted").on(t.taskId, t.acceptedAt, t.id),
+  ],
 );
 export const reopens = sqliteTable(
   "reopens",
@@ -201,13 +221,24 @@ export const reopens = sqliteTable(
     reason: text("reason").notNull(),
     createdAt: integer("created_at").notNull(),
   },
-  (t) => [index("reopens_task_created").on(t.taskId, t.createdAt, t.id)],
+  (t) => [
+    check("reopens_actor", sql`${t.actor}='operator'`),
+    check("reopens_work_revision", sql`${t.workRevision}>0`),
+    index("reopens_task_created").on(t.taskId, t.createdAt, t.id),
+  ],
 );
-export const settings = sqliteTable("settings", {
-  singleton: integer("singleton").primaryKey(),
-  timezone: text("timezone").notNull(),
-  version: integer("version").notNull(),
-});
+export const settings = sqliteTable(
+  "settings",
+  {
+    singleton: integer("singleton").primaryKey(),
+    timezone: text("timezone").notNull(),
+    version: integer("version").notNull(),
+  },
+  (t) => [
+    check("settings_singleton", sql`${t.singleton}=1`),
+    check("settings_version", sql`${t.version}>0`),
+  ],
+);
 export const changes = sqliteTable("changes", {
   cursor: integer("cursor").primaryKey({ autoIncrement: true }),
   entityType: text("entity_type").notNull(),
