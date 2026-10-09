@@ -18,7 +18,9 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
-    "test:runtime": "vitest run tests/integration/runtime.test.ts tests/integration/auth.test.ts tests/integration/recovery.test.ts tests/integration/lock.test.ts tests/integration/stream.test.ts"
+    "test:runtime": "vitest run tests/integration/runtime.test.ts tests/integration/auth.test.ts tests/integration/recovery.test.ts tests/integration/lock.test.ts tests/integration/stream.test.ts",
+    "openapi:generate": "tsx scripts/openapi.ts",
+    "openapi:check": "tsx scripts/openapi.ts --check"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
