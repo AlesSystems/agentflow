@@ -1,9 +1,10 @@
 # Local API contract
 
-Status: P01 health, session and foundation routes are implemented and under
-independent review. Task, reporting and workflow endpoints below remain planned. P02 publishes generated OpenAPI from shared Zod schemas; P04 and P05 extend it with the reporting contracts below. W01–W03c add the
-[Phase 3 contracts](V1_WORKFLOWS.md), including workflow reports, dependency/review
-commands, opt-in GitHub observation, export/retention, and usage.
+Status: P01 foundation routes are integrated. P02 project/task/settings/overview
+routes are implemented as a candidate awaiting independent review and integration.
+[Generated OpenAPI](openapi.json) describes implemented operations only. P04/P05
+reporting routes below remain planned. W01–W03c add the
+[Phase 3 contracts](V1_WORKFLOWS.md).
 
 ## Conventions
 
@@ -31,7 +32,7 @@ Paths below are relative to `/api/v1`.
 
 | Method and path | Behavior |
 | --- | --- |
-| `GET /foundation` | P01 authenticated readiness `{ "ready": true, "generation": "UUID", "schemaVersion": 1 }`; no task snapshot/cursor |
+| `GET /foundation` | P01 authenticated readiness `{ "ready": true, "generation": "UUID", "schemaVersion": 2 }`; no task snapshot/cursor |
 | `GET /health` | `200` ready or `503` not ready; no private metadata |
 | `POST /session` | Exchange the pairing token for a browser session; body `{ "token": "..." }` |
 | `DELETE /session` | Revoke the current session, body `{}`; `204` |
@@ -209,3 +210,68 @@ A single invocation retries for at most five seconds, then exits. Exit codes are
 A replay after database restoration requires re-registering missing entities with their original IDs where supported. A lost task/agent registration receipt may require rebuilding references before reporting. The first release recovery guide must make this limit explicit; a restore cannot guarantee preservation of observations acknowledged after the backup.
 
 The harness must explicitly emit events. AgentFlow does not scrape Codex or Claude Code private state. Provider-specific adapters can follow after the generic integration has end-to-end evidence.
+
+
+## P02 serialized contracts
+
+Shared strict Zod schemas and the endpoint registry generate `openapi.json`.
+`npm run openapi:check` validates published examples and detects stale output.
+The native guard uses the same registry for early authentication and command
+roles. Unsupported fields, duplicate query parameters and mutation query strings
+reject without a receipt. UUID idempotency keys and concrete paths are canonicalized
+for receipt scope. Original parsed JSON is retained before trims/defaults.
+Object key order and JSON formatting whitespace are irrelevant; whitespace inside
+string values and omitted versus explicit defaults remain different requests.
+
+Project queries accept `archived=true|false`, `limit` and `cursor`. Task queries
+accept `projectId`, `status`, `priority`, `tag`, `assignedAgentId`, `q` for a title
+substring, `limit` and `cursor`. Board queries accept the same filters except
+project/status/cursor, which come from the route and column. All pages default
+to 50 and cap at 100. Stable ordering is descending creation time then ID.
+List data is `{ items, total, nextCursor }`. Board data is
+`{ columns: [{ status, items, total, nextCursor }] }`, with the four fixed statuses.
+Each board cursor works with the corresponding `/tasks` status and identical
+filters and limit. Cursors bind generation, entity kind, filters, limit and order.
+
+`TaskDetailV1` data is `{ task, currentCompletion, latestRun, history }`.
+`currentCompletion` is null until current work is completed. `latestRun` is
+nullable persisted observation metadata. `history` contains `commentsUrl`,
+`completions` and `reopens`. Each requested history container is
+`{ items, nextCursor, nextUrl }`; an unrequested container is null.
+GET task query `TaskDetailQueryV1` accepts `history=both|completion|reopen`,
+`historyLimit`, `completionCursor` and `reopenCursor`. Initial reads default to
+both histories and 50 records each. Each nextUrl is a working GET task URL with
+its independent cursor, history selector and limit. A supplied cursor for an
+unrequested kind rejects. Empty/exhausted requested pages have an empty items
+array and null continuation values. Run/event history links await P04.
+
+Comments append immutably to tasks in unarchived projects, including completed
+tasks. They change neither task version nor work revision nor current acceptance.
+Archived projects reject comment append. Task edits remain rejected on completed
+work until reopen. Description limit is 20,000; acceptance-criteria limit is
+8,000. Name/title/branch/title-query limits are 200; blocker/note/comment/reason
+limits are 4,000. Existing tag, URL, path and body limits remain independent.
+Work revision compares changed values rather than field presence.
+
+Settings data is `{ timezone, version, dataLocation, storageBytes,
+storageMeasurement: "observational" }`. Database values belong to the snapshot;
+filesystem database/WAL size sampling is observational. UTC is initial until P03
+browser initialization. Validated named IANA aliases, including UTC and Etc names,
+are retained as supplied. Raw numeric-offset pseudo-zones reject.
+
+Overview data contains `metrics`, `attention`, `timezone`, `capturedAt` and
+`day: { start, end }`. Metric names are `activeProjects`, `reportingAgents`,
+`completedToday`, `awaitingReview` and `failedRunsToday`. Attention is a bounded
+`{ items, total, nextCursor }` page. Each item has `id`, `projectId`, nullable
+`taskId`/`runId`, `title`, `createdAt` and grouped `reasons` from blocked/failed/stale.
+Taskless planning runs appear once. Archived projects are excluded. Reporting
+means a running record received within 60 seconds; it never claims process liveness.
+Today is a half-open local-day interval with earliest valid midnight, repeated
+midnight first occurrence and an empty skipped date. The exact-pinned Temporal
+fallback and literal feasibility fixtures are recorded in [P02](implementation/P02.md).
+
+All resource reads and writes return snapshot metadata. Completed command receipts
+remain historical after newer versions or restore. Clients compare the current
+response generation header and refetch authoritative state; an old receipt never
+advances a future subscription cursor. No P04 reporting, activity or SSE endpoint
+is executable in P02.

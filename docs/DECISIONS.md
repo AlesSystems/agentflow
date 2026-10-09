@@ -85,3 +85,39 @@ AgentFlow, proceeding package by package after proof and integration. A durable
 ledger enables resume; external access/protection blockers remain honest stops.
 This avoids requiring a new routine prompt per phase without promising that a
 long run cannot be interrupted.
+
+
+## ADR-009. Keep P02 commands and acceptance in the owned Store
+
+P02 implementation candidate follows the approved Astra medium plan hash recorded
+in [P02](implementation/P02.md). A flat typed command/snapshot capability hides
+SQLite transaction, receipt, cursor and projection knowledge. Pure task decisions
+hold lifecycle rules. Separate repository coordination was rejected because no
+second persistence consumer requires it. A strict typed endpoint registry is the
+shared boundary for HTTP roles, schemas and generated OpenAPI.
+
+Immutable comments may append to completed tasks in an unarchived project.
+This adds context without editing accepted work, changing task revisions or
+replacing current human acceptance. Archived projects remain read-only. Reporter
+credentials still cannot complete/reopen tasks or update settings, including retries.
+Synthetic acceptance fixtures prove browser-only transport and persistence;
+they never claim actual human attestation.
+
+Original parsed JSON supplies receipt identity before normalization. JSON key
+order and formatting whitespace are irrelevant; string whitespace and omitted
+versus explicit values remain significant. Receipt replay returns the exact
+committed status/body. Current generation remains a response header even when
+the stored body belongs to an older generation or task version.
+
+Finite Intl sampling cannot establish arbitrary historical timezone transition
+assumptions. The approved fallback uses exact-pinned `@js-temporal/polyfill` 0.5.1
+start-of-day semantics, with literal DST/repeated-midnight/skipped-date regression
+fixtures before query implementation. This avoids a silent offset approximation.
+Host ICU timezone data remains a qualified dependency, and six fixtures are not
+presented as universal proof.
+
+Agents/runs are persisted prerequisites for real assignment, active-run and
+acceptance gates. Their public reporting API stays in P04. Workflow archive
+checks stay in W01, where workflow records first exist. P02 updates older-prefix
+and interrupted-marker restore so P01 backups remain usable without replacing
+an original database before candidate migration succeeds.

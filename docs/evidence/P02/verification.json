@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "71bc5a51f1522dbcc06c093dad1d31ba1aab568e",
+  "baseRevision": "fb507181b13999dea46acfde08f07bb9dbb4847d",
+  "lockSha256": "46800035258f237a72e341706d5c25cb2f5fc05ac6487147c2b1a35f68088787",
+  "host": {
+    "macOS": "27.0",
+    "model": "Mac16,8",
+    "processor": "Apple M4 Pro",
+    "architecture": "arm64"
+  },
+  "runtime": {
+    "node": "24.15.0",
+    "npm": "11.12.1",
+    "driver": "better-sqlite3 13.0.3 bundled darwin-arm64 prebuild",
+    "timezone": "@js-temporal/polyfill 0.5.1"
+  },
+  "checks": [
+    {
+      "command": "npm run test:unit",
+      "result": "passed",
+      "files": 9,
+      "tests": 24
+    },
+    {
+      "command": "npm run test:integration",
+      "result": "passed",
+      "files": 12,
+      "tests": 63
+    },
+    {
+      "command": "AGENTFLOW_TEST_BROWSER=chrome npm run test:e2e",
+      "result": "passed",
+      "tests": 3
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed",
+      "warning": "Existing dynamic filesystem tracing warning in P01 active-root containment."
+    },
+    {
+      "command": "npm run openapi:check",
+      "result": "passed"
+    },
+    {
+      "command": "npm run test:performance:p02",
+      "result": "passed",
+      "productionRuns": 3,
+      "samplesPerEndpointPerRun": 100,
+      "warmupPerEndpointPerRun": 10
+    },
+    {
+      "command": "npm audit --omit=dev --json",
+      "result": "passed",
+      "vulnerabilities": 0
+    },
+    {
+      "command": "npm ls --all",
+      "result": "passed"
+    }
+  ],
+  "devAudit": {
+    "advisoryChains": 2,
+    "reportedPackages": 9,
+    "moderate": 4,
+    "high": 5,
+    "sources": [
+      "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+      "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm"
+    ],
+    "qualification": "Existing drizzle-kit/esbuild and eslint-config-next/fast-glob/micromatch/braces development chains. No force audit update applied."
+  },
+  "evidence": "Synthetic producer records and browser acceptance fixtures; no actual human attestation",
+  "redactions": [
+    "Credential values, cookies and authorization headers omitted.",
+    "Settings dataLocation replaced with a labeled synthetic-directory placeholder.",
+    "No operator task data or private prompts used."
+  ],
+  "limits": [
+    "Independent candidate review, GitHub CI and integration are owned by the coordinator and remain pending.",
+    "P02 has no equivalent baseline endpoint and no P04 event-ingestion fixture.",
+    "Browser proof covers retained P01 journeys; P03 owns the board journey.",
+    "No fresh checkout installation replay for P02 is claimed; P01 qualified this host, and P02 installed its exact pinned added dependency here.",
+    "Active workflow archive guard awaits W01 records."
+  ]
+}

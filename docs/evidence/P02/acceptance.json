@@ -1,0 +1,502 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "71bc5a51f1522dbcc06c093dad1d31ba1aab568e",
+  "fixture": "Synthetic public HTTP requests with synthetic browser acceptance; no actual human attestation",
+  "observations": [
+    {
+      "path": "/projects",
+      "method": "POST",
+      "status": 201,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "id": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "name": "Synthetic evidence project",
+          "repositoryPath": null,
+          "archivedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T20:16:19.848Z",
+          "updatedAt": "2026-10-09T20:16:19.848Z"
+        },
+        "snapshotCursor": "1",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks",
+      "method": "POST",
+      "status": 201,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "title": "Synthetic evidence task",
+          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "status": "backlog",
+          "version": 1,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T20:16:19.852Z",
+          "updatedAt": "2026-10-09T20:16:19.852Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "2",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "method": "PATCH",
+      "status": 200,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "title": "Synthetic evidence task",
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "status": "review",
+          "version": 2,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T20:16:19.852Z",
+          "updatedAt": "2026-10-09T20:16:19.856Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "3",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/complete",
+      "method": "POST",
+      "status": 201,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "id": "eb076393-179b-4671-8f99-5e4765d709ae",
+          "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "workRevision": 1,
+          "implementationRunId": null,
+          "actor": "operator",
+          "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+          "evidenceUrl": null,
+          "acceptedAt": "2026-10-09T20:16:19.860Z"
+        },
+        "snapshotCursor": "5",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+      "method": "POST",
+      "status": 201,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "id": "fd1eac7a-054c-4db7-b074-ccbdebb978ac",
+          "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "text": "Synthetic immutable comment after acceptance",
+          "actor": "operator",
+          "createdAt": "2026-10-09T20:16:19.862Z"
+        },
+        "snapshotCursor": "7",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "method": "GET",
+      "status": 200,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "task": {
+            "title": "Synthetic evidence task",
+            "description": "",
+            "acceptanceCriteria": "",
+            "priority": "normal",
+            "tags": [],
+            "assignedAgentId": null,
+            "targetRole": null,
+            "parentTaskId": null,
+            "branch": null,
+            "pullRequestUrl": null,
+            "blockedReason": null,
+            "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+            "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+            "status": "completed",
+            "version": 3,
+            "workRevision": 1,
+            "createdAt": "2026-10-09T20:16:19.852Z",
+            "updatedAt": "2026-10-09T20:16:19.860Z",
+            "completedAt": "2026-10-09T20:16:19.860Z"
+          },
+          "currentCompletion": {
+            "id": "eb076393-179b-4671-8f99-5e4765d709ae",
+            "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+            "workRevision": 1,
+            "implementationRunId": null,
+            "actor": "operator",
+            "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+            "evidenceUrl": null,
+            "acceptedAt": "2026-10-09T20:16:19.860Z"
+          },
+          "latestRun": null,
+          "history": {
+            "commentsUrl": "/api/v1/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+            "completions": {
+              "items": [
+                {
+                  "id": "eb076393-179b-4671-8f99-5e4765d709ae",
+                  "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "workRevision": 1,
+                  "implementationRunId": null,
+                  "actor": "operator",
+                  "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+                  "evidenceUrl": null,
+                  "acceptedAt": "2026-10-09T20:16:19.860Z"
+                }
+              ],
+              "nextCursor": null,
+              "nextUrl": null
+            },
+            "reopens": {
+              "items": [],
+              "nextCursor": null,
+              "nextUrl": null
+            }
+          }
+        },
+        "snapshotCursor": "7",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/reopen",
+      "method": "POST",
+      "status": 200,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "title": "Synthetic evidence task",
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "status": "backlog",
+          "version": 4,
+          "workRevision": 2,
+          "createdAt": "2026-10-09T20:16:19.852Z",
+          "updatedAt": "2026-10-09T20:16:19.866Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "9",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "method": "PATCH",
+      "status": 409,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "error": {
+          "code": "version_conflict",
+          "details": {
+            "currentVersion": 4
+          },
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      }
+    },
+    {
+      "path": "/projects/e3afd559-5225-46d8-8386-7d73460dd546",
+      "method": "PATCH",
+      "status": 200,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "id": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "name": "Synthetic evidence project",
+          "repositoryPath": null,
+          "archivedAt": "2026-10-09T20:16:19.870Z",
+          "version": 2,
+          "createdAt": "2026-10-09T20:16:19.848Z",
+          "updatedAt": "2026-10-09T20:16:19.870Z"
+        },
+        "snapshotCursor": "10",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+      "method": "POST",
+      "status": 409,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "error": {
+          "code": "project_archived",
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      }
+    },
+    {
+      "path": "/settings",
+      "method": "PATCH",
+      "status": 200,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "timezone": "Europe/London",
+          "version": 2,
+          "dataLocation": "<redacted synthetic private directory>",
+          "storageBytes": 449088,
+          "storageMeasurement": "observational"
+        },
+        "snapshotCursor": "11",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/complete",
+      "method": "POST",
+      "status": 403,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "error": {
+          "code": "human_required",
+          "message": "The request could not be completed. Check the local service and request."
+        }
+      }
+    },
+    {
+      "path": "/projects/e3afd559-5225-46d8-8386-7d73460dd546/board",
+      "method": "GET",
+      "status": 200,
+      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "body": {
+        "data": {
+          "columns": [
+            {
+              "status": "backlog",
+              "items": [
+                {
+                  "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+                  "parentTaskId": null,
+                  "title": "Synthetic evidence task",
+                  "description": "",
+                  "acceptanceCriteria": "",
+                  "status": "backlog",
+                  "priority": "normal",
+                  "tags": [],
+                  "assignedAgentId": null,
+                  "targetRole": null,
+                  "branch": null,
+                  "pullRequestUrl": null,
+                  "blockedReason": null,
+                  "version": 4,
+                  "workRevision": 2,
+                  "createdAt": "2026-10-09T20:16:19.852Z",
+                  "updatedAt": "2026-10-09T20:16:19.866Z",
+                  "completedAt": null
+                }
+              ],
+              "total": 1,
+              "nextCursor": null
+            },
+            {
+              "status": "in_progress",
+              "items": [],
+              "total": 0,
+              "nextCursor": null
+            },
+            {
+              "status": "review",
+              "items": [],
+              "total": 0,
+              "nextCursor": null
+            },
+            {
+              "status": "completed",
+              "items": [],
+              "total": 0,
+              "nextCursor": null
+            }
+          ]
+        },
+        "snapshotCursor": "11",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks",
+      "method": "POST",
+      "status": 201,
+      "generationHeader": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2",
+      "body": {
+        "data": {
+          "description": "",
+          "acceptanceCriteria": "",
+          "priority": "normal",
+          "tags": [],
+          "assignedAgentId": null,
+          "targetRole": null,
+          "parentTaskId": null,
+          "branch": null,
+          "pullRequestUrl": null,
+          "blockedReason": null,
+          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "title": "Synthetic evidence task",
+          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "status": "backlog",
+          "version": 1,
+          "workRevision": 1,
+          "createdAt": "2026-10-09T20:16:19.852Z",
+          "updatedAt": "2026-10-09T20:16:19.852Z",
+          "completedAt": null
+        },
+        "snapshotCursor": "2",
+        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+      }
+    },
+    {
+      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "method": "GET",
+      "status": 200,
+      "generationHeader": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2",
+      "body": {
+        "data": {
+          "task": {
+            "title": "Synthetic evidence task",
+            "description": "",
+            "acceptanceCriteria": "",
+            "priority": "normal",
+            "tags": [],
+            "assignedAgentId": null,
+            "targetRole": null,
+            "parentTaskId": null,
+            "branch": null,
+            "pullRequestUrl": null,
+            "blockedReason": null,
+            "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+            "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+            "status": "backlog",
+            "version": 4,
+            "workRevision": 2,
+            "createdAt": "2026-10-09T20:16:19.852Z",
+            "updatedAt": "2026-10-09T20:16:19.866Z",
+            "completedAt": null
+          },
+          "currentCompletion": null,
+          "latestRun": null,
+          "history": {
+            "commentsUrl": "/api/v1/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+            "completions": {
+              "items": [
+                {
+                  "id": "eb076393-179b-4671-8f99-5e4765d709ae",
+                  "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "workRevision": 1,
+                  "implementationRunId": null,
+                  "actor": "operator",
+                  "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
+                  "evidenceUrl": null,
+                  "acceptedAt": "2026-10-09T20:16:19.860Z"
+                }
+              ],
+              "nextCursor": null,
+              "nextUrl": null
+            },
+            "reopens": {
+              "items": [
+                {
+                  "id": "643033a9-baaf-4720-b145-2fd85de781d9",
+                  "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "workRevision": 2,
+                  "actor": "operator",
+                  "reason": "Synthetic rework fixture",
+                  "createdAt": "2026-10-09T20:16:19.866Z"
+                }
+              ],
+              "nextCursor": null,
+              "nextUrl": null
+            }
+          }
+        },
+        "snapshotCursor": "11",
+        "generation": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2"
+      }
+    }
+  ],
+  "restore": {
+    "before": {
+      "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "schemaVersion": 2,
+      "sessionCount": 1,
+      "counts": {
+        "projects": 1,
+        "tasks": 1,
+        "comments": 1,
+        "completions": 1,
+        "reopens": 1,
+        "receipts": 8,
+        "changes": 11,
+        "runs": 0
+      },
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      }
+    },
+    "after": {
+      "generation": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2",
+      "schemaVersion": 2,
+      "sessionCount": 0,
+      "counts": {
+        "projects": 1,
+        "tasks": 1,
+        "comments": 1,
+        "completions": 1,
+        "reopens": 1,
+        "receipts": 8,
+        "changes": 11,
+        "runs": 0
+      },
+      "integrity": {
+        "integrity": "ok",
+        "foreignKeys": []
+      }
+    },
+    "integrity": "ok",
+    "generationRenewed": true,
+    "backupPreserved": true,
+    "backupDigest": "b9fff695f3ad49a1c8ee25ba0bbc5bd76277dd0f17eac4ec3c86cbdbd367a0a4"
+  }
+}

@@ -95,3 +95,27 @@ the same-lockfile clean-private clone, reusing its documented fresh install at
 published UI captures and the scoped UI verdict are unchanged. Independent final
 code review and integration passed; P01 checkboxes are complete and later package
 checkboxes remain open.
+
+
+## Current P02 handoff
+
+Implementation candidate `71bc5a51f1522dbcc06c093dad1d31ba1aab568e` on
+`codex/v1-p02-contracts` extends integrated P01 receipt base
+`fb507181b13999dea46acfde08f07bb9dbb4847d`. Astra medium approved plan
+`9ed89f3489762f8e23bed29b426f953eb5c56956593c8c45f7fcc6ee07cea451`.
+P02 remains in review with unchecked PLAN boxes. The coordinator owns independent
+exact-candidate standards/spec/security review, CI, PR creation and integration.
+No worker push, PR or merge occurred. The final handoff commit is docs/evidence only.
+
+Unchanged source passed 24 unit, 63 integration and 3 retained P01 Chrome browser
+tests, lint, types, production build and OpenAPI reproducibility/example checking.
+Three production runs with 1,000 tasks, 200 runs, 300 comments and 100 synthetic
+completions measured task/board/overview p95 below 2.46 ms and the 250 ms budget.
+Production audit is clean; the two known development advisory chains remain.
+[P02 receipt](implementation/P02.md) and [structured proof](evidence/P02/verification.json)
+record exact source, lock hash, host, commands, redacted HTTP/restore evidence,
+performance distributions, historical failures and qualifications.
+
+Next gate: independently review `71bc5a5` source and this docs-only receipt, repair
+blocking findings within P02, reverify the affected candidate, then publish and
+integrate one scoped P02 PR. P03 starts only after verified P02 integration.

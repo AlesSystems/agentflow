@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "approvedPlanSha256": "9ed89f3489762f8e23bed29b426f953eb5c56956593c8c45f7fcc6ee07cea451",
+  "reviewArtifactSha256": "e03dc9b1ac1c4537d894c8cababe2afb95a665b3439e61091c9cfa6fc50539ad",
+  "decision": "APPROVED",
+  "reviewModel": "Astra medium",
+  "baseRevision": "fb507181b13999dea46acfde08f07bb9dbb4847d",
+  "scope": "P02 projects, tasks, settings, overview, command receipts, snapshots and generated OpenAPI. P03 and P04 remain unopened.",
+  "corrections": [
+    "description 20000 and acceptance criteria 8000",
+    "reachable immutable history continuation",
+    "original parsed JSON digest before transforms",
+    "immutable comments preserve task revisions, including completed tasks",
+    "exact local-day boundaries with mandatory pinned-library fallback",
+    "positive run versions and nonnegative lastSequence initialized at zero"
+  ],
+  "implementationFallback": {
+    "library": "@js-temporal/polyfill",
+    "version": "0.5.1",
+    "reason": "A fixed 15-minute Intl sampling grid cannot prove arbitrary unseen transitions or disjoint local-date membership. The approved fallback uses documented Temporal start-of-day semantics.",
+    "sources": [
+      "https://github.com/js-temporal/temporal-polyfill",
+      "https://github.com/js-temporal/temporal-polyfill/blob/main/CHANGELOG.md",
+      "https://tc39.es/proposal-temporal/docs/plaindate.html#toZonedDateTime",
+      "https://tc39.es/proposal-temporal/docs/zoneddatetime.html#startOfDay"
+    ]
+  }
+}
