@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T21:19:59.556566+00:00",
+  "title": "Design System: AgentFlow",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted"
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider"
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "Action"
+      },
+      "backlog": {
+        "role": "secondary",
+        "displayName": "Backlog"
+      },
+      "progress": {
+        "role": "secondary",
+        "displayName": "Progress"
+      },
+      "review": {
+        "role": "secondary",
+        "displayName": "Review"
+      },
+      "completed": {
+        "role": "secondary",
+        "displayName": "Completed"
+      },
+      "attention": {
+        "role": "secondary",
+        "displayName": "Attention"
+      },
+      "attention-tint": {
+        "role": "secondary",
+        "displayName": "Attention Tint"
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "Rail"
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "Action Hover"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Task card titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Evidence, forms and controls."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metadata and counts."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper-edge",
+        "value": "0 2px 0 var(--divider)",
+        "purpose": "Resting task cards."
+      },
+      {
+        "name": "dialog",
+        "value": "0 12px 38px rgb(32 41 57 / 0.2)",
+        "purpose": "Protected dialogs."
+      },
+      {
+        "name": "menu",
+        "value": "0 8px 20px rgb(32 41 57 / 0.15)",
+        "purpose": "Status dropdown."
+      }
+    ],
+    "motion": [
+      {
+        "name": "scrim-open",
+        "value": "fade-in 150ms ease-out",
+        "purpose": "Overlay opacity 0.6 to 1; reduced motion disables animation."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "single-lane",
+        "value": "1247px"
+      },
+      {
+        "name": "stacked-shell",
+        "value": "700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Committed primary action.",
+      "html": "<button class=\"ds-primary\">Save task</button>",
+      "css": ".ds-primary{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);border:1px solid var(--ink,#202939);border-radius:10px;padding:10px 14px;min-height:42px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--action,#2457d6);color:var(--paper,#fff);border-color:var(--action,#2457d6);font-weight:650}.ds-primary:hover{background:#1945b5}.ds-primary:active{background:var(--progress,#dcebff)}.ds-primary:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}.ds-primary:disabled{opacity:.65;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ordinary workspace action.",
+      "html": "<button class=\"ds-secondary\">Apply filters</button>",
+      "css": ".ds-secondary{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);border:1px solid var(--ink,#202939);border-radius:10px;padding:10px 14px;min-height:42px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--paper,#fff)}.ds-secondary:hover{background:var(--backlog,#e8edf4)}.ds-secondary:active{background:var(--progress,#dcebff)}.ds-secondary:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}.ds-secondary:disabled{opacity:.65;cursor:not-allowed}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Labeled native task field.",
+      "html": "<label class=\"ds-label\">Title<input class=\"ds-field\" value=\"Inspect the stored evidence\" /></label>",
+      "css": ".ds-label{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:block;font-weight:600;margin-bottom:16px}.ds-field{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:block;margin-top:6px;width:100%;border:1px solid var(--muted,#526071);border-radius:10px;background:var(--paper,#fff);padding:10px;min-height:42px;caret-color:var(--action,#2457d6)}.ds-field:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}.ds-field:disabled{opacity:.65}"
+    },
+    {
+      "name": "Workspace navigation",
+      "kind": "nav",
+      "description": "Compact local workspace links.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><a href=\"#overview\">Overview</a><a href=\"#projects\">Projects</a><a href=\"#settings\">Settings</a></nav>",
+      "css": ".ds-nav{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);background:#edf0f5;padding:28px 16px;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--divider,#cbd2dc)}.ds-nav a{color:var(--ink,#202939);text-decoration:none;padding:12px;border-radius:10px}.ds-nav a:hover{background:var(--paper,#fff)}.ds-nav a:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Noninteractive task metadata.",
+      "html": "<span class=\"ds-tag\">local</span>",
+      "css": ".ds-tag{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:inline-block;font-size:12px;background:var(--backlog,#e8edf4);padding:3px 8px;border-radius:12px}"
+    },
+    {
+      "name": "Task card",
+      "kind": "card",
+      "refersTo": "task-card",
+      "description": "Title-first stored task record.",
+      "html": "<article class=\"ds-card\"><button class=\"ds-title\">Inspect the stored evidence</button><p class=\"ds-meta\">normal \u00b7 verifier</p></article>",
+      "css": ".ds-card{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);background:var(--paper,#fff);border:1px solid var(--ink,#202939);border-radius:12px;padding:16px;box-shadow:0 2px 0 var(--divider,#cbd2dc)}.ds-title{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:block;text-align:left;border:0;border-radius:0;padding:0;min-height:0;background:none;font-size:16px;line-height:21px;font-weight:700;width:100%;overflow-wrap:anywhere;cursor:pointer}.ds-title:hover{color:var(--action,#2457d6)}.ds-title:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}.ds-meta{display:flex;gap:8px;margin:12px 0;font-size:12px;color:var(--muted,#526071)}"
+    },
+    {
+      "name": "Human acceptance stamp",
+      "kind": "custom",
+      "refersTo": "accepted-stamp",
+      "description": "Authoritative acceptance label, not a run outcome.",
+      "html": "<span class=\"ds-stamp\">Human accepted</span>",
+      "css": ".ds-stamp{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:inline-flex;border:1px solid var(--ink,#202939);border-radius:6px;padding:4px 8px;background:var(--completed,#ddf1df);font-size:12px;font-weight:650;margin:10px 0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The friendly work board",
+    "overview": "Original paper cards, bold upright titles, colored lane capsules and small acceptance stamps carry the selected slightly cartoonish character; evidence and recovery copy stay plain. P03 implements a manual local workspace, while reporting and graphs remain planned.",
+    "keyCharacteristics": [
+      "Title-first paper records",
+      "One blue action accent",
+      "Written status labels",
+      "Local system fonts",
+      "Explicit recovery decisions"
+    ],
+    "rules": [
+      {
+        "name": "The Written Status Rule",
+        "body": "A tint accompanies a written lifecycle label; human acceptance and run outcome remain separate facts.",
+        "section": "colors"
+      },
+      {
+        "name": "The Title First Rule",
+        "body": "Keep card titles upright, wrapping and stronger than metadata.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper Edge Rule",
+        "body": "Keep the selected small paper edge without adding diffuse card shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve local fonts/assets, explicit status text and visible focus.",
+      "Do keep human acceptance separate from reported execution success.",
+      "Do retain drafts through failure and require an explicit conflict decision.",
+      "Do adapt to one selected lane and readable full-viewport task controls."
+    ],
+    "donts": [
+      "Don't borrow Fizzy assets or add mascots, confetti or ambient motion.",
+      "Don't invent card report data, liveness, graph nodes or execution controls.",
+      "Don't describe synthetic acceptance as human attestation.",
+      "Don't treat captures or sampled contrast as blanket WCAG compliance."
+    ]
+  }
+}

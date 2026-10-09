@@ -33,8 +33,8 @@ after installation; external agent providers may still require network access.
 
 ## Capabilities and Constraints
 
-The repository is design-only: routes, APIs, and commands describe planned
-behavior, not shipped features. The v1 boundary is all three phases: P01–P07, W01–W02, W03a–W03c, and W04 in
+The repository implements the local runtime, project/task API and manual Work
+board. Reporting, CLI hooks and workflow surfaces remain later gated packages. The v1 boundary is all three phases: P01–P07, W01–W02, W03a–W03c, and W04 in
 [PLAN.md](PLAN.md). This supersedes the earlier v0.1 target.
 
 - Each project has Backlog, In progress, Review, and Completed columns.
@@ -53,8 +53,8 @@ behavior, not shipped features. The v1 boundary is all three phases: P01–P07, 
   and rework, opt-in read-only GitHub PR observation, export/retention, and reported
   usage summaries. [Phase 3 contracts](docs/V1_WORKFLOWS.md) define their bounds.
 - Agent process controls, multiple users, and LAN access remain separate proposals.
-- MIT is selected for AgentFlow-owned material. Exact runtime/dependency versions
-  remain open until P01. Installation evidence follows the approved
+- MIT is selected for AgentFlow-owned material. Runtime/dependency versions are pinned in
+  package.json and the lockfile; [P01 evidence](docs/implementation/P01.md) records compatibility. Installation evidence follows the approved
   [execution policy](docs/EXECUTION_POLICY.md); Linux support requires its own evidence.
 
 ## Brand Commitments
@@ -65,7 +65,7 @@ or assets. Preserve the frontend plan's light neutral canvas, readable dark text
 readable card outlines, one blue action accent, and offline system fonts. The user
 selected the Work board prototype and requested a slightly cartoonish Fizzy-like
 refinement on 2026-10-09: rounded colored lane tabs, bold titles, and small
-acceptance stamps. See [DESIGN.md](DESIGN.md) for proposed values.
+acceptance stamps. See [DESIGN.md](DESIGN.md) for extracted implementation values.
 
 ## Evidence on Hand
 
@@ -75,8 +75,9 @@ acceptance stamps. See [DESIGN.md](DESIGN.md) for proposed values.
 freshness, metrics, and accessibility. Backend/API/architecture documents define
 the planned contracts. [P01](docs/implementation/P01.md) adds runnable pairing and
 storage readiness, browser captures, runtime/recovery verification and initial
-host measurements. Board and workflow interfaces remain planned; no customer
-acceptance is claimed.
+host measurements. [P02](docs/implementation/P02.md) records persistent task contracts and
+[P03](docs/implementation/P03.md) records the manual Work board candidate. Workflow
+interfaces remain planned; synthetic browser acceptance is not a customer attestation.
 
 ## Product Principles
 

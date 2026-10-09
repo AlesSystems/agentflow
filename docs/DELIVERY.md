@@ -4,8 +4,8 @@ Status: two packages passed acceptance, independent review, coordinator verifica
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
-`f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. P03 is being planned and requires
-Astra medium approval before UI implementation. P04 through W04 have not started.
+`f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. P03 has an Astra-approved, tested implementation candidate. Final exact-candidate
+review and integration remain open. P04 through W04 have not started.
 
 ## Package state
 
@@ -16,7 +16,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | --- | --- | --- | --- | --- |
 | P01 | Runtime/storage | Integrated | Candidate `8e0e0c78f1c6579b3f2aed4dfbc065e1ca92a59b`; merge `a2e5170879602faff706e1aa2e5e7a1905d63b47`, PR #4 | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
 | P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
-| P03 | Work board | Planning | Baseline `f0b3cf2`; branch `codex/v1-p03-work-board` | Astra plan gate pending |
+| P03 | Work board | Final review | Runtime `7dbc8b76bc36c2d19a88ad550216a38af0a4656d`; branch `codex/v1-p03-work-board` | [Receipt](implementation/P03.md), Astra plan approved; final candidate review/integration pending |
 | P04 | Agent ingestion | Not started | — | — |
 | P05 | Live tracking | Not started | — | — |
 | P06 | CLI hooks | Not started | — | — |
@@ -152,3 +152,7 @@ No required GitHub checks were configured and no protections were bypassed.
 The merged branch was removed. The mandatory durable registration-order condition
 remains unchecked in P04; P03 does not expose agent reporting. Next gate is P03
 Astra plan approval, followed by the selected UI and real browser acceptance.
+
+## Current P03 handoff
+
+Astra medium approved plan SHA-256 `e555bef620bb0d5bc588f44820f1791edb73605a92af84f4816b832f61c301af`. The selected Work board now implements persistent manual task operations, recovery, keyboard movement and pointer lane drops. Independent review found draft loss, retained old snapshot pages, overlapping Overview continuations and lost filter return context; focused regressions and repairs are committed. Direct-route heading focus also received an explicit regression/fix. [P03 receipt](implementation/P03.md) records source identities, actual commands and synthetic visual evidence. Final exact-candidate review, PR publication and verified integration remain open; no P03 checkbox is complete yet.
