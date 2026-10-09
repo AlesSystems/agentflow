@@ -71,3 +71,6 @@ it("rejects invalid authoritative credentials but removes unpublished partial st
   await expect(openOwnedStore(dir)).rejects.toThrow("INVALID_CREDENTIALS");
   expect(readFileSync(join(dir, "credentials.json"), "utf8")).toBe("{}");
 });
+it('malformed credential JSON is rejected with a safe repair code',async()=>{
+ const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-json-'));const owned=await openOwnedStore(dir);owned.close();writeFileSync(join(dir,'credentials.json'),'{"pairingToken":"synthetic-secret');await expect(openOwnedStore(dir)).rejects.toThrow('INVALID_CREDENTIALS');
+});
