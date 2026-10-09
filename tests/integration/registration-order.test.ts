@@ -632,3 +632,49 @@ it("fresh Store starts allocator at zero and seed fixtures allocate explicit nam
     owned.close();
   }
 });
+it.each(["ordinary", "replace collision", "upsert update"])(
+  "immutable run identity protects latest acceptance against %s",
+  async (mode) => {
+    const { dir, owned } = await upgradedFixture();
+    const successId = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+    try {
+      expect(() => complete(owned)).toThrow("implementation_not_current");
+      connection(dir, (db) => {
+        const before = db
+          .prepare("SELECT * FROM runs ORDER BY registration_order")
+          .all();
+        const statements = {
+          ordinary: `UPDATE runs SET id='10000000-0000-4000-8000-000000000099' WHERE id='${successId}'`,
+          "replace collision": `UPDATE OR REPLACE runs SET id='${failedId}' WHERE id='${successId}'`,
+          "upsert update": `INSERT INTO runs SELECT '${successId}',project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at,4 FROM runs WHERE id='${successId}' ON CONFLICT(id) DO UPDATE SET id='${failedId}'`,
+        };
+        expect(() =>
+          db.exec(statements[mode as keyof typeof statements]),
+        ).toThrow();
+        expect(
+          db.prepare("SELECT * FROM runs ORDER BY registration_order").all(),
+        ).toEqual(before);
+        expect(highwater(db)).toEqual({ last_value: 3 });
+        db.prepare(
+          "UPDATE runs SET id=id,version=version+1,last_received_at=500 WHERE id=?",
+        ).run(successId);
+        expect(
+          db
+            .prepare("SELECT version,last_received_at FROM runs WHERE id=?")
+            .get(successId),
+        ).toEqual({ version: 2, last_received_at: 500 });
+      });
+      expect(
+        owned.store.snapshot({
+          kind: "task",
+          id: taskId,
+          input: { history: "both", historyLimit: 50 },
+        }).body.data,
+      ).toMatchObject({ latestRun: { id: failedId, state: "failed" } });
+      expect(() => complete(owned)).toThrow("implementation_not_current");
+      expect(owned.store.integrity().integrity).toBe("ok");
+    } finally {
+      owned.close();
+    }
+  },
+);
