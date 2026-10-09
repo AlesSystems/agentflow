@@ -172,3 +172,10 @@ Additive migration 0003 makes existing run IDs immutable through UPDATE triggers
 including replacement collisions. It preserves migration 0002's reviewed bytes.
 Connected Store regressions prove that failed latest evidence still blocks
 acceptance after rejected identity changes, while lifecycle updates remain valid.
+
+
+### P04 observation identity and recovery
+
+The approved Stage 2 plan preserves original new-registration identity independently of mutable run state. Legacy identity remains unavailable rather than adopting a guessed request. Globally unique event identity resolves exact valid retries before sequence/lifecycle checks. New reports check sequence before terminal state. Original parsed JSON, before transforms/defaults, defines digest identity consistently with P02.
+
+Human closure ends stale tracking only and records an immutable reason. It cannot stop the external process or fabricate producer events. Freshness uses one captured server receipt clock and strictly greater than 60 seconds; producer time is metadata. Older restore renews generation and preserves only retained facts and high-water, not discarded acknowledgements. These are bounded completions of ADR-002/004/005/007/010, not process-control authority.

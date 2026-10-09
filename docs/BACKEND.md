@@ -219,3 +219,12 @@ UPDATE OR REPLACE collision that would otherwise delete a later failure and
 rebind older success evidence to its identity. Same-ID updates and lifecycle
 projection updates remain valid. Existing insert guards also reject replacement
 and UPSERT attempts for an existing run identity.
+
+
+## P04 public observations
+
+P04 adds migration 0004 without editing reviewed 0000–0003 bytes. `run_registrations` records the original canonical request digest and committed registration envelope for new public attempts. Legacy runs retain unavailable original identity. `run_events` records global event ID, unique run/sequence, typed payload envelope, original acknowledgement, producer occurrence metadata and authoritative server receipt time. `run_closures` records one immutable operator reason/time per closed tracking record. Effective SQLite triggers reject update, deletion and replacement of all three fact kinds. Phase 2 retains them; future retention requires an explicit reviewed migration and policy.
+
+Owned Store command transactions keep registration order, task revision capture, active ownership, events, permitted task transitions, durable changes and acknowledgements atomic. Resource receipts stay scoped by principal/method/path/key. Event identity is separate from resource receipts and does not require an Idempotency-Key. Identity replay follows authentication and validation and precedes current state guards. Only implementation start/success changes task status, always for the current registered work revision. Other purposes and stale closure never change task column or work revision. Heartbeats are actual stored ordered observations and never evidence of process liveness.
+
+Read snapshots capture freshness and cursor/generation together. Agent list reporting uses a bounded correlated indexed existence query rather than one query per identity. Latest task detail stays compatible with P03. Registration order remains internal and restore non-reuse remains limited to retained history. Activity/SSE, CLI outbox and workflow surfaces are later packages.
