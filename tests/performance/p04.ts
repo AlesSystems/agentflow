@@ -12,6 +12,7 @@ import {
 } from "../../src/db/application";
 import { canonicalDigest } from "../../src/domain/request-digest";
 import { launch } from "../fixtures/server";
+import { comparableSnapshot } from "./public-projection";
 const output = process.env.AGENTFLOW_P04_EVIDENCE_DIR!;
 if (!output) throw new Error("EVIDENCE_DIRECTORY_REQUIRED");
 const dir = mkdtempSync(
@@ -122,8 +123,14 @@ if (process.env.AGENTFLOW_P04_BASE_SOURCE) {
     for (let run = 1; run <= 3; run++)
       for (const [name, query] of Object.entries(queries)) {
         const samples = { base: [] as number[], head: [] as number[] };
-        const baseline = base.snapshot(query, captured).body.data;
-        const current = head.snapshot(query, captured).body.data;
+        const baseline = comparableSnapshot(
+          query,
+          base.snapshot(query, captured).body,
+        );
+        const current = comparableSnapshot(
+          query,
+          head.snapshot(query, captured).body,
+        );
         if (JSON.stringify(baseline) !== JSON.stringify(current))
           throw new Error("QUERY_FIXTURE_RESULT_DIFFERENCE_" + name);
         for (let i = 0; i < 110; i++)
