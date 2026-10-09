@@ -78,7 +78,8 @@ chart. Show each attempt separately; a retry is not another stage of the same
 attempt. Connect event markers only to indicate sequence, never task dependency.
 Use equal row spacing rather than suggesting a duration scale. Long histories
 paginate. Source times and server receipt times must be labeled distinctly;
-receipt order governs the displayed observation trail per the API contract.
+per-run sequence ascending governs lifecycle event order per the API contract.
+Receipt timestamps are display metadata, not a replacement sort order.
 
 Example timeline, synthetic: “Registered → Started → Progress report → Succeeded”,
 followed by the task's separate “Awaiting human review” state. Review/verification
