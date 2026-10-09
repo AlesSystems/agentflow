@@ -38,3 +38,27 @@ it('bounds stable lists and retrieves every immutable acceptance and reopen exac
  expect(board.columns).toHaveLength(4);expect(board.columns.reduce((n,c)=>n+c.total,0)).toBe(105);
  }finally{owned.close();}
 });
+it('counts local-day current acceptance, distinct reports, exact freshness and grouped attention',async()=>{
+ const {seedRun}=await import('../fixtures/application');
+ const owned=await openOwnedStore(mkdtempSync(join(realpathSync(tmpdir()),'agentflow-metrics-')));
+ try{
+ const now=Date.parse('2026-11-01T06:00:00Z');
+ const send=(command:ApplicationCommand,at=now)=>owned.store.command(command,{principal:'operator',method:'POST',path:command.kind,key:randomUUID(),digest:canonicalDigest(command),now:at});
+ const p=(send({kind:'project.create',input:{name:'active'}}).body.data as {id:string}).id;
+ const archive=(send({kind:'project.create',input:{name:'archive'}}).body.data as {id:string}).id;
+ const make=(projectId:string,title:string,blockedReason?:string)=>(send({kind:'task.create',input:{projectId,title,blockedReason}}).body.data as {id:string}).id;
+ const accepted=make(p,'accepted');send({kind:'task.patch',id:accepted,input:{expectedVersion:1,status:'review'}});send({kind:'task.complete',id:accepted,input:{expectedVersion:2,evidenceNote:'Synthetic acceptance'}},Date.parse('2026-11-01T04:00Z'));
+ const obsolete=make(p,'reopened');send({kind:'task.patch',id:obsolete,input:{expectedVersion:1,status:'review'}});send({kind:'task.complete',id:obsolete,input:{expectedVersion:2,evidenceNote:'Synthetic acceptance'}});send({kind:'task.reopen',id:obsolete,input:{expectedVersion:3,reason:'Synthetic rework'}});
+ const blocked=make(p,'blocked','dependency');const review=make(p,'review');send({kind:'task.patch',id:review,input:{expectedVersion:1,status:'review'}});
+ const live=seedRun(owned.instance,{projectId:p,taskId:blocked,state:'running',receivedAt:now-60000});
+ seedRun(owned.instance,{projectId:p,state:'running',receivedAt:now-60000,agentId:live.agentId});
+ seedRun(owned.instance,{projectId:p,state:'queued',receivedAt:now-60001});
+ seedRun(owned.instance,{projectId:p,taskId:blocked,state:'failed',receivedAt:now,endedAt:Date.parse('2026-11-02T05:00Z')});
+ seedRun(owned.instance,{projectId:p,taskId:blocked,state:'failed',receivedAt:now,endedAt:Date.parse('2026-11-01T04:00Z')});
+ seedRun(owned.instance,{projectId:archive,state:'failed',endedAt:now});send({kind:'project.patch',id:archive,input:{expectedVersion:1,archived:true}});
+ const data=owned.store.snapshot({kind:'overview',input:{timezone:'America/New_York',limit:50}},now).body.data as {metrics:unknown;attention:{items:{taskId:string|null;reasons:string[]}[];total:number};day:unknown};
+ expect(data.metrics).toEqual({activeProjects:1,reportingAgents:1,completedToday:1,awaitingReview:1,failedRunsToday:1});
+ expect(data.day).toEqual({start:'2026-11-01T04:00:00.000Z',end:'2026-11-02T05:00:00.000Z'});
+ expect(data.attention.total).toBe(2);expect(data.attention.items.find(i=>i.taskId===blocked)?.reasons).toEqual(['blocked','failed']);
+ }finally{owned.close();}
+});

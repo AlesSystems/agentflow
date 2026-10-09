@@ -26,3 +26,31 @@ it('commits resources, receipts, comments and acceptance with restart-safe exact
  expect(send(command,'/api/v1/tasks',key)).toEqual(created);
  expect(owned.store.integrity().integrity).toBe('ok'); owned.close();
 });
+it('enforces real reference, active run and implementation history gates atomically',async()=>{
+ const { seedRun,persistedCounts }=await import('../fixtures/application');
+ const owned=await openOwnedStore(mkdtempSync(join(realpathSync(tmpdir()),'agentflow-gates-')));
+ try{
+ let now=1000;const send=(command:ApplicationCommand,principal:'operator'|'reporter'='operator')=>owned.store.command(command,{principal,method:'POST',path:command.kind,key:randomUUID(),digest:canonicalDigest(command),now:now++});
+ const p=(send({kind:'project.create',input:{name:'Synthetic project'}}).body.data as {id:string}).id;
+ const other=(send({kind:'project.create',input:{name:'Other project'}}).body.data as {id:string}).id;
+ const a=(send({kind:'task.create',input:{projectId:p,title:'A'}}).body.data as {id:string}).id;
+ const b=(send({kind:'task.create',input:{projectId:p,title:'B',parentTaskId:a}}).body.data as {id:string}).id;
+ expect(()=>send({kind:'task.patch',id:a,input:{expectedVersion:1,parentTaskId:b}})).toThrow('parent_cycle');
+ expect(()=>send({kind:'task.create',input:{projectId:other,title:'cross project',parentTaskId:a}})).toThrow('parent_project_mismatch');
+ seedRun(owned.instance,{projectId:p,taskId:a,state:'succeeded',workRevision:1,createdAt:now++});
+ send({kind:'task.patch',id:a,input:{expectedVersion:1,status:'review'}});
+ const before=persistedCounts(owned.instance);
+ expect(()=>send({kind:'task.complete',id:a,input:{expectedVersion:2,evidenceNote:'synthetic'}},'reporter')).toThrow('human_required');expect(persistedCounts(owned.instance)).toEqual(before);
+ send({kind:'task.complete',id:a,input:{expectedVersion:2,evidenceNote:'Synthetic current implementation acceptance'}});
+ send({kind:'task.reopen',id:a,input:{expectedVersion:3,reason:'Synthetic rework'}});
+ send({kind:'task.patch',id:a,input:{expectedVersion:4,status:'review'}});
+ expect(()=>send({kind:'task.complete',id:a,input:{expectedVersion:5,evidenceNote:'synthetic'}})).toThrow('implementation_not_current');
+ seedRun(owned.instance,{projectId:p,taskId:a,state:'queued',workRevision:2,createdAt:now++});
+ expect(()=>send({kind:'task.patch',id:a,input:{expectedVersion:5,description:'new work'}})).toThrow('active_run');
+ send({kind:'task.patch',id:a,input:{expectedVersion:5,title:'metadata allowed'}});
+ expect(()=>send({kind:'project.patch',id:p,input:{expectedVersion:1,archived:true}})).toThrow('active_run');
+ seedRun(owned.instance,{projectId:other,state:'queued'});
+ expect(()=>send({kind:'project.patch',id:other,input:{expectedVersion:1,archived:true}})).toThrow('active_run');
+ expect(owned.store.integrity().integrity).toBe('ok');
+ }finally{owned.close();}
+});
