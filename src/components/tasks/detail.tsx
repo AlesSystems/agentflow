@@ -50,7 +50,10 @@ export function TaskDetail({
     [action, setAction] = useState<"accept" | "reopen" | null>(
       initialAccept ? "accept" : null,
     ),
-    [command, setCommand] = useState<FrozenCommand | null>(null),
+    [command, setCommand] = useState<{
+      request: FrozenCommand;
+      kind: "edit" | "action" | "comment" | "move";
+    } | null>(null),
     [busy, setBusy] = useState(false);
   const [commentsCursor, setCommentsCursor] = useState<string | null>(null),
     [comments, setComments] = useState<
@@ -102,7 +105,7 @@ export function TaskDetail({
   ) {
     setNotice("");
     setBusy(true);
-    setCommand(request);
+    setCommand({ request, kind });
     if (kind === "edit" && draft)
       setDraft({ ...draft, phase: "submitting", request });
     try {
@@ -338,7 +341,12 @@ export function TaskDetail({
           >
             <TaskFields
               values={draft?.values ?? fields(task)}
-              disabled={archived || task.status === "completed" || frozen}
+              disabled={
+                archived ||
+                task.status === "completed" ||
+                frozen ||
+                command?.kind === "comment"
+              }
               onChange={(values) =>
                 setDraft({
                   phase: "editing",
@@ -373,18 +381,7 @@ export function TaskDetail({
             )}
           </form>
           {command && !busy && draft?.phase !== "conflict" && (
-            <button
-              onClick={() =>
-                void send(
-                  command,
-                  draft
-                    ? "edit"
-                    : command.path.endsWith("/comments")
-                      ? "comment"
-                      : "action",
-                )
-              }
-            >
+            <button onClick={() => void send(command.request, command.kind)}>
               Retry exact request
             </button>
           )}
@@ -598,10 +595,12 @@ export function TaskDetail({
                     name="comment"
                     required
                     maxLength={4000}
-                    disabled={busy}
+                    disabled={busy || dirty || command?.kind === "comment"}
                   />
                 </label>
-                <button disabled={busy}>Add comment</button>
+                <button disabled={busy || dirty || command?.kind === "comment"}>
+                  Add comment
+                </button>
               </form>
             )}
           </section>
