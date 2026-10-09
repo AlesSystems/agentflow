@@ -548,6 +548,281 @@ test("project metadata editing, archive confirmation and unarchive use persisten
   }
 });
 
-test("acceptance cannot discard an editable draft and saving fields keeps its evidence note",async({page})=>{const server=await launch();try{const f=await fixture(page,server);await command(page,`/tasks/${f.task.id}`,{expectedVersion:1,status:"review"},"PATCH");await page.goto(f.boardUrl);await page.getByRole("button",{name:f.task.title,exact:true}).click();await page.getByRole("button",{name:"Move task",exact:true}).last().click();await page.getByRole("menuitem",{name:"Completed",exact:true}).click();await page.getByLabel("Description",{exact:true}).fill("UNSAVED MUST SURVIVE");await page.getByLabel("Acceptance evidence note",{exact:true}).fill("Evidence stays while the field draft is saved.");await expect(page.getByRole("button",{name:"Complete current revision"})).toBeDisabled();await page.getByRole("button",{name:"Save task",exact:true}).click();await expect(page.getByLabel("Description",{exact:true})).toHaveValue("UNSAVED MUST SURVIVE");await expect(page.getByLabel("Acceptance evidence note",{exact:true})).toHaveValue("Evidence stays while the field draft is saved.");await page.getByRole("button",{name:"Complete current revision"}).click();await expect(page.locator(".task-context")).toContainText("Completed");await expect(page.getByLabel("Description",{exact:true})).toHaveValue("UNSAVED MUST SURVIVE");}finally{await server.stop();}});
+test("acceptance cannot discard an editable draft and saving fields keeps its evidence note", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await fixture(page, server);
+    await command(
+      page,
+      `/tasks/${f.task.id}`,
+      { expectedVersion: 1, status: "review" },
+      "PATCH",
+    );
+    await page.goto(f.boardUrl);
+    await page.getByRole("button", { name: f.task.title, exact: true }).click();
+    await page
+      .getByRole("button", { name: "Move task", exact: true })
+      .last()
+      .click();
+    await page
+      .getByRole("menuitem", { name: "Completed", exact: true })
+      .click();
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("UNSAVED MUST SURVIVE");
+    await page
+      .getByLabel("Acceptance evidence note", { exact: true })
+      .fill("Evidence stays while the field draft is saved.");
+    await expect(
+      page.getByRole("button", { name: "Complete current revision" }),
+    ).toBeDisabled();
+    await page.getByRole("button", { name: "Save task", exact: true }).click();
+    await expect(page.getByLabel("Description", { exact: true })).toHaveValue(
+      "UNSAVED MUST SURVIVE",
+    );
+    await expect(
+      page.getByLabel("Acceptance evidence note", { exact: true }),
+    ).toHaveValue("Evidence stays while the field draft is saved.");
+    await expect(page.locator(".task-context")).toContainText("Backlog");
+    await expect(
+      page.getByRole("button", { name: "Complete current revision" }),
+    ).toBeDisabled();
+    await page
+      .getByRole("button", { name: "Move task", exact: true })
+      .last()
+      .click();
+    await page.getByRole("menuitem", { name: "Review", exact: true }).click();
+    await expect(page.locator(".task-context")).toContainText("Review");
+    await expect(
+      page.getByLabel("Acceptance evidence note", { exact: true }),
+    ).toHaveValue("Evidence stays while the field draft is saved.");
+    await page
+      .getByRole("button", { name: "Complete current revision" })
+      .click();
+    await expect(page.locator(".task-context")).toContainText("Completed");
+    await expect(page.getByLabel("Description", { exact: true })).toHaveValue(
+      "UNSAVED MUST SURVIVE",
+    );
+  } finally {
+    await server.stop();
+  }
+});
 
-test("cancelling acceptance preserves an unrelated comment draft and its dirty-close protection",async({page})=>{const server=await launch();try{const f=await fixture(page,server);await command(page,`/tasks/${f.task.id}`,{expectedVersion:1,status:"review"},"PATCH");await page.goto(f.boardUrl);await page.getByRole("button",{name:f.task.title,exact:true}).click();await page.getByRole("button",{name:"Move task",exact:true}).last().click();await page.getByRole("menuitem",{name:"Completed",exact:true}).click();await page.getByLabel("Add a comment",{exact:true}).fill("COMMENT MUST SURVIVE CANCEL");await page.getByRole("button",{name:"Cancel",exact:true}).click();await page.getByRole("button",{name:"Close",exact:true}).click();await expect(page.getByRole("heading",{name:"Keep your draft?",exact:true})).toBeVisible();await page.getByRole("button",{name:"Stay",exact:true}).click();await expect(page.getByLabel("Add a comment",{exact:true})).toHaveValue("COMMENT MUST SURVIVE CANCEL");}finally{await server.stop();}});
+test("cancelling acceptance preserves an unrelated comment draft and its dirty-close protection", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await fixture(page, server);
+    await command(
+      page,
+      `/tasks/${f.task.id}`,
+      { expectedVersion: 1, status: "review" },
+      "PATCH",
+    );
+    await page.goto(f.boardUrl);
+    await page.getByRole("button", { name: f.task.title, exact: true }).click();
+    await page
+      .getByRole("button", { name: "Move task", exact: true })
+      .last()
+      .click();
+    await page
+      .getByRole("menuitem", { name: "Completed", exact: true })
+      .click();
+    await page
+      .getByLabel("Add a comment", { exact: true })
+      .fill("COMMENT MUST SURVIVE CANCEL");
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Keep your draft?", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Stay", exact: true }).click();
+    await expect(page.getByLabel("Add a comment", { exact: true })).toHaveValue(
+      "COMMENT MUST SURVIVE CANCEL",
+    );
+  } finally {
+    await server.stop();
+  }
+});
+
+test("addressable task reload and Back preserve validated board filters", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await fixture(page, server);
+    await command(
+      page,
+      `/tasks/${f.task.id}`,
+      { expectedVersion: 1, tags: ["context"] },
+      "PATCH",
+    );
+    await page.goto(f.boardUrl + "?q=Synthetic&priority=normal&tag=context");
+    await page.getByRole("button", { name: f.task.title, exact: true }).click();
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Back to work board" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Back to work board" }).click();
+    await expect(page.getByLabel("Search", { exact: true })).toHaveValue(
+      "Synthetic",
+    );
+    await expect(page.getByLabel("Tag", { exact: true })).toHaveValue(
+      "context",
+    );
+    expect(new URL(page.url()).searchParams.get("priority")).toBe("normal");
+  } finally {
+    await server.stop();
+  }
+});
+
+test("generation reset clears accumulated comment pages while retaining a comment draft", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await fixture(page, server);
+    await page.evaluate(async (id) => {
+      for (let i = 0; i < 51; i++) {
+        const response = await fetch(`/api/v1/tasks/${id}/comments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": crypto.randomUUID(),
+          },
+          body: JSON.stringify({ text: `OLD GENERATION COMMENT ${i}` }),
+        });
+        if (!response.ok)
+          throw new Error("Fixture comment status " + response.status);
+      }
+    }, f.task.id);
+    await page.goto(f.boardUrl);
+    await page.getByRole("button", { name: f.task.title, exact: true }).click();
+    await page.getByRole("button", { name: "Load more comments" }).click();
+    await expect(page.locator(".comments article")).toHaveCount(51);
+    await page
+      .getByLabel("Add a comment", { exact: true })
+      .fill("COMMENT DRAFT SURVIVES GENERATION");
+    let reset = false;
+    const generation = crypto.randomUUID();
+    await page.route("**/api/v1/**", async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      if (
+        route.request().method() === "POST" &&
+        route.request().url().includes(`/tasks/${f.task.id}/comments`)
+      ) {
+        if (!reset) {
+          reset = true;
+          await route.fulfill({
+            response,
+            headers: {
+              ...response.headers(),
+              "agentflow-generation": generation,
+            },
+            json: body,
+          });
+          return;
+        }
+      }
+      if (
+        reset &&
+        route.request().method() === "GET" &&
+        route.request().url().includes(`/tasks/${f.task.id}/comments`)
+      ) {
+        await route.fulfill({
+          response,
+          headers: {
+            ...response.headers(),
+            "agentflow-generation": generation,
+          },
+          json: {
+            ...body,
+            generation,
+            data: { items: [], total: 0, nextCursor: null },
+          },
+        });
+        return;
+      }
+      await route.fulfill({
+        response,
+        headers: {
+          ...response.headers(),
+          ...(reset ? { "agentflow-generation": generation } : {}),
+        },
+        json: reset ? { ...body, generation } : body,
+      });
+    });
+    await page
+      .getByRole("button", { name: "Add comment", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Comments 0", exact: true }),
+    ).toBeVisible();
+    await expect(page.locator(".comments article")).toHaveCount(0);
+    await expect(page.getByLabel("Add a comment", { exact: true })).toHaveValue(
+      "COMMENT DRAFT SURVIVES GENERATION",
+    );
+  } finally {
+    await server.stop();
+  }
+});
+
+test("Overview authoritative refresh clears obsolete loaded attention pages", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await fixture(page, server);
+    const ids = await page.evaluate(async (projectId) => {
+      const ids: string[] = [];
+      for (let i = 0; i < 51; i++) {
+        const response = await fetch("/api/v1/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": crypto.randomUUID(),
+          },
+          body: JSON.stringify({
+            projectId,
+            title: `Synthetic old attention ${i}`,
+            blockedReason: "Synthetic blocker",
+          }),
+        });
+        if (!response.ok) throw new Error("Fixture create " + response.status);
+        ids.push((await response.json()).data.id);
+      }
+      return ids;
+    }, f.project.id);
+    await page.goto(server.url + "/");
+    await page
+      .getByRole("button", { name: "Load more attention items" })
+      .click();
+    await expect(page.locator(".attention-row")).toHaveCount(51);
+    await page.evaluate(async (ids) => {
+      for (const id of ids) {
+        const response = await fetch(`/api/v1/tasks/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": crypto.randomUUID(),
+          },
+          body: JSON.stringify({ expectedVersion: 1, blockedReason: null }),
+        });
+        if (!response.ok) throw new Error("Fixture patch " + response.status);
+      }
+    }, ids);
+    await expect(
+      page.getByRole("heading", { name: "Needs attention 0", exact: true }),
+    ).toBeVisible({ timeout: 20000 });
+    await expect(page.locator(".attention-row")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Load more attention items" }),
+    ).toHaveCount(0);
+  } finally {
+    await server.stop();
+  }
+});
