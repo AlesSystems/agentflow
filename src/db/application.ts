@@ -4,7 +4,7 @@ import { statSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { projectCreate, projectPatch, projectQuery, project } from '../contracts/projects';
-import { taskCreate, taskPatch, completeInput, reopenInput, commentInput, taskQuery, taskDetailQueryV1, boardQuery, task, comment, completion, reopen, run } from '../contracts/tasks';
+import { taskCreate, taskPatch, completeInput, reopenInput, commentInput, taskQuery, taskDetailQueryV1, boardQuery, task } from '../contracts/tasks';
 import { settingsPatch } from '../contracts/settings';
 import { canonicalDigest } from '../contracts/common';
 import { localDate, localDayInterval } from '../domain/local-day';

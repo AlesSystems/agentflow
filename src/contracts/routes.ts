@@ -1,0 +1,38 @@
+import { z } from 'zod';
+import { envelope,pageQuery,status,uuid } from './common';
+import { project,projectCreate,projectPatch,projectQuery } from './projects';
+import { task,taskCreate,taskPatch,taskQuery,taskDetailV1,taskDetailQueryV1,boardQuery,comment,commentInput,completeInput,completion,reopenInput } from './tasks';
+import { settings,settingsPatch } from './settings';
+import { overview,overviewQuery } from './overview';
+import type { ApplicationCommand,ApplicationQuery } from '../db/application';
+export const emptyQuery=z.strictObject({});
+const list=<T extends z.ZodType>(item:T)=>z.strictObject({items:z.array(item),total:z.number().int().nonnegative(),nextCursor:z.string().nullable()});
+const commentsQuery=z.strictObject(pageQuery);
+export type Endpoint={id:string;method:'GET'|'POST'|'PATCH';path:string;access:'read'|'report'|'human';input:z.ZodType;response:z.ZodType;status:number;command?:(input:never,id:string)=>ApplicationCommand;query?:(input:never,id:string)=>ApplicationQuery};
+export const endpoints:Endpoint[]=[
+ {id:'listProjects',method:'GET',path:'/projects',access:'read',input:projectQuery,response:envelope(list(project)),status:200,query:input=>({kind:'projects',input})},
+ {id:'createProject',method:'POST',path:'/projects',access:'report',input:projectCreate,response:envelope(project),status:201,command:input=>({kind:'project.create',input})},
+ {id:'getProject',method:'GET',path:'/projects/{id}',access:'read',input:emptyQuery,response:envelope(project),status:200,query:(_,id)=>({kind:'project',id})},
+ {id:'patchProject',method:'PATCH',path:'/projects/{id}',access:'report',input:projectPatch,response:envelope(project),status:200,command:(input,id)=>({kind:'project.patch',id,input})},
+ {id:'getBoard',method:'GET',path:'/projects/{id}/board',access:'read',input:boardQuery,response:envelope(z.strictObject({columns:z.array(z.strictObject({status,...list(task).shape}))})),status:200,query:(input,id)=>({kind:'board',id,input})},
+ {id:'listTasks',method:'GET',path:'/tasks',access:'read',input:taskQuery,response:envelope(list(task)),status:200,query:input=>({kind:'tasks',input})},
+ {id:'createTask',method:'POST',path:'/tasks',access:'report',input:taskCreate,response:envelope(task),status:201,command:input=>({kind:'task.create',input})},
+ {id:'getTask',method:'GET',path:'/tasks/{id}',access:'read',input:taskDetailQueryV1,response:envelope(taskDetailV1),status:200,query:(input,id)=>({kind:'task',id,input})},
+ {id:'patchTask',method:'PATCH',path:'/tasks/{id}',access:'report',input:taskPatch,response:envelope(task),status:200,command:(input,id)=>({kind:'task.patch',id,input})},
+ {id:'completeTask',method:'POST',path:'/tasks/{id}/complete',access:'human',input:completeInput,response:envelope(completion),status:201,command:(input,id)=>({kind:'task.complete',id,input})},
+ {id:'reopenTask',method:'POST',path:'/tasks/{id}/reopen',access:'human',input:reopenInput,response:envelope(task),status:200,command:(input,id)=>({kind:'task.reopen',id,input})},
+ {id:'listComments',method:'GET',path:'/tasks/{id}/comments',access:'read',input:commentsQuery,response:envelope(list(comment)),status:200,query:(input,id)=>({kind:'comments',id,input})},
+ {id:'createComment',method:'POST',path:'/tasks/{id}/comments',access:'report',input:commentInput,response:envelope(comment),status:201,command:(input,id)=>({kind:'comment.create',id,input})},
+ {id:'getSettings',method:'GET',path:'/settings',access:'read',input:emptyQuery,response:envelope(settings),status:200,query:()=>({kind:'settings'})},
+ {id:'patchSettings',method:'PATCH',path:'/settings',access:'human',input:settingsPatch,response:envelope(settings),status:200,command:input=>({kind:'settings.patch',input})},
+ {id:'getOverview',method:'GET',path:'/overview',access:'read',input:overviewQuery,response:envelope(overview),status:200,query:input=>({kind:'overview',input})},
+];
+export function matchEndpoint(method:string,pathname:string){
+ for(const endpoint of endpoints){
+ if(endpoint.method!==(method==='HEAD'?'GET':method))continue;
+ const match=new RegExp('^/api/v1'+endpoint.path.replace('{id}','([^/]+)')+'/?$').exec(pathname);
+ if(match){const id=match[1];return {endpoint,id:id?.toLowerCase(),path:'/api/v1'+endpoint.path.replace('{id}',id?.toLowerCase()??'')};}
+ }
+ return null;
+}
+export function validResourceId(id:string|undefined){return id===undefined||uuid.safeParse(id).success;}

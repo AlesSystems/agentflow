@@ -1,5 +1,7 @@
 import type { Task } from '../contracts/tasks';
+const conflictTag=Symbol.for("agentflow.domain-conflict");
 export class Conflict extends Error {
+ readonly [conflictTag]=true;
  constructor(readonly code:string,readonly currentVersion?:number){super(code);}
 }
 export type TaskFacts = {projectArchived:boolean;activeRun:boolean;latestImplementation:null|{id:string;state:string;workRevision:number|null};hasImplementationHistory:boolean;ancestorIds:string[]};
@@ -30,3 +32,5 @@ export function decideTask(task:Task,command:TaskCommand,facts:TaskFacts,actor:'
  if(changes.parentTaskId&&(changes.parentTaskId===task.id||facts.ancestorIds.includes(task.id))) throw new Conflict('parent_cycle');
  return {task:{...next,...changes,workRevision:task.workRevision+(workChanged?1:0),status:workChanged&&task.status==='review'?'backlog':changes.status??task.status},fact:'patch'};
 }
+
+export function isConflict(value:unknown):value is Conflict { return value instanceof Error && (value as Conflict)[conflictTag]===true; }
