@@ -1,6 +1,14 @@
-# Local Impeccable sessions and generated build/review evidence.
+node_modules/
+.next/
+coverage/
+test-results/
+playwright-report/
+work/poteto/
+.impeccable/review/
+*.tsbuildinfo
+.env*
+agentflow-data/
 .impeccable/questions/
 .impeccable/mocks/
 .impeccable/build/
-.impeccable/review/
 .impeccable/config.local.json
