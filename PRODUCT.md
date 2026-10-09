@@ -34,30 +34,38 @@ after installation; external agent providers may still require network access.
 ## Capabilities and Constraints
 
 The repository is design-only: routes, APIs, and commands describe planned
-behavior, not shipped features. The v0.1 boundary is P01-P07 in [PLAN.md](PLAN.md).
+behavior, not shipped features. The v1 boundary is all three phases: P01–P07, W01–W02, W03a–W03c, and W04 in
+[PLAN.md](PLAN.md). This supersedes the earlier v0.1 target.
 
 - Each project has Backlog, In progress, Review, and Completed columns.
 - Successful implementation runs move tasks to Review. Human acceptance with
   evidence is required for Completed; reopening permits later edits.
-- One active run per task; parallel agents use child tasks in v0.1.
+- One active run per task; parallel agents use separate tasks in v1.
 - Task details retain acceptance criteria, comments, repository/PR metadata,
   run history, blockers, and completion evidence.
 - Reports describe observed state. Stale reports remain uncertain; closing a
   tracking record does not stop an external process.
 - Browser connectivity and agent reporting freshness are distinct.
 - Runtime data and credentials stay outside the public checkout. No telemetry,
-  remote fonts, or external asset requests are part of the product design.
-- Workflow graphs, dependency enforcement, GitHub synchronization, analytics,
-  agent controls, multiple users, and LAN access are deferred.
-- License selection and exact runtime/dependency versions remain open before
-  release. Linux support requires its own acceptance evidence.
+  remote fonts, or external asset requests are part of the product design. The
+  only app network integration is explicitly enabled GitHub PR observation.
+- v1 includes reported workflow graphs, task dependencies, revision-bound review
+  and rework, opt-in read-only GitHub PR observation, export/retention, and reported
+  usage summaries. [Phase 3 contracts](docs/V1_WORKFLOWS.md) define their bounds.
+- Agent process controls, multiple users, and LAN access remain separate proposals.
+- MIT is selected for AgentFlow-owned material. Exact runtime/dependency versions
+  remain open until P01. Installation evidence follows the approved
+  [execution policy](docs/EXECUTION_POLICY.md); Linux support requires its own evidence.
 
 ## Brand Commitments
 
 Use the AgentFlow name. The implementation and visual design are original.
 Fizzy is a reference for a lightweight board experience, with no reused source
 or assets. Preserve the frontend plan's light neutral canvas, readable dark text,
-thin borders, one action accent, and offline system fonts.
+readable card outlines, one blue action accent, and offline system fonts. The user
+selected the Work board prototype and requested a slightly cartoonish Fizzy-like
+refinement on 2026-10-09: rounded colored lane tabs, bold titles, and small
+acceptance stamps. See [DESIGN.md](DESIGN.md) for proposed values.
 
 ## Evidence on Hand
 

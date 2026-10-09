@@ -32,7 +32,7 @@ All boxes except the existing harness are part of the local application. No queu
 | Events | HTTP JSON ingestion and Server-Sent Events | Harness reports changes; browser receives notifications |
 | Validation | Zod contracts shared by server and CLI | Parse external input once at the boundary |
 | Verification | Vitest, Playwright, real temporary SQLite files | Domain behavior, HTTP integration, and browser journeys |
-| Later graph | React Flow | Interactive view of reported workflow dependencies |
+| Workflow graph (W01) | React Flow | Interactive view of reported workflow dependencies |
 
 Next.js Route Handlers support HTTP handlers and streaming responses. The self-hosting guide describes operation as a Node server. This supports the proposed single-application boundary, subject to the production-build spike in P01. [Route Handlers](https://nextjs.org/docs/app/api-reference/file-conventions/route), [self-hosting](https://nextjs.org/docs/app/guides/self-hosting).
 
@@ -81,6 +81,13 @@ Normal use works without internet after dependencies are installed. External lin
 
 ## Growth boundaries
 
-Phase 3 adds workflow nodes and dependencies as a reported graph. A graph edge records ordering or evidence; it does not schedule work. React Flow is a later display component, not a backend scheduler. [React Flow documentation](https://reactflow.dev/learn).
+Phase 3 adds workflow nodes and dependencies as a reported graph. A graph edge records ordering or evidence; it does not schedule work. React Flow is the v1 Phase 3 display component, not a backend scheduler. [React Flow documentation](https://reactflow.dev/learn).
 
 Agent controls require a separate decision record covering executable allowlists, process isolation, credential handling, cancellation, and authorization. The current API deliberately has no launch, shell, or stop endpoint.
+
+The complete v1 boundary includes Phases 1–3 and W04 release validation.
+[V1_WORKFLOWS.md](V1_WORKFLOWS.md) supplies additive workflow, dependency/review,
+export/retention, and usage contracts. These remain modules in the same local
+application and SQLite database. The sole optional outbound application adapter
+is read-only GitHub PR metadata observation for explicitly selected repositories;
+it is disabled by default. No workflow graph or dependency module owns processes.

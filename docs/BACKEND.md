@@ -23,7 +23,7 @@ IDs are opaque UUIDs. Dates use UTC in storage. Client timestamps never decide s
 
 Projects, tasks, agents, runs, and settings start at `version=1`. Each accepted mutation of a versioned record increments its version once, including metadata edits and manual run closure. Run registration and events additionally update linked task versions as specified below. Exact retries increment nothing. Comments and completions are immutable records and do not increment task version except for the completion state transition.
 
-Foreign keys prevent orphaned records. Parent tasks must belong to the same project, cannot reference themselves, and cannot introduce cycles. Parentage is grouping only in v0.1; it does not imply dependency or automatic completion. Agent assignment expresses intent and does not prove execution.
+Foreign keys prevent orphaned records. Parent tasks must belong to the same project, cannot reference themselves, and cannot introduce cycles. Parentage is grouping only in v1; it does not imply dependency or automatic completion. Agent assignment expresses intent and does not prove execution.
 
 Priorities are `low`, `normal`, `high`, and `urgent`. Roles are `orchestrator`, `implementation`, `reviewer`, and `verifier`. A run's purpose is `planning`, `implementation`, `review`, or `verification`; it is recorded per attempt rather than inferred from an agent's current role. One agent identity may report many runs.
 
@@ -48,17 +48,17 @@ Description and acceptance-criteria edits increment both revisions. Title, tags,
 
 Completion is a distinct command. It requires `review`, the current task version, no queued or running run, and a nonempty human acceptance note. If the task has any implementation-run history, its latest implementation run must have succeeded for the current work revision. A task with no implementation-run history can be accepted as manual work. The UI labels both paths as human acceptance.
 
-Review and verification run outcomes appear as evidence for the human. A successful test process does not prove that its assertions passed, and AgentFlow does not inspect linked evidence. Automatic policy enforcement is deferred to Phase 3. Only a browser session can complete or reopen a task in v0.1; harness credentials cannot claim human acceptance.
+Review and verification run outcomes appear as evidence for the human. A successful test process does not prove that its assertions passed, and AgentFlow does not inspect linked evidence. W02 adds configured revision-bound evidence gates under [V1_WORKFLOWS.md](V1_WORKFLOWS.md); these never automatically complete tasks. Only a browser session can complete or reopen a task in v1; harness credentials cannot claim human acceptance.
 
 ## Run lifecycle and concurrent work
 
 A registered run begins in `queued`. It can transition to `running`, then `succeeded`, `failed`, or `cancelled`. A queued run may become `cancelled` before it starts. Terminal outcomes never change. A retry or resumed execution uses a new run ID. Each accepted event increments run `version`; an exact retry changes no version.
 
-At most one queued or running run references a task in v0.1. A partial unique index enforces that rule. Parallel implementation uses separate tasks grouped by a parent. This bounds automatic card movement without preventing parallel agents across a project. Planning runs may omit `taskId`; other purposes require it. Task, run, and project references must agree.
+At most one queued or running run references a task in v1. A partial unique index enforces that rule. Parallel implementation uses separate tasks grouped by a parent. This bounds automatic card movement without preventing parallel agents across a project. Planning runs may omit `taskId`; other purposes require it. Task, run, and project references must agree.
 
 A browser user can close a stale run record with a reason, producing terminal state `interrupted`. This changes tracking only and never signals the external process. The confirmation explains that the process may still be executing. Further reports for that run are rejected; a surviving producer needs a new run ID.
 
-Harnesses send a heartbeat every 15 seconds while a run is active. Registration initializes `lastReceivedAt` to server registration time. A queued run with `lastSequence=0` displays "No report received." More than 60 seconds without a new accepted report makes the observation stale, including a queued run that never starts. Staleness is computed from server receipt time and is separate from persisted run state. A stale run is not declared dead or failed. Duplicate retries do not refresh its last-seen time.
+Harnesses send a heartbeat every 15 seconds while a run is running. Queued runs reject heartbeats; their permitted events are start or cancellation. Registration initializes `lastReceivedAt` to server registration time. A queued run with `lastSequence=0` displays "No report received." More than 60 seconds without a new accepted report makes the observation stale, including a queued run that never starts. Staleness is computed from server receipt time and is separate from persisted run state. A stale run is not declared dead or failed. Duplicate retries do not refresh its last-seen time.
 
 ## Event ingestion
 
@@ -88,7 +88,12 @@ Startup takes the instance lock, backs up an existing database, applies pending 
 
 Backups use the SQLite backup API, then run an integrity check. Copying only the database file while WAL writes are active is not the backup procedure. [SQLite backup API](https://sqlite.org/backup.html), [better-sqlite3 backup API](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/api.md).
 
-v0.1 retains events, changes, and idempotency receipts. There is no automatic pruning or hard-delete endpoint. Storage growth is visible in Settings and tested in P07. Retention and exports require a later migration and cursor-expiry policy.
+Phase 2 retains events, changes, and idempotency receipts. v1 W03b adds explicit
+export and conservative retention under [V1_WORKFLOWS.md](V1_WORKFLOWS.md). Default
+retention remains unlimited; no task hard-delete or automatic pruning is added.
+Identity/digest/receipt ledgers and current evidence remain protected. A confirmed
+prune renews stream generation, with snapshot recovery and preserved sessions;
+restore continues to invalidate sessions. Storage growth is visible and measured.
 
 ## Durable browser updates
 

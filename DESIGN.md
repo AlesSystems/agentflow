@@ -1,96 +1,98 @@
 ---
 name: AgentFlow
-description: A classic engineering issue ledger with visible execution evidence.
+description: A lightly cartoonish work board with clear tasks and reported evidence.
 ---
-
-<!-- SEED: established with the user before implementation; re-run $impeccable document once there's code to capture the actual tokens and components. -->
 
 # Design System: AgentFlow
 
-## Overview
+Status: proposed design specification, updated 2026-10-09. No application UI has
+been implemented. Values below are design targets, not extracted runtime tokens.
 
-**Creative North Star: "The Engineering Issue Ledger"**
+## Direction
 
-The user selected a classic Kanban direction on 2026-10-09. Familiar navigation,
-readable task titles, and restrained metadata make frequent engineering work
-easy to scan. The character is direct, orderly, and practical.
+**The friendly work board.** Preserve the selected Work board's classic Kanban
+composition. Give it a little cartoon character through bold titles, rounded
+status tabs, ink-like outlines, and small acceptance stamps. An engineer checking
+local work during a busy day should find the next task before noticing decoration.
 
-Use light, opaque work surfaces. Information establishes hierarchy through
-alignment, spacing, and weight. Images are unnecessary for the working interface;
-icons support text labels. The reusable signature is a task record with a clearly
-attributed evidence trail: what happened, when it was reported, and who accepted
-the result remain easy to distinguish.
+The user selected the Work board prototype and requested a slightly cartoonish
+[Fizzy-like direction](https://www.fizzy.do/). Its published board image informs
+the confident typography, colored lane markers, and paper-card feel. AgentFlow
+uses original shapes, copy, and layouts; no Fizzy source, logos, avatars, or other
+assets are included. See the [design brief and static studies](docs/design/WORK_BOARD.md).
 
-Motion communicates a navigation or state change. Keep it brief, preserve focus,
-and honor reduced motion. Avoid continuous ambient animation in a working view.
+Keep expression concentrated in lane headers, controls, and recorded acceptance.
+Body text, timestamps, failures, and evidence remain plain and precise. Cards
+stay aligned and text stays upright. No mascots, confetti, ambient bouncing,
+handwritten body font, or decorative noise behind records.
 
-**Key Characteristics:**
+## Proposed palette
 
-- Familiar controls and clear task hierarchy.
-- Quiet surfaces with one action accent.
-- Explicit labels for outcomes, uncertainty, and human acceptance.
-- Evidence available beside the work without crowding its summary.
+| Role | Value | Use |
+| --- | --- | --- |
+| Canvas | `#F6F7F9` | Light cool workspace |
+| Paper | `#FFFFFF` | Cards, fields, detail surface |
+| Ink | `#202939` | Titles, body text, strong outlines |
+| Muted ink | `#526071` | Secondary labels and timestamps |
+| Divider | `#CBD2DC` | Nonessential separators |
+| Action | `#2457D6` | Primary button, links, selection, focus |
+| Backlog tint | `#E8EDF4` | Neutral lane label |
+| In progress tint | `#DCEBFF` | Blue lane label |
+| Review tint | `#FFE7A3` | Warm lane label |
+| Completed tint | `#DDF1DF` | Green lane label |
+| Attention ink / tint | `#9B2C2C` / `#FDE8E7` | Failed report or blocker |
 
-## Colors
+Use Ink on every lane tint. Use white on Action for primary buttons. Tints never
+carry meaning without a written status; failure and stale reporting never recolor
+the task's lifecycle lane. Muted ink is for readable metadata, not disabled text.
+Validate actual contrast pairs and focus boundaries during P03.
 
-Use a light neutral canvas, opaque white or near-white records, dark readable
-text, thin neutral boundaries, and one blue action accent. The selection-page
-swatches illustrate this direction; they are not implementation tokens.
-Exact palette, semantic status colors, and contrast pairs are
-[to be resolved during implementation].
+## Type, spacing, and shape
 
-**The Status Label Rule.** Every status and freshness signal has a text label;
-color supplements it. Action color identifies an available action or selection,
-not proof that a task has been accepted.
+Use `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif` without
+network font requests. Page titles start at 28/34 px, weight 750; card titles at
+16/21 px, weight 700; body and controls at 14/20 px; metadata at 12/17 px minimum.
+Use tabular numerals for counts and times. Let long titles wrap; truncate optional
+summaries only, with full content available in the detail view.
 
-## Typography
+Use a 4, 8, 12, 16, 24, 32 px spacing scale. Start with 16 px card padding,
+16 px lane gaps, and a 24 px content inset. Card radius: 12 px. Field and button
+radius: 10 px. Lane labels and tags may use capsules. Card boundaries use 1 px
+neutral ink; selected cards and emphasized controls use 2 px Ink or Action.
+A small 0 2 px 0 neutral offset may give cards paper depth. Overlays use one
+soft shadow. Do not stack offset and diffuse shadows on ordinary cards.
 
-Use an offline system sans stack for navigation, task titles, forms, and prose.
-Titles lead; metadata stays subordinate but readable. Use tabular numerals where
-alignment helps compare counts or timestamps. A separate display face is
-unnecessary for the working application.
+The acceptance stamp is an outlined check and the words “Human accepted”, with
+its timestamp in the evidence record. A successful run gets “Succeeded” and a
+separate “Awaiting human review” label, never this stamp.
 
-Exact font stack, sizes, weights, line heights, and text-width limits are
-[to be resolved during implementation]. Establish the hierarchy at normal size
-and verify it at 200% zoom.
+## Layout and motion
 
-## Layout
+Keep compact navigation, project title and Create task, filters, then four lanes:
+Backlog, In progress, Review, Completed. The board remains the main work area.
+Tracking is available in task detail, Agents, Activity, and Overview. In v1 the
+project Workflows view adds the connected graph/list beside Work board; Usage
+provides bounded reported summaries. Graph nodes inherit the paper-card language
+and explicit freshness/evidence labels. See the [surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md).
 
-Organize work with aligned headers, a compact navigation layer, and clearly
-grouped content. Keep primary actions close to the content they change. The
-board's composition belongs in its [surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md);
-other routes inherit this system without inheriting four columns.
+Desktop planning target: 192 px navigation, four flexible lanes of at least
+240 px, and a 440 px detail overlay with constrained width. Below the width that
+fits these lanes, show a status selector and one lane. At 375 px use 16 px page
+insets and full-page task detail. These dimensions are starting targets; content,
+200% zoom, and actual focus behavior decide final breakpoints during P03.
 
-Narrow layouts preserve reading order and reachable actions. Use a full-page
-detail view when a side panel no longer fits comfortably. Spacing scale,
-container dimensions, column widths, and breakpoints are
-[to be resolved during implementation].
+Use 120–180 ms opacity or short position transitions only for opening, closing,
+and committed movement. Reduced motion removes translation. A report update
+must not move focus, collapse a disclosure, discard a draft, or animate a heartbeat.
 
-## Elevation & Depth
+## Evidence and constraints
 
-Surfaces are flat at rest. Thin borders and tonal separation organize records.
-Reserve elevation for menus, dialogs, and panels that actually overlay content.
-Avoid stacked shadows on ordinary task records. Exact overlay shadows and
-layering values are [to be resolved during implementation].
+Static studies illustrate composition with synthetic data; they do not prove
+responsive behavior, accessibility, interaction, or persistence. P03 and P05 must
+verify keyboard and pointer journeys, 375 px layout, 200% zoom, contrast, focus
+restoration, retained drafts, and recovery states. Preserve local-only assets,
+explicit freshness, browser connectivity, and human-only completion.
 
-## Shapes
-
-Use rectangular records and gently rounded interactive controls. Keep corners
-consistent across equivalent controls; use pills only where the compact shape
-helps identify a tag. Thin borders define boundaries without becoming decoration.
-Exact radii, border values, and icon sizing are
-[to be resolved during implementation].
-
-## Do's and Don'ts
-
-- **Do** make task titles the first readable element in a work record.
-- **Do** keep outcomes, report freshness, and human acceptance visually distinct.
-- **Do** use the same control vocabulary across board, details, agents, and activity.
-- **Do** preserve explicit focus, error, pending, and disabled states.
-- **Don't** turn the board into an analytics wall or an agent command console.
-- **Don't** encode status in color alone or present stale reports as live facts.
-- **Don't** import Fizzy assets or fetch fonts and decorative assets remotely.
-
-This file establishes direction only. No components or tokens have been
-implemented or visually verified. After implementation, run `$impeccable document`
-to capture real tokens and generate `.impeccable/design.json`.
+After implementation, run `$impeccable document` to describe actual tokens and
+components and generate `.impeccable/design.json`. Do not present these proposed
+values as measurements of a shipped interface.

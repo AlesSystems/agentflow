@@ -4,7 +4,7 @@ Status: design specification. No screens have been implemented or visually verif
 
 ## Information architecture
 
-Navigation contains Overview, Projects, Agents, Activity, and Settings. A task opens in a shared detail panel with a stable URL. The board is the primary work area; Overview summarizes attention rather than becoming a wall of charts.
+Navigation contains Overview, Projects, Agents, Activity, Usage, and Settings. Within a project, Work board and Workflows are sibling views in v1. A task opens in a shared detail panel with a stable URL. The board is the primary work area; Overview summarizes attention rather than becoming a wall of charts.
 
 | Route | Main content |
 | --- | --- |
@@ -12,6 +12,8 @@ Navigation contains Overview, Projects, Agents, Activity, and Settings. A task o
 | `/projects` | Project list, create action, archive filter |
 | `/projects/[projectId]` | Backlog, In progress, Review, Completed board |
 | `/projects/[projectId]/tasks/[taskId]` | Addressable task detail, presented as a panel from its board |
+| `/projects/[projectId]/workflows` | Workflow list and revision-selected read-only graph with equivalent node list |
+| `/usage` | Project/date-bounded reported usage, coverage, and optional attributable estimates |
 | `/agents` | Agent identity, role, active reported runs, freshness, latest outcome |
 | `/agents/[agentId]` | Run history and linked tasks |
 | `/activity` | Paginated events filtered by project, agent, or task |
@@ -34,12 +36,26 @@ An implementation run that succeeds places its task in Review. A human reads the
 
 ## Visual direction
 
-The user selected the classic engineering issue-ledger direction on 2026-10-09.
-[DESIGN.md](../DESIGN.md) records its global visual seed; the
-[board surface brief](../.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) records the first
-composition and states. Exact tokens remain unresolved until P03 implementation.
+The user selected the Work board prototype and requested a slightly cartoonish,
+Fizzy-like refinement on 2026-10-09. [DESIGN.md](../DESIGN.md) records proposed
+palette, typography, shape, and motion targets. The
+[Work board design brief](design/WORK_BOARD.md) includes static desktop/narrow
+studies and tracking-component scope; the
+[board surface brief](../.impeccable/surfaces/src-app-projects-projectid-page-tsx.md)
+records composition and states. Values remain unverified until P03 implementation.
 
-Use a light neutral canvas, dark readable text, thin borders, and a single accent for actions. Status colors supplement explicit labels. Cards use generous title space and restrained metadata. A system font keeps the app offline. The design is original; Fizzy supplies a simplicity reference, not a component template.
+Use light paper surfaces, bold readable card titles, rounded colored lane tabs,
+and restrained outlines. Keep technical evidence plain and human acceptance
+explicit. One blue action accent is separate from labeled lifecycle colors.
+System fonts and original local assets preserve offline use. Fizzy informs the
+lightness and character; no source or assets are reused.
+
+P05 tracking uses status counts, attempt timelines, freshness labels, and
+attention/activity lists. W01 adds the connected workflow graph and equivalent
+list in v1; W02 adds readiness and revision-bound review/rework. Timelines display
+ordered reports rather than inferred stages or percent complete.
+[Phase 3 contracts](V1_WORKFLOWS.md) define graph, integration, history, and usage
+states. The graph has no execution controls; node selection opens reported evidence.
 
 Use selected shadcn/ui controls for dialogs, menus, fields, and focus behavior, then verify the actual combinations. Library defaults are not evidence that a complete interaction is accessible. The implementation includes a documented visual review of the board, task panel, failure state, and narrow layout.
 
@@ -78,10 +94,38 @@ The API computes all Overview metrics from one snapshot. "Today" uses the operat
 | Failed runs today | Runs with outcome `failed` and terminal server receipt time today |
 | Needs attention | Failed or stale runs and tasks with a nonempty blocker; grouped to avoid duplicate cards |
 
-Agent and task metrics exclude archived projects. Active workflows is absent until a workflow model exists. Usage is unknown when the harness does not report it; it is never displayed as zero. Cost estimates are deferred.
+Agent and task metrics exclude archived projects. W01 exposes workflow state in its
+own graph/list; do not add an undefined Active workflows metric to Overview. W03c
+adds bounded usage summaries with coverage labels. Missing usage remains unknown,
+never zero. Optional estimates require a complete named price snapshot and must
+disclose exclusions and currency; see the Phase 3 contract.
 
 ## Accessibility acceptance
 
 The complete create, edit, move, inspect, accept, and reopen journey must work without a pointer. Focus enters the task panel and returns to its triggering card. Closing a dirty panel preserves the draft or prompts before discarding it. Dialogs expose accessible names and errors are associated with fields.
 
 Status labels do not rely on color. Target WCAG 2.2 AA contrast and keyboard behavior, verified during P03 and P07. Respect reduced motion and avoid animated card motion when disabled. Announce saves, errors, and moves without narrating every heartbeat. Check at 200% zoom and a 375 px viewport.
+
+## Phase 3 surfaces
+
+The [Workflow surface brief](../.impeccable/surfaces/src-app-projects-projectid-workflows-page-tsx.md)
+defines the graph/list composition and required states.
+
+The project Workflows view selects a workflow, immutable plan revision, and reported
+workflow run. A graph/list toggle shares selection; both reveal the same states,
+report age, assigned task/attempt, reported skill provenance, and readiness reasons.
+At narrow widths use the list and full-page node/task detail. Node links open task
+evidence. Missing node observations display Unknown, not pending inferred work.
+
+A selected node exposes current and historical review decisions, revision/artifact
+bindings, and rework rounds. Show obsolete approvals distinctly; no positive badge
+can stand in for human acceptance. Browser connection, workflow report freshness,
+and linked attempt freshness each have their own labels.
+
+Settings includes disabled-by-default GitHub PR observation, selected repositories,
+manual refresh/disconnect, last fetch/error, export selection, and retention preview.
+A prune confirmation states the cutoff, protected records, and expected effect;
+export distinguishes retained stubs from full history. No secrets enter the view.
+Usage has date/project filters, source/model groups, known totals and unknown
+coverage. Empty integration/usage states explain what the external source must
+supply. Offline GitHub errors do not block the local board.
