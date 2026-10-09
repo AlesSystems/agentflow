@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { projectCreate, projectPatch, projectQuery, project } from '../contracts/projects';
 import { taskCreate, taskPatch, completeInput, reopenInput, commentInput, taskQuery, taskDetailQueryV1, boardQuery, task } from '../contracts/tasks';
 import { settingsPatch } from '../contracts/settings';
-import { canonicalDigest } from '../contracts/common';
+import { canonicalDigest } from '../domain/request-digest';
 import { localDate, localDayInterval } from '../domain/local-day';
 import { Conflict, decideTask, type TaskCommand, type TaskFacts } from '../domain/tasks';
 export type ApplicationCommand =

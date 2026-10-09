@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { expect,it } from 'vitest';
 import { openOwnedStore } from '../../src/db';
-import { canonicalDigest } from '../../src/contracts/common';
+import { canonicalDigest } from '../../src/domain/request-digest';
 import type { ApplicationCommand } from '../../src/db/application';
 it('bounds stable lists and retrieves every immutable acceptance and reopen exactly once',async()=>{
  const owned=await openOwnedStore(mkdtempSync(join(realpathSync(tmpdir()),'agentflow-pages-')));

@@ -161,7 +161,8 @@ export function requireResourceMutation(headers:Headers,principal:Principal){
 }
 export class MutationBudget{
  private tokens=200;
- private at=performance.now();
+ private at:number;
+ constructor(now=performance.now()){this.at=now;}
  charge(now=performance.now()){
  this.tokens=Math.min(200,this.tokens+Math.max(0,now-this.at)/10);this.at=now;
  if(this.tokens<1)throw new HttpError(429,'rate_limited');this.tokens--;

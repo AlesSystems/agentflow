@@ -1,5 +1,6 @@
 import 'server-only';
-import { canonicalDigest,uuid } from '../contracts/common';
+import { uuid } from '../contracts/common';
+import { canonicalDigest } from '../domain/request-digest';
 import { matchEndpoint,validResourceId } from '../contracts/routes';
 import { privateContext,json,failure } from './next-boundary';
 import { HttpError,requireResourceMutation } from './security';

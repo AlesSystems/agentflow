@@ -13,7 +13,7 @@ export async function freePort() {
   return port;
 }
 export async function launch(
-  options: { dir?: string; port?: number; plain?: boolean; cwd?: string } = {},
+  options: { dir?: string; port?: number; plain?: boolean; cwd?: string; entry?: string; extraEnv?: Record<string,string> } = {},
 ) {
   const dir =
     options.dir || mkdtempSync(join(realpathSync(tmpdir()), "agentflow-http-"));
@@ -30,11 +30,12 @@ export async function launch(
           "--port",
           String(port),
         ]
-      : ["--import", "tsx", "src/server/launcher.ts", "--production"],
+      : ["--import", "tsx", options.entry ?? "src/server/launcher.ts", "--production"],
     {
       cwd,
       env: {
         ...process.env,
+        ...options.extraEnv,
         NODE_ENV: "production",
         NEXT_TELEMETRY_DISABLED: "1",
         AGENTFLOW_DATA_DIR: dir,

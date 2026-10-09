@@ -22,3 +22,32 @@ it('persists real HTTP commands, rejects forged acceptance and returns original 
  const unknownKey=randomUUID();expect((await call('/tasks','POST',{...input,actor:'operator'},unknownKey)).status).toBe(422);expect((await call('/tasks','POST',input,unknownKey)).status).toBe(201);
  }finally{await server.stop();}
 },60000);
+for(const mode of ['before','after'] as const)it(`recovers real HTTP ${mode}-commit process death without duplicate facts`,async()=>{
+ const {openOwnedStore}=await import('../../src/db');const {persistedCounts}=await import('../fixtures/application');
+ const key=randomUUID();let server=await launch({entry:'tests/fixtures/crash-server.ts',extraEnv:{AGENTFLOW_TEST_KEY:key,AGENTFLOW_TEST_CRASH:mode}});
+ try{
+ const cookie=await pair(server);
+ const headers={Cookie:cookie,Origin:server.url,'Content-Type':'application/json','Idempotency-Key':randomUUID()};
+ const projectResponse=await fetch(server.url+'/api/v1/projects',{method:'POST',headers,body:JSON.stringify({name:'Synthetic crash project'})});expect(projectResponse.status).toBe(201);const projectId=(await projectResponse.json()).data.id;
+ const input={projectId,title:'Synthetic crash task'};
+ await expect(fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{...headers,'Idempotency-Key':key},body:JSON.stringify(input)})).rejects.toThrow();
+ await server.stop();const dir=server.dir;
+ const inspected=await openOwnedStore(dir);expect(persistedCounts(inspected.instance)).toMatchObject({tasks:mode==='before'?0:1,receipts:mode==='before'?1:2,changes:mode==='before'?1:2});inspected.close();
+ server=await launch({dir});const renewed=await pair(server);
+ const retry=await fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{...headers,Origin:server.url,Cookie:renewed,'Idempotency-Key':key},body:JSON.stringify(input)});expect(retry.status).toBe(201);const body=await retry.json();
+ const exact=await fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{...headers,Origin:server.url,Cookie:renewed,'Idempotency-Key':key},body:JSON.stringify(input)});expect(await exact.json()).toEqual(body);
+ await server.stop();const final=await openOwnedStore(dir);expect(persistedCounts(final.instance)).toMatchObject({tasks:1,receipts:2,changes:2});expect(final.store.integrity().integrity).toBe('ok');final.close();
+ }finally{await server.stop();}
+},60000);
+it('authenticates before new-route body failures, keeps generations and shares the mutation budget',async()=>{
+ const server=await launch();
+ try{
+ const cookie=await pair(server);const generation=(await (await fetch(server.url+'/api/v1/foundation',{headers:{Cookie:cookie}})).json()).generation;
+ const anonymous=await fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{'Content-Type':'text/plain','Content-Length':'70000'},body:'x'.repeat(70000)});expect(anonymous.status).toBe(401);
+ const oversized=await fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{Cookie:cookie,Origin:server.url,'Content-Type':'application/json'},body:'x'.repeat(70000)});expect(oversized.status).toBe(413);expect(oversized.headers.get('AgentFlow-Generation')).toBe(generation);
+ const wrongType=await fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{Cookie:cookie,Origin:server.url,'Content-Type':'text/plain'},body:'{}'});expect(wrongType.status).toBe(415);expect(wrongType.headers.get('AgentFlow-Generation')).toBe(generation);
+ const burst:Response[]=[];for(let batch=0;batch<7;batch++)burst.push(...await Promise.all(Array.from({length:50},(_,i)=>fetch(server.url+'/api/v1/tasks',{method:'POST',headers:{...(i%2?{Authorization:'Bearer '+server.credentials().reporterToken}:{Cookie:cookie,Origin:server.url}),'Content-Type':'application/json','Idempotency-Key':randomUUID()},body:'{}'}))));
+ const limited=burst.filter(r=>r.status===429);expect(limited.length).toBeGreaterThan(0);for(const response of limited){expect(response.headers.get('Retry-After')).toBe('1');expect(response.headers.get('AgentFlow-Generation')).toBe(generation);}
+ const read=await fetch(server.url+'/api/v1/projects?limit=50',{headers:{Cookie:cookie}});expect(read.status).toBe(200);
+ }finally{await server.stop();}
+},60000);

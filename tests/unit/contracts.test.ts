@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { taskCreate, taskPatch } from '../../src/contracts/tasks';
-import { canonicalDigest } from '../../src/contracts/common';
+import { canonicalDigest } from '../../src/domain/request-digest';
 const projectId = '10000000-0000-4000-8000-000000000001';
 describe('P02 input contracts', () => {
  it('preserves accepted text limits and rejects unknown or forged fields', () => {

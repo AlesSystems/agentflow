@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { expect,it } from 'vitest';
 import { openOwnedStore } from '../../src/db';
-import { canonicalDigest } from '../../src/contracts/common';
+import { canonicalDigest } from '../../src/domain/request-digest';
 import type { ApplicationCommand } from '../../src/db/application';
 it('commits resources, receipts, comments and acceptance with restart-safe exact retries',async()=>{
  const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-p02-'));

@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { z } from 'zod';
 export const uuid = z.uuid();
 export const version = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
@@ -16,12 +15,6 @@ export const manualStatus = z.enum(['backlog','in_progress','review']);
 export const actor = z.enum(['operator','reporter']);
 export const pageQuery = {limit:z.coerce.number().int().min(1).max(100).default(50),cursor:z.string().max(4096).optional()};
 export const envelope = <T extends z.ZodType>(data:T) => z.strictObject({data,snapshotCursor:z.string().regex(/^\d+$/),generation:uuid});
-export function canonicalJson(value: unknown): string {
- if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
- if(value !== null && typeof value === 'object') return '{' + Object.keys(value).sort().map(key => JSON.stringify(key)+':'+canonicalJson((value as Record<string,unknown>)[key])).join(',') + '}';
- return JSON.stringify(value);
-}
-export const canonicalDigest = (value: unknown) => createHash('sha256').update(canonicalJson(value)).digest('hex');
 export const timezone = z.string().max(100).refine(value => {
  if(!/^[A-Za-z][A-Za-z_+\-/]*$/.test(value) || /^(GMT|UTC)[+-]/.test(value)) return false;
  try { new Intl.DateTimeFormat('en',{timeZone:value}); return true; } catch { return false; }
