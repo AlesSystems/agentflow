@@ -49,7 +49,8 @@ in the initial successful run peaked at 75,282 queued+writable bytes and closed
 in 5,026ms; a concurrent SQLite write took 0.043ms. These are synthetic local
 measurements, not UI latency or sustained-load acceptance. Unit coverage also
 forces the pre-enqueue 1MiB ceiling (native pressure normally stops far below
-it). The memory procedure performs three explicit GC collections separated by
+it). The pressure dataset is prepared before idle sampling; HEAD and snapshot routes
+are warmed with zero stream leases. The memory procedure performs three explicit GC collections separated by
 25ms for idle, steady, paused and post-close samples; heap must return within
 20% of idle. RSS is recorded, with no cross-platform RSS guarantee.
 
@@ -61,3 +62,16 @@ subsequent malformed-decimal test also exposed and corrected a throwing BigInt
 refinement. Production transport proof was required before its implementation
 commit. Full P05 production browser/report-to-visible, silence/restore, sustained
 load, multi-tab and independent-review gates remain open.
+
+Final transport checks: 63 unit tests, 166 integration tests, eight focused seam
+checks and 22 existing browser journeys pass. The default cached Chromium was
+unavailable; `AGENTFLOW_TEST_BROWSER=chrome npm run test:e2e` passes on installed
+Chrome. Lint, types, build and committed OpenAPI parity pass. The corrected
+same-dataset native run measured 75,282 peak bytes, 5,003ms stalled termination,
+0.286ms paused writer latency, and heap 63,210,576→66,072,112 bytes (+4.5%).
+RSS was 247,119,872→333,873,152 bytes (+35.1%), despite zero remaining leases,
+queued bytes, timers, stream listeners and dispatches; this is recorded rather
+than asserted to return to idle. A native socket close notification remained
+pending in the diagnostic set at Store closure, but active sockets were zero.
+These one-run memory observations do not replace P05/P07 sustained-load or
+cross-platform measurement gates.

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, realpathSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomBytes, createHash } from "node:crypto";
+import { randomBytes, createHash, randomUUID } from "node:crypto";
 import { connect, type Socket } from "node:net";
 import Database from "better-sqlite3";
 import { startRuntime } from "../../src/server/launcher";
@@ -64,11 +64,23 @@ async function paused() {
 }
 try {
   session();
+  seed(20000);
   await fetch(url + path, { method: "HEAD", headers });
+  await (await fetch(url + "/api/v1/projects?limit=1", { headers })).arrayBuffer();
   proof.idle = await memory();
   // Snapshot -> write -> subscribe uses the captured cursor and real committed row.
-  const baseline = running.owned.store.changeBatch("0").maximum;
-  seed(1);
+  const snapshot = await fetch(url + "/api/v1/projects?limit=1", { headers });
+  assert.equal(snapshot.status, 200);
+  const baseline = (await snapshot.json()).snapshotCursor as string;
+  const publicWrite = async () => {
+    const result = await fetch(url + "/api/v1/projects", {
+      method: "POST", headers: { Cookie: cookie, Origin: url, "Content-Type": "application/json", "Idempotency-Key": randomUUID() },
+      body: JSON.stringify({ name: "Synthetic stream gap" }),
+    });
+    assert.equal(result.status, 201);
+    await result.arrayBuffer();
+  };
+  await publicWrite();
   const first = await stream(baseline);
   assert.equal(first.response.status, 200);
   assert.equal(first.response.headers.get("content-encoding"), null);
@@ -76,15 +88,15 @@ try {
   const reader = first.response.body!.getReader();
   const at = performance.now();
   const chunk = await reader.read();
-  assert.match(new TextDecoder().decode(chunk.value), /id: 1\nevent: change/);
+  assert.match(new TextDecoder().decode(chunk.value), new RegExp(`id: ${BigInt(baseline) + 1n}\\nevent: change`));
   proof.incrementalMs = performance.now() - at;
   const notice = JSON.parse(new TextDecoder().decode(chunk.value).split("data: ")[1].trim());
   assert.deepEqual(Object.keys(notice).sort(), ["entityId", "entityType", "kind"]);
   let received = false;
   const second = reader.read().then(c => { received = true; return c; });
   await sleep(100); assert.equal(received, false);
-  seed(1);
-  assert.match(new TextDecoder().decode((await second).value), /id: 2\nevent: change/);
+  await publicWrite();
+  assert.match(new TextDecoder().decode((await second).value), new RegExp(`id: ${BigInt(baseline) + 2n}\\nevent: change`));
   first.controller.abort(); await until(() => running.streams.diagnostics().leases === 0);
   for (const query of ["after=00", "after=9223372036854775808", "after=1&after=2", "after=1&unknown=x", "after=1&__proto__=x"] ) {
     const response = await fetch(`${url}/api/v1/changes/stream?${query}&generation=${generation}`, { headers });
@@ -121,7 +133,6 @@ try {
   assert.match(new TextDecoder().decode((await chosen.body!.getReader().read()).value), /id: 2\nevent: change/);
   precedence.abort(); await until(() => running.streams.diagnostics().leases === 0);
   // Real native socket pressure; maximum buffer is measured before reader resumption.
-  seed(200000);
   const stalled = await paused();
   const pressure = running.streams.diagnostics();
   proof.pausedMemory = await memory();
