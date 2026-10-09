@@ -29,7 +29,7 @@ async function main() {
       return;
     }
     if (args.join(" ") === "credentials rotate") {
-      rotateCredentials(config.dataDir, owned.store);
+      rotateCredentials(owned.store.dataDir, owned.store);
       console.log("Credentials rotated. Run local setup to view them.");
       return;
     }

@@ -126,7 +126,23 @@ it("uses the frozen active root for backups and creates only the normalized exte
   });
   expect(existsSync(join(app, "public", "new.sqlite"))).toBe(false);
 });
-it('local credential rotation uses the normalized external directory instead of discarded raw components',()=>{
- const app=fixtureApp();const outside=app+'-rotation';const raw=app+'/discarded/../../'+outside.split('/').at(-1);const env={...process.env,AGENTFLOW_DATA_DIR:raw};const setup=spawnSync(process.execPath,['--import','tsx','src/cli/local.ts','setup'],{cwd:app,env,encoding:'utf8'});expect(setup.status).toBe(1);expect(existsSync(join(outside,'credentials.json'))).toBe(true);
- const rotated=spawnSync(process.execPath,['--import','tsx','src/cli/local.ts','credentials','rotate'],{cwd:app,env,encoding:'utf8'});expect(rotated.status).toBe(0);expect(existsSync(join(app,'discarded'))).toBe(false);
+it("local credential rotation uses the normalized external directory instead of discarded raw components", () => {
+  const app = fixtureApp();
+  const outside = app + "-rotation";
+  const raw = app + "/discarded/../../" + outside.split("/").at(-1);
+  const env = { ...process.env, AGENTFLOW_DATA_DIR: raw };
+  const setup = spawnSync(
+    process.execPath,
+    ["--import", "tsx", "src/cli/local.ts", "setup"],
+    { cwd: app, env, encoding: "utf8" },
+  );
+  expect(setup.status).toBe(1);
+  expect(existsSync(join(outside, "credentials.json"))).toBe(true);
+  const rotated = spawnSync(
+    process.execPath,
+    ["--import", "tsx", "src/cli/local.ts", "credentials", "rotate"],
+    { cwd: app, env, encoding: "utf8" },
+  );
+  expect(rotated.status).toBe(0);
+  expect(existsSync(join(app, "discarded"))).toBe(false);
 });
