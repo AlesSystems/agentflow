@@ -47,6 +47,7 @@ export async function startRuntime(
         clearTimeout(timer);
       }
       await Promise.allSettled([...requests]);
+      await owned.store.drain();
       await app?.close();
       await hooks.beforeStoreClose?.();
       owned.close();

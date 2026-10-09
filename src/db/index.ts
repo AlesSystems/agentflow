@@ -28,6 +28,7 @@ export const migrations: Migration[] = ["0000_foundation"].map((id) => {
 });
 export class Store {
   private db: Database.Database;
+  private work = new Set<Promise<unknown>>();
   readonly dataDir: string;
   private unregister: (() => void) | undefined;
   constructor(
@@ -191,7 +192,17 @@ export class Store {
       this.integrity();
     });
   }
-  async backup(destination: string) {
+  backup(destination: string) {
+    const pending = this.writeBackup(destination).finally(() =>
+      this.work.delete(pending),
+    );
+    this.work.add(pending);
+    return pending;
+  }
+  async drain() {
+    await Promise.allSettled([...this.work]);
+  }
+  private async writeBackup(destination: string) {
     secureDirectory(join(destination, ".."));
     validateFile(destination);
     createFile(destination);
@@ -214,6 +225,7 @@ export class Store {
     this.db.pragma("wal_checkpoint(TRUNCATE)");
   }
   close() {
+    if (this.work.size) throw new Error("STORAGE_WORK_PENDING");
     if (this.db.open) this.db.close();
     this.unregister?.();
   }
