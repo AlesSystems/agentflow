@@ -1,5 +1,6 @@
 import { z } from "zod";
 export const uuid = z.uuid();
+export const inputUuid = uuid.toLowerCase();
 export const version = z.number().int().positive().max(Number.MAX_SAFE_INTEGER);
 export const timestamp = z.iso.datetime();
 export const requiredText = (max: number) => z.string().max(max).trim().min(1);

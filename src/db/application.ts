@@ -127,12 +127,22 @@ export class ApplicationData {
     private readonly db: Database.Database,
     private readonly dataDir: string,
   ) {}
+  private find(table: string, id: string, column = "id") {
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM ${table} WHERE ${column}=? COLLATE NOCASE LIMIT 2`,
+      )
+      .all(id) as Row[];
+    if (rows.length > 1) throw new Conflict("identity_ambiguous");
+    return rows[0];
+  }
   private one(table: string, id: string) {
-    const row = this.db.prepare(`SELECT * FROM ${table} WHERE id=?`).get(id) as
-      | Row
-      | undefined;
+    const row = this.find(table, id);
     if (!row) throw new Conflict("resource_not_found");
     return serialize(row);
+  }
+  private reference(table: string, id: string | null | undefined) {
+    return id ? (this.one(table, id).id as string) : id;
   }
   private insert(table: string, row: Row) {
     const values = persisted(row);
@@ -256,9 +266,8 @@ export class ApplicationData {
         let data: unknown;
         let status = 200;
         if (command.kind === "agent.create") {
-          const id = command.input.id ?? randomUUID();
-          if (this.db.prepare("SELECT 1 FROM agents WHERE id=?").get(id))
-            throw new Conflict("agent_conflict");
+          const id = command.input.id?.toLowerCase() ?? randomUUID();
+          if (this.find("agents", id)) throw new Conflict("agent_conflict");
           const value = { ...command.input, id, version: 1, createdAt: time };
           this.insert("agents", value);
           this.change("agent", id, null, "created", now);
@@ -276,30 +285,35 @@ export class ApplicationData {
             version: (value.version as number) + 1,
           };
           this.update("agents", next);
-          this.change("agent", command.id, null, "updated", now);
+          this.change("agent", value.id as string, null, "updated", now);
           data = this.agentView(next, now);
         } else if (command.kind === "run.register") {
-          const input = command.input;
-          const existing = this.db
-            .prepare("SELECT 1 FROM runs WHERE id=?")
-            .get(input.id);
+          const requested = command.input;
+          const existing = this.find("runs", requested.id);
           if (existing) {
             const identity = this.db
               .prepare(
                 "SELECT digest,body FROM run_registrations WHERE run_id=?",
               )
-              .get(input.id) as { digest: string; body: string } | undefined;
+              .get(existing.id) as { digest: string; body: string } | undefined;
             if (!identity || identity.digest !== digest)
               throw new Conflict("run_conflict");
             const body = JSON.parse(identity.body) as SnapshotBody;
             this.receipt(context, 200, body);
             return { status: 200, body };
           }
-          this.activeProject(input.projectId);
-          this.one("agents", input.agentId);
-          const taskValue = input.taskId
-            ? task.parse(this.one("tasks", input.taskId))
+          const projectValue = this.activeProject(requested.projectId);
+          const agentValue = this.one("agents", requested.agentId);
+          const taskValue = requested.taskId
+            ? task.parse(this.one("tasks", requested.taskId))
             : null;
+          const input = {
+            ...requested,
+            id: requested.id.toLowerCase(),
+            projectId: projectValue.id,
+            agentId: agentValue.id as string,
+            ...(taskValue ? { taskId: taskValue.id } : {}),
+          };
           const active = !!this.db
             .prepare(
               "SELECT 1 FROM runs WHERE task_id=? AND state IN ('queued','running')",
@@ -407,11 +421,30 @@ export class ApplicationData {
           this.update("projects", data as Row);
           this.change("project", value.id, value.id, "updated", now);
         } else if (command.kind === "task.create") {
-          this.activeProject(command.input.projectId);
+          const resolved = {
+            ...command.input,
+            projectId: this.activeProject(command.input.projectId).id,
+            ...(command.input.assignedAgentId !== undefined
+              ? {
+                  assignedAgentId: this.reference(
+                    "agents",
+                    command.input.assignedAgentId,
+                  ),
+                }
+              : {}),
+            ...(command.input.parentTaskId !== undefined
+              ? {
+                  parentTaskId: this.reference(
+                    "tasks",
+                    command.input.parentTaskId,
+                  ),
+                }
+              : {}),
+          };
           this.references(
-            command.input.projectId,
-            command.input.parentTaskId,
-            command.input.assignedAgentId,
+            resolved.projectId,
+            resolved.parentTaskId,
+            resolved.assignedAgentId,
           );
           data = {
             description: "",
@@ -424,7 +457,7 @@ export class ApplicationData {
             branch: null,
             pullRequestUrl: null,
             blockedReason: null,
-            ...command.input,
+            ...resolved,
             id: randomUUID(),
             status: "backlog",
             version: 1,
@@ -437,7 +470,7 @@ export class ApplicationData {
           this.change(
             "task",
             (data as Row).id as string,
-            command.input.projectId,
+            resolved.projectId,
             "created",
             now,
           );
@@ -459,7 +492,26 @@ export class ApplicationData {
           const value = task.parse(this.one("tasks", command.id));
           let input: TaskCommand;
           if (command.kind === "task.patch") {
-            const { expectedVersion, ...changes } = command.input;
+            const { expectedVersion, ...requestedChanges } = command.input;
+            const changes = {
+              ...requestedChanges,
+              ...(requestedChanges.assignedAgentId !== undefined
+                ? {
+                    assignedAgentId: this.reference(
+                      "agents",
+                      requestedChanges.assignedAgentId,
+                    ),
+                  }
+                : {}),
+              ...(requestedChanges.parentTaskId !== undefined
+                ? {
+                    parentTaskId: this.reference(
+                      "tasks",
+                      requestedChanges.parentTaskId,
+                    ),
+                  }
+                : {}),
+            };
             input = { kind: "patch", expectedVersion, changes };
           } else if (command.kind === "task.complete")
             input = { kind: "complete", ...command.input };
@@ -592,11 +644,15 @@ export class ApplicationData {
     command: Extract<ApplicationCommand, { kind: "run.event" }>,
     context: CommandContext,
   ): CommittedReply {
-    const { input, id } = command;
-    if (input.runId !== id) throw new Conflict("validation_failed");
-    const existing = this.db
-      .prepare("SELECT digest,acknowledgement FROM run_events WHERE event_id=?")
-      .get(input.eventId) as
+    const { id } = command;
+    const input = {
+      ...command.input,
+      eventId: command.input.eventId.toLowerCase(),
+      runId: command.input.runId.toLowerCase(),
+    };
+    if (input.runId !== id.toLowerCase())
+      throw new Conflict("validation_failed");
+    const existing = this.find("run_events", input.eventId, "event_id") as
       | { digest: string; acknowledgement: string }
       | undefined;
     if (existing) {
@@ -623,7 +679,7 @@ export class ApplicationData {
         context.now,
       );
     }
-    this.change("run", id, value.projectId, input.type, context.now);
+    this.change("run", value.id, value.projectId, input.type, context.now);
     this.change(
       "event",
       input.eventId,
@@ -634,7 +690,7 @@ export class ApplicationData {
     const receivedAt = new Date(context.now).toISOString();
     const body = this.body({
       eventId: input.eventId,
-      runId: id,
+      runId: value.id,
       acceptedSequence: input.sequence,
       receivedAt,
     });
@@ -642,11 +698,11 @@ export class ApplicationData {
       .prepare("INSERT INTO run_events VALUES(?,?,?,?,?,?,?,?,?)")
       .run(
         input.eventId,
-        id,
+        value.id,
         input.sequence,
         input.type,
         context.digest,
-        JSON.stringify({ ...input, receivedAt }),
+        JSON.stringify({ ...input, runId: value.id, receivedAt }),
         JSON.stringify(body),
         Date.parse(input.occurredAt),
         context.now,
@@ -758,7 +814,21 @@ export class ApplicationData {
     ] as const) {
       if (filters[key] !== undefined) {
         clauses.push(column + "=?");
-        params.push(filters[key]);
+        params.push(
+          column.endsWith("_id")
+            ? (this.find(
+                (
+                  {
+                    projectId: "projects",
+                    taskId: "tasks",
+                    assignedAgentId: "agents",
+                    agentId: "agents",
+                  } as Record<string, string>
+                )[key],
+                filters[key] as string,
+              )?.id ?? filters[key])
+            : filters[key],
+        );
       }
     }
     if (filters.tag) {
@@ -902,7 +972,21 @@ export class ApplicationData {
         ] as const)
           if (filters[key]) {
             clauses.push(column + "=?");
-            params.push(filters[key]);
+            params.push(
+              column.endsWith("_id")
+                ? (this.find(
+                    (
+                      {
+                        projectId: "projects",
+                        taskId: "tasks",
+                        assignedAgentId: "agents",
+                        agentId: "agents",
+                      } as Record<string, string>
+                    )[key],
+                    filters[key] as string,
+                  )?.id ?? filters[key])
+                : filters[key],
+            );
           }
         if (filters.stale !== undefined) {
           clauses.push(
@@ -930,11 +1014,11 @@ export class ApplicationData {
           }),
         };
       } else if (query.kind === "events") {
-        this.run(query.id);
+        const value = this.run(query.id);
         const page = this.page(
           "(SELECT event_id AS id,run_id,sequence,body FROM run_events)",
           "run_id=?",
-          [query.id],
+          [value.id],
           "events",
           { runId: query.id },
           query.input.limit,

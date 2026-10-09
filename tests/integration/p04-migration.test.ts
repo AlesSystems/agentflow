@@ -60,7 +60,7 @@ for (const checkpoint of [
         integrity: "ok",
         foreignKeys: [],
       });
-      expect(upgraded.store.metadata().schemaVersion).toBe(5);
+      expect(upgraded.store.metadata().schemaVersion).toBe(migrations.length);
     } finally {
       upgraded.close();
     }

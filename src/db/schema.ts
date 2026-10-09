@@ -43,6 +43,7 @@ export const projects = sqliteTable(
   (t) => [
     check("projects_version", sql`${t.version}>0`),
     index("projects_created").on(t.createdAt, t.id),
+    index("projects_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const agents = sqliteTable(
@@ -61,6 +62,7 @@ export const agents = sqliteTable(
       sql`${t.defaultRole} IN ('orchestrator','implementation','reviewer','verifier')`,
     ),
     check("agents_version", sql`${t.version}>0`),
+    index("agents_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const tasks = sqliteTable(
@@ -118,6 +120,7 @@ export const tasks = sqliteTable(
       t.id,
     ),
     index("tasks_created").on(t.createdAt, t.id),
+    index("tasks_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const runs = sqliteTable(
@@ -180,6 +183,7 @@ export const runs = sqliteTable(
     ),
     index("runs_task_created").on(t.taskId, t.createdAt, t.id),
     index("runs_agent_received").on(t.agentId, t.lastReceivedAt),
+    index("runs_id_case").on(sql`${t.id} COLLATE NOCASE`),
   ],
 );
 export const comments = sqliteTable(
@@ -319,6 +323,7 @@ export const runEvents = sqliteTable(
   },
   (t) => [
     uniqueIndex("run_events_run_sequence").on(t.runId, t.sequence),
+    index("run_events_id_case").on(sql`${t.eventId} COLLATE NOCASE`),
     check(
       "run_events_sequence",
       sql`typeof(${t.sequence})='integer' AND ${t.sequence} BETWEEN 1 AND 9007199254740991`,

@@ -7,11 +7,12 @@ import {
   safeUrl,
   timestamp,
   uuid,
+  inputUuid,
   version,
 } from "./common";
 import { run } from "./tasks";
 export const agentCreate = z.strictObject({
-  id: uuid.optional(),
+  id: inputUuid.optional(),
   displayName: requiredText(200),
   source: requiredText(200),
   defaultRole: role,
@@ -34,10 +35,10 @@ export const agent = z.strictObject({
 });
 export const runRegister = z
   .strictObject({
-    id: uuid,
-    projectId: uuid,
-    agentId: uuid,
-    taskId: uuid.optional(),
+    id: inputUuid,
+    projectId: inputUuid,
+    agentId: inputUuid,
+    taskId: inputUuid.optional(),
     purpose: run.shape.purpose,
     model: requiredText(200).optional(),
     expectedTaskVersion: version.optional(),
@@ -49,9 +50,9 @@ export const runRegister = z
   );
 export const runQuery = z.strictObject({
   ...pageQuery,
-  projectId: uuid.optional(),
-  agentId: uuid.optional(),
-  taskId: uuid.optional(),
+  projectId: inputUuid.optional(),
+  agentId: inputUuid.optional(),
+  taskId: inputUuid.optional(),
   state: run.shape.state.optional(),
   stale: z.enum(["true", "false"]).optional(),
 });
@@ -74,8 +75,8 @@ export const observedAgent = agent.extend({
 });
 const eventBase = {
   schemaVersion: z.literal(1),
-  eventId: uuid,
-  runId: uuid,
+  eventId: inputUuid,
+  runId: inputUuid,
   sequence: version,
   occurredAt: z.iso
     .datetime({ offset: true })
