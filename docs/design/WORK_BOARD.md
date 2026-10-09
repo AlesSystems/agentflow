@@ -1,7 +1,7 @@
 # Work board: design brief
 
 Status: documentation proposal, 2026-10-09. Refines the user-selected Work board
-prototype. This PR does not implement UI or activate the v0.1 delivery plan.
+prototype. This PR does not implement UI or activate the v1 delivery plan.
 Mode: Operate. Audience: an engineer tracking tasks and explicit reports from
 agents started in Codex or another external harness.
 
@@ -53,16 +53,16 @@ notes through state updates, status changes, failure, and conflict recovery.
 
 The prototype's “Track prompt”, named skill badges, agent replay controls, and
 inferred workflow stages are demonstration material, not newly approved product
-fields or commands. v0.1 creates task records; external tools own execution.
-Skill-specific structured reporting needs a separate contract before becoming
-an authoritative UI field.
+fields or commands. v1 creates task records; external tools own execution.
+W01 adds optional explicitly reported skill provenance under the
+[Phase 3 contract](../V1_WORKFLOWS.md), without inferring it from role or stage.
 
 ## Tracking components and release boundary
 
-The current [roadmap](../../ROADMAP.md) includes reliable live observation in
-v0.1 (P04–P07). Connected workflow graphs belong to Phase 3 (W01). Until the
-operator explicitly changes that boundary, this proposal keeps it. Progress
-components below present existing records; they introduce no analytics schema.
+The operator changed the target to v1 on 2026-10-09. The [roadmap](../../ROADMAP.md)
+now includes all three phases in order. P05 supplies live attempt/activity tracking;
+W01–W02 supply the connected graph, dependency readiness, and review/rework evidence.
+W03a–W03c supply opt-in integration, history tools, and usage.
 
 | Component | Placement | Data and meaning | Delivery |
 | --- | --- | --- | --- |
@@ -71,9 +71,9 @@ components below present existing records; they introduce no analytics schema.
 | Report freshness label | Card summary / agent row | Last report age; running freshness and staleness follow backend rules | P05 |
 | Attention list | Overview | Failed/stale runs and blockers, deduplicated by existing metric rules | P05 |
 | Activity feed | Task detail / Activity | Paginated events with project, agent, and task filters | P05 |
-| Workflow graph | Future project Workflow view | Explicitly reported plan nodes and edges; selection opens evidence | W01, future |
+| Workflow graph | Project Workflows view | Explicitly reported plan nodes and edges; selection opens evidence | W01, v1 |
 
-Use a vertical event timeline for v0.1 rather than inventing a percent-complete
+Use a vertical event timeline for attempts rather than inventing a percent-complete
 chart. Show each attempt separately; a retry is not another stage of the same
 attempt. Connect event markers only to indicate sequence, never task dependency.
 Use equal row spacing rather than suggesting a duration scale. Long histories
@@ -86,12 +86,32 @@ followed by the task's separate “Awaiting human review” state. Review/verifi
 attempts retain their own outcomes. Human acceptance is a task-history entry, not
 an agent event. Do not synthesize Plan/Build/Test stages that were never reported.
 
-A future workflow view may show a read-only branching graph with a synchronized
-list, keyboard node selection, zoom-to-fit, and evidence detail. Missing reports
-stay unknown; parent-child task grouping is not a dependency edge. W01 needs the
-reported workflow model first; W02 owns dependency validation and rework semantics.
-Do not add an inert Workflow tab to the v0.1 application or silently add React Flow
-to P03. The separate Flow map prototype remains exploration, not release scope.
+The v1 Workflows view is a sibling of Work board, with a read-only branching
+graph and synchronized list, keyboard node selection, zoom-to-fit, and evidence
+detail. Missing reports stay unknown; parent-child grouping is not a dependency
+edge. W01 supplies immutable reported plans and observation state; W02 supplies
+separate dependencies, readiness, and rework semantics.
+
+The graph uses the board's paper nodes and rounded labeled state markers. Node
+selection outlines the node in Action blue and opens task/attempt evidence. Solid
+connectors represent reported plan edges; dependency reasons appear in the evidence
+section as explicit prerequisites, never inferred from connector geometry. Rework
+is a new round referencing historical evidence, not a fake cycle in a DAG. At
+375 px, default to an equivalent node list with full-page detail.
+
+```mermaid
+flowchart LR
+    Plan[Reported plan] --> UI[UI task]
+    Plan --> API[API task]
+    UI --> Verify[Verification]
+    API --> Verify
+    Verify --> Review[Review evidence]
+```
+
+This synthetic schematic illustrates a reported plan, not a scheduler or approval
+policy. Each node can be selected to inspect observations, linked task/attempt,
+reported skill, report age, readiness, and current/historical review tuples. The
+human acceptance record remains distinct from every graph node's reported outcome.
 
 ## States that must be designed and verified
 
@@ -140,5 +160,7 @@ captures, plus keyboard/pointer journey evidence and persisted-record checks.
 This documentation PR is checked for local link resolution, valid self-contained
 SVGs, consistent scope and lifecycle language, and an independent review. Static
 studies establish visual intent only; no runtime, browser, contrast, or performance
-pass is claimed. No API, database, credential, deployment, or license change is
-part of this proposal.
+pass is claimed. The expanded v1 plan specifies future additive API/database contracts and an
+opt-in credential boundary; this PR changes documentation only and activates none
+of them. The earlier approved license and execution-policy documents accompany
+the updated delivery plan.

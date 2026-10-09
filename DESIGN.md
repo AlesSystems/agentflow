@@ -70,8 +70,10 @@ separate “Awaiting human review” label, never this stamp.
 
 Keep compact navigation, project title and Create task, filters, then four lanes:
 Backlog, In progress, Review, Completed. The board remains the main work area.
-Tracking is available in task detail, Agents, Activity, and Overview; graphs do
-not replace the board. See the [surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md).
+Tracking is available in task detail, Agents, Activity, and Overview. In v1 the
+project Workflows view adds the connected graph/list beside Work board; Usage
+provides bounded reported summaries. Graph nodes inherit the paper-card language
+and explicit freshness/evidence labels. See the [surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md).
 
 Desktop planning target: 192 px navigation, four flexible lanes of at least
 240 px, and a 440 px detail overlay with constrained width. Below the width that

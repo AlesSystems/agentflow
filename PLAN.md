@@ -1,6 +1,6 @@
-# Implement AgentFlow v0.1
+# Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). This PR delivers documentation only. All implementation boxes remain unchecked. P01-P07 are proposed work-package identifiers, not existing GitHub PR numbers.
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). This PR delivers documentation only. All implementation boxes remain unchecked. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -8,25 +8,35 @@ Implement one work package per reviewable PR. Record its commit, commands, actua
 
 Use the accepted [architecture](docs/ARCHITECTURE.md) and [API contract](docs/API.md). Changes to task acceptance, local trust, event order, or the observer boundary require an updated [decision record](docs/DECISIONS.md).
 
-The operator approved the [v0.1 execution policy](docs/EXECUTION_POLICY.md) on 2026-10-09. Read it before implementation: it authorizes package integration after passing checks and independent review, replaces operator browser sign-off with verified evidence, and defines release authority and stopping conditions. Execution can use Poteto's Feature playbook for each package and Opening a PR for delivery, alongside other relevant available skills. Saving this approval does not start implementation, create a goal, schedule recurring work, or authorize agent execution from AgentFlow.
+The operator changed the release target to v1 on 2026-10-09. The
+[execution policy](docs/EXECUTION_POLICY.md) preserves the earlier approved
+P01–P07 controls and supplies an explicit one-prompt activation for the expanded
+scope. This document is a planning artifact; it does not start implementation.
+Use relevant skills for each package, including Poteto for implementation and
+Impeccable for UI work; do not invoke every installed skill indiscriminately.
 
 ## Dependencies and ownership
 
+Complete packages in this order. Integrate a passing, independently reviewed
+package before starting the next; do not skip a phase because a later surface
+can be mocked sooner.
+
 ```mermaid
 flowchart LR
-    P01[Runtime and storage] --> P02[Task domain and API]
-    P02 --> P03[Board and task UI]
-    P02 --> P04[Agents and ingestion]
-    P03 --> P05[Live tracking UI]
-    P04 --> P05
-    P04 --> P06[CLI hooks]
-    P05 --> P07[Release validation]
-    P06 --> P07
+    P01 --> P02 --> P03 --> P04 --> P05 --> P06 --> P07
+    P07 --> W01 --> W02 --> W03a --> W03b --> W03c --> W04
 ```
 
-P03 and P04 can run independently after P02. P05 and P06 can run independently after their prerequisites. Give concurrent writers disjoint files or isolated worktrees. Assign shared contract and migration changes to one owner. Never let parallel agents edit the same SQLite file, branch, or test data directory.
+The coordinator owns integration and the evidence ledger. Bounded workers may
+work on independent tasks within the current package with disjoint files or
+isolated worktrees/data directories. A reviewer checks the exact candidate commit.
+No parallel writer shares a SQLite file, branch, or test data directory.
 
-The critical path is runtime proof, domain/API, ingestion and board, live tracking, then release validation. More parallel workers cannot shorten that dependency chain. Use one independent reviewer for the integrated result. Test and review against the exact proposed PR commit.
+At each package: pin a failing behavioral contract where appropriate; implement
+the smallest complete change; run focused checks, lint, types, and build; obtain
+independent review; fix findings; record evidence; integrate under activated
+authority. Preserve small Conventional Commits. Failed or unavailable checks keep
+the package open. Follow [DELIVERY.md](docs/DELIVERY.md) to resume after interruption.
 
 ## P01. Prove the local runtime and storage
 
@@ -113,7 +123,7 @@ Pass when a real CLI report appears in the API and SQLite, including after serve
 
 Run the CLI through subprocess integration tests and an interactive terminal walkthrough. Preserve actual exit codes. Measure flush throughput under the P07 fixture. The CLI must not require an installed provider-specific agent or access to private Codex/Claude storage.
 
-## P07. Verify and release v0.1
+## P07. Verify the Phase 2 integration checkpoint
 
 Depends on P05 and P06. Proposed files include release walkthroughs, load scenarios, backup/recovery documentation, and focused fixes supported by failing evidence.
 
@@ -124,7 +134,125 @@ Depends on P05 and P06. Proposed files include release walkthroughs, load scenar
 - [ ] Run the load scenario below and inspect resource cleanup.
 - [ ] Run the execution policy's isolated-install walkthrough, keyboard journey, production build, full relevant tests, lint, and type checking.
 - [ ] Verify the approved MIT license and notices, set package license metadata, and record the tested macOS configuration and exact dependency versions.
-- [ ] Obtain independent review at the release commit, including browser journey evidence, then integrate and publish the v0.1.0 source release under the execution policy.
+- [ ] Obtain independent review at the checkpoint commit, including browser journey evidence, and integrate it. Continue to W01; P07 does not publish a release.
+
+## Phase 3 work packages
+
+The [Phase 3 contract](docs/V1_WORKFLOWS.md) owns additive domain/API and interface
+choices. Update backend/API/OpenAPI documentation with each implementation so
+planned and executable contracts stay aligned. All scopes below are required.
+
+### W01. Observe a reported workflow
+
+Depends on P07. Proposed files: `src/workflows/`, `src/db/schema/workflows.ts`,
+`src/app/api/v1/workflows/`, `src/app/projects/[projectId]/workflows/`,
+`src/components/workflows/`, and workflow CLI/reporting integration tests.
+
+- [ ] Define immutable plan revisions, workflow attempts, reported nodes/links,
+  sequence/idempotency rules, and optional skill provenance as specified.
+- [ ] Implement real ingestion/storage/CLI paths before the read-only graph/list.
+- [ ] Add project Work board / Workflows navigation and node-to-evidence detail.
+- [ ] Test missing reports, duplicates, gaps, cross-project references, plan revision
+  changes, stale reports, and offline reconnect against real persistence.
+- [ ] Verify keyboard node selection, list parity, reduced motion, 375 px and 200%
+  zoom, with screenshots and actual producer-to-visible evidence.
+
+Pass when a synthetic external producer reports a branching workflow through the
+public contract, both browser sessions agree, and missing observations remain
+unknown. Nodes open the correct task/attempt; the graph cannot launch agents.
+
+### W02. Track dependencies, reviews, and rework
+
+Depends on W01. Proposed files: `src/workflows/dependencies.ts`,
+`src/workflows/reviews.ts`, additive schema/migrations and API commands, workflow
+readiness/evidence components, and domain/database/browser tests.
+
+- [ ] Enforce same-project acyclic dependencies transactionally, including
+  concurrent edge changes and the contract's run-registration readiness gate.
+- [ ] Bind reported review decisions to current work revision, artifact identifier,
+  and rework round; surface obsolete evidence after revision changes.
+- [ ] Explain blockers/readiness in graph and list; preserve human-only completion.
+- [ ] Prove a failed review → new work → new artifact → fresh review → human
+  acceptance cycle, including stale approval and concurrent-write rejection.
+
+Pass when dependency and review state survives restart/replay and no old approval
+or agent report can complete new work. Gating a record never claims to prevent or
+cancel execution in the external harness.
+
+### W03a. Observe GitHub PR metadata
+
+Depends on W02. Proposed files: `src/integrations/github/`, local credential
+handling, integration settings, PR-detail components, and adapter contract tests.
+
+- [ ] Implement opt-in read-only access scoped to operator-selected repositories.
+  Verify current official API/permission requirements before pinning the adapter.
+- [ ] Record source/update time, stale/offline state, disconnect, authentication
+  recovery, rate limiting, and missing/deleted PR behavior.
+- [ ] Test adapter boundaries using a deterministic local server and a real read-only
+  smoke check when an authorized repository/credential is available.
+
+Pass when supported PR metadata refreshes without remote mutations, credentials
+stay out of source/logs/exports, and offline use retains labeled prior observations.
+A missing live credential is disclosed; it cannot waive implemented adapter tests
+or be represented as successful live GitHub verification.
+
+### W03b. Export and retain history deliberately
+
+Depends on W03a. Proposed files: `src/history/`, export/retention API commands,
+settings panels, migrations, and snapshot/restore/cursor regression tests.
+
+- [ ] Implement versioned export with explicit content selection and no credentials.
+- [ ] Implement the contract's default-retain-all policy, preview and explicit
+  human prune action, backup/recovery, and protected-record constraints.
+- [ ] Prove cursor/generation recovery, retry safety, multi-tab refresh, and
+  retention behavior with active attempts and current acceptance evidence.
+
+Pass when export counts match the snapshot, pruning cannot remove protected facts,
+and stale clients/outboxes recover without duplicate mutations or silent loss.
+Run destructive scenarios only in synthetic isolated test directories.
+
+### W03c. Show reported usage honestly
+
+Depends on W03b. Proposed files: `src/usage/`, report/query schemas, usage view,
+price-snapshot handling, and aggregation/replay/timezone tests.
+
+- [ ] Implement explicit usage reporting, bounded snapshot summaries, filters,
+  coverage labels, and optional estimates under the Phase 3 contract.
+- [ ] Preserve unknown values and source/model/time provenance; deduplicate retries.
+- [ ] Test absent/partial usage, mixed models/currencies, rework, outbox replay,
+  timezone boundaries, and retention/export reconciliation.
+
+Pass when repeated reports never inflate totals, missing data is never zero, and
+an estimate displays its price snapshot, currency, scope, and uncertainty. No
+credentials or unrequested outbound pricing service is required for local use.
+
+## W04. Validate and release the complete v1
+
+Depends on W03c and every prior package gate. Proposed files include release
+walkthroughs, production load fixtures, upgrade/recovery scenarios, and release
+notes; runtime fixes require focused regression evidence.
+
+- [ ] Run the full P07 suite again on the integrated v1 production build, using a
+  fresh checkout and isolated data/outbox directories on the named macOS host.
+- [ ] Upgrade a Phase 2 fixture through every Phase 3 migration; prove failed
+  migration recovery, backup restore, generation renewal, and old outbox handling.
+- [ ] Complete the roadmap's branching/rework journey through real HTTP/CLI,
+  SQLite, graph/list, and two browser sessions with synthetic evidence.
+- [ ] Verify opt-in integration disconnect/offline behavior, exports, protected
+  retention, usage reconciliation, keyboard navigation, zoom, and narrow layout.
+- [ ] Retain P07 performance budgets; additionally test 100 workflows of 100 nodes
+  each, opening a 100-node graph with 200 edges and its equivalent list. On the
+  named host, target snapshot p95 <250 ms and report-to-visible p95 <2 seconds.
+  Measure at least three runs; record graph interaction stalls and resource cleanup.
+- [ ] Obtain independent review at the exact release commit. Record all package
+  PRs, SHAs, commands, actual results, screenshots, and limitations in the ledger.
+- [ ] Under activated policy, integrate passing packages, set version `1.0.0`,
+  create `v1.0.0`, and publish the GitHub source release. Preserve existing tags
+  and branch protections. Verify the release points to the reviewed commit.
+
+Completion requires all gates above. A demo, mocked integration, or unchecked
+package cannot count as v1. Missing live optional-service evidence must be named
+in release limitations without misrepresenting fixture coverage as a live test.
 
 ## Performance acceptance targets
 
@@ -146,4 +274,4 @@ Unit tests cover transitions and validation. Integration tests cover the actual 
 
 For each PR, record the head SHA, test commands/results, scenario logs, screenshots where UI changes, source of synthetic data, and known limitations. Store runtime evidence outside the tracked data directory and upload only synthetic, redacted artifacts. Keep provider credentials, real repository paths, prompts, and private task text out of public PRs.
 
-Completion of this plan requires all P01-P07 gates to pass. The current documentation PR does not claim any of them has run.
+Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The current documentation PR does not claim any of them has run.

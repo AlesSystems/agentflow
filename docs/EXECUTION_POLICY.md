@@ -1,30 +1,32 @@
-# AgentFlow v0.1 execution policy
+# AgentFlow v1 execution policy
 
-Status: approved by the operator on 2026-10-09.
-Approval source: the operator selected "Approve the full policy (Recommended)"
-in the consolidated policy question in this chat.
-This records authorization, not evidence that implementation has passed.
+Status: v1 scope requested by the operator on 2026-10-09; expanded delivery
+contract prepared for activation by the single prompt below. Implementation has
+not started. The earlier P01–P07 policy was approved on 2026-10-09 via “Approve
+the full policy”. This revision carries those controls into a proposed v1 run;
+it does not pretend the earlier approval covered Phase 3.
 
-## Approval package
+## Scope and activation
 
-The following decisions are approved together for a future implementation run.
-This policy replaces the per-package operator gates in PLAN.md within this scope.
-Saving this policy does not start implementation; a subsequent implementation
-request activates the approved authority.
+The operator now wants all three phases completed in order for v1. This supersedes
+the old v0.1 release boundary. The current task remains a documentation PR. The
+starting prompt below explicitly activates implementation and the expanded
+integration/release authority; editing or merging these documents alone does not.
 
-1. **Scope and design.** Approve P01-P07 for v0.1 and the existing product,
-   design, architecture, backend, frontend, API, and implementation documents,
-   with the clarifications below. Accept ADR-004 through ADR-007 as implementation
-   decisions. Phase 3, process controls, LAN access, and cloud deployment remain
-   separate work.
+1. **Scope and design.** Implement P01–P07, W01–W02, W03a–W03c, and W04 in
+   [PLAN.md](../PLAN.md), with [V1_WORKFLOWS.md](V1_WORKFLOWS.md) for the new
+   contracts and the selected Work board/graph design. Complete Phase 1, then
+   Phase 2, then Phase 3, then final validation. P07 is a checkpoint, not a
+   v0.1 release. Agent controls, LAN access, multiple users, cloud deployment,
+   npm publication, and installer distribution remain outside this run.
 2. **Delivery.** Permit the coordinator to create isolated worktrees and
    `codex/` branches, install project dependencies and test browsers, implement,
    test, commit, push, create package PRs, and merge those PRs into `main` after
    the package's automated gates pass and an independent reviewer has no
    unresolved blocking findings. Respect branch protections and required checks.
    Use merge commits to retain the detailed Conventional Commits. Integrate
-   dependency packages before downstream work; coordinate independent packages
-   as PLAN.md permits. The implementation run owns scoped documentation updates.
+   dependency packages before downstream work; keep packages sequential; delegate independent tasks within the current
+   package only. The implementation run owns scoped documentation updates.
 3. **Review.** Replace per-package and final operator browser sign-off with
    automated browser journeys, screenshots/recordings, accessibility checks,
    and independent agent review of the exact candidate commit. The coordinator
@@ -58,38 +60,71 @@ request activates the approved authority.
    walkthrough using public CLI/API contracts, heartbeats, retry, and flush.
    Provider-specific automatic adapters remain deferred. The external harness
    owns execution and scheduling; AgentFlow remains an observer.
-9. **Release.** After all amended P01-P07 gates and independent release review
-   pass at the integrated commit, permit a `v0.1.0` tag and GitHub source release
+9. **Release.** After all v1 package gates and independent release review
+   pass at the integrated commit, permit a `v1.0.0` tag and GitHub source release
    with verified setup instructions, evidence, and limitations. An existing tag
    or release must be inspected and preserved rather than overwritten. Hosted
    deployment, npm publication, and installer distribution remain outside scope.
 
 ## Execution and stopping
 
-Use relevant available skills and bounded workers, with one independent reviewer.
-Prefer named `worker` and `reviewer` roles. Workers use `gpt-6.1-sol` with low
-reasoning; reviewers use `gpt-6.1-sol` with high reasoning unless the operator
-requests otherwise. When overrides require a no-history fork, supply the complete
-bounded task context. Preserve user work and
-give concurrent writers isolated worktrees and test data directories. Keep a
-durable package/evidence ledger so execution can resume after interruption.
+The coordinator may delegate bounded implementation and review tasks using the
+available harness tools. Workers use `gpt-6.1-sol` with low reasoning; reviewers
+use `gpt-6.1-sol` with high reasoning, preferably named roles. Supply complete
+scope, dependencies, write boundaries, acceptance gates, and return evidence to
+fresh workers. A reviewer is independent of the implementation it reviews. The
+coordinator verifies returned evidence and owns integration.
 
-Repair ordinary test, build, and review failures within scope. Stop dependent work
-when P01 cannot prove the runtime. Ask only for a missing external capability,
-an unresolved material product/security decision, a required protection gate,
-or a departure from the approved scope or acceptance budgets. Approval authorizes
-work; it does not turn a failed or unavailable check into passing evidence.
+Use Poteto and Impeccable where applicable, plus relevant planning, testing,
+review, and security skills. Read each skill before use. Available tools decide
+execution mechanisms; a skill is never evidence that an unavailable tool ran.
+Keep a durable [delivery ledger](DELIVERY.md) updated after each gate and before
+handoff. Resume from the verified commit and next incomplete gate, not from memory.
 
-Completion means the amended P01-P07 gates pass, package changes are integrated,
-and the source release points to the reviewed commit. Otherwise record the exact
-remaining gate and current commit; keep incomplete packages open.
+Repair routine build/test/review failures autonomously within scope. After two
+unsuccessful attempts on the same failure, diagnose and change approach before
+retrying; do not keep repeating the same action. If no safe route remains, record
+the exact blocker and stop dependent work. Work may continue on independent tasks
+inside the current package; never mark an unavailable check passed.
+
+Ask only for unavailable credentials/external capabilities, required branch
+protection or account approval, a material product/security decision the plan
+does not settle, or a departure from the agreed scope/budgets. A one-prompt run
+removes routine phase handoffs; it cannot guarantee uninterrupted execution when
+external access, platform limits, or new material decisions intervene. It does
+not schedule background continuation or bypass the harness's limits.
+
+GitHub integration is disabled by default. Test its full adapter with deterministic
+fixtures without touching the operator's real repos. Enabling live synchronization
+requires the operator's selected repositories and appropriately scoped existing
+credentials; no prompt authorizes unbounded account access. Never publish secrets
+or private task data. Retention tests use synthetic directories; the implementation
+run does not authorize pruning the operator's real history.
+
+Completion means all P01–P07, W01–W02, W03a–W03c, and W04 gates pass, package changes
+are integrated, and the source release points to the independently reviewed commit.
+Otherwise record the remaining gate and current SHA, leaving its checkbox open.
+Fixture evidence can prove adapter behavior; absent live optional-service evidence
+must remain an explicit release limitation. Core local operation and generic
+producer integration require actual end-to-end proof.
 
 ## Starting the future run
 
-The operator can activate this policy with:
+The operator can issue this single prompt when ready to implement:
 
-> Implement AgentFlow v0.1 P01-P07 using PLAN.md and the approved
-> docs/EXECUTION_POLICY.md. Use relevant skills, bounded workers, and independent
-> review. Continue through verified package integration and the v0.1.0 source
-> release under the saved authority. Keep a durable progress and evidence ledger;
-> ask only at the stopping conditions defined in the policy.
+> Implement AgentFlow v1 from PLAN.md, ROADMAP.md, docs/V1_WORKFLOWS.md, DESIGN.md,
+> and docs/EXECUTION_POLICY.md. I activate the v1 execution policy for this run,
+> including scoped dependency installation, isolated worktrees, commits, pushes,
+> package PRs, verified merges, and the final v1.0.0 GitHub source release.
+> Complete Phase 1 P01–P03, then Phase 2 P04–P07, then Phase 3 W01, W02, W03a,
+> W03b, W03c, and finally W04. Use relevant skills, bounded implementation workers,
+> and independent reviewers; keep the selected playful Work board design and
+> include the connected workflow graph. Respect protections and require each
+> package's checks and review to pass before integrating and continuing. If the
+> planning PR is still open, verify and integrate it first under the same rules.
+> Keep AgentFlow an observer of agents started externally, and preserve human-only
+> task acceptance. Maintain docs/DELIVERY.md with exact commits, commands, results,
+> review evidence, limitations, and the next incomplete gate. Repair ordinary
+> failures and continue without asking me at each phase. Ask only at the stopping
+> conditions in the policy. Do not call the job complete until every v1 gate passes
+> and the reviewed source release is verified; otherwise report the precise blocker.

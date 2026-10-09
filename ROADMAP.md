@@ -1,53 +1,94 @@
-# AgentFlow roadmap
+# AgentFlow v1 roadmap
 
-Status: planned. Only repository creation and design documentation are complete in this change. Every application milestone below remains open. Dates will be assigned after the first runtime spike establishes the work involved.
+Status: planned. On 2026-10-09 the operator changed the release target from v0.1
+to v1 and requested completion of all three phases in order from one implementation
+prompt. This PR records that scope and delivery plan. Implementation is unstarted.
 
 ## Release boundary
 
-v0.1 is a local task manager with reliable observation of an external agent harness. It includes both foundation and generic integration. A manual board alone is an internal checkpoint, not the first agent-tracking release.
+v1 is the complete local task and workflow-observation application: foundation,
+agent integration, workflow graphs, dependencies, review/rework tracking, opt-in
+GitHub PR observation, export/retention, and reported usage analytics. The selected
+Work board uses the [lightly cartoonish design](DESIGN.md).
 
-| Milestone | User outcome | Delivery units | Exit condition |
+| Order | Phase | Packages | Gate before proceeding |
 | --- | --- | --- | --- |
-| Phase 1. Foundation | Create projects, manage a board, inspect history, and record human acceptance | P01-P03 | Data survives restart; the complete board journey works with keyboard and pointer |
-| Phase 2. Agent integration | See registered agents, attempts, failures, stale reports, and automatic progress through Review | P04-P07 | A real CLI report reaches SQLite and both browser sessions, including retry and reconnect cases |
-| Phase 3. Workflow tracking | Inspect orchestrator plans, assignments, dependencies, review cycles, and reported workflow state | Future W01-W03 | A branching workflow and rework cycle can be traced without implying that AgentFlow executes it |
-| Optional control release | Launch or stop approved agent processes through explicit operator actions | Separate proposal | Approved execution and credential design, then isolation and cancellation evidence |
+| 1 | Foundation | P01–P03 | Persistent project/task board, accessible manual journey, human acceptance |
+| 2 | Agent integration | P04–P07 | Reliable reports, CLI outbox, live views, recovery, isolated-install checkpoint |
+| 3 | Workflow tracking and supporting tools | W01, W02, W03a–W03c | Reported graph, dependencies, revision-bound reviews, integration/export/usage features |
+| 4 | Full v1 release validation | W04 | All phase gates, migration/recovery, independent review, `v1.0.0` source release |
 
-The ordered work packages and their verification requirements are in [PLAN.md](PLAN.md). The operator-approved [execution policy](docs/EXECUTION_POLICY.md) defines delivery authority and the amended review and installation gates. Implementation remains unstarted.
+Follow [PLAN.md](PLAN.md) and the [execution policy](docs/EXECUTION_POLICY.md).
+P07 is an internal integration checkpoint; it no longer publishes v0.1. Do not stop
+at a manual board, P07, or a graph-only demo and call the v1 objective complete.
+The [single starting prompt](docs/EXECUTION_POLICY.md#starting-the-future-run)
+activates the future implementation run. Saving this plan does not start it.
 
 ## Phase 1. Foundation
 
-- [ ] P01 proves the production runtime, SQLite driver, authenticated local access, migrations, and backup/restore.
-- [ ] P02 delivers project and task commands, comments, completion evidence, versions, and activity records.
-- [ ] P03 delivers Overview, project boards, task details, filters, and accessible interactions.
+- [ ] P01: local runtime, SQLite, local authentication, migration and recovery.
+- [ ] P02: project/task contracts, comments, versions, acceptance and history.
+- [ ] P03: Overview, projects, Work board, task detail, settings and pairing.
 
-One project has one board with Backlog, In progress, Review, and Completed. Task fields include title, description, acceptance criteria, priority, tags, assignment, blocker, parent task, and branch/PR metadata. Comments and human acceptance remain in history.
-
-Foundation acceptance requires create, edit, move, complete, and reopen through a real browser. An API edit must appear after refresh. Invalid requests and stale versions must leave the database unchanged. Restart must preserve tasks and acceptance history.
+One project has Backlog, In progress, Review, and Completed. Preserve title,
+description, acceptance criteria, priority, tags, assignment, blocker, parent task,
+and repository/PR metadata. Completed requires evidence recorded through a human
+browser session. Records must survive restart and concurrent edits must conflict
+safely. The design's desktop and narrow studies specify intent, not passing UI tests.
 
 ## Phase 2. Agent integration
 
-- [ ] P04 delivers stable agent identities, per-attempt runs, ordered event ingestion, and automatic task transitions.
-- [ ] P05 delivers authenticated SSE, snapshot/replay, and the Agents and Activity views.
-- [ ] P06 delivers generic CLI hooks with a durable outbox and a documented integration walkthrough.
-- [ ] P07 proves clean installation, load limits, recovery, local security, and the v0.1 end-to-end journey.
+- [ ] P04: agent identities, attempts, ordered/idempotent event ingestion.
+- [ ] P05: SSE recovery, freshness, run timelines, Agents and Activity views.
+- [ ] P06: generic CLI hooks, durable outbox, executable producer walkthrough.
+- [ ] P07: production installation, load, recovery and security checkpoint.
 
-Success means an implementation run moves a task to Review and a human can accept it with evidence. Retried events do not duplicate activity. A stale reporter remains visibly uncertain. Closing its record does not stop the external agent.
+External tools start and coordinate agents. AgentFlow sees only explicit reports.
+An implementation success reaches Review, not Completed. Stale reports are
+uncertain; closing a tracking record never stops a process. One active attempt
+per task remains the v1 rule; parallel agents work on separate linked tasks.
 
-v0.1 ships when every P01-P07 acceptance gate passes on a production build using the execution policy's isolated installation on a named macOS host, with independent review at the release commit. This establishes support for the tested configuration, not a pristine-OS claim. Linux support is advertised only after equivalent checks pass there. The app remains usable without internet after installation.
+## Phase 3. Workflow tracking and supporting tools
 
-## Phase 3. Workflow tracking
+- [ ] W01: versioned reported plans, workflow runs, graph/list view, node evidence,
+  assignments, and optional reported skill metadata.
+- [ ] W02: same-project dependency DAGs, readiness explanations, revision/artifact
+  bound review decisions, and explicit rework rounds.
+- [ ] W03a: opt-in, read-only GitHub PR metadata synchronization for selected repos.
+- [ ] W03b: explicit export and retention controls, defaulting to retain all history.
+- [ ] W03c: reported usage summaries with unknown-data handling and attributable
+  cost estimates only when a complete named price snapshot is available.
 
-W01 adds reported workflow plans, versioned workflow runs, nodes linked to tasks/runs, and a read-only React Flow graph. Node selection opens the task and its event history. The graph reflects reported state and exposes missing observations.
+The [Phase 3 contract](docs/V1_WORKFLOWS.md) defines the bounded implementation
+scope. These capabilities are required in v1 even when an individual operator
+chooses not to connect GitHub, report usage, or prune history. A missing optional
+connection is an empty/configuration state, not permission to omit the feature.
 
-W02 adds same-project dependencies with cycle detection, readiness explanations, review decisions tied to a work revision and artifact identifier, and explicit rework rounds. Before automatic completion is considered, a policy must define which evidence counts and how a new implementation invalidates earlier approvals.
+Dependencies explain/gate accepted tracking records; they do not run a scheduler.
+A graph reflects reports and exposes missing observations. Parent-child grouping
+is distinct from dependencies. Review evidence never impersonates human acceptance.
 
-W03 considers opt-in GitHub synchronization, retention/export tools, and usage analytics. PR links already exist as manual metadata in v0.1. GitHub credentials and outbound requests enter only with an explicit integration design. Missing usage remains unknown, and cost estimates need a named price snapshot, currency, and provider.
+## Full v1 acceptance
 
-Sequence these as separate proposals after observing real v0.1 use. Parent-task grouping is not a substitute for dependency semantics. A workflow diagram is not a scheduler.
+- [ ] W04: finish all package gates and validate the integrated v1 journey on a
+  fresh checkout with isolated data/outbox directories on the named macOS host.
+- [ ] Trace a branching workflow, failed attempt, retry, stale report, review,
+  rework, updated artifact, human acceptance, and reconnect across two browsers.
+- [ ] Verify GitHub opt-in/offline recovery, exports, safe retention/cursor reset,
+  usage deduplication, and unknown-data displays.
+- [ ] Review the exact release commit and publish `v1.0.0` only under activated
+  execution authority, with evidence and disclosed limitations.
 
-## Deferred product choices
+The tested host configuration is the support claim. Linux requires equivalent
+installation/runtime evidence. Normal local use works offline; explicitly enabled
+GitHub synchronization and external agent providers need their own network access.
 
-Multiple users, LAN access, cloud synchronization, custom columns, arbitrary command execution, transcript indexing, mobile clients, a plugin marketplace, and desktop packaging are outside v0.1. A Tauri shell may follow once browser workflows are stable.
+## Separate future proposals
 
-The operator selected MIT for AgentFlow-owned material; see [LICENSE](LICENSE). Exact dependency versions and the tested runtime configuration are resolved in P01. Their acceptance evidence remains required before release.
+Agent process controls, multiple users, LAN access, cloud synchronization, custom
+columns, arbitrary command execution, transcript indexing, native mobile clients,
+a plugin marketplace, installers, and desktop packaging remain outside v1. The
+previous optional control release was never one of Phases 1–3.
+
+MIT remains selected for AgentFlow-owned material. Exact compatible dependencies
+and runtime versions are pinned and validated in P01 and the package adding them.

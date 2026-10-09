@@ -74,6 +74,6 @@ layout together. Screenshots and browser evidence belong to that implementation 
 
 [DESIGN.md](../../DESIGN.md) now proposes visual values and starting dimensions.
 The [design brief](../../docs/design/WORK_BOARD.md) supplies static studies and
-tracking scope: event timelines in P05, workflow graph in future W01. Final
+tracking scope: event timelines in P05, workflow graph in v1 W01. Final
 breakpoints and control-library combinations require runtime validation. No
 application UI or accessibility pass is claimed.

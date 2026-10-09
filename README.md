@@ -22,10 +22,12 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 | [Product context](PRODUCT.md) | Confirmed users, purpose, constraints, and accessibility targets |
 | [Design seed](DESIGN.md) | Lightly cartoonish Work board direction and proposed visual values |
 | [Board surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) | First board composition, states, and P03 acceptance targets |
-| [Work board design brief](docs/design/WORK_BOARD.md) | Static visual studies, evidence hierarchy, and v0.1 tracking scope |
+| [Work board design brief](docs/design/WORK_BOARD.md) | Static visual studies, evidence hierarchy, and v1 tracking scope |
 | [Roadmap](ROADMAP.md) | Product milestones, release boundaries, and exit criteria |
 | [Implementation plan](PLAN.md) | Ordered work packages and verification requirements |
-| [Execution policy](docs/EXECUTION_POLICY.md) | Approved v0.1 delivery authority, review gates, and future-run prompt |
+| [Execution policy](docs/EXECUTION_POLICY.md) | V1 activation prompt, delivery authority, review gates, and stopping conditions |
+| [Phase 3 contract](docs/V1_WORKFLOWS.md) | Workflow graph, dependencies/rework, GitHub observation, export/retention, usage |
+| [Delivery ledger](docs/DELIVERY.md) | Package progress and evidence for resumable execution |
 | [Architecture](docs/ARCHITECTURE.md) | System boundaries, stack, and proposed source layout |
 | [Backend](docs/BACKEND.md) | Domain model, persistence, state transitions, and recovery |
 | [Frontend](docs/FRONTEND.md) | Pages, interactions, accessibility, and live updates |
@@ -47,8 +49,15 @@ Runtime data stays outside the checkout. A public source repository does not pub
 
 ## Current delivery boundary
 
-The first release combines the foundation and agent-integration milestones. Workflow graphs, dependency enforcement, GitHub synchronization, usage analytics, and agent controls are later work. See the [roadmap](ROADMAP.md).
+The target is **v1 across all three phases**, completed in order: foundation, agent
+integration, then workflow tracking and supporting tools. The connected graph,
+dependencies/rework, opt-in read-only GitHub PR observation, export/retention, and
+reported usage are included. Agent process controls remain separate. See the
+[roadmap](ROADMAP.md) and [starting prompt](docs/EXECUTION_POLICY.md#starting-the-future-run).
 
 AgentFlow-owned material is licensed under [MIT](LICENSE), copyright 2026 AlesSystems. Retain applicable third-party licenses and notices.
 
-The operator approved the [execution policy](docs/EXECUTION_POLICY.md) for a future v0.1 implementation run. It permits verified package merges and source release without repeated operator sign-off. Its final section contains the activation prompt. Implementation remains unstarted.
+The earlier approved P01–P07 execution controls are retained in the revised
+[execution policy](docs/EXECUTION_POLICY.md). Its single prompt explicitly activates
+the expanded v1 implementation, sequential verified integration, and source
+release. This documentation PR does not activate implementation.
