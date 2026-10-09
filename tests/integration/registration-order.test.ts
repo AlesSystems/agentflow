@@ -161,7 +161,7 @@ it("effective SQL guards reject invalid, duplicate and changed order without alt
   const { dir, owned } = await upgradedFixture();
   try {
     connection(dir, (db) => {
-      for (const value of [null, 0, -1, 1.5, 9007199254740992, 2]) {
+      for (const value of [null, 0, -1, 1.5, "invalid", 9007199254740992, 2]) {
         expect(() => insert(db, value)).toThrow();
         expect(highwater(db)).toEqual({ last_value: 3 });
       }
@@ -229,10 +229,11 @@ it("protects allocator singleton and high-water against insertion deletion reset
         expect(highwater(db)).toEqual({ last_value: 3 });
       }
       expect(() => nextRegistrationOrder(db)).toThrow("TRANSACTION_REQUIRED");
-      db.exec("UPDATE run_order_allocator SET last_value=9007199254740991");
+      db.exec("UPDATE run_order_allocator SET last_value=9007199254740990");
+      expect(allocate(db)).toBe(Number.MAX_SAFE_INTEGER);
       expect(() => allocate(db)).toThrow("EXHAUSTED");
       expect(highwater(db)).toEqual({ last_value: 9007199254740991 });
-      expect(db.prepare("SELECT count(*) n FROM runs").get()).toEqual({ n: 3 });
+      expect(db.prepare("SELECT count(*) n FROM runs").get()).toEqual({ n: 4 });
     });
   } finally {
     owned.close();
@@ -577,6 +578,48 @@ it("rejects UPSERT bypasses of run order and allocator high-water", async () => 
     }).body.data as { latestRun: Record<string, unknown> };
     expect(detail.latestRun).not.toHaveProperty("registrationOrder");
     expect(detail.latestRun).not.toHaveProperty("registration_order");
+  } finally {
+    owned.close();
+  }
+});
+
+it("fresh Store starts allocator at zero and seed fixtures allocate explicit named-column order", async () => {
+  const dir = directory();
+  const owned = await openOwnedStore(dir);
+  try {
+    connection(dir, (db) => {
+      expect(highwater(db)).toEqual({ last_value: 0 });
+      expect(db.prepare("SELECT count(*) n FROM runs").get()).toEqual({ n: 0 });
+    });
+    const reply = owned.store.command(
+      { kind: "project.create", input: { name: "Synthetic fresh fixture" } },
+      {
+        principal: "operator",
+        method: "POST",
+        path: "/api/v1/projects",
+        key: randomUUID(),
+        digest: "synthetic-fresh",
+        now: 0,
+      },
+    );
+    const projectId = (reply.body.data as { id: string }).id;
+    const { seedRun } = await import("../fixtures/application");
+    const first = seedRun(owned.instance, { projectId, state: "cancelled" });
+    const second = seedRun(owned.instance, { projectId, state: "queued" });
+    connection(dir, (db) => {
+      expect(
+        db
+          .prepare(
+            "SELECT id,registration_order FROM runs ORDER BY registration_order",
+          )
+          .all(),
+      ).toEqual([
+        { id: first.id, registration_order: 1 },
+        { id: second.id, registration_order: 2 },
+      ]);
+      expect(highwater(db)).toEqual({ last_value: 2 });
+    });
+    expect(owned.store.integrity().integrity).toBe("ok");
   } finally {
     owned.close();
   }
