@@ -1,9 +1,14 @@
+import { sql } from "drizzle-orm";
 import {
   sqliteTable,
   integer,
   text,
   uniqueIndex,
   index,
+  check,
+  foreignKey,
+  primaryKey,
+  type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 export const metadata = sqliteTable("instance_metadata", {
   singleton: integer("singleton").primaryKey(),
@@ -52,7 +57,9 @@ export const tasks = sqliteTable(
     projectId: text("project_id")
       .notNull()
       .references(() => projects.id),
-    parentTaskId: text("parent_task_id"),
+    parentTaskId: text("parent_task_id").references(
+      (): AnySQLiteColumn => tasks.id,
+    ),
     title: text("title").notNull(),
     description: text("description").notNull(),
     acceptanceCriteria: text("acceptance_criteria").notNull(),
@@ -72,6 +79,25 @@ export const tasks = sqliteTable(
   },
   (t) => [
     uniqueIndex("tasks_id_project").on(t.id, t.projectId),
+    foreignKey({
+      columns: [t.parentTaskId, t.projectId],
+      foreignColumns: [t.id, t.projectId],
+    }),
+    check("tasks_version", sql`${t.version}>0`),
+    check("tasks_work_revision", sql`${t.workRevision}>0`),
+    check(
+      "tasks_status",
+      sql`${t.status} IN ('backlog','in_progress','review','completed')`,
+    ),
+    check(
+      "tasks_priority",
+      sql`${t.priority} IN ('low','normal','high','urgent')`,
+    ),
+    check("tasks_tags", sql`json_valid(${t.tags})`),
+    check(
+      "tasks_target_role",
+      sql`${t.targetRole} IN ('orchestrator','implementation','reviewer','verifier')`,
+    ),
     index("tasks_project_status_created").on(
       t.projectId,
       t.status,
@@ -104,6 +130,30 @@ export const runs = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (t) => [
+    foreignKey({
+      columns: [t.taskId, t.projectId],
+      foreignColumns: [tasks.id, tasks.projectId],
+    }),
+    uniqueIndex("runs_active_task")
+      .on(t.taskId)
+      .where(
+        sql`${t.taskId} IS NOT NULL AND ${t.state} IN ('queued','running')`,
+      ),
+    check("runs_version", sql`${t.version}>0`),
+    check("runs_work_revision", sql`${t.workRevision}>0`),
+    check("runs_last_sequence", sql`${t.lastSequence}>=0`),
+    check(
+      "runs_purpose",
+      sql`${t.purpose} IN ('planning','implementation','review','verification')`,
+    ),
+    check(
+      "runs_state",
+      sql`${t.state} IN ('queued','running','succeeded','failed','cancelled','interrupted')`,
+    ),
+    check(
+      "runs_task_revision",
+      sql`(${t.taskId} IS NULL AND ${t.purpose}='planning' AND ${t.workRevision} IS NULL) OR (${t.taskId} IS NOT NULL AND ${t.workRevision} IS NOT NULL)`,
+    ),
     index("runs_task_created").on(t.taskId, t.createdAt, t.id),
     index("runs_agent_received").on(t.agentId, t.lastReceivedAt),
   ],
@@ -166,12 +216,19 @@ export const changes = sqliteTable("changes", {
   kind: text("kind").notNull(),
   receivedAt: integer("received_at").notNull(),
 });
-export const receipts = sqliteTable("receipts", {
-  principal: text("principal").notNull(),
-  method: text("method").notNull(),
-  path: text("path").notNull(),
-  key: text("key").notNull(),
-  digest: text("digest").notNull(),
-  status: integer("status").notNull(),
-  body: text("body").notNull(),
-});
+export const receipts = sqliteTable(
+  "receipts",
+  {
+    principal: text("principal").notNull(),
+    method: text("method").notNull(),
+    path: text("path").notNull(),
+    key: text("key").notNull(),
+    digest: text("digest").notNull(),
+    status: integer("status").notNull(),
+    body: text("body").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.principal, t.method, t.path, t.key] }),
+    check("receipts_body", sql`json_valid(${t.body})`),
+  ],
+);

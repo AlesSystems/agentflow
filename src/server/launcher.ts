@@ -95,6 +95,12 @@ export async function startRuntime(
         ).pathname;
         const matched = matchEndpoint(request.method || "GET", pathname);
         if (
+          (pathname.startsWith("/api/v1/") &&
+            !(
+              pathname === "/api/v1/health" &&
+              ["GET", "HEAD"].includes(request.method || "GET")
+            ) &&
+            !(pathname === "/api/v1/session" && request.method === "POST")) ||
           matched ||
           pathname === "/" ||
           pathname === "/api/v1/foundation" ||
@@ -109,14 +115,21 @@ export async function startRuntime(
             owned.store,
             owned.credentials,
             matched?.endpoint.access ??
-              (pathname === "/api/v1/foundation" ? "read" : "human"),
+              (pathname === "/" || pathname === "/api/v1/session"
+                ? "human"
+                : "read"),
             () =>
               response.setHeader(
                 "AgentFlow-Generation",
                 owned.store.metadata().generation,
               ),
           );
-          if (matched?.endpoint.kind === "command") {
+          if (
+            matched?.endpoint.kind === "command" ||
+            (pathname.startsWith("/api/v1/") &&
+              pathname !== "/api/v1/session" &&
+              !["GET", "HEAD"].includes(request.method || "GET"))
+          ) {
             requireResourceMutation(headers, principal);
             mutationBudget.charge();
           }
