@@ -7,6 +7,7 @@ import { projectCreate, projectPatch, projectQuery, project } from '../contracts
 import { taskCreate, taskPatch, completeInput, reopenInput, commentInput, taskQuery, taskDetailQueryV1, boardQuery, task, comment, completion, reopen, run } from '../contracts/tasks';
 import { settingsPatch } from '../contracts/settings';
 import { canonicalDigest } from '../contracts/common';
+import { localDate, localDayInterval } from '../domain/local-day';
 import { Conflict, decideTask, type TaskCommand, type TaskFacts } from '../domain/tasks';
 export type ApplicationCommand =
  |{kind:'project.create';input:z.infer<typeof projectCreate>}
@@ -132,22 +133,78 @@ export class ApplicationData {
  }).immediate();
  }
  private settings(){
- const value=this.db.prepare('SELECT timezone,version FROM settings WHERE singleton=1').get() as Row;
+ const value=this.db.prepare('SELECT timezone,version FROM settings WHERE singleton=1').get() as {timezone:string;version:number};
  let storageBytes=0;
  for(const suffix of ['','-wal']){try{storageBytes+=statSync(join(this.dataDir,'agentflow.sqlite'+suffix)).size;}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}}
  return {...value,dataLocation:this.dataDir,storageBytes,storageMeasurement:'observational'};
+ }
+ private page(source:string,where:string,params:unknown[],kind:string,filters:unknown,limit:number,cursor?:string,timeColumn='created_at') {
+ const generation=this.body(null).generation;
+ const fingerprint=canonicalDigest({kind,filters,limit,order:timeColumn+'-id-desc'});
+ let boundary='';const boundParams:unknown[]=[];
+ if(cursor){
+ try{
+ if(!/^[A-Za-z0-9_-]+$/.test(cursor)||cursor.length>4096)throw new Error('shape');
+ const parsed=z.strictObject({v:z.literal(1),generation:z.uuid(),fingerprint:z.string().length(64),time:z.number().int().safe(),id:z.string().min(1).max(100)}).parse(JSON.parse(Buffer.from(cursor,'base64url').toString('utf8')));
+ if(parsed.generation!==generation||parsed.fingerprint!==fingerprint)throw new Error('binding');
+ boundary=` AND (${timeColumn}<? OR (${timeColumn}=? AND id<?))`;boundParams.push(parsed.time,parsed.time,parsed.id);
+ }catch{throw new Conflict('cursor_invalid');}
+ }
+ const total=(this.db.prepare(`SELECT count(*) AS total FROM ${source} WHERE ${where}`).get(...params) as {total:number}).total;
+ const rows=this.db.prepare(`SELECT * FROM ${source} WHERE ${where}${boundary} ORDER BY ${timeColumn} DESC,id DESC LIMIT ?`).all(...params,...boundParams,limit+1) as Row[];
+ const more=rows.length>limit;const selected=rows.slice(0,limit);const last=selected.at(-1);
+ const nextCursor=more&&last?Buffer.from(JSON.stringify({v:1,generation,fingerprint,time:last[timeColumn],id:last.id})).toString('base64url'):null;
+ return {items:selected.map(serialize),total,nextCursor};
+ }
+ private taskList(input:z.infer<typeof taskQuery>){
+ const {cursor,limit,...filters}=input;const clauses:string[]=[];const params:unknown[]=[];
+ for(const [key,column] of [['projectId','project_id'],['status','status'],['priority','priority'],['assignedAgentId','assigned_agent_id']] as const){if(filters[key]!==undefined){clauses.push(column+'=?');params.push(filters[key]);}}
+ if(filters.tag){clauses.push('EXISTS (SELECT 1 FROM json_each(tasks.tags) WHERE value=?)');params.push(filters.tag);}
+ if(filters.q){clauses.push('instr(lower(title),lower(?))>0');params.push(filters.q);}
+ return this.page('tasks',clauses.join(' AND ')||'1',params,'tasks',filters,limit,cursor);
+ }
+ private history(id:string,kind:'completion'|'reopen',limit:number,cursor?:string){
+ const result=this.page(kind==='completion'?'completions':'reopens','task_id=?',[id],kind,{taskId:id},limit,cursor,kind==='completion'?'accepted_at':'created_at');
+ const nextUrl=result.nextCursor?`/api/v1/tasks/${id}?history=${kind}&historyLimit=${limit}&${kind}Cursor=${result.nextCursor}`:null;
+ return {items:result.items,nextCursor:result.nextCursor,nextUrl};
+ }
+ private overview(input:{timezone?:string;limit:number;cursor?:string},now:number){
+ const settings=this.settings();const zone=input.timezone??settings.timezone as string;
+ const day=localDayInterval(localDate(now,zone),zone);
+ const count=(sql:string,...params:unknown[])=>(this.db.prepare(sql).get(...params) as {count:number}).count;
+ const metrics={activeProjects:count('SELECT count(*) AS count FROM projects WHERE archived_at IS NULL'),reportingAgents:count("SELECT count(DISTINCT agent_id) AS count FROM runs r JOIN projects p ON p.id=r.project_id WHERE p.archived_at IS NULL AND r.state='running' AND r.last_received_at>=?",now-60000),completedToday:count("SELECT count(*) AS count FROM tasks t JOIN projects p ON p.id=t.project_id WHERE p.archived_at IS NULL AND t.status='completed' AND t.completed_at>=? AND t.completed_at<?",day.start,day.end),awaitingReview:count("SELECT count(*) AS count FROM tasks t JOIN projects p ON p.id=t.project_id WHERE p.archived_at IS NULL AND t.status='review'"),failedRunsToday:count("SELECT count(*) AS count FROM runs r JOIN projects p ON p.id=r.project_id WHERE p.archived_at IS NULL AND r.state='failed' AND r.ended_at>=? AND r.ended_at<?",day.start,day.end)};
+ const source=`(SELECT t.id,t.project_id,t.id AS task_id,NULL AS run_id,t.title,t.created_at,
+ (CASE WHEN trim(coalesce(t.blocked_reason,''))<>'' THEN 1 ELSE 0 END) AS blocked,
+ EXISTS(SELECT 1 FROM runs r WHERE r.task_id=t.id AND r.state='failed') AS failed,
+ EXISTS(SELECT 1 FROM runs r WHERE r.task_id=t.id AND r.state IN ('queued','running') AND r.last_received_at<?) AS stale
+ FROM tasks t JOIN projects p ON p.id=t.project_id WHERE p.archived_at IS NULL
+ UNION ALL SELECT r.id,r.project_id,NULL,r.id,coalesce(r.model,'Planning run'),r.created_at,0,r.state='failed',r.state IN ('queued','running') AND r.last_received_at<?
+ FROM runs r JOIN projects p ON p.id=r.project_id WHERE r.task_id IS NULL AND p.archived_at IS NULL)`;
+ const attention=this.page(source,'blocked OR failed OR stale',[now-60000,now-60000],'attention',{timezone:zone,day:localDate(now,zone)},input.limit,input.cursor);
+ return {metrics,attention:{...attention,items:attention.items.map(({blocked,failed,stale,...item})=>({...item,reasons:[...(blocked?['blocked']:[]),...(failed?['failed']:[]),...(stale?['stale']:[])]}))},timezone:zone,capturedAt:new Date(now).toISOString(),day:{start:new Date(day.start).toISOString(),end:new Date(day.end).toISOString()}};
  }
  snapshot(query:ApplicationQuery,now:number):CommittedReply {
  return this.db.transaction(()=>{
  let data:unknown;
  if(query.kind==='settings') data=this.settings();
  else if(query.kind==='project') data=this.one('projects',query.id);
- else if(query.kind==='task'){
+ else if(query.kind==='projects'){
+ const {limit,cursor,...filters}=query.input;
+ data=this.page('projects',filters.archived===undefined?'1':filters.archived==='true'?'archived_at IS NOT NULL':'archived_at IS NULL',[],'projects',filters,limit,cursor);
+ }else if(query.kind==='tasks')data=this.taskList(query.input);
+ else if(query.kind==='comments') {this.one('tasks',query.id);data=this.page('comments','task_id=?',[query.id],'comments',{taskId:query.id},query.input.limit,query.input.cursor);}
+ else if(query.kind==='board'){
+ this.one('projects',query.id);
+ data={columns:['backlog','in_progress','review','completed'].map(status=>({status,...this.taskList({...query.input,projectId:query.id,status:status as z.infer<typeof task>['status']})}))};
+ }else if(query.kind==='overview')data=this.overview(query.input,now);
+ else {
  const value=task.parse(this.one('tasks',query.id));
  const accepted=this.db.prepare('SELECT * FROM completions WHERE task_id=? AND work_revision=? ORDER BY accepted_at DESC,id DESC LIMIT 1').get(value.id,value.workRevision) as Row|undefined;
- data={task:value,currentCompletion:value.status==='completed'&&accepted?serialize(accepted):null,latestRun:null,history:{commentsUrl:`/api/v1/tasks/${value.id}/comments`,completions:{items:[],nextCursor:null,nextUrl:null},reopens:{items:[],nextCursor:null,nextUrl:null}}};
- }else throw new Error('QUERY_NOT_IMPLEMENTED');
- void now;return {status:200,body:this.body(data)};
+ const latest=this.db.prepare('SELECT * FROM runs WHERE task_id=? ORDER BY created_at DESC,id DESC LIMIT 1').get(value.id) as Row|undefined;
+ const {history,historyLimit,completionCursor,reopenCursor}=query.input;
+ data={task:value,currentCompletion:value.status==='completed'&&accepted?serialize(accepted):null,latestRun:latest?serialize(latest):null,history:{commentsUrl:`/api/v1/tasks/${value.id}/comments`,completions:history==='reopen'?null:this.history(value.id,'completion',historyLimit,completionCursor),reopens:history==='completion'?null:this.history(value.id,'reopen',historyLimit,reopenCursor)}};
+ }
+ return {status:200,body:this.body(data)};
  })();
  }
 }
