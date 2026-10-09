@@ -328,3 +328,14 @@ it("keeps list totals and feed cursor together during concurrent HTTP writes and
     await server.stop();
   }
 }, 60000);
+it('permits reporter JSON mutations with exact allowed Origin and rejects hostile Origin', async () => {
+ const server = await launch();
+ try {
+  const headers={Authorization:'Bearer '+server.credentials().reporterToken,'Content-Type':'application/json','Idempotency-Key':randomUUID()};
+  const allowed=await fetch(server.url+'/api/v1/projects',{method:'POST',headers:{...headers,Origin:server.url},body:JSON.stringify({name:'Synthetic allowed-origin reporter'})});
+  expect(allowed.status).toBe(201);const body=await allowed.json();expect(allowed.headers.get('AgentFlow-Generation')).toBe(body.generation);
+  const originless=await fetch(server.url+'/api/v1/projects',{method:'POST',headers:{...headers,'Idempotency-Key':randomUUID()},body:JSON.stringify({name:'Synthetic originless reporter'})});expect(originless.status).toBe(201);
+  const hostile=await fetch(server.url+'/api/v1/projects',{method:'POST',headers:{...headers,Origin:'https://hostile.example'},body:JSON.stringify({name:'must reject'})});expect(hostile.status).toBe(403);expect((await hostile.json()).error.code).toBe('origin_rejected');
+  const invalid=await fetch(server.url+'/api/v1/projects',{method:'POST',headers:{...headers,Origin:server.url},body:JSON.stringify({actor:'operator'})});expect(invalid.status).toBe(422);expect(invalid.headers.get('AgentFlow-Generation')).toBe(body.generation);
+ }finally{await server.stop();}
+},60000);
