@@ -370,6 +370,14 @@ it("older backup restores retained high-water and orders under new generation an
   try {
     expect(restored.store.metadata().generation).not.toBe(generation);
     expect(restored.store.sessionCount()).toBe(0);
+    expect(
+      restored.store.snapshot({
+        kind: "task",
+        id: taskId,
+        input: { history: "both", historyLimit: 50 },
+      }).body.data,
+    ).toMatchObject({ latestRun: { id: failedId } });
+    expect(() => complete(restored)).toThrow("implementation_not_current");
     connection(dir, (db) => {
       expect(
         db
