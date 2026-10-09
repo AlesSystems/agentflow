@@ -8,16 +8,18 @@ import { Modal } from "../ui/dialog";
 export function TaskPage({
   projectId,
   taskId,
+  boardSearch = "",
 }: {
   projectId: string;
   taskId: string;
+  boardSearch?: string;
 }) {
   const router = useRouter();
   const project = useRead(`/projects/${projectId}`, projectResponse);
   const [dirty, setDirty] = useState(false),
     [confirm, setConfirm] = useState(false);
   const onDirty = useCallback((value: boolean) => setDirty(value), []);
-  const back = () => router.push(`/projects/${projectId}`);
+  const back = () => router.push(`/projects/${projectId}${boardSearch}`);
   return (
     <>
       <button onClick={() => (dirty ? setConfirm(true) : back())}>
