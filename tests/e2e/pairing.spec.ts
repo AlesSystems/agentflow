@@ -33,9 +33,9 @@ test("pairs with the keyboard and reads SQLite while external network is denied"
     ).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(
-      page.getByRole("heading", { name: "Your local workspace is ready" }),
+      page.getByRole("heading", { name: "Overview", exact: true }),
     ).toBeVisible();
-    await expect(page.getByText("SQLite · ready")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
     const metadata = await page.evaluate(async () => {
       const response = await fetch("/api/v1/foundation");
       return {
@@ -69,7 +69,7 @@ test("pairs with the keyboard and reads SQLite while external network is denied"
     ).toBeVisible();
     expect(requests.every((origin) => origin === server.url)).toBe(true);
     await page.reload();
-    await expect(page.getByText("SQLite · ready")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Disconnect browser" }).click();
     await expect(
       page.getByRole("heading", { name: "Pair your browser" }),
@@ -103,7 +103,7 @@ test("a paired browser on a second localhost port cannot read pages, RSC or pref
       .getByLabel("Pairing token", { exact: true })
       .fill(server.credentials().pairingToken);
     await page.getByRole("button", { name: "Pair this browser" }).click();
-    await expect(page.getByText("SQLite · ready")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
     await page.goto(`http://127.0.0.1:${port}`);
     const session = await page.context().newCDPSession(page);
     await session.send("Network.enable");
@@ -134,7 +134,7 @@ test("a paired browser on a second localhost port cannot read pages, RSC or pref
       page.locator("#private").click(),
     ]);
     expect(response[0].status()).toBe(403);
-    await expect(page.getByText("SQLite · ready")).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Overview", exact: true })).not.toBeVisible();
   } finally {
     await new Promise<void>((resolve) => other.close(() => resolve()));
     await server.stop();
@@ -153,7 +153,7 @@ test("disconnect clears errors and permits only one delayed request until it fin
       .getByLabel("Pairing token", { exact: true })
       .fill(server.credentials().pairingToken);
     await page.getByRole("button", { name: "Pair this browser" }).click();
-    await expect(page.getByText("SQLite · ready")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
     await page.route("**/api/v1/session", async (route) => {
       if (route.request().method() !== "DELETE") {
         await route.continue();
@@ -168,7 +168,7 @@ test("disconnect clears errors and permits only one delayed request until it fin
       await route.continue();
     });
     await page.getByRole("button", { name: "Disconnect browser" }).click();
-    await expect(page.locator('main p[role="alert"]')).toContainText(
+    await expect(page.locator('nav p[role="alert"]')).toContainText(
       "Could not disconnect. Try again.",
     );
     await expect(
@@ -178,10 +178,10 @@ test("disconnect clears errors and permits only one delayed request until it fin
     await expect(
       page.getByRole("button", { name: "Disconnecting…" }),
     ).toBeDisabled();
-    await expect(page.locator('main p[role="alert"]')).toHaveText("");
+    await expect(page.locator('nav p[role="alert"]')).toHaveText("");
     expect(count).toBe(2);
     await page.evaluate(() => {
-      const button = document.querySelector("main button") as HTMLButtonElement;
+      const button = document.querySelector("nav button") as HTMLButtonElement;
       button.click();
       button.click();
     });

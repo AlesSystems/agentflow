@@ -1,0 +1,131 @@
+{
+  "implementationSource": "7dbc8b76bc36c2d19a88ad550216a38af0a4656d",
+  "buildId": "dloJxLCrBV3v7wG0xuF9z",
+  "fixture": "Synthetic records and browser acceptance; no actual human attestation.",
+  "checks": {
+    "unit": {
+      "source": "7dbc8b76bc36c2d19a88ad550216a38af0a4656d",
+      "tests": 28,
+      "files": 11,
+      "result": "passed",
+      "verifier": "coordinator"
+    },
+    "integration": {
+      "source": "0cc8dabbd510dcd1b56367642ab5ebbb9a65a500",
+      "tests": 68,
+      "files": 14,
+      "result": "passed",
+      "retainedReason": "Later TaskPage heading-focus/browser-regression delta leaves server, storage and API source unchanged."
+    },
+    "browser": {
+      "source": "7dbc8b76bc36c2d19a88ad550216a38af0a4656d",
+      "tests": 22,
+      "result": "passed"
+    },
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed",
+    "openapi": {
+      "source": "0cc8dabbd510dcd1b56367642ab5ebbb9a65a500",
+      "result": "passed",
+      "laterDelta": "TaskPage heading-focus only; contract source unchanged"
+    },
+    "performance": {
+      "source": "0cc8dabbd510dcd1b56367642ab5ebbb9a65a500",
+      "result": "passed",
+      "runs": 3,
+      "worstApiP95Ms": 2.7442919999998594,
+      "budgetMs": 250
+    },
+    "dependencyTree": "passed",
+    "productionAuditFindings": 0,
+    "developmentAuditAffectedPackages": 9
+  },
+  "coordinatorFocusedTests": {
+    "source": "0cc8dabbd510dcd1b56367642ab5ebbb9a65a500",
+    "tests": 9,
+    "files": 3,
+    "result": "passed"
+  },
+  "video": {
+    "source": "7dbc8b76bc36c2d19a88ad550216a38af0a4656d",
+    "result": "full synthetic journey fixture exit 0, server stopped; actual sampled frame valid",
+    "codec": "VP9",
+    "width": 1440,
+    "height": 1000,
+    "durationSeconds": 3.52,
+    "limitation": "Compressed short walkthrough; sampled frame inspection, not claimed full playback."
+  },
+  "reviews": {
+    "plan": "Astra medium APPROVED, see plan-review.json",
+    "ui": "Initial full finish ship at d1e498d; scoped acceptance-state repair ship at0cc8dab; no detector rerun",
+    "code": "Original blockers repaired; final exact-candidate Standards/Spec approval remains a coordinator gate"
+  },
+  "sourceHashes": {
+    "src/app/api/v1/[...resource]/route.ts": "1e88cf54fe7b50181f6b4dcab38bf321b920e8f18fb64ede1ad2dbfe8c2d3bda",
+    "src/app/api/v1/foundation/route.ts": "4802cba4f59be3d512098a38010c761b9fb3f8269ccf3f9d1c8f9e80b5b7342b",
+    "src/app/api/v1/health/route.ts": "7c16f23de85b78a293e1d691fd97559d8d7cdedf563f8875aca3e6db62b0e2f5",
+    "src/app/api/v1/session/route.ts": "00e83de927c8bdd6eb291a8921f90767748e2493df384e341142117fd6aab18f",
+    "src/app/globals.css": "d4b69a972fa7d9bd51ae6b0492e31e253a16f736a689184701a770b52464592f",
+    "src/app/layout.tsx": "ba487a6a63d021bf1562bec3a43ceb2e1c08dd2d5bf582c38165c754f6c2c610",
+    "src/app/page.tsx": "7eb8f1f3e01d35e69f8c83099d04f463458c4a398ca3f073f62f3459729a2029",
+    "src/app/pair/form.tsx": "3f5c6426586ddbd4b95ccc11f6fd7ee42df318df22ad6617a353fed213ec9611",
+    "src/app/pair/page.tsx": "a573a2ae2ab1466c47000fd19d5f47b855caa1fd7826d011706ccef6212a6674",
+    "src/app/projects/[projectId]/page.tsx": "846abab04d86a7ac51255fed441a9e563ca6665ebc8d1090346975b47f123abd",
+    "src/app/projects/[projectId]/tasks/[taskId]/page.tsx": "9a595388ee93e479622c3615d3d0629a8f99a65935f0ea443322b26e15d3fd82",
+    "src/app/projects/page.tsx": "a279d1712759a2898aa66640e37bdf65b6797d342f9a8bd68937c4ecfd456cc6",
+    "src/app/settings/page.tsx": "06a12c2b59675ed9eeac592a468139d1a50a62cf38369bd2ad1c7614b896fe54",
+    "src/app/sign-out.tsx": "db48d16c6828b1af33c370100241f09c70b1268880a6bb085e7ef5b8a3508aae",
+    "src/cli/local.ts": "b7e13511ae6007c6e974c489e26d8da8eed8019d95dd11c8ee83529b4c371eb6",
+    "src/client/api.ts": "a97b3ba5d3d8c201733d58887dca6a9f9792d8dad5d4999eb3a083bb0e950a7d",
+    "src/client/commands.ts": "3e944573b7251fdba5a1bb898a90fa3ceb132e4c17aba6e1796312076f5ab5fe",
+    "src/client/drafts.ts": "9472728f797ff5942fa0d4b7b2c0d64bb46f255b4216a278a04546cf08138dae",
+    "src/client/provider.tsx": "b31ed15aeb6baf99308b7a50125f57b2afd6d3fec16582d3ffbd254898b6c591",
+    "src/client/queries.ts": "24c58e461253a64766f685134847112ede24c0068895f9f08bd19a33a8ae7849",
+    "src/components/board/board.tsx": "27f578f8821fb96cc0ed91f53bc654b09901c76ffaaddb0ce8ff8aa11711ee79",
+    "src/components/overview.tsx": "00452dfdd0d47b8b77f31c7c416ee1e5c8aea243ca3023ad5cb123fae0b2ddb0",
+    "src/components/projects.tsx": "ac21559449325cc9d0b469196017f59f562236a62c9045037b4d5ba09679a1a2",
+    "src/components/settings.tsx": "e9ec2f459dc9077ed014fd41c14936786734b46e36531831962414bc0733e355",
+    "src/components/shell.tsx": "7f2cd3ab39fa5815267324b4fb7c8f55491cb16fca864890fedc813074e4ab5f",
+    "src/components/tasks/detail.tsx": "b9a438fa131376f003e09a877823fcbda0f8dcff5fe421aca86bdf6830e3ea7a",
+    "src/components/tasks/fields.tsx": "695a52f6860893c08da3fe0d5df3192068222f8aae48158ca699fc8b93c3d108",
+    "src/components/tasks/page.tsx": "13484f507df6b6ce1f86876ecd6abd00baa4679f8976eb6df19596230088367b",
+    "src/components/ui/dialog.tsx": "1316be45485b6139b391837121a1fd051003ba98490f062b0f4a625a84a95ce5",
+    "src/components/ui/menu.tsx": "add5a971f0b2fff62f08b10e86a1513fc9bee91ece5bf91b2755f29e85c74a57",
+    "src/contracts/common.ts": "3e1cb39c32484081527a1ebfb5599ae4cfb6800111148acd2e35e730d92ea3cd",
+    "src/contracts/examples.ts": "cfb5a579a3d6418b89c37c989c89e638cd2f49ac5a347a655f66a4b59fee44d0",
+    "src/contracts/foundation.ts": "db20e04fe6434b102c7ec4b117e9df56d91d7651852defdc4104008df8536f55",
+    "src/contracts/openapi.ts": "b49220101f14a366a9ef6d6963b75b570a7edcaf0f2f5df257b3db98429c2c52",
+    "src/contracts/overview.ts": "6628e926b8f4f442eb85e023170ed93d3b8ad98bd3d1414ea7749a0429bfd5e7",
+    "src/contracts/projects.ts": "de1e537db33ac88bc448ac072a2a0ceb8826b4ddc34cbfdfd098d420f34b013f",
+    "src/contracts/responses.ts": "e76a7c84a51b0379a8e27878eef68d2f49143fea3c2f2f60ec00b759c777961b",
+    "src/contracts/routes.ts": "61f06983fa1d85da08e23e987d1bd7f16bb0061a7a395b4519aff01f3cc5404c",
+    "src/contracts/settings.ts": "647244a4dea81b88e0ff8a9cc8e5d3add1a9c9404bc52d9dbbd712bc2a93e878",
+    "src/contracts/tasks.ts": "63ecacd826e0282662c2e8e4f6e500671794b1d4041cf208133e64b2162f92fc",
+    "src/db/application.ts": "005d8347c65c022f741fccc6167e6bfb15bed3f1a63adf1934d7f313cd698f8b",
+    "src/db/index.ts": "0dc6a325ef7e076cbf9403fba6ad743c26028ecf11378a3facd756e9f3245277",
+    "src/db/recovery.ts": "6be0d374da298f0892bfe0e9f9f120e66b054c4e453d1b68ddd792a3d1dc278e",
+    "src/db/schema.ts": "11ba368ceb5f2eab9e91979d777f901645f18a62fe1689468c16db80909fe706",
+    "src/domain/local-day.ts": "fceb3a31f879921a6effc66fe921a3e5e633fdab5366c62d43874403ea931917",
+    "src/domain/request-digest.ts": "8b2baaa971d28c71160e67c8bf065ae665976823dddfe6385a731fd6e6a035a2",
+    "src/domain/tasks.ts": "d98cb5a54e23984f1ef85d951f34d7e233f3abb1d011c3cbc294014ead044fcb",
+    "src/server/application-api.ts": "7bdd2b7f9c646d91e956568744ccc9000d0da459160bd2f6fc07e85f97141734",
+    "src/server/auth.ts": "64f4d897e55052409e913f0d100e253dcb072d9a20f6b3b5ded6b90a79cba735",
+    "src/server/config.ts": "0947af0b8897146d02c71c30738fe9ae3380c06eaf1ed821a2666cbf5fec7f60",
+    "src/server/filesystem.ts": "8777f4780bdcd1c4d096941549ef4102d7edad94c049838e845d99624e56bb93",
+    "src/server/instance.ts": "0aefe50971aadf8acbd0a01d49c8e05eb4c18fe194aa237401e61e097c96b8b8",
+    "src/server/launcher.ts": "fe4bcb20586b2cb0e9bba4a77d32c3711f44f43b1e2c04f22162f478878fefac",
+    "src/server/next-boundary.ts": "1c65cc000b0a02f2089940d671d7ab586cea29c7796b403b15f1ed2702a96f4f",
+    "src/server/page-data.ts": "252f1c5ad83214bfc9c7f11b0b91c76202633ff188c29e83d70db8854065eb87",
+    "src/server/runtime.ts": "af0b11537b354a16f82b5053dfc348f32c87fa515b8950b3bc93ab32c4ef974a",
+    "src/server/security.ts": "1ae4a8fc033aa487d6ab715ffa24354e70e2a84ed71dac809beb650d4110ce14"
+  },
+  "lockSha256": "f87f27acb470eb86cbcbdd4ded750df327a46def7d2f52a91956c4f59f0b06fc",
+  "limitations": [
+    "Generation client browser seam is simulated; actual stopped-service restore remains P01/P02 HTTP/storage proof.",
+    "Full reload loses memory drafts; pairing recovery discloses this.",
+    "Missing historical QUALITY BAR card; approved code-first design/brief are authority.",
+    "Existing P01 dynamic filesystem tracing warning remains.",
+    "P04 registration order remains an unchecked mandatory prerequisite before public reporting."
+  ]
+}

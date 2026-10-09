@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01 foundation implemented, pending independent review and integration.** Browser pairing, protected SQLite readiness, backup, and restore are runnable. Task boards and agent/workflow reporting remain planned packages.
+**Status: P01 and P02 integrated; P03 manual Work board implemented and awaiting final integration.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable. Agent reporting, live tracking, CLI hooks and workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -20,7 +20,7 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 | Document | Purpose |
 | --- | --- |
 | [Product context](PRODUCT.md) | Confirmed users, purpose, constraints, and accessibility targets |
-| [Design seed](DESIGN.md) | Lightly cartoonish Work board direction and proposed visual values |
+| [Design system](DESIGN.md) | Extracted Work board tokens, controls and recovery behavior |
 | [Board surface brief](.impeccable/surfaces/src-app-projects-projectid-page-tsx.md) | First board composition, states, and P03 acceptance targets |
 | [Work board design brief](docs/design/WORK_BOARD.md) | Static visual studies, evidence hierarchy, and v1 tracking scope |
 | [Roadmap](ROADMAP.md) | Product milestones, release boundaries, and exit criteria |
@@ -35,11 +35,11 @@ The interaction goal is the lightweight board experience of [Fizzy](https://gith
 | [Decisions](docs/DECISIONS.md) | Accepted choices, alternatives, and remaining evidence gaps |
 
 Impeccable initialization records the existing product plan and a code-first
-workflow in `.impeccable/config.json`. The design seed does not implement P03.
-After the UI exists, run `$impeccable document` to extract real tokens and generate
-the design sidecar; browser verification is still required by the plan.
+workflow in `.impeccable/config.json`. P03 now has extracted DESIGN.md tokens and its design sidecar. The
+[P03 receipt](docs/implementation/P03.md) records actual browser evidence, repairs
+and the remaining final review/integration gate.
 
-## Run the local foundation
+## Run the local application
 
 Use Node **24.15.0** and npm **11.12.1**. The verified host is macOS 27.0 arm64. Install dependencies and build:
 

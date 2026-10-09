@@ -1,0 +1,614 @@
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  DragDropProvider,
+  useDraggable,
+  useDroppable,
+  PointerSensor,
+} from "@dnd-kit/react";
+import { PointerActivationConstraints, Feedback } from "@dnd-kit/dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useWorkspace, useRead, QueryFeedback } from "../../client/provider";
+import {
+  boardResponse,
+  projectResponse,
+  tasksResponse,
+} from "../../contracts/responses";
+import { taskCreate, type Task } from "../../contracts/tasks";
+import type { DraftFields } from "../../client/drafts";
+import {
+  freezeCommand,
+  moveIntent,
+  type FrozenCommand,
+} from "../../client/commands";
+import { ApiError } from "../../client/api";
+import { Modal } from "../ui/dialog";
+import { StatusMenu, statuses, statusLabel } from "../ui/menu";
+import { TaskFields } from "../tasks/fields";
+import { TaskDetail } from "../tasks/detail";
+const sensors = [
+  PointerSensor.configure({
+    activationConstraints: [
+      new PointerActivationConstraints.Distance({ value: 8 }),
+    ],
+  }),
+];
+const plugins = [
+  Feedback.configure({ feedback: "clone", dropAnimation: null }),
+];
+const empty: DraftFields = {
+  title: "",
+  description: "",
+  acceptanceCriteria: "",
+  priority: "normal",
+  tags: [],
+  assignedAgentId: null,
+  targetRole: null,
+  parentTaskId: null,
+  branch: null,
+  pullRequestUrl: null,
+  blockedReason: null,
+};
+export function Board({
+  projectId,
+  initialFilters = "",
+}: {
+  projectId: string;
+  initialFilters?: string;
+}) {
+  const { api, pair } = useWorkspace();
+  const cache = useQueryClient();
+  const [filters, setFilters] = useState(initialFilters);
+  const normalized = new URLSearchParams(filters);
+  for (const key of [...normalized.keys()])
+    if (
+      !["q", "priority", "tag", "assignedAgentId"].includes(key) ||
+      !normalized.get(key)
+    )
+      normalized.delete(key);
+  normalized.sort();
+  const suffix = normalized.toString() ? "&" + normalized.toString() : "";
+  const board = useRead(
+    `/projects/${projectId}/board?limit=50${suffix}`,
+    boardResponse,
+  );
+  const project = useRead(`/projects/${projectId}`, projectResponse);
+  const [selected, setSelected] = useState<{
+      id: string;
+      title: string;
+      accept: boolean;
+    } | null>(null),
+    [creating, setCreating] = useState(false),
+    [values, setValues] = useState(empty),
+    [request, setRequest] = useState<FrozenCommand | null>(null),
+    [busy, setBusy] = useState(false),
+    [message, setMessage] = useState(""),
+    [lane, setLane] = useState<Task["status"]>("backlog"),
+    [dirty, setDirty] = useState(false),
+    [confirmClose, setConfirmClose] = useState(false);
+  const latestTask = useRef<Task | null>(null);
+  const trigger = useRef<HTMLElement | null>(null);
+  const createRef = useRef<HTMLButtonElement>(null);
+  const onDirty = useCallback((value: boolean) => setDirty(value), []);
+  const archived = !!project.data?.data.archivedAt;
+  function open(task: Task, accept = false) {
+    trigger.current = document.activeElement as HTMLElement;
+    latestTask.current = task;
+    setSelected({ id: task.id, title: task.title, accept });
+    window.history.pushState(
+      {},
+      "",
+      `/projects/${projectId}/tasks/${task.id}${filters}`,
+    );
+  }
+  function close() {
+    if (dirty || (creating && values.title)) {
+      setConfirmClose(true);
+      return;
+    }
+    finishClose();
+  }
+  function finishClose() {
+    setConfirmClose(false);
+    setSelected(null);
+    setCreating(false);
+    setValues(empty);
+    setRequest(null);
+    setDirty(false);
+    window.history.replaceState({}, "", `/projects/${projectId}${filters}`);
+    if (latestTask.current) setLane(latestTask.current.status);
+  }
+  function restore() {
+    requestAnimationFrame(() => {
+      const id = latestTask.current?.id;
+      const card = id ? document.getElementById(`card-${id}`) : null;
+      if (card && card.getClientRects().length) {
+        card.focus();
+      } else if (
+        trigger.current?.isConnected &&
+        trigger.current.getClientRects().length
+      )
+        trigger.current.focus();
+      else createRef.current?.focus();
+    });
+  }
+  useEffect(() => {
+    const onBack = () => {
+      if (selected) close();
+    };
+    window.addEventListener("popstate", onBack);
+    return () => window.removeEventListener("popstate", onBack);
+  });
+  async function create(command: FrozenCommand) {
+    setBusy(true);
+    setRequest(command);
+    setMessage("");
+    try {
+      await api.command(command);
+      await cache.invalidateQueries();
+      setCreating(false);
+      setValues(empty);
+      setRequest(null);
+      setLane("backlog");
+      setMessage("Task created in Backlog.");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) pair();
+      setMessage(
+        error instanceof ApiError
+          ? `Could not create task: ${error.message}. Your draft is retained.`
+          : "Response uncertain. Retry sends the same task request.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  const [moveRetry, setMoveRetry] = useState<{
+    command: FrozenCommand;
+    status: Task["status"];
+  } | null>(null);
+  async function sendMove(command: FrozenCommand, status: Task["status"]) {
+    try {
+      await api.command(command);
+      await cache.invalidateQueries();
+      setMoveRetry(null);
+      setLane(status);
+      setMessage(`Task moved to ${statusLabel[status]}.`);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) pair();
+      setMoveRetry({ command, status });
+      setMessage(
+        error instanceof ApiError
+          ? `Move rejected: ${error.message}. Refresh the task before retrying.`
+          : "Move response uncertain. Retry sends the same movement request.",
+      );
+      void board.refetch();
+    }
+  }
+  async function move(task: Task, status: Task["status"]) {
+    const intent = moveIntent(task.status, status);
+    if (intent.kind === "reviewFirst")
+      setMessage("Move to Review first. Completed requires human acceptance.");
+    if (intent.kind === "accept") open(task, true);
+    if (intent.kind === "patch")
+      await sendMove(
+        freezeCommand(`/tasks/${task.id}`, "PATCH", {
+          expectedVersion: task.version,
+          status: intent.status,
+        }),
+        intent.status,
+      );
+  }
+
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <Link className="metadata" href="/projects">
+            Projects
+          </Link>
+          <h1>{project.data?.data.name ?? "Work board"}</h1>
+        </div>
+        <button
+          ref={createRef}
+          className="primary"
+          disabled={archived}
+          onClick={() => {
+            setCreating(true);
+            setMessage("");
+            trigger.current = document.activeElement as HTMLElement;
+          }}
+        >
+          Create task
+        </button>
+      </div>
+      {archived && (
+        <p className="notice">
+          Archived project · read-only task history. Unarchive in Projects to
+          edit.
+        </p>
+      )}
+      <form
+        className="filters"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const form = new FormData(e.currentTarget);
+          const next = new URLSearchParams();
+          for (const [key, value] of form) {
+            if (String(value).trim()) next.set(key, String(value).trim());
+          }
+          next.sort();
+          const search = next.size ? "?" + next.toString() : "";
+          setFilters(search);
+          window.history.replaceState(
+            {},
+            "",
+            `/projects/${projectId}${search}`,
+          );
+        }}
+      >
+        <label>
+          Search
+          <input
+            name="q"
+            defaultValue={normalized.get("q") ?? ""}
+            maxLength={200}
+            placeholder="Task title or description"
+          />
+        </label>
+        <label>
+          Priority
+          <select
+            name="priority"
+            defaultValue={normalized.get("priority") ?? ""}
+          >
+            <option value="">All priorities</option>
+            {["low", "normal", "high", "urgent"].map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Tag
+          <input
+            name="tag"
+            defaultValue={normalized.get("tag") ?? ""}
+            maxLength={40}
+          />
+        </label>
+        <label>
+          Assigned agent UUID
+          <input
+            name="assignedAgentId"
+            defaultValue={normalized.get("assignedAgentId") ?? ""}
+            maxLength={36}
+          />
+        </label>
+        <button>Apply filters</button>
+        {suffix && (
+          <button
+            type="button"
+            onClick={() => {
+              setFilters("");
+              window.history.replaceState({}, "", `/projects/${projectId}`);
+            }}
+          >
+            Clear filters
+          </button>
+        )}
+      </form>
+      <p role="status" className={message ? "notice" : ""}>
+        {message}
+      </p>
+      {moveRetry && (
+        <button
+          onClick={() => void sendMove(moveRetry.command, moveRetry.status)}
+        >
+          Retry exact move
+        </button>
+      )}
+      <QueryFeedback
+        error={board.error || project.error}
+        loading={board.isPending}
+        retry={() => {
+          void board.refetch();
+          void project.refetch();
+        }}
+      />
+      <label className="mobile-status">
+        Show status
+        <select
+          value={lane}
+          onChange={(e) => setLane(e.target.value as Task["status"])}
+        >
+          {statuses.map((status) => (
+            <option key={status} value={status}>
+              {statusLabel[status]} (
+              {board.data?.data.columns.find((c) => c.status === status)
+                ?.total ?? "…"}
+              )
+            </option>
+          ))}
+        </select>
+      </label>
+      <DragDropProvider
+        sensors={sensors}
+        plugins={plugins}
+        onDragEnd={(event) => {
+          if (event.canceled) return;
+          const source = event.operation.source;
+          const target = event.operation.target;
+          const task = source?.data.task;
+          if (task && target && statuses.includes(target.id as Task["status"]))
+            void move(task as Task, target.id as Task["status"]);
+        }}
+      >
+        <div className="board">
+          {board.data?.data.columns.map((column) => (
+            <Lane
+              key={`${column.status}${suffix}${board.data?.snapshotCursor}`}
+              column={column}
+              active={lane === column.status}
+              projectId={projectId}
+              filters={suffix}
+              archived={archived}
+              onOpen={open}
+              onMove={(task, status) => void move(task, status)}
+            />
+          ))}
+        </div>
+      </DragDropProvider>
+      <Modal
+        title={selected?.title ?? "Task"}
+        open={!!selected}
+        panel
+        onClose={close}
+        onRestore={restore}
+      >
+        {selected && (
+          <TaskDetail
+            key={selected.id}
+            id={selected.id}
+            archived={archived}
+            initialAccept={selected.accept}
+            onDirty={onDirty}
+            onStatus={(task) => {
+              latestTask.current = task;
+              setMessage(`Task is now in ${statusLabel[task.status]}.`);
+            }}
+          />
+        )}
+      </Modal>
+      <Modal
+        title="Create task"
+        open={creating}
+        onClose={close}
+        onRestore={restore}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const parsed = taskCreate.safeParse({
+              ...values,
+              tags: values.tags.filter(Boolean),
+              projectId,
+            });
+            if (!parsed.success) {
+              setMessage(
+                parsed.error.issues
+                  .map((i) => `${i.path.join(".")}: ${i.message}`)
+                  .join("; "),
+              );
+              return;
+            }
+            void create(freezeCommand("/tasks", "POST", parsed.data));
+          }}
+        >
+          <TaskFields values={values} onChange={setValues} disabled={busy} />
+          <p id="task-form-error" role="alert" className="error">
+            {message}
+          </p>
+          <button className="primary" disabled={busy}>
+            {busy ? "Creating…" : "Create task in Backlog"}
+          </button>
+          {request && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void create(request)}
+            >
+              Retry exact request
+            </button>
+          )}
+        </form>
+      </Modal>
+      <Modal
+        title="Keep your draft?"
+        open={confirmClose}
+        onClose={() => setConfirmClose(false)}
+      >
+        <p>
+          You have unsaved changes. Stay to keep editing, or discard them and
+          leave.
+        </p>
+        <div className="actions">
+          <button className="primary" onClick={() => setConfirmClose(false)}>
+            Stay
+          </button>
+          <button onClick={finishClose}>Discard and leave</button>
+        </div>
+      </Modal>
+    </>
+  );
+}
+type Column = ReturnType<typeof boardResponse.parse>["data"]["columns"][number];
+function Lane({
+  column,
+  active,
+  projectId,
+  filters,
+  archived,
+  onOpen,
+  onMove,
+}: {
+  column: Column;
+  active: boolean;
+  projectId: string;
+  filters: string;
+  archived: boolean;
+  onOpen: (task: Task) => void;
+  onMove: (task: Task, status: Task["status"]) => void;
+}) {
+  const { ref: dropRef, isDropTarget } = useDroppable({
+    id: column.status,
+    disabled: archived,
+  });
+  const { api } = useWorkspace();
+  const [items, setItems] = useState(column.items),
+    [cursor, setCursor] = useState(column.nextCursor),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  async function more() {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await api.read(
+        `/tasks?projectId=${projectId}&status=${column.status}&limit=50${filters}&cursor=${encodeURIComponent(cursor!)}`,
+        tasksResponse,
+      );
+      setItems((old) =>
+        [...old, ...response.data.items].filter(
+          (p, i, a) => a.findIndex((x) => x.id === p.id) === i,
+        ),
+      );
+      setCursor(response.data.nextCursor);
+    } catch {
+      setError("Could not load more tasks. Retry this page.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section
+      ref={dropRef}
+      className={`lane ${active ? "selected-lane" : ""} ${isDropTarget ? "drop-target" : ""}`}
+      aria-label={statusLabel[column.status]}
+    >
+      <h2 className={`status-tab ${column.status}`}>
+        {statusLabel[column.status]}{" "}
+        <span className="count">{column.total}</span>
+      </h2>
+      <div className="cards">
+        {items.map((task) => (
+          <Card
+            key={task.id}
+            task={task}
+            archived={archived}
+            onOpen={onOpen}
+            onMove={onMove}
+          />
+        ))}
+        {!items.length && (
+          <p className="lane-empty">
+            {filters
+              ? "No matching tasks. Clear filters to see more work."
+              : "No tasks here yet."}
+          </p>
+        )}
+      </div>
+      <p role="alert" className="error">
+        {error}
+      </p>
+      {cursor && (
+        <button disabled={busy} onClick={() => void more()}>
+          {busy ? "Loading…" : "Load more tasks"}
+        </button>
+      )}
+    </section>
+  );
+}
+
+function Card({
+  task,
+  archived,
+  onOpen,
+  onMove,
+}: {
+  task: Task;
+  archived: boolean;
+  onOpen: (task: Task) => void;
+  onMove: (task: Task, status: Task["status"]) => void;
+}) {
+  const {
+    ref: dragRef,
+    handleRef,
+    isDragging,
+    isDropping,
+  } = useDraggable({
+    id: task.id,
+    data: { task },
+    disabled: archived || task.status === "completed",
+  });
+  return (
+    <article
+      ref={dragRef}
+      className={`task-card ${isDragging ? "dragging" : isDropping ? "dropping" : ""}`}
+    >
+      <button
+        id={`card-${task.id}`}
+        className="card-title"
+        onClick={() => onOpen(task)}
+      >
+        {task.title}
+      </button>
+      <div className="card-meta">
+        <span className={`priority ${task.priority}`}>{task.priority}</span>
+        {task.targetRole && <span>{task.targetRole}</span>}
+      </div>
+      {task.assignedAgentId && (
+        <p className="metadata break-word">Assigned {task.assignedAgentId}</p>
+      )}
+      {task.blockedReason && (
+        <p className="blocker">Blocked · {task.blockedReason}</p>
+      )}
+      {task.tags.length > 0 && (
+        <div className="tags">
+          {task.tags.map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </div>
+      )}
+      {task.status === "completed" && (
+        <span className="accepted-stamp">Human accepted</span>
+      )}
+      <div className="card-actions">
+        <StatusMenu
+          task={task}
+          disabled={archived}
+          onMove={(status) => onMove(task, status)}
+        />
+        <button
+          ref={handleRef}
+          className="drag-handle"
+          disabled={archived || task.status === "completed"}
+          aria-label={`Drag ${task.title}`}
+          title="Drag between statuses"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            width="20"
+            height="20"
+            aria-hidden="true"
+            fill="currentColor"
+          >
+            {[5, 10, 15].flatMap((y) =>
+              [7, 13].map((x) => (
+                <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" />
+              )),
+            )}
+          </svg>
+        </button>
+      </div>
+    </article>
+  );
+}

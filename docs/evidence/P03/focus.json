@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "candidate": "7dbc8b76bc36c2d19a88ad550216a38af0a4656d",
+  "buildId": "dloJxLCrBV3v7wG0xuF9z",
+  "focusedContracts": [
+    "375px direct task route focuses heading",
+    "reload focuses heading",
+    "subsequent edit/save/refetch renders do not steal focus",
+    "dirty Back retains draft through Stay",
+    "Back preserves validated q and priority filters",
+    "existing q/priority/tag reload/back test remains passing"
+  ],
+  "checks": {
+    "focusedBrowser": "2 passed (2.6s)",
+    "fullBrowser": "22 passed (48.1s)",
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed"
+  },
+  "red": "work/poteto/P03/focus-red.log: heading was not focused before route-entry effect",
+  "rawLogs": [
+    "work/poteto/P03/focus-green.log",
+    "work/poteto/P03/focus-e2e-final.log",
+    "work/poteto/P03/focus-typecheck.log",
+    "work/poteto/P03/focus-lint.log",
+    "work/poteto/P03/focus-build.log"
+  ],
+  "implementation": "Heading ref focused in effect keyed only by taskId; no focus on ordinary render/background refresh.",
+  "sourceHash": "13484f507df6b6ce1f86876ecd6abd00baa4679f8976eb6df19596230088367b",
+  "unchangedGates": "Prior28unit/68integration/API/performance passed at0cc8dab. No repeat per explicit root scope because only TaskPage focus and browser regression changed.",
+  "ownership": "Synthetic implementation evidence. Final review and integration are coordinator gates."
+}

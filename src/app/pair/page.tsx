@@ -7,17 +7,17 @@ export default async function PairPage() {
     guard(new Headers(await headers()));
   } catch {
     return (
-      <>
+      <main id="main-content" className="pair-page">
         <h1>AgentFlow is unavailable</h1>
         <p>Start the local service with npm start, then reload this page.</p>
-      </>
+      </main>
     );
   }
   return (
-    <>
+    <main id="main-content" className="pair-page">
       <h1>Pair your browser</h1>
       <p>Connect this browser to your local AgentFlow workspace.</p>
       <PairForm />
-    </>
+    </main>
   );
 }

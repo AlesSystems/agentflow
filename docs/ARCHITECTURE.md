@@ -1,7 +1,8 @@
 # AgentFlow architecture
 
 Status: accepted v1 design direction. P01 runtime/storage has automated verification
-and passed independent review and integration through PR #4; task, agent and workflow modules remain planned. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
+and passed independent review and integration through PR #4; task contracts passed review and integration through PR #5; agent reporting
+and workflow modules remain planned. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
 
 ## System boundary
 

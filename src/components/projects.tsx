@@ -1,0 +1,329 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRead, useWorkspace, QueryFeedback } from "../client/provider";
+import { projectsResponse, projectResponse } from "../contracts/responses";
+import type { z } from "zod";
+import { projectCreate } from "../contracts/projects";
+import { freezeCommand, type FrozenCommand } from "../client/commands";
+import { ApiError } from "../client/api";
+import { Modal } from "./ui/dialog";
+type Project = z.infer<typeof projectsResponse>["data"]["items"][number];
+export function Projects() {
+  const [archived, setArchived] = useState(false),
+    [cursor, setCursor] = useState<string | null>(null),
+    [pages, setPages] = useState<Project[]>([]);
+  const path = `/projects?archived=${archived}&limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+  const query = useRead(path, projectsResponse);
+  const { api, pair, generation } = useWorkspace();
+  const cache = useQueryClient();
+  const [editing, setEditing] = useState<Project | "new" | null>(null),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [retry, setRetry] = useState<FrozenCommand | null>(null),
+    [archive, setArchive] = useState<Project | null>(null);
+  const [current, setCurrent] = useState<Project | null>(null),
+    [dirty, setDirty] = useState(false),
+    [confirmClose, setConfirmClose] = useState(false);
+  const [pageScope, setPageScope] = useState<{
+    generation: string;
+    cursor?: string;
+    path?: string;
+    revision?: number;
+  }>({ generation });
+  if (
+    pageScope.generation !== generation ||
+    (query.data &&
+      (pageScope.cursor !== query.data.snapshotCursor ||
+        (pageScope.path === path &&
+          pageScope.revision !== query.dataUpdatedAt)))
+  ) {
+    setPageScope({
+      generation,
+      cursor: query.data?.snapshotCursor,
+      path,
+      revision: query.dataUpdatedAt,
+    });
+    setPages([]);
+    setCursor(null);
+    setCurrent(null);
+  } else if (query.data && pageScope.path !== path) {
+    setPageScope({
+      generation,
+      cursor: query.data.snapshotCursor,
+      path,
+      revision: query.dataUpdatedAt,
+    });
+  }
+  async function send(command: FrozenCommand) {
+    setBusy(true);
+    setError("");
+    try {
+      await api.command(command);
+      await cache.invalidateQueries();
+      setCursor(null);
+      setPages([]);
+      setEditing(null);
+      setArchive(null);
+      setRetry(null);
+      setCurrent(null);
+      setDirty(false);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) pair();
+      setError(
+        e instanceof ApiError
+          ? e.message
+          : "Save response is uncertain. Retry sends the same request.",
+      );
+      setRetry(command);
+      if (
+        e instanceof ApiError &&
+        e.status === 409 &&
+        typeof editing === "object" &&
+        editing
+      ) {
+        try {
+          setCurrent(
+            (await api.read(`/projects/${editing.id}`, projectResponse)).data,
+          );
+        } catch {}
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+  const items = [...pages, ...(query.data?.data.items ?? [])].filter(
+    (p, i, a) => a.findIndex((x) => x.id === p.id) === i,
+  );
+  return (
+    <>
+      <div className="page-heading">
+        <h1>Projects</h1>
+        <button
+          className="primary"
+          onClick={() => {
+            setEditing("new");
+            setError("");
+          }}
+        >
+          Create project
+        </button>
+      </div>
+      <label className="inline">
+        <input
+          type="checkbox"
+          checked={archived}
+          onChange={(e) => {
+            setArchived(e.target.checked);
+            setCursor(null);
+            setPages([]);
+          }}
+        />
+        Show archived projects
+      </label>
+      <QueryFeedback
+        error={query.error}
+        loading={query.isPending}
+        retry={() => void query.refetch()}
+      />
+      <div className="project-list">
+        {items.map((project) => (
+          <article className="project-row" key={project.id}>
+            <div>
+              <Link href={`/projects/${project.id}`} className="project-name">
+                {project.name}
+              </Link>
+              <p className="metadata">
+                {project.repositoryPath || "No repository path"}
+              </p>
+              {project.archivedAt && <p>Archived · read-only history</p>}
+            </div>
+            <div className="actions">
+              <button
+                onClick={() => {
+                  setEditing(project);
+                  setError("");
+                }}
+              >
+                Edit project
+              </button>
+              <button onClick={() => setArchive(project)}>
+                {project.archivedAt ? "Unarchive" : "Archive"}
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+      {!items.length && query.data && (
+        <section className="empty">
+          <h2>{archived ? "No archived projects" : "Start with a project"}</h2>
+          <p>Keep related tasks together in a work board.</p>
+          {!archived && (
+            <button onClick={() => setEditing("new")}>Create project</button>
+          )}
+        </section>
+      )}
+      {query.data?.data.nextCursor && (
+        <button
+          onClick={() => {
+            setPages(items);
+            setCursor(query.data!.data.nextCursor);
+          }}
+        >
+          Load more projects
+        </button>
+      )}
+      <Modal
+        title={editing === "new" ? "Create project" : "Edit project"}
+        open={!!editing}
+        onClose={() => {
+          if (dirty) {
+            setConfirmClose(true);
+            return;
+          }
+          if (!busy) {
+            setEditing(null);
+            setRetry(null);
+          }
+        }}
+      >
+        {current && (
+          <section className="conflict">
+            <h3>Current saved project</h3>
+            <p>
+              {current.name} · {current.repositoryPath || "No repository path"}{" "}
+              · version {current.version}
+            </p>
+            <p>Your draft is still in the fields below.</p>
+            <button
+              onClick={() => {
+                setEditing(current);
+                setCurrent(null);
+                setRetry(null);
+              }}
+            >
+              Prepare project reapply
+            </button>
+          </section>
+        )}
+        {editing && (
+          <form
+            key={typeof editing === "object" ? editing.id : "new"}
+            onChange={() => setDirty(true)}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const form = new FormData(e.currentTarget);
+              const body = {
+                name: String(form.get("name")),
+                repositoryPath: String(form.get("repositoryPath")) || null,
+              };
+              const parsed = projectCreate.safeParse(body);
+              if (!parsed.success) {
+                setError("Enter a project name of at most 200 characters.");
+                return;
+              }
+              void send(
+                freezeCommand(
+                  editing === "new" ? "/projects" : `/projects/${editing.id}`,
+                  editing === "new" ? "POST" : "PATCH",
+                  editing === "new"
+                    ? parsed.data
+                    : { ...parsed.data, expectedVersion: editing.version },
+                ),
+              );
+            }}
+          >
+            <label>
+              Project name
+              <input
+                name="name"
+                disabled={busy}
+                required
+                maxLength={200}
+                defaultValue={editing === "new" ? "" : editing.name}
+              />
+            </label>
+            <label>
+              Repository path
+              <input
+                disabled={busy}
+                name="repositoryPath"
+                maxLength={2000}
+                defaultValue={
+                  editing === "new" ? "" : (editing.repositoryPath ?? "")
+                }
+              />
+            </label>
+            <p className="metadata">
+              Metadata only. AgentFlow does not access this repository.
+            </p>
+            <p role="alert" className="error">
+              {error}
+            </p>
+            <button className="primary" disabled={busy}>
+              {busy ? "Saving…" : "Save project"}
+            </button>
+            {retry && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void send(retry)}
+              >
+                Retry exact request
+              </button>
+            )}
+          </form>
+        )}
+      </Modal>
+      <Modal
+        title="Keep your project draft?"
+        open={confirmClose}
+        onClose={() => setConfirmClose(false)}
+      >
+        <p>Stay to keep editing, or discard your project draft.</p>
+        <button onClick={() => setConfirmClose(false)}>Stay</button>
+        <button
+          onClick={() => {
+            setConfirmClose(false);
+            setEditing(null);
+            setRetry(null);
+            setCurrent(null);
+            setDirty(false);
+          }}
+        >
+          Discard and leave
+        </button>
+      </Modal>
+      <Modal
+        title={archive?.archivedAt ? "Unarchive project" : "Archive project"}
+        open={!!archive}
+        onClose={() => !busy && setArchive(null)}
+      >
+        <p>
+          {archive?.archivedAt
+            ? "Restore editing for this project?"
+            : "Archived projects preserve task history and stop all task editing."}
+        </p>
+        <p role="alert" className="error">
+          {error}
+        </p>
+        <button
+          className="primary"
+          disabled={busy}
+          onClick={() =>
+            archive &&
+            void send(
+              freezeCommand(`/projects/${archive.id}`, "PATCH", {
+                expectedVersion: archive.version,
+                archived: !archive.archivedAt,
+              }),
+            )
+          }
+        >
+          {archive?.archivedAt ? "Unarchive project" : "Confirm archive"}
+        </button>
+      </Modal>
+    </>
+  );
+}

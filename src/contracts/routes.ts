@@ -1,30 +1,33 @@
 import { z } from "zod";
-import { envelope, pageQuery, status, uuid } from "./common";
-import { project, projectCreate, projectPatch, projectQuery } from "./projects";
+import { pageQuery, uuid } from "./common";
+import { projectCreate, projectPatch, projectQuery } from "./projects";
 import {
-  task,
   taskCreate,
   taskPatch,
   taskQuery,
-  taskDetailV1,
   taskDetailQueryV1,
   boardQuery,
-  comment,
   commentInput,
   completeInput,
-  completion,
   reopenInput,
 } from "./tasks";
-import { settings, settingsPatch } from "./settings";
-import { overview, overviewQuery } from "./overview";
+import { settingsPatch } from "./settings";
+import { overviewQuery } from "./overview";
 import type { ApplicationCommand, ApplicationQuery } from "../db/application";
+import {
+  projectsResponse,
+  projectResponse,
+  boardResponse,
+  tasksResponse,
+  taskResponse,
+  taskDetailResponse,
+  completionResponse,
+  commentsResponse,
+  commentResponse,
+  settingsResponse,
+  overviewResponse,
+} from "./responses";
 export const emptyQuery = z.strictObject({});
-const list = <T extends z.ZodType>(item: T) =>
-  z.strictObject({
-    items: z.array(item),
-    total: z.number().int().nonnegative(),
-    nextCursor: z.string().nullable(),
-  });
 const commentsQuery = z.strictObject(pageQuery);
 type EndpointBase = {
   id: string;
@@ -94,7 +97,7 @@ export const endpoints: Endpoint[] = [
     path: "/projects",
     access: "read",
     input: projectQuery,
-    response: envelope(list(project)),
+    response: projectsResponse,
     status: 200,
     query: (input) => ({ kind: "projects", input }),
   }),
@@ -104,7 +107,7 @@ export const endpoints: Endpoint[] = [
     path: "/projects",
     access: "report",
     input: projectCreate,
-    response: envelope(project),
+    response: projectResponse,
     status: 201,
     command: (input) => ({ kind: "project.create", input }),
   }),
@@ -114,7 +117,7 @@ export const endpoints: Endpoint[] = [
     path: "/projects/{id}",
     access: "read",
     input: emptyQuery,
-    response: envelope(project),
+    response: projectResponse,
     status: 200,
     query: (_, id) => ({ kind: "project", id }),
   }),
@@ -124,7 +127,7 @@ export const endpoints: Endpoint[] = [
     path: "/projects/{id}",
     access: "report",
     input: projectPatch,
-    response: envelope(project),
+    response: projectResponse,
     status: 200,
     command: (input, id) => ({ kind: "project.patch", id, input }),
   }),
@@ -134,11 +137,7 @@ export const endpoints: Endpoint[] = [
     path: "/projects/{id}/board",
     access: "read",
     input: boardQuery,
-    response: envelope(
-      z.strictObject({
-        columns: z.array(z.strictObject({ status, ...list(task).shape })),
-      }),
-    ),
+    response: boardResponse,
     status: 200,
     query: (input, id) => ({ kind: "board", id, input }),
   }),
@@ -148,7 +147,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks",
     access: "read",
     input: taskQuery,
-    response: envelope(list(task)),
+    response: tasksResponse,
     status: 200,
     query: (input) => ({ kind: "tasks", input }),
   }),
@@ -158,7 +157,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks",
     access: "report",
     input: taskCreate,
-    response: envelope(task),
+    response: taskResponse,
     status: 201,
     command: (input) => ({ kind: "task.create", input }),
   }),
@@ -168,7 +167,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks/{id}",
     access: "read",
     input: taskDetailQueryV1,
-    response: envelope(taskDetailV1),
+    response: taskDetailResponse,
     status: 200,
     query: (input, id) => ({ kind: "task", id, input }),
   }),
@@ -178,7 +177,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks/{id}",
     access: "report",
     input: taskPatch,
-    response: envelope(task),
+    response: taskResponse,
     status: 200,
     command: (input, id) => ({ kind: "task.patch", id, input }),
   }),
@@ -188,7 +187,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks/{id}/complete",
     access: "human",
     input: completeInput,
-    response: envelope(completion),
+    response: completionResponse,
     status: 201,
     command: (input, id) => ({ kind: "task.complete", id, input }),
   }),
@@ -198,7 +197,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks/{id}/reopen",
     access: "human",
     input: reopenInput,
-    response: envelope(task),
+    response: taskResponse,
     status: 200,
     command: (input, id) => ({ kind: "task.reopen", id, input }),
   }),
@@ -208,7 +207,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks/{id}/comments",
     access: "read",
     input: commentsQuery,
-    response: envelope(list(comment)),
+    response: commentsResponse,
     status: 200,
     query: (input, id) => ({ kind: "comments", id, input }),
   }),
@@ -218,7 +217,7 @@ export const endpoints: Endpoint[] = [
     path: "/tasks/{id}/comments",
     access: "report",
     input: commentInput,
-    response: envelope(comment),
+    response: commentResponse,
     status: 201,
     command: (input, id) => ({ kind: "comment.create", id, input }),
   }),
@@ -228,7 +227,7 @@ export const endpoints: Endpoint[] = [
     path: "/settings",
     access: "read",
     input: emptyQuery,
-    response: envelope(settings),
+    response: settingsResponse,
     status: 200,
     query: () => ({ kind: "settings" }),
   }),
@@ -238,7 +237,7 @@ export const endpoints: Endpoint[] = [
     path: "/settings",
     access: "human",
     input: settingsPatch,
-    response: envelope(settings),
+    response: settingsResponse,
     status: 200,
     command: (input) => ({ kind: "settings.patch", input }),
   }),
@@ -248,7 +247,7 @@ export const endpoints: Endpoint[] = [
     path: "/overview",
     access: "read",
     input: overviewQuery,
-    response: envelope(overview),
+    response: overviewResponse,
     status: 200,
     query: (input) => ({ kind: "overview", input }),
   }),

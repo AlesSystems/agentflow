@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 is integrated through PR #4; P02 planning is underway. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 and P02 are integrated through PRs #4 and #5; P03 has a tested implementation candidate awaiting final exact-candidate review and integration. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -58,11 +58,11 @@ Run the runtime integration suite, lint, type checking, and production build. Me
 
 Depends on P01. Proposed files include shared schemas, Drizzle tables/migrations, task domain rules, query/command modules, `/api/v1` task/project/session routes, and generated OpenAPI.
 
-- [ ] Define the entities and allowed transitions in [BACKEND.md](docs/BACKEND.md).
-- [ ] Implement project/task CRUD within the documented archive and no-hard-delete limits, comments, completion, and reopen.
-- [ ] Store idempotency receipts, optimistic versions, work revisions, and durable change records transactionally.
-- [ ] Define snapshot reads, pagination, totals, and Overview metrics with timezone boundaries.
-- [ ] Generate OpenAPI from schemas and validate every published request/response example against them.
+- [x] Define the entities and allowed transitions in [BACKEND.md](docs/BACKEND.md).
+- [x] Implement project/task CRUD within the documented archive and no-hard-delete limits, comments, completion, and reopen.
+- [x] Store idempotency receipts, optimistic versions, work revisions, and durable change records transactionally.
+- [x] Define snapshot reads, pagination, totals, and Overview metrics with timezone boundaries.
+- [x] Generate OpenAPI from schemas and validate every published request/response example against them.
 
 Pass when HTTP create/edit/move/reopen calls persist across restart, retries return the original result, and stale writes cannot overwrite newer data. Completion must require human session evidence. A forged harness completion must fail. Test parent cycles, cross-project references, archived projects, and daylight-saving boundaries.
 
