@@ -89,7 +89,7 @@ export async function stop(
   child: ChildProcess,
   signal: NodeJS.Signals = "SIGTERM",
 ) {
-  if (child.exitCode !== null) return;
+  if (child.exitCode !== null || child.signalCode !== null) return;
   const exited = new Promise<void>((resolve) =>
     child.once("exit", () => resolve()),
   );
