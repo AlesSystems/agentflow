@@ -7,13 +7,14 @@ import { settingsResponse } from "../contracts/responses";
 import { freezeCommand } from "./commands";
 import PairForm from "../app/pair/form";
 const Context=createContext<{api:ApiClient;generation:string;pair:()=>void}|null>(null);
+export function BrowserCache({children}:{children:React.ReactNode}){const [cache]=useState(()=>new QueryClient({defaultOptions:{queries:{retry:false,staleTime:5000,refetchOnWindowFocus:true}}}));return <QueryClientProvider client={cache}>{children}</QueryClientProvider>;}
 export function useWorkspace(){const context=useContext(Context);if(!context)throw new Error("Workspace missing");return context;}
 export function Workspace({generation:initial,hydration,children}:{generation:string;hydration:DehydratedState;children:React.ReactNode}){
- const [cache]=useState(()=>new QueryClient({defaultOptions:{queries:{retry:false,staleTime:5000,refetchOnWindowFocus:true}}}));
+ const cache=useQueryClient();
  const [generation,setGeneration]=useState(initial);const [pairing,setPairing]=useState(false);
  const pair=useCallback(()=>setPairing(true),[]);
  const [api]=useState(()=>new ApiClient(initial,(next)=>{cache.cancelQueries();cache.clear();setGeneration(next);}));
- return <QueryClientProvider client={cache}><Context.Provider value={{api,generation,pair}}><HydrationBoundary state={hydration}><TimezoneInit/>{pairing&&<section className="pair-inline" aria-label="Repair browser pairing"><h2>Pair again to keep editing</h2><p>Your draft stays here. Reloading loses unsaved memory drafts.</p><PairForm onPaired={()=>{setPairing(false);void cache.invalidateQueries();}}/></section>}{children}</HydrationBoundary></Context.Provider></QueryClientProvider>;
+ return <Context.Provider value={{api,generation,pair}}><HydrationBoundary state={hydration}><TimezoneInit/>{pairing&&<section className="pair-inline" aria-label="Repair browser pairing"><h2>Pair again to keep editing</h2><p>Your draft stays here. Reloading loses unsaved memory drafts.</p><PairForm onPaired={()=>{setPairing(false);void cache.invalidateQueries();}}/></section>}{children}</HydrationBoundary></Context.Provider>;
 }
 export function useRead<S extends z.ZodType>(path:string,schema:S,interval?:number){
  const {api,generation,pair}=useWorkspace();

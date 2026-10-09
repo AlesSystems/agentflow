@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-export default function PairForm() {
+export default function PairForm({ onPaired }: { onPaired?: () => void } = {}) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -11,7 +11,8 @@ export default function PairForm() {
         event.preventDefault();
         setError("");
         setBusy(true);
-        const data = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        const data = new FormData(form);
         try {
           const response = await fetch("/api/v1/session", {
             method: "POST",
@@ -26,6 +27,7 @@ export default function PairForm() {
             );
             return;
           }
+          if (onPaired) { form.reset(); onPaired(); return; }
           router.push("/");
           router.refresh();
         } catch {
