@@ -5505,6 +5505,18 @@
             "$ref": "#/components/responses/RetryableError"
           }
         }
+      },
+      "head": {
+        "operationId": "healthHead",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Bodyless readiness status"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
       }
     },
     "/api/v1/foundation": {
@@ -5594,6 +5606,37 @@
           },
           "429": {
             "$ref": "#/components/responses/RetryableError"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
+      },
+      "head": {
+        "operationId": "foundationHead",
+        "security": [
+          {
+            "browserSession": []
+          },
+          {
+            "reporterBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bodyless readiness status",
+            "headers": {
+              "AgentFlow-Generation": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/RequestError"
           },
           "503": {
             "$ref": "#/components/responses/RetryableError"

@@ -236,7 +236,7 @@ export class ApplicationData {
           this.change(
             "project",
             (data as Row).id as string,
-            null,
+            (data as Row).id as string,
             "created",
             now,
           );

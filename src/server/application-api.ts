@@ -20,6 +20,7 @@ export async function applicationApi(request: Request) {
     const { endpoint, id, path } = matched;
     let original: unknown;
     if (endpoint.kind === "command") {
+      if (url.searchParams.size) throw new HttpError(400, "query_invalid");
       requireResourceMutation(request.headers, state.principal);
       if (!uuid.safeParse(request.headers.get("idempotency-key")).success)
         throw new HttpError(422, "idempotency_key_invalid");
@@ -48,7 +49,7 @@ export async function applicationApi(request: Request) {
             principal: state.principal.id,
             method: request.method,
             path,
-            key: request.headers.get("idempotency-key")!,
+            key: request.headers.get("idempotency-key")!.toLowerCase(),
             digest: canonicalDigest(original),
             now: Date.now(),
           })

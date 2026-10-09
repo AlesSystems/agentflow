@@ -1,3 +1,4 @@
+import { foundationSchemas } from "./foundation";
 import { z } from "zod";
 import { endpoints } from "./routes";
 import { uuid, version } from "./common";
@@ -15,20 +16,6 @@ export const errorSchema = z.strictObject({
     details: z.strictObject({ currentVersion: version }).optional(),
   }),
 });
-export const foundationSchemas = {
-  health: z.strictObject({
-    ready: z.literal(true),
-    apiVersion: z.literal("v1"),
-  }),
-  foundation: z.strictObject({
-    ready: z.literal(true),
-    generation: uuid,
-    schemaVersion: version,
-  }),
-  pairInput: z.strictObject({ token: z.string().max(128) }),
-  paired: z.strictObject({ paired: z.literal(true) }),
-  revokeInput: z.strictObject({}),
-};
 const errorExample = {
   error: {
     code: "version_conflict",
@@ -181,6 +168,26 @@ export function openapiDocument() {
         generation: "10000000-0000-4000-8000-000000000004",
         schemaVersion: 2,
       }),
+    },
+  };
+  paths["/api/v1/health"].head = {
+    operationId: "healthHead",
+    security: [],
+    responses: {
+      200: { description: "Bodyless readiness status" },
+      503: { $ref: "#/components/responses/RetryableError" },
+    },
+  };
+  paths["/api/v1/foundation"].head = {
+    operationId: "foundationHead",
+    security,
+    responses: {
+      200: {
+        description: "Bodyless readiness status",
+        headers: { "AgentFlow-Generation": { schema: schema(uuid) } },
+      },
+      401: { $ref: "#/components/responses/RequestError" },
+      503: { $ref: "#/components/responses/RetryableError" },
     },
   };
   paths["/api/v1/session"] = {
