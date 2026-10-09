@@ -43,7 +43,7 @@ immutable plan revisions and separate observed workflow attempts.
 | Plan revision | `id`, `workflowId`, increasing `revision`, immutable nodes/edges |
 | Plan node | Stable node ID within workflow, label, optional same-project `taskId` |
 | Plan edge | Source/target node IDs; ordering metadata within that revision |
-| Workflow run | `id`, `workflowId`, `planRevisionId`, state, `lastSequence`, receipt time |
+| Workflow run | `id`, `workflowId`, `planRevisionId`, state, `version`, `lastSequence`, receipt time |
 | Workflow report | Event ID, sequence, schema version, occurrence/receipt times, digest |
 | Node observation | Workflow run/node, optional task-linked `runId`, reported state/skill |
 
@@ -68,7 +68,10 @@ installed skill directory does not prove skill use. Render all hook text safely.
 Proposed routes: `POST /workflows`, `GET /workflows?projectId=...`,
 `GET /workflows/{id}`, `POST /workflows/{id}/revisions`,
 `GET /workflows/{id}/revisions/{revisionId}`, `POST /workflow-runs`,
-`GET /workflow-runs/{id}`, and `POST /workflow-runs/{id}/events`.
+`GET /workflow-runs/{id}`, `POST /workflow-runs/{id}/events`, and browser-only
+`POST /workflow-runs/{id}/close`. Close requires reason and `expectedVersion`,
+applies only to stale active workflow records, and records terminal `interrupted`.
+It never stops an external process; a surviving producer registers a new attempt.
 Registration uses normal idempotency keys and immutable ID conflict handling.
 Report envelopes mirror run events, with `workflowRunId`, sequence starting at 1,
 and `eventId`. Types are `workflow.started`, `workflow.node.reported`, `workflow.heartbeat`,

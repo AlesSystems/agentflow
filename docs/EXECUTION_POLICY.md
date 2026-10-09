@@ -25,8 +25,8 @@ integration/release authority; editing or merging these documents alone does not
    the package's automated gates pass and an independent reviewer has no
    unresolved blocking findings. Respect branch protections and required checks.
    Use merge commits to retain the detailed Conventional Commits. Integrate
-   dependency packages before downstream work; keep packages sequential; delegate independent tasks within the current
-   package only. The implementation run owns scoped documentation updates.
+   dependency packages before downstream work; keep packages sequential and delegate
+   independent tasks within the current package only. The implementation run owns scoped documentation updates.
 3. **Review.** Replace per-package and final operator browser sign-off with
    automated browser journeys, screenshots/recordings, accessibility checks,
    and independent agent review of the exact candidate commit. The coordinator
