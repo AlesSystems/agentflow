@@ -14,7 +14,19 @@ import {
 import { settingsPatch } from "./settings";
 import { overviewQuery } from "./overview";
 import type { ApplicationCommand, ApplicationQuery } from "../db/application";
-import { projectsResponse, projectResponse, boardResponse, tasksResponse, taskResponse, taskDetailResponse, completionResponse, commentsResponse, commentResponse, settingsResponse, overviewResponse } from "./responses";
+import {
+  projectsResponse,
+  projectResponse,
+  boardResponse,
+  tasksResponse,
+  taskResponse,
+  taskDetailResponse,
+  completionResponse,
+  commentsResponse,
+  commentResponse,
+  settingsResponse,
+  overviewResponse,
+} from "./responses";
 export const emptyQuery = z.strictObject({});
 const commentsQuery = z.strictObject(pageQuery);
 type EndpointBase = {

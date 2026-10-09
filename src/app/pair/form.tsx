@@ -27,7 +27,11 @@ export default function PairForm({ onPaired }: { onPaired?: () => void } = {}) {
             );
             return;
           }
-          if (onPaired) { form.reset(); onPaired(); return; }
+          if (onPaired) {
+            form.reset();
+            onPaired();
+            return;
+          }
           router.push("/");
           router.refresh();
         } catch {
