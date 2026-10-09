@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P03 integrated; manual Work board available.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable. P04 agent/run reporting APIs are implemented and awaiting verified integration. Live tracking, CLI hooks and workflow packages remain gated by PLAN.md.
+**Status: P01–P04 integrated; manual Work board and reporting APIs available.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable. Live tracking, CLI hooks and workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
