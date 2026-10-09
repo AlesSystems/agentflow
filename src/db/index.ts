@@ -4,6 +4,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   createFile,
+  privateDestination,
+  type AppRoot,
   secureDirectory,
   syncFile,
   syncDirectory,
@@ -28,6 +30,7 @@ export const migrations: Migration[] = ["0000_foundation"].map((id) => {
 });
 export class Store {
   private db: Database.Database;
+  private readonly appRoot: AppRoot;
   private work = new Set<Promise<unknown>>();
   readonly dataDir: string;
   private unregister: (() => void) | undefined;
@@ -36,6 +39,8 @@ export class Store {
     file = join(owner.dataDir, "agentflow.sqlite"),
   ) {
     owner.assertOwned();
+    this.appRoot = owner.appRoot;
+    file = privateDestination(file, this.appRoot);
     this.dataDir = owner.dataDir;
     for (const suffix of ["", "-wal", "-shm", "-journal"])
       validateFile(file + suffix);
@@ -203,6 +208,7 @@ export class Store {
     await Promise.allSettled([...this.work]);
   }
   private async writeBackup(destination: string) {
+    destination = privateDestination(destination, this.appRoot);
     secureDirectory(join(destination, ".."));
     validateFile(destination);
     createFile(destination);

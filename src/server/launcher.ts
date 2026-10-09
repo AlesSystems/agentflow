@@ -59,6 +59,7 @@ export async function startRuntime(
   try {
     const next = (await import("next")).default;
     app = next({
+      dir: owned.instance.appRoot.path,
       dev: config.mode === "development",
       hostname: config.host,
       port: config.port,

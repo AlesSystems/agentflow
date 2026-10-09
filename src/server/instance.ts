@@ -1,10 +1,17 @@
 import Database from "better-sqlite3";
 import { existsSync, lstatSync } from "node:fs";
 import { join } from "node:path";
-import { createFile, secureDirectory, validateFile } from "./filesystem";
+import {
+  activeAppRoot,
+  privateDestination,
+  createFile,
+  secureDirectory,
+  validateFile,
+} from "./filesystem";
 
 export function acquireInstance(path: string) {
-  const dataDir = secureDirectory(path);
+  const appRoot = activeAppRoot();
+  const dataDir = secureDirectory(privateDestination(path, appRoot));
   const lockPath = join(dataDir, "instance-lock.sqlite");
   validateFile(lockPath);
   if (!existsSync(lockPath)) {
@@ -29,6 +36,7 @@ export function acquireInstance(path: string) {
   const connections = new Set<symbol>();
   return {
     dataDir,
+    appRoot,
     inode,
     assertOwned() {
       if (!lock.open || !lock.inTransaction)

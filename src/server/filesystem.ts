@@ -10,7 +10,16 @@ import {
   realpathSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, parse } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  parse,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 
 export function inspectManaged(
   stat: {
@@ -101,4 +110,82 @@ export function syncFile(path: string) {
 export function managedParent(path: string) {
   secureDirectory(dirname(path));
   validateFile(path);
+}
+
+export type AppRoot = Readonly<{ path: string; dev: number; ino: number }>;
+function inspectPath(path: string) {
+  try {
+    return lstatSync(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw new Error(
+      "PRIVATE_PATH_UNVERIFIABLE: Verify local path permissions.",
+    );
+  }
+}
+function canonicalPath(path: string) {
+  try {
+    return realpathSync(path);
+  } catch {
+    throw new Error(
+      "PRIVATE_PATH_UNVERIFIABLE: Verify local path permissions.",
+    );
+  }
+}
+export function activeAppRoot(): AppRoot {
+  const path = canonicalPath(process.cwd());
+  const stat = inspectPath(path);
+  if (!stat?.isDirectory()) throw new Error("PRIVATE_PATH_UNVERIFIABLE");
+  return Object.freeze({ path, dev: stat.dev, ino: stat.ino });
+}
+export function privateDestination(path: string, root: AppRoot): string {
+  if (!isAbsolute(path)) throw new Error("ABSOLUTE_DATA_DIR_REQUIRED");
+  const parts = path.slice(parse(path).root.length).split("/").filter(Boolean);
+  let current = parse(path).root;
+  for (const [index, part] of parts.entries()) {
+    current = part === ".." ? dirname(current) : join(current, part);
+    const stat = inspectPath(current);
+    if (stat?.isSymbolicLink())
+      throw new Error("SYMLINK: Use a real local path.");
+    if (stat && index < parts.length - 1 && !stat.isDirectory())
+      throw new Error("INVALID_DIRECTORY");
+  }
+  const normalized = resolve(path);
+  let existing = normalized;
+  const missing: string[] = [];
+  let stat = inspectPath(existing);
+  while (!stat) {
+    missing.unshift(basename(existing));
+    const parent = dirname(existing);
+    if (parent === existing) throw new Error("PRIVATE_PATH_UNVERIFIABLE");
+    existing = parent;
+    stat = inspectPath(existing);
+  }
+  if (missing.length && !stat.isDirectory())
+    throw new Error("INVALID_DIRECTORY");
+  const canonical = join(canonicalPath(existing), ...missing);
+  const difference = relative(root.path, canonical);
+  if (
+    !difference ||
+    (difference !== ".." &&
+      !difference.startsWith(".." + sep) &&
+      !isAbsolute(difference))
+  )
+    throw new Error(
+      "PRIVATE_PATH_INSIDE_APP: Use a data or backup path outside the application.",
+    );
+  let ancestor = stat.isDirectory() ? existing : dirname(existing);
+  while (true) {
+    const directory = inspectPath(ancestor);
+    if (!directory?.isDirectory() || directory.isSymbolicLink())
+      throw new Error("PRIVATE_PATH_UNVERIFIABLE");
+    if (directory.dev === root.dev && directory.ino === root.ino)
+      throw new Error(
+        "PRIVATE_PATH_INSIDE_APP: Use a data or backup path outside the application.",
+      );
+    const parent = dirname(ancestor);
+    if (parent === ancestor) break;
+    ancestor = parent;
+  }
+  return canonical;
 }
