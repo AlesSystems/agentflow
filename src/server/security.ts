@@ -60,7 +60,7 @@ export function authenticate(
   } catch {
     throw new HttpError(403, "ambiguous_auth");
   }
-  if (bearer && secret) throw new HttpError(403, "ambiguous_auth");
+  if (bearer && secret !== undefined) throw new HttpError(403, "ambiguous_auth");
   if (bearer) {
     if (
       !/^Bearer [a-f0-9]{64}$/.test(bearer) ||
