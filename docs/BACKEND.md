@@ -156,3 +156,23 @@ markers at staged/archived/replaced phases also upgrade before continuing. Migra
 backup/drain, integrity, checkpoint/fsync, generation renewal and session revocation
 remain owned operations. Invalid/newer/tampered schemas fail closed. No foundation
 migration checksum was changed.
+
+
+### Mandatory P04 registration-order prerequisite
+
+Astra approved implicit rowid ordering only for bounded P02, which has no public
+run registration/deletion, VACUUM or runs-table rebuild. Implicit rowid is not a
+full-v1 durability contract. Before the first P04 public registration, add an
+explicit immutable registration-order field with a uniqueness constraint in a
+reviewed additive migration. Preserve migration 0001's checksum and backfill in
+existing rowid order before any operation can change it. Allocate later values
+transactionally with registration, using a durable monotonic allocator that does
+not reuse order after pruning; exact retries retain the stored value.
+
+Move both latest-run detail and latest-implementation acceptance queries to that
+field. Prove tied timestamps and reversed UUID ordering, later failure superseding
+success, current-revision acceptance, restart, backup/restore, VACUUM and a
+representative table rebuild. P04's independent Astra plan approval must include
+this prerequisite. If registration, deletion, VACUUM or rebuild moves into P02/P03,
+the durable field must precede that expanded scope. PLAN retains this unchecked
+acceptance item; the P02 receipt records the adjudication provenance.

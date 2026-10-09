@@ -86,6 +86,7 @@ Run the focused browser suite plus lint, type checking, and build. Attach board,
 
 Depends on P02. Proposed files include agent/run schemas, run state rules, event ingestion, migrations, HTTP handlers, and integration fixtures.
 
+- [ ] Before public run registration, add explicit immutable unique registration order in a reviewed additive migration, preserve migration 0001's checksum and existing rowid order in backfill, allocate durable non-reusing values transactionally, and move both latest queries to it. Prove tied timestamps, reversed UUID order, later failure/current-revision gates, restart, backup/restore, VACUUM and table-rebuild preservation. Include this mandatory prerequisite in P04 Astra plan approval; see [BACKEND.md](docs/BACKEND.md).
 - [ ] Implement agent registration and per-attempt runs, including active-run uniqueness and task version checks.
 - [ ] Implement the event envelope, strict sequence policy, exact-duplicate recovery, and terminal-state protection.
 - [ ] Commit events, run/task projections, receipts, and change records together.

@@ -119,3 +119,23 @@ performance distributions, historical failures and qualifications.
 Next gate: independently review `71bc5a5` source and this docs-only receipt, repair
 blocking findings within P02, reverify the affected candidate, then publish and
 integrate one scoped P02 PR. P03 starts only after verified P02 integration.
+
+
+### P02 repaired candidate handoff
+
+Repaired source `baf0bffcf79baf6268133fc3c8b1dd20b2ab967b` supersedes the original
+`71bc5a5` candidate. It preserves allowed reporter bearer Origins, mirrors all ten
+missing Drizzle CHECKs without migration edits, and fixes cleanup of already
+SIGKILL-exited test children. Executed failing regressions precede these fixes.
+Final unchanged candidate passed 25 unit, 65 integration and 3 Chrome journeys,
+lint, types, build and OpenAPI checks. Raw final repair logs remain ignored under
+`work/poteto/P02/repair-final-*.log`. The original pass did not prove reliable
+already-exited fixture cleanup; the repaired suite now pins it explicitly.
+
+Runtime-identical performance/capture evidence at `9735ea7` is retained with its
+actual provenance; the later delta affects only test cleanup and its regression.
+The three production snapshot runs remain below 2.83 ms p95 and the 250 ms budget.
+Astra approved bounded P02 rowid ordering with the mandatory explicit durable
+P04 registration-order prerequisite now recorded as an unchecked PLAN item and
+in BACKEND/DECISIONS. No P04 code was added. P02 still awaits final independent
+exact-candidate review, CI and integration; no worker publication or merge occurred.

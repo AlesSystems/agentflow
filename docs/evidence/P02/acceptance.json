@@ -1,32 +1,57 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "71bc5a51f1522dbcc06c093dad1d31ba1aab568e",
+  "sourceRevision": "9735ea7126bd6a330aa73fe3a6d9cda6c4c7b906",
   "fixture": "Synthetic public HTTP requests with synthetic browser acceptance; no actual human attestation",
   "observations": [
     {
       "path": "/projects",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 201,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
-          "id": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "id": "f8a17cc3-e471-4609-a364-efbd33099bc5",
           "name": "Synthetic evidence project",
           "repositoryPath": null,
           "archivedAt": null,
           "version": 1,
-          "createdAt": "2026-10-09T20:16:19.848Z",
-          "updatedAt": "2026-10-09T20:16:19.848Z"
+          "createdAt": "2026-10-09T20:26:28.167Z",
+          "updatedAt": "2026-10-09T20:26:28.167Z"
         },
         "snapshotCursor": "1",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
+      }
+    },
+    {
+      "path": "/projects",
+      "method": "POST",
+      "credentialKind": "reporter",
+      "originPolicy": "exact allowed local Origin",
+      "status": 201,
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
+      "body": {
+        "data": {
+          "id": "3aa49b38-5c02-4a07-9c1b-d09c75f848fb",
+          "name": "Synthetic allowed-Origin reporter evidence",
+          "repositoryPath": null,
+          "archivedAt": null,
+          "version": 1,
+          "createdAt": "2026-10-09T20:26:28.171Z",
+          "updatedAt": "2026-10-09T20:26:28.171Z"
+        },
+        "snapshotCursor": "2",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
       "path": "/tasks",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 201,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
           "description": "",
@@ -39,25 +64,27 @@
           "branch": null,
           "pullRequestUrl": null,
           "blockedReason": null,
-          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
           "title": "Synthetic evidence task",
-          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
           "status": "backlog",
           "version": 1,
           "workRevision": 1,
-          "createdAt": "2026-10-09T20:16:19.852Z",
-          "updatedAt": "2026-10-09T20:16:19.852Z",
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.173Z",
           "completedAt": null
         },
-        "snapshotCursor": "2",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "3",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
       "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
           "title": "Synthetic evidence task",
@@ -71,61 +98,67 @@
           "branch": null,
           "pullRequestUrl": null,
           "blockedReason": null,
-          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
-          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
           "status": "review",
           "version": 2,
           "workRevision": 1,
-          "createdAt": "2026-10-09T20:16:19.852Z",
-          "updatedAt": "2026-10-09T20:16:19.856Z",
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.177Z",
           "completedAt": null
         },
-        "snapshotCursor": "3",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "4",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/complete",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/complete",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 201,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
-          "id": "eb076393-179b-4671-8f99-5e4765d709ae",
-          "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+          "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
           "workRevision": 1,
           "implementationRunId": null,
           "actor": "operator",
           "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
           "evidenceUrl": null,
-          "acceptedAt": "2026-10-09T20:16:19.860Z"
+          "acceptedAt": "2026-10-09T20:26:28.180Z"
         },
-        "snapshotCursor": "5",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "6",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 201,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
-          "id": "fd1eac7a-054c-4db7-b074-ccbdebb978ac",
-          "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "id": "d6d33f2d-305e-4adc-8e66-17b916e3c000",
+          "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
           "text": "Synthetic immutable comment after acceptance",
           "actor": "operator",
-          "createdAt": "2026-10-09T20:16:19.862Z"
+          "createdAt": "2026-10-09T20:26:28.182Z"
         },
-        "snapshotCursor": "7",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "8",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
       "method": "GET",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
           "task": {
@@ -140,39 +173,39 @@
             "branch": null,
             "pullRequestUrl": null,
             "blockedReason": null,
-            "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
-            "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+            "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+            "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
             "status": "completed",
             "version": 3,
             "workRevision": 1,
-            "createdAt": "2026-10-09T20:16:19.852Z",
-            "updatedAt": "2026-10-09T20:16:19.860Z",
-            "completedAt": "2026-10-09T20:16:19.860Z"
+            "createdAt": "2026-10-09T20:26:28.173Z",
+            "updatedAt": "2026-10-09T20:26:28.180Z",
+            "completedAt": "2026-10-09T20:26:28.180Z"
           },
           "currentCompletion": {
-            "id": "eb076393-179b-4671-8f99-5e4765d709ae",
-            "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+            "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+            "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
             "workRevision": 1,
             "implementationRunId": null,
             "actor": "operator",
             "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
             "evidenceUrl": null,
-            "acceptedAt": "2026-10-09T20:16:19.860Z"
+            "acceptedAt": "2026-10-09T20:26:28.180Z"
           },
           "latestRun": null,
           "history": {
-            "commentsUrl": "/api/v1/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+            "commentsUrl": "/api/v1/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
             "completions": {
               "items": [
                 {
-                  "id": "eb076393-179b-4671-8f99-5e4765d709ae",
-                  "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+                  "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
                   "workRevision": 1,
                   "implementationRunId": null,
                   "actor": "operator",
                   "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
                   "evidenceUrl": null,
-                  "acceptedAt": "2026-10-09T20:16:19.860Z"
+                  "acceptedAt": "2026-10-09T20:26:28.180Z"
                 }
               ],
               "nextCursor": null,
@@ -185,15 +218,17 @@
             }
           }
         },
-        "snapshotCursor": "7",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "8",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/reopen",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/reopen",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
           "title": "Synthetic evidence task",
@@ -207,24 +242,26 @@
           "branch": null,
           "pullRequestUrl": null,
           "blockedReason": null,
-          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
-          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
           "status": "backlog",
           "version": 4,
           "workRevision": 2,
-          "createdAt": "2026-10-09T20:16:19.852Z",
-          "updatedAt": "2026-10-09T20:16:19.866Z",
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.187Z",
           "completedAt": null
         },
-        "snapshotCursor": "9",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "10",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
       "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 409,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "error": {
           "code": "version_conflict",
@@ -236,29 +273,33 @@
       }
     },
     {
-      "path": "/projects/e3afd559-5225-46d8-8386-7d73460dd546",
+      "path": "/projects/f8a17cc3-e471-4609-a364-efbd33099bc5",
       "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
-          "id": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "id": "f8a17cc3-e471-4609-a364-efbd33099bc5",
           "name": "Synthetic evidence project",
           "repositoryPath": null,
-          "archivedAt": "2026-10-09T20:16:19.870Z",
+          "archivedAt": "2026-10-09T20:26:28.190Z",
           "version": 2,
-          "createdAt": "2026-10-09T20:16:19.848Z",
-          "updatedAt": "2026-10-09T20:16:19.870Z"
+          "createdAt": "2026-10-09T20:26:28.167Z",
+          "updatedAt": "2026-10-09T20:26:28.190Z"
         },
-        "snapshotCursor": "10",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "11",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 409,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "error": {
           "code": "project_archived",
@@ -269,25 +310,29 @@
     {
       "path": "/settings",
       "method": "PATCH",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
           "timezone": "Europe/London",
           "version": 2,
           "dataLocation": "<redacted synthetic private directory>",
-          "storageBytes": 449088,
+          "storageBytes": 477928,
           "storageMeasurement": "observational"
         },
-        "snapshotCursor": "11",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "12",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/complete",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd/complete",
       "method": "POST",
+      "credentialKind": "reporter",
+      "originPolicy": "originless",
       "status": 403,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "error": {
           "code": "human_required",
@@ -296,10 +341,12 @@
       }
     },
     {
-      "path": "/projects/e3afd559-5225-46d8-8386-7d73460dd546/board",
+      "path": "/projects/f8a17cc3-e471-4609-a364-efbd33099bc5/board",
       "method": "GET",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generationHeader": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "body": {
         "data": {
           "columns": [
@@ -307,8 +354,8 @@
               "status": "backlog",
               "items": [
                 {
-                  "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
-                  "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+                  "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+                  "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
                   "parentTaskId": null,
                   "title": "Synthetic evidence task",
                   "description": "",
@@ -323,8 +370,8 @@
                   "blockedReason": null,
                   "version": 4,
                   "workRevision": 2,
-                  "createdAt": "2026-10-09T20:16:19.852Z",
-                  "updatedAt": "2026-10-09T20:16:19.866Z",
+                  "createdAt": "2026-10-09T20:26:28.173Z",
+                  "updatedAt": "2026-10-09T20:26:28.187Z",
                   "completedAt": null
                 }
               ],
@@ -351,15 +398,17 @@
             }
           ]
         },
-        "snapshotCursor": "11",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "12",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
       "path": "/tasks",
       "method": "POST",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 201,
-      "generationHeader": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2",
+      "generationHeader": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d",
       "body": {
         "data": {
           "description": "",
@@ -372,25 +421,27 @@
           "branch": null,
           "pullRequestUrl": null,
           "blockedReason": null,
-          "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+          "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
           "title": "Synthetic evidence task",
-          "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+          "id": "3c48e72a-d069-4325-abd9-207313098ddd",
           "status": "backlog",
           "version": 1,
           "workRevision": 1,
-          "createdAt": "2026-10-09T20:16:19.852Z",
-          "updatedAt": "2026-10-09T20:16:19.852Z",
+          "createdAt": "2026-10-09T20:26:28.173Z",
+          "updatedAt": "2026-10-09T20:26:28.173Z",
           "completedAt": null
         },
-        "snapshotCursor": "2",
-        "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110"
+        "snapshotCursor": "3",
+        "generation": "05310284-8257-417b-b1d2-d3ca85b888c3"
       }
     },
     {
-      "path": "/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67",
+      "path": "/tasks/3c48e72a-d069-4325-abd9-207313098ddd",
       "method": "GET",
+      "credentialKind": "browser",
+      "originPolicy": "exact allowed local Origin",
       "status": 200,
-      "generationHeader": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2",
+      "generationHeader": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d",
       "body": {
         "data": {
           "task": {
@@ -405,30 +456,30 @@
             "branch": null,
             "pullRequestUrl": null,
             "blockedReason": null,
-            "id": "436889f0-2f0e-4331-ab04-1adf0919fc67",
-            "projectId": "e3afd559-5225-46d8-8386-7d73460dd546",
+            "id": "3c48e72a-d069-4325-abd9-207313098ddd",
+            "projectId": "f8a17cc3-e471-4609-a364-efbd33099bc5",
             "status": "backlog",
             "version": 4,
             "workRevision": 2,
-            "createdAt": "2026-10-09T20:16:19.852Z",
-            "updatedAt": "2026-10-09T20:16:19.866Z",
+            "createdAt": "2026-10-09T20:26:28.173Z",
+            "updatedAt": "2026-10-09T20:26:28.187Z",
             "completedAt": null
           },
           "currentCompletion": null,
           "latestRun": null,
           "history": {
-            "commentsUrl": "/api/v1/tasks/436889f0-2f0e-4331-ab04-1adf0919fc67/comments",
+            "commentsUrl": "/api/v1/tasks/3c48e72a-d069-4325-abd9-207313098ddd/comments",
             "completions": {
               "items": [
                 {
-                  "id": "eb076393-179b-4671-8f99-5e4765d709ae",
-                  "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "id": "103bdab9-d59f-4cd2-aded-449005e3231f",
+                  "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
                   "workRevision": 1,
                   "implementationRunId": null,
                   "actor": "operator",
                   "evidenceNote": "Synthetic browser acceptance fixture; no actual human attestation",
                   "evidenceUrl": null,
-                  "acceptedAt": "2026-10-09T20:16:19.860Z"
+                  "acceptedAt": "2026-10-09T20:26:28.180Z"
                 }
               ],
               "nextCursor": null,
@@ -437,12 +488,12 @@
             "reopens": {
               "items": [
                 {
-                  "id": "643033a9-baaf-4720-b145-2fd85de781d9",
-                  "taskId": "436889f0-2f0e-4331-ab04-1adf0919fc67",
+                  "id": "4e4b0693-228a-4882-89c5-c95dbf2ee93f",
+                  "taskId": "3c48e72a-d069-4325-abd9-207313098ddd",
                   "workRevision": 2,
                   "actor": "operator",
                   "reason": "Synthetic rework fixture",
-                  "createdAt": "2026-10-09T20:16:19.866Z"
+                  "createdAt": "2026-10-09T20:26:28.187Z"
                 }
               ],
               "nextCursor": null,
@@ -450,24 +501,24 @@
             }
           }
         },
-        "snapshotCursor": "11",
-        "generation": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2"
+        "snapshotCursor": "12",
+        "generation": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d"
       }
     }
   ],
   "restore": {
     "before": {
-      "generation": "9bfeba03-04ad-43cb-a6fb-e911fedfb110",
+      "generation": "05310284-8257-417b-b1d2-d3ca85b888c3",
       "schemaVersion": 2,
       "sessionCount": 1,
       "counts": {
-        "projects": 1,
+        "projects": 2,
         "tasks": 1,
         "comments": 1,
         "completions": 1,
         "reopens": 1,
-        "receipts": 8,
-        "changes": 11,
+        "receipts": 9,
+        "changes": 12,
         "runs": 0
       },
       "integrity": {
@@ -476,17 +527,17 @@
       }
     },
     "after": {
-      "generation": "922a7b10-82d7-46b0-9ed2-543a3c3aa9a2",
+      "generation": "e5d60bd4-951c-4d1b-99e3-8103fcd3227d",
       "schemaVersion": 2,
       "sessionCount": 0,
       "counts": {
-        "projects": 1,
+        "projects": 2,
         "tasks": 1,
         "comments": 1,
         "completions": 1,
         "reopens": 1,
-        "receipts": 8,
-        "changes": 11,
+        "receipts": 9,
+        "changes": 12,
         "runs": 0
       },
       "integrity": {
@@ -497,6 +548,12 @@
     "integrity": "ok",
     "generationRenewed": true,
     "backupPreserved": true,
-    "backupDigest": "b9fff695f3ad49a1c8ee25ba0bbc5bd76277dd0f17eac4ec3c86cbdbd367a0a4"
-  }
+    "backupDigest": "8bd4367f2b433aa3c865162ae93d4526eba1ede9e839442b9277297822405d99"
+  },
+  "finalCandidateRevision": "baf0bffcf79baf6268133fc3c8b1dd20b2ab967b",
+  "evidenceReuse": "Captured at sourceRevision. Runtime unchanged in final candidate; only fixture signal cleanup and its regression were added afterward.",
+  "redactions": [
+    "Credential values and cookie/bearer headers omitted.",
+    "Settings dataLocation is a labeled synthetic-directory placeholder."
+  ]
 }

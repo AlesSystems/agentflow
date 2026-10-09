@@ -121,3 +121,20 @@ acceptance gates. Their public reporting API stays in P04. Workflow archive
 checks stay in W01, where workflow records first exist. P02 updates older-prefix
 and interrupted-marker restore so P01 backups remain usable without replacing
 an original database before candidate migration succeeds.
+
+
+### P02 latest-run adjudication condition
+
+Astra approved implicit rowid latest-run ordering only within current P02. It
+handles tied server timestamps without treating random UUID order as registration
+order. This is not a guarantee through VACUUM or table rebuilding. The runs UUID
+TEXT primary key does not alias rowid.
+
+P04 must introduce an explicit immutable unique durable registration order before
+its first public registration, preserve migration 0001's checksum and backfill
+existing rowid order, allocate non-reusing values transactionally, and migrate both
+latest queries. Acceptance includes timestamp/UUID ties, later failure and current
+revision gates, restart, backup/restore, VACUUM and a representative table rebuild.
+P04 Astra approval must include that prerequisite. PLAN and BACKEND retain it.
+Earlier registration, deletion, VACUUM or a runs rebuild would invalidate the
+bounded approval and require the durable field first.
