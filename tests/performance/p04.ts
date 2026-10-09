@@ -122,6 +122,10 @@ if (process.env.AGENTFLOW_P04_BASE_SOURCE) {
     for (let run = 1; run <= 3; run++)
       for (const [name, query] of Object.entries(queries)) {
         const samples = { base: [] as number[], head: [] as number[] };
+        const baseline = base.snapshot(query, captured).body.data;
+        const current = head.snapshot(query, captured).body.data;
+        if (JSON.stringify(baseline) !== JSON.stringify(current))
+          throw new Error("QUERY_FIXTURE_RESULT_DIFFERENCE_" + name);
         for (let i = 0; i < 110; i++)
           for (const label of (i % 2 ? ["head", "base"] : ["base", "head"]) as (
             | "base"
@@ -316,6 +320,12 @@ try {
       counts,
     }),
   );
+  if (
+    ["measured1", "measured2", "measured3"].some(
+      (phase) => phases[phase].accepted.count !== 1000,
+    )
+  )
+    throw new Error("MEASURED_ACCEPTED_COUNT");
   if (Object.values(phases).some((d) => d.accepted.p95Ms >= 250))
     throw new Error("INGEST_P95_BUDGET");
 } finally {
