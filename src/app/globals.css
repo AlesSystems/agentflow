@@ -756,3 +756,24 @@ dd {
 .lane {
   min-height: 240px;
 }
+.connection { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--divider); display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.connection p { margin: 0; }
+.connection-connected > p:first-child { color: var(--ink); font-weight: 650; }
+.connection-polling, .connection-recovering, .connection-authentication-required { background: var(--review); padding: 12px; border-radius: 10px; }
+.tracking-list { list-style: none; margin: 24px 0; padding: 0; }
+.tracking-list > li { border-top: 1px solid var(--divider); padding: 20px 0; overflow-wrap: anywhere; }
+.tracking-list h2, .tracking-list h3 { margin: 0 0 8px; }
+.tracking-filter { max-width: 400px; }
+.report-label { display: inline-block; border: 1px solid var(--ink); border-radius: 6px; padding: 4px 8px; background: var(--backlog); }
+.report-stale { background: var(--review); }
+.report-facts { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 8px 16px; margin: 20px 0; }
+.report-facts dd { margin: 0; overflow-wrap: anywhere; }
+.run-detail { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--divider); }
+.event-history { padding-left: 24px; }
+.event-history li { margin-bottom: 20px; overflow-wrap: anywhere; }
+.event-history h4 { margin-bottom: 6px; }
+.long-report { overflow-wrap: anywhere; margin: 12px 0; }
+.long-report summary { cursor: pointer; padding: 10px 0; }
+.long-report summary span { color: var(--action); text-decoration: underline; }
+.attempt-title { text-align: left; }
+@media (max-width: 700px) { .report-facts { grid-template-columns: minmax(0, 1fr); gap: 4px; } .report-facts dd { margin-bottom: 12px; } }

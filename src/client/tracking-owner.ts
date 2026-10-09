@@ -10,6 +10,7 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
     let source: EventSource | null = null;
     let owner = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let invalidation: ReturnType<typeof setTimeout> | undefined;
     let refreshing = false;
     let fallback = false;
     let failures = 0;
@@ -19,7 +20,7 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
     let after = safeCursor(cache.getQueryCache().getAll().map(q => q.state.data), generation);
     const current = () => !disposed && api.generation === generation;
     function publish(next: Connection["state"]) { state = next; if (current()) update({ state, lastSuccess }); }
-    function close() { owner++; source?.close(); source = null; }
+    function close() { owner++; source?.close(); source = null; if (invalidation) { clearTimeout(invalidation); invalidation = undefined; void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation, refetchType: "none" }); } }
     function schedule() {
       clearTimeout(timer);
       if (!current() || state === "authentication-required") return;
@@ -47,7 +48,7 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
     function recover() {
       if (!current()) return;
       close(); fallback = true; publish("recovering");
-      void refresh(true);
+      void refresh(false);
     }
     function connect() {
       if (!current()) return;
@@ -63,7 +64,10 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
           const message = event as MessageEvent<string>;
           const cursor = validatedChange(message.lastEventId, message.data, after);
           if (!cursor) return;
-          void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation });
+          if (!invalidation) invalidation = setTimeout(() => {
+            invalidation = undefined;
+            if (valid()) void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation });
+          }, 50);
           after = cursor;
         } catch { recover(); }
       });
@@ -94,6 +98,6 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
     publish("connecting"); connect(); schedule();
     document.addEventListener("visibilitychange", visible);
     window.addEventListener("focus", visible);
-    return () => { disposed = true; close(); clearTimeout(timer); unsubscribe(); document.removeEventListener("visibilitychange", visible); window.removeEventListener("focus", visible); };
+    return () => { disposed = true; close(); clearTimeout(timer); clearTimeout(invalidation); unsubscribe(); document.removeEventListener("visibilitychange", visible); window.removeEventListener("focus", visible); };
   }, [api, cache, generation, paired, update, pair]);
 }

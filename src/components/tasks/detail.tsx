@@ -20,6 +20,7 @@ import {
   type FrozenCommand,
 } from "../../client/commands";
 import { ApiError, StaleSnapshot } from "../../client/api";
+import { Attempts } from "../tracking";
 import { TaskFields } from "./fields";
 import { StatusMenu, statusLabel } from "../ui/menu";
 type DetailProps = {
@@ -58,7 +59,7 @@ export function TaskDetail({
     [comments, setComments] = useState<
       NonNullable<ReturnType<typeof useComments>["data"]>["data"]["items"]
     >([]);
-  const commentQuery = useComments(id, commentsCursor);
+  const commentQuery = useComments(query.data?.data.task.id ?? id, commentsCursor);
   const [history, setHistory] = useState<{
     completion: NonNullable<
       NonNullable<typeof query.data>["data"]["history"]["completions"]
@@ -235,8 +236,10 @@ export function TaskDetail({
       );
   }
   async function loadHistory(kind: "completion" | "reopen", url: string) {
+    const captured = cache.getQueryState([generation, path])?.dataUpdatedAt;
     try {
       const result = await api.read(url, taskDetailResponse);
+      if (api.generation !== generation || captured !== cache.getQueryState([generation, path])?.dataUpdatedAt) return;
       const page =
         kind === "completion"
           ? result.data.history.completions
@@ -595,21 +598,7 @@ export function TaskDetail({
               </a>
             </p>
           )}
-          <section>
-            <h3>Latest reported run</h3>
-            {data.latestRun ? (
-              <dl>
-                <dt>Purpose</dt>
-                <dd>{data.latestRun.purpose}</dd>
-                <dt>Reported state</dt>
-                <dd>{data.latestRun.state}</dd>
-                <dt>Received</dt>
-                <dd>{data.latestRun.lastReceivedAt}</dd>
-              </dl>
-            ) : (
-              <p>No run reports are recorded for this task.</p>
-            )}
-          </section>
+          <Attempts filters={`taskId=${task.id}`} inline />
           <section className="comments">
             <h3>
               Comments{" "}
