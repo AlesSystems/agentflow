@@ -10,13 +10,13 @@ function connection(dir: string, operation: (db: Database.Database) => void) {
   try { operation(db); } finally { db.close(); }
 }
 function legacy(db: Database.Database) {
-  db.exec(`INSERT INTO projects VALUES('p','Synthetic legacy',NULL,NULL,1,0,0);
-    INSERT INTO agents VALUES('a','Synthetic legacy','fixture','implementation',1,0);
-    INSERT INTO tasks VALUES('t','p',NULL,'Synthetic task','','','review','normal','[]',NULL,NULL,NULL,NULL,NULL,1,1,0,0,NULL);`);
-  const insert = db.prepare("INSERT INTO runs(rowid,id,project_id,agent_id,task_id,purpose,work_revision,state,last_sequence,last_received_at,version,created_at) VALUES(?,?, 'p','a',? ,?, ?,?,0,0,1,0)");
-  insert.run(-10, 'z-success','t','implementation',1,'succeeded');
-  insert.run(20, 'a-failure','t','implementation',1,'failed');
-  insert.run(80, 'taskless',null,'planning',null,'queued');
+  db.exec(`INSERT INTO projects VALUES('10000000-0000-4000-8000-000000000001','Synthetic legacy',NULL,NULL,1,0,0);
+    INSERT INTO agents VALUES('10000000-0000-4000-8000-000000000002','Synthetic legacy','fixture','implementation',1,0);
+    INSERT INTO tasks VALUES('10000000-0000-4000-8000-000000000003','10000000-0000-4000-8000-000000000001',NULL,'Synthetic task','','','review','normal','[]',NULL,NULL,NULL,NULL,NULL,1,1,0,0,NULL);`);
+  const insert = db.prepare("INSERT INTO runs(rowid,id,project_id,agent_id,task_id,purpose,work_revision,state,last_sequence,last_received_at,version,created_at) VALUES(?,?, '10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002',? ,?, ?,?,0,0,1,0)");
+  insert.run(-10, 'ffffffff-ffff-4fff-8fff-ffffffffffff','10000000-0000-4000-8000-000000000003','implementation',1,'succeeded');
+  insert.run(20, '00000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000003','implementation',1,'failed');
+  insert.run(80, '10000000-0000-4000-8000-000000000004',null,'planning',null,'queued');
 }
 it("upgrades 0001 preserving dense legacy rowid order and all run facts", async () => {
   const dir = directory(); const old = await openOwnedStore(dir, migrations.slice(0,2)); old.close();
@@ -24,11 +24,11 @@ it("upgrades 0001 preserving dense legacy rowid order and all run facts", async 
   const upgraded = await openOwnedStore(dir);
   try {
     connection(dir, db => {
-      expect(db.prepare("SELECT id,registration_order FROM runs ORDER BY registration_order").all()).toEqual([{id:'z-success',registration_order:1},{id:'a-failure',registration_order:2},{id:'taskless',registration_order:3}]);
+      expect(db.prepare("SELECT id,registration_order FROM runs ORDER BY registration_order").all()).toEqual([{id:'ffffffff-ffff-4fff-8fff-ffffffffffff',registration_order:1},{id:'00000000-0000-4000-8000-000000000001',registration_order:2},{id:'10000000-0000-4000-8000-000000000004',registration_order:3}]);
       expect(db.prepare("SELECT last_value FROM run_order_allocator").get()).toEqual({last_value:3});
       expect(db.prepare("SELECT name FROM sqlite_schema WHERE name LIKE '%registration_identity%' OR name LIKE '%event%'").all()).toEqual([]);
     });
-    expect(upgraded.store.snapshot({kind:'task',id:'t',input:{history:'both',historyLimit:50}}).body.data).toMatchObject({latestRun:{id:'a-failure'}});
+    expect(upgraded.store.snapshot({kind:'task',id:'10000000-0000-4000-8000-000000000003',input:{history:'both',historyLimit:50}}).body.data).toMatchObject({latestRun:{id:'00000000-0000-4000-8000-000000000001'}});
     expect(upgraded.store.integrity().integrity).toBe('ok');
   } finally { upgraded.close(); }
 });

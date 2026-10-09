@@ -141,8 +141,13 @@ export const runs = sqliteTable(
     endedAt: integer("ended_at"),
     version: integer("version").notNull(),
     createdAt: integer("created_at").notNull(),
+    // Additive SQLite column is physically nullable; reviewed triggers enforce required immutable order.
+    registrationOrder: integer("registration_order").notNull(),
   },
   (t) => [
+    uniqueIndex("runs_registration_order").on(t.registrationOrder),
+    index("runs_task_registration").on(t.taskId, t.registrationOrder),
+    check("runs_registration_order", sql`${t.registrationOrder} IS NULL OR (typeof(${t.registrationOrder})='integer' AND ${t.registrationOrder} BETWEEN 1 AND 9007199254740991)`),
     foreignKey({
       columns: [t.taskId, t.projectId],
       foreignColumns: [tasks.id, tasks.projectId],
@@ -263,3 +268,11 @@ export const receipts = sqliteTable(
     check("receipts_body", sql`json_valid(${t.body})`),
   ],
 );
+
+export const runOrderAllocator = sqliteTable("run_order_allocator", {
+  singleton: integer("singleton").primaryKey(),
+  lastValue: integer("last_value").notNull(),
+}, t => [
+  check("run_order_allocator_singleton", sql`${t.singleton}=1`),
+  check("run_order_allocator_value", sql`typeof(${t.lastValue})='integer' AND ${t.lastValue} BETWEEN 0 AND 9007199254740991`),
+]);

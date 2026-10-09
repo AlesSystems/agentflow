@@ -175,7 +175,7 @@ export class ApplicationData {
   private facts(value: z.infer<typeof task>, ancestors: string[]): TaskFacts {
     const latest = this.db
       .prepare(
-        "SELECT id,state,work_revision AS workRevision FROM runs WHERE task_id=? AND purpose='implementation' ORDER BY rowid DESC LIMIT 1",
+        "SELECT id,state,work_revision AS workRevision FROM runs WHERE task_id=? AND purpose='implementation' ORDER BY registration_order DESC LIMIT 1",
       )
       .get(value.id) as TaskFacts["latestImplementation"] | undefined;
     return {
@@ -688,7 +688,7 @@ export class ApplicationData {
           .get(value.id, value.workRevision) as Row | undefined;
         const latest = this.db
           .prepare(
-            "SELECT * FROM runs WHERE task_id=? ORDER BY rowid DESC LIMIT 1",
+            "SELECT id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at FROM runs WHERE task_id=? ORDER BY registration_order DESC LIMIT 1",
           )
           .get(value.id) as Row | undefined;
         const { history, historyLimit, completionCursor, reopenCursor } =
