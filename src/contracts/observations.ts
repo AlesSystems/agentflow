@@ -131,7 +131,14 @@ export const acknowledgement = z.strictObject({
   receivedAt: timestamp,
 });
 export const eventRecord = z.union(
-  eventInput.options.map((option) => option.extend({ receivedAt: timestamp })),
+  eventInput.options.map((option) =>
+    option.extend({
+      eventId: uuid,
+      runId: uuid,
+      occurredAt: timestamp,
+      receivedAt: timestamp,
+    }),
+  ),
 );
 const list = <S extends z.ZodType>(item: S) =>
   z.strictObject({
