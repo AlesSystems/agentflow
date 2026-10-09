@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 and P02 are integrated through PRs #4 and #5; P03 has a tested implementation candidate awaiting final exact-candidate review and integration. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 and P02 are integrated through PRs #4 and #5; P03 is integrated through PR #6; P04 planning is underway. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -72,11 +72,11 @@ Run unit and real-database integration suites. Compare task-list query latency a
 
 Depends on P02. Proposed files include page layouts, project/board/task components, query-cache integration, and browser tests. Agent run controls are not part of this package.
 
-- [ ] Build Overview, project list, board, task panel, and settings/pairing UI.
-- [ ] Implement create/edit, status-menu movement, comments, completion evidence, and reopen before adding drag interaction.
-- [ ] Add dnd-kit for cross-column movement through the same command. Do not add manual sorting.
-- [ ] Implement filters, load-more controls, empty/loading/error states, and version-conflict recovery.
-- [ ] Verify keyboard navigation, focus restoration, reduced motion, contrast, zoom, and a 375 px layout.
+- [x] Build Overview, project list, board, task panel, and settings/pairing UI.
+- [x] Implement create/edit, status-menu movement, comments, completion evidence, and reopen before adding drag interaction.
+- [x] Add dnd-kit for cross-column movement through the same command. Do not add manual sorting.
+- [x] Implement filters, load-more controls, empty/loading/error states, and version-conflict recovery.
+- [x] Verify keyboard navigation, focus restoration, reduced motion, contrast, zoom, and a 375 px layout.
 
 Pass when automated real-browser tests complete the full manual journey and its records survive restart. Synthetic acceptance fixtures exercise the human-only browser command without claiming an actual human attestation. Two tabs editing the same task must expose a conflict rather than lose an edit. Dropping into Completed must open acceptance, not bypass it.
 
