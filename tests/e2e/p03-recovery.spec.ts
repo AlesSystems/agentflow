@@ -826,3 +826,54 @@ test("Overview authoritative refresh clears obsolete loaded attention pages", as
     await server.stop();
   }
 });
+
+test("narrow direct task entry and reload focus the heading without stealing later editor focus", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await fixture(page, server);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto(
+      f.boardUrl + `/tasks/${f.task.id}?q=Synthetic&priority=normal`,
+    );
+    const heading = page.getByRole("heading", {
+      name: "Task details",
+      exact: true,
+    });
+    await expect(heading).toBeFocused();
+    await page.reload();
+    await expect(heading).toBeFocused();
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("Focused draft stays editable");
+    await expect(page.getByLabel("Description", { exact: true })).toBeFocused();
+    await page.getByRole("button", { name: "Save task", exact: true }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Changes saved." }),
+    ).toBeVisible();
+    await expect(heading).not.toBeFocused();
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("Dirty navigation draft");
+    await page.getByRole("button", { name: "Back to work board" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Keep your draft?", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Stay", exact: true }).click();
+    await expect(page.getByLabel("Description", { exact: true })).toHaveValue(
+      "Dirty navigation draft",
+    );
+    page.once("dialog", (dialog) => dialog.accept());
+    await page
+      .getByRole("button", { name: "Discard changes", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Back to work board" }).click();
+    await expect(page.getByLabel("Search", { exact: true })).toHaveValue(
+      "Synthetic",
+    );
+    expect(new URL(page.url()).searchParams.get("priority")).toBe("normal");
+  } finally {
+    await server.stop();
+  }
+});
