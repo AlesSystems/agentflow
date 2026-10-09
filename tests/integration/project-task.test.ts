@@ -1,56 +1,233 @@
-import { mkdtempSync, realpathSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import { expect,it } from 'vitest';
-import { openOwnedStore } from '../../src/db';
-import { canonicalDigest } from '../../src/domain/request-digest';
-import type { ApplicationCommand } from '../../src/db/application';
-it('commits resources, receipts, comments and acceptance with restart-safe exact retries',async()=>{
- const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-p02-'));
- let owned=await openOwnedStore(dir);
- const send=(command:ApplicationCommand,path:string,key=randomUUID())=>owned.store.command(command,{principal:'operator',method:'POST',path,key,digest:canonicalDigest(command),now:1000});
- const p=send({kind:'project.create',input:{name:'Synthetic project'}},'/api/v1/projects');
- const projectId=(p.body.data as {id:string}).id;
- const command:ApplicationCommand={kind:'task.create',input:{projectId,title:'Synthetic task'}};
- const key=randomUUID(); const created=send(command,'/api/v1/tasks',key); const taskId=(created.body.data as {id:string}).id;
- expect(send(command,'/api/v1/tasks',key)).toEqual(created);
- expect(()=>send({...command,input:{projectId,title:'changed'}},'/api/v1/tasks',key)).toThrow('idempotency_conflict');
- send({kind:'task.patch',id:taskId,input:{expectedVersion:1,status:'review'}},'/api/v1/tasks/'+taskId);
- const accepted=send({kind:'task.complete',id:taskId,input:{expectedVersion:2,evidenceNote:'Synthetic acceptance fixture'}},'/api/v1/tasks/'+taskId+'/complete');
- send({kind:'comment.create',id:taskId,input:{text:'immutable context'}},'/api/v1/tasks/'+taskId+'/comments');
- const detail=owned.store.snapshot({kind:'task',id:taskId,input:{history:'both',historyLimit:50}},1000);
- expect(detail.body.data).toMatchObject({task:{version:3,workRevision:1,status:'completed'},currentCompletion:accepted.body.data});
- expect(()=>send({kind:'task.patch',id:taskId,input:{expectedVersion:2,title:'lost edit'}},'/api/v1/tasks/'+taskId)).toThrow('version_conflict');
- owned.close(); owned=await openOwnedStore(dir);
- expect(send(command,'/api/v1/tasks',key)).toEqual(created);
- expect(owned.store.integrity().integrity).toBe('ok'); owned.close();
+import { mkdtempSync, realpathSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { expect, it } from "vitest";
+import { openOwnedStore } from "../../src/db";
+import { canonicalDigest } from "../../src/domain/request-digest";
+import type { ApplicationCommand } from "../../src/db/application";
+it("commits resources, receipts, comments and acceptance with restart-safe exact retries", async () => {
+  const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p02-"));
+  let owned = await openOwnedStore(dir);
+  const send = (
+    command: ApplicationCommand,
+    path: string,
+    key = randomUUID(),
+  ) =>
+    owned.store.command(command, {
+      principal: "operator",
+      method: "POST",
+      path,
+      key,
+      digest: canonicalDigest(command),
+      now: 1000,
+    });
+  const p = send(
+    { kind: "project.create", input: { name: "Synthetic project" } },
+    "/api/v1/projects",
+  );
+  const projectId = (p.body.data as { id: string }).id;
+  const command: ApplicationCommand = {
+    kind: "task.create",
+    input: { projectId, title: "Synthetic task" },
+  };
+  const key = randomUUID();
+  const created = send(command, "/api/v1/tasks", key);
+  const taskId = (created.body.data as { id: string }).id;
+  expect(send(command, "/api/v1/tasks", key)).toEqual(created);
+  expect(() =>
+    send(
+      { ...command, input: { projectId, title: "changed" } },
+      "/api/v1/tasks",
+      key,
+    ),
+  ).toThrow("idempotency_conflict");
+  send(
+    {
+      kind: "task.patch",
+      id: taskId,
+      input: { expectedVersion: 1, status: "review" },
+    },
+    "/api/v1/tasks/" + taskId,
+  );
+  const accepted = send(
+    {
+      kind: "task.complete",
+      id: taskId,
+      input: {
+        expectedVersion: 2,
+        evidenceNote: "Synthetic acceptance fixture",
+      },
+    },
+    "/api/v1/tasks/" + taskId + "/complete",
+  );
+  send(
+    {
+      kind: "comment.create",
+      id: taskId,
+      input: { text: "immutable context" },
+    },
+    "/api/v1/tasks/" + taskId + "/comments",
+  );
+  const detail = owned.store.snapshot(
+    { kind: "task", id: taskId, input: { history: "both", historyLimit: 50 } },
+    1000,
+  );
+  expect(detail.body.data).toMatchObject({
+    task: { version: 3, workRevision: 1, status: "completed" },
+    currentCompletion: accepted.body.data,
+  });
+  expect(() =>
+    send(
+      {
+        kind: "task.patch",
+        id: taskId,
+        input: { expectedVersion: 2, title: "lost edit" },
+      },
+      "/api/v1/tasks/" + taskId,
+    ),
+  ).toThrow("version_conflict");
+  owned.close();
+  owned = await openOwnedStore(dir);
+  expect(send(command, "/api/v1/tasks", key)).toEqual(created);
+  expect(owned.store.integrity().integrity).toBe("ok");
+  owned.close();
 });
-it('enforces real reference, active run and implementation history gates atomically',async()=>{
- const { seedRun,persistedCounts }=await import('../fixtures/application');
- const owned=await openOwnedStore(mkdtempSync(join(realpathSync(tmpdir()),'agentflow-gates-')));
- try{
- let now=1000;const send=(command:ApplicationCommand,principal:'operator'|'reporter'='operator')=>owned.store.command(command,{principal,method:'POST',path:command.kind,key:randomUUID(),digest:canonicalDigest(command),now:now++});
- const p=(send({kind:'project.create',input:{name:'Synthetic project'}}).body.data as {id:string}).id;
- const other=(send({kind:'project.create',input:{name:'Other project'}}).body.data as {id:string}).id;
- const a=(send({kind:'task.create',input:{projectId:p,title:'A'}}).body.data as {id:string}).id;
- const b=(send({kind:'task.create',input:{projectId:p,title:'B',parentTaskId:a}}).body.data as {id:string}).id;
- expect(()=>send({kind:'task.patch',id:a,input:{expectedVersion:1,parentTaskId:b}})).toThrow('parent_cycle');
- expect(()=>send({kind:'task.create',input:{projectId:other,title:'cross project',parentTaskId:a}})).toThrow('parent_project_mismatch');
- seedRun(owned.instance,{projectId:p,taskId:a,state:'succeeded',workRevision:1,createdAt:now++});
- send({kind:'task.patch',id:a,input:{expectedVersion:1,status:'review'}});
- const before=persistedCounts(owned.instance);
- expect(()=>send({kind:'task.complete',id:a,input:{expectedVersion:2,evidenceNote:'synthetic'}},'reporter')).toThrow('human_required');expect(persistedCounts(owned.instance)).toEqual(before);
- send({kind:'task.complete',id:a,input:{expectedVersion:2,evidenceNote:'Synthetic current implementation acceptance'}});
- send({kind:'task.reopen',id:a,input:{expectedVersion:3,reason:'Synthetic rework'}});
- send({kind:'task.patch',id:a,input:{expectedVersion:4,status:'review'}});
- expect(()=>send({kind:'task.complete',id:a,input:{expectedVersion:5,evidenceNote:'synthetic'}})).toThrow('implementation_not_current');
- seedRun(owned.instance,{projectId:p,taskId:a,state:'queued',workRevision:2,createdAt:now++});
- expect(()=>send({kind:'task.patch',id:a,input:{expectedVersion:5,description:'new work'}})).toThrow('active_run');
- send({kind:'task.patch',id:a,input:{expectedVersion:5,title:'metadata allowed'}});
- expect(()=>send({kind:'project.patch',id:p,input:{expectedVersion:1,archived:true}})).toThrow('active_run');
- seedRun(owned.instance,{projectId:other,state:'queued'});
- expect(()=>send({kind:'project.patch',id:other,input:{expectedVersion:1,archived:true}})).toThrow('active_run');
- expect(owned.store.integrity().integrity).toBe('ok');
- }finally{owned.close();}
+it("enforces real reference, active run and implementation history gates atomically", async () => {
+  const { seedRun, persistedCounts } = await import("../fixtures/application");
+  const owned = await openOwnedStore(
+    mkdtempSync(join(realpathSync(tmpdir()), "agentflow-gates-")),
+  );
+  try {
+    let now = 1000;
+    const send = (
+      command: ApplicationCommand,
+      principal: "operator" | "reporter" = "operator",
+    ) =>
+      owned.store.command(command, {
+        principal,
+        method: "POST",
+        path: command.kind,
+        key: randomUUID(),
+        digest: canonicalDigest(command),
+        now: now++,
+      });
+    const p = (
+      send({ kind: "project.create", input: { name: "Synthetic project" } })
+        .body.data as { id: string }
+    ).id;
+    const other = (
+      send({ kind: "project.create", input: { name: "Other project" } }).body
+        .data as { id: string }
+    ).id;
+    const a = (
+      send({ kind: "task.create", input: { projectId: p, title: "A" } }).body
+        .data as { id: string }
+    ).id;
+    const b = (
+      send({
+        kind: "task.create",
+        input: { projectId: p, title: "B", parentTaskId: a },
+      }).body.data as { id: string }
+    ).id;
+    expect(() =>
+      send({
+        kind: "task.patch",
+        id: a,
+        input: { expectedVersion: 1, parentTaskId: b },
+      }),
+    ).toThrow("parent_cycle");
+    expect(() =>
+      send({
+        kind: "task.create",
+        input: { projectId: other, title: "cross project", parentTaskId: a },
+      }),
+    ).toThrow("parent_project_mismatch");
+    seedRun(owned.instance, {
+      projectId: p,
+      taskId: a,
+      state: "succeeded",
+      workRevision: 1,
+      createdAt: now++,
+    });
+    send({
+      kind: "task.patch",
+      id: a,
+      input: { expectedVersion: 1, status: "review" },
+    });
+    const before = persistedCounts(owned.instance);
+    expect(() =>
+      send(
+        {
+          kind: "task.complete",
+          id: a,
+          input: { expectedVersion: 2, evidenceNote: "synthetic" },
+        },
+        "reporter",
+      ),
+    ).toThrow("human_required");
+    expect(persistedCounts(owned.instance)).toEqual(before);
+    send({
+      kind: "task.complete",
+      id: a,
+      input: {
+        expectedVersion: 2,
+        evidenceNote: "Synthetic current implementation acceptance",
+      },
+    });
+    send({
+      kind: "task.reopen",
+      id: a,
+      input: { expectedVersion: 3, reason: "Synthetic rework" },
+    });
+    send({
+      kind: "task.patch",
+      id: a,
+      input: { expectedVersion: 4, status: "review" },
+    });
+    expect(() =>
+      send({
+        kind: "task.complete",
+        id: a,
+        input: { expectedVersion: 5, evidenceNote: "synthetic" },
+      }),
+    ).toThrow("implementation_not_current");
+    seedRun(owned.instance, {
+      projectId: p,
+      taskId: a,
+      state: "queued",
+      workRevision: 2,
+      createdAt: now++,
+    });
+    expect(() =>
+      send({
+        kind: "task.patch",
+        id: a,
+        input: { expectedVersion: 5, description: "new work" },
+      }),
+    ).toThrow("active_run");
+    send({
+      kind: "task.patch",
+      id: a,
+      input: { expectedVersion: 5, title: "metadata allowed" },
+    });
+    expect(() =>
+      send({
+        kind: "project.patch",
+        id: p,
+        input: { expectedVersion: 1, archived: true },
+      }),
+    ).toThrow("active_run");
+    seedRun(owned.instance, { projectId: other, state: "queued" });
+    expect(() =>
+      send({
+        kind: "project.patch",
+        id: other,
+        input: { expectedVersion: 1, archived: true },
+      }),
+    ).toThrow("active_run");
+    expect(owned.store.integrity().integrity).toBe("ok");
+  } finally {
+    owned.close();
+  }
 });

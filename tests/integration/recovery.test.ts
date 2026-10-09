@@ -98,7 +98,10 @@ it("rolls failed migration DDL and history back without serving", async () => {
   const reopened = await openOwnedStore(dir);
   expect(reopened.store.sessionCount()).toBe(1);
   expect(reopened.store.metadata().schemaVersion).toBe(2);
-  expect(reopened.store.validateMigrations()).toEqual(["0000_foundation", "0001_application"]);
+  expect(reopened.store.validateMigrations()).toEqual([
+    "0000_foundation",
+    "0001_application",
+  ]);
   reopened.close();
 });
 for (const phase of ["staged", "archived", "replaced"] as const)
@@ -269,18 +272,63 @@ it("applies an existing fixture pending migration and restarts unchanged", async
   backup.close();
 });
 for (const phase of ["staged", "archived", "replaced"] as const)
- it(`upgrades a known P01 backup before marker publication and repairs ${phase}`,async()=>{
- const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-prefix-'));
- const old=await openOwnedStore(dir,migrations.slice(0,1));
- old.store.createSession('old-session',1,9999999999999);
- const backup=join(dir,'backups','p01.sqlite');await old.store.backup(backup);
- const generation=old.store.metadata().generation;old.close();
- const current=await openOwnedStore(dir);current.close();
- await expect(restore(dir,backup,at=>{if(at===phase)throw new Error('interrupted');})).rejects.toThrow('interrupted');
- await repairRestore(dir);
- const restored=await openOwnedStore(dir);
- expect(restored.store.metadata().schemaVersion).toBe(2);
- expect(restored.store.metadata().generation).not.toBe(generation);
- expect(restored.store.sessionCount()).toBe(0);
- expect(restored.store.integrity().integrity).toBe('ok');restored.close();
- });
+  it(`upgrades a known P01 backup before marker publication and repairs ${phase}`, async () => {
+    const dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-prefix-"));
+    const old = await openOwnedStore(dir, migrations.slice(0, 1));
+    old.store.createSession("old-session", 1, 9999999999999);
+    const backup = join(dir, "backups", "p01.sqlite");
+    await old.store.backup(backup);
+    const generation = old.store.metadata().generation;
+    old.close();
+    const current = await openOwnedStore(dir);
+    current.close();
+    await expect(
+      restore(dir, backup, (at) => {
+        if (at === phase) throw new Error("interrupted");
+      }),
+    ).rejects.toThrow("interrupted");
+    await repairRestore(dir);
+    const restored = await openOwnedStore(dir);
+    expect(restored.store.metadata().schemaVersion).toBe(2);
+    expect(restored.store.metadata().generation).not.toBe(generation);
+    expect(restored.store.sessionCount()).toBe(0);
+    expect(restored.store.integrity().integrity).toBe("ok");
+    restored.close();
+  });
+for (const phase of ["staged", "archived", "replaced"] as const)
+  it(`repairs a historical P01 ${phase} marker only after upgrading its candidate`, async () => {
+    const { writeFileSync, renameSync, mkdirSync, copyFileSync } = await import(
+      "node:fs"
+    );
+    const dir = mkdtempSync(
+      join(realpathSync(tmpdir()), "agentflow-oldmarker-"),
+    );
+    const owned = await openOwnedStore(dir, migrations.slice(0, 1));
+    owned.store.renewGeneration();
+    const generation = owned.store.metadata().generation;
+    const candidate = "restore-10000000-0000-4000-8000-000000000001.sqlite";
+    await owned.store.backup(join(dir, candidate));
+    owned.close();
+    const damaged = "damaged-10000000-0000-4000-8000-000000000002";
+    if (phase !== "staged") {
+      mkdirSync(join(dir, damaged), { mode: 0o700 });
+      renameSync(
+        join(dir, "agentflow.sqlite"),
+        join(dir, damaged, "agentflow.sqlite"),
+      );
+    }
+    if (phase === "replaced") {
+      copyFileSync(join(dir, candidate), join(dir, "agentflow.sqlite"));
+    }
+    writeFileSync(
+      join(dir, "restore-marker.json"),
+      JSON.stringify({ version: 1, phase, candidate, damaged, generation }),
+      { mode: 0o600 },
+    );
+    await repairRestore(dir);
+    const restored = await openOwnedStore(dir);
+    expect(restored.store.metadata()).toEqual({ generation, schemaVersion: 2 });
+    expect(restored.store.sessionCount()).toBe(0);
+    expect(restored.store.integrity().integrity).toBe("ok");
+    restored.close();
+  });

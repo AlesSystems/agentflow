@@ -1,4 +1,4 @@
-import { isConflict } from '../domain/tasks';
+import { isConflict } from "../domain/tasks";
 import type { IncomingMessage } from "node:http";
 import { cookieSecret, equalSecret, hashSecret } from "./auth";
 import type { Credentials } from "./auth";
@@ -143,7 +143,22 @@ export async function boundedBody(request: IncomingMessage): Promise<Buffer> {
   });
 }
 export function publicError(error: unknown) {
-  if(isConflict(error)) return {status:error.code === "resource_not_found"?404:error.code === "human_required"?403:error.code === "cursor_invalid"?400:409,code:error.code,details:error.currentVersion===undefined?undefined:{currentVersion:error.currentVersion}};
+  if (isConflict(error))
+    return {
+      status:
+        error.code === "resource_not_found"
+          ? 404
+          : error.code === "human_required"
+            ? 403
+            : error.code === "cursor_invalid"
+              ? 400
+              : 409,
+      code: error.code,
+      details:
+        error.currentVersion === undefined
+          ? undefined
+          : { currentVersion: error.currentVersion },
+    };
   if (error instanceof HttpError)
     return { status: error.status, code: error.code, details: error.details };
   const code = (error as { code?: string })?.code;
@@ -152,19 +167,30 @@ export function publicError(error: unknown) {
   return { status: 503, code: "unavailable" };
 }
 
-export function requireResourceMutation(headers:Headers,principal:Principal){
- if(principal.kind==='browser')requireBrowserMutation(headers);
- else{
- if(headers.get('origin'))throw new HttpError(403,'origin_rejected');
- if((headers.get('content-type')||'').split(';')[0].trim().toLowerCase()!=='application/json')throw new HttpError(415,'json_required');
- }
+export function requireResourceMutation(
+  headers: Headers,
+  principal: Principal,
+) {
+  if (principal.kind === "browser") requireBrowserMutation(headers);
+  else {
+    if (headers.get("origin")) throw new HttpError(403, "origin_rejected");
+    if (
+      (headers.get("content-type") || "").split(";")[0].trim().toLowerCase() !==
+      "application/json"
+    )
+      throw new HttpError(415, "json_required");
+  }
 }
-export class MutationBudget{
- private tokens=200;
- private at:number;
- constructor(now=performance.now()){this.at=now;}
- charge(now=performance.now()){
- this.tokens=Math.min(200,this.tokens+Math.max(0,now-this.at)/10);this.at=now;
- if(this.tokens<1)throw new HttpError(429,'rate_limited');this.tokens--;
- }
+export class MutationBudget {
+  private tokens = 200;
+  private at: number;
+  constructor(now = performance.now()) {
+    this.at = now;
+  }
+  charge(now = performance.now()) {
+    this.tokens = Math.min(200, this.tokens + Math.max(0, now - this.at) / 10);
+    this.at = now;
+    if (this.tokens < 1) throw new HttpError(429, "rate_limited");
+    this.tokens--;
+  }
 }

@@ -1,21 +1,158 @@
-import { z } from 'zod';
-import { actor, manualStatus, nullableText, pageQuery, priority, requiredText, role, safeUrl, status, timestamp, uuid, version } from './common';
-const editable = {title:requiredText(200),description:z.string().max(20000),acceptanceCriteria:z.string().max(8000),priority,tags:z.array(requiredText(40)).max(20),assignedAgentId:uuid.nullable(),targetRole:role.nullable(),parentTaskId:uuid.nullable(),branch:nullableText(200),pullRequestUrl:safeUrl.nullable(),blockedReason:nullableText(4000)};
-export const taskCreate = z.strictObject({projectId:uuid,...z.strictObject(editable).partial().shape,title:editable.title});
-export const taskPatch = z.strictObject({...z.strictObject(editable).partial().shape,expectedVersion:version,status:manualStatus.optional()}).refine(value=>Object.keys(value).length>1);
-export const task = z.strictObject({...editable,id:uuid,projectId:uuid,status,version,workRevision:version,createdAt:timestamp,updatedAt:timestamp,completedAt:timestamp.nullable()});
-export const completeInput = z.strictObject({expectedVersion:version,evidenceNote:requiredText(4000),evidenceUrl:safeUrl.nullable().optional()});
-export const reopenInput = z.strictObject({expectedVersion:version,reason:requiredText(4000)});
-export const commentInput = z.strictObject({text:requiredText(4000)});
-export const comment = z.strictObject({id:uuid,taskId:uuid,text:z.string(),actor,createdAt:timestamp});
-export const completion = z.strictObject({id:uuid,taskId:uuid,workRevision:version,implementationRunId:uuid.nullable(),actor:z.literal('operator'),evidenceNote:z.string(),evidenceUrl:safeUrl.nullable(),acceptedAt:timestamp});
-export const reopen = z.strictObject({id:uuid,taskId:uuid,workRevision:version,actor:z.literal('operator'),reason:z.string(),createdAt:timestamp});
-export const taskFilters = {projectId:uuid.optional(),status:status.optional(),priority:priority.optional(),tag:requiredText(40).optional(),assignedAgentId:uuid.optional(),q:requiredText(200).optional()};
-export const taskQuery = z.strictObject({...pageQuery,...taskFilters});
-export const boardQuery = z.strictObject({...pageQuery,...taskFilters,projectId:z.never().optional(),status:z.never().optional(),cursor:z.never().optional()});
-export const taskDetailQueryV1 = z.strictObject({history:z.enum(['both','completion','reopen']).default('both'),historyLimit:z.coerce.number().int().min(1).max(100).default(50),completionCursor:z.string().max(4096).optional(),reopenCursor:z.string().max(4096).optional()}).refine(q=>(q.history!=='reopen'||!q.completionCursor)&&(q.history!=='completion'||!q.reopenCursor));
-export const completionHistoryV1 = z.strictObject({items:z.array(completion),nextCursor:z.string().nullable(),nextUrl:z.string().nullable()});
-export const reopenHistoryV1 = z.strictObject({items:z.array(reopen),nextCursor:z.string().nullable(),nextUrl:z.string().nullable()});
-export const run = z.strictObject({id:uuid,projectId:uuid,agentId:uuid,taskId:uuid.nullable(),purpose:z.enum(['planning','implementation','review','verification']),model:z.string().nullable(),workRevision:version.nullable(),state:z.enum(['queued','running','succeeded','failed','cancelled','interrupted']),lastSequence:z.number().int().nonnegative(),lastReceivedAt:timestamp,startedAt:timestamp.nullable(),endedAt:timestamp.nullable(),version,createdAt:timestamp});
-export const taskDetailV1 = z.strictObject({task,currentCompletion:completion.nullable(),latestRun:run.nullable(),history:z.strictObject({commentsUrl:z.string(),completions:completionHistoryV1.nullable(),reopens:reopenHistoryV1.nullable()})});
+import { z } from "zod";
+import {
+  actor,
+  manualStatus,
+  nullableText,
+  pageQuery,
+  priority,
+  requiredText,
+  role,
+  safeUrl,
+  status,
+  timestamp,
+  uuid,
+  version,
+} from "./common";
+const editable = {
+  title: requiredText(200),
+  description: z.string().max(20000),
+  acceptanceCriteria: z.string().max(8000),
+  priority,
+  tags: z.array(requiredText(40)).max(20),
+  assignedAgentId: uuid.nullable(),
+  targetRole: role.nullable(),
+  parentTaskId: uuid.nullable(),
+  branch: nullableText(200),
+  pullRequestUrl: safeUrl.nullable(),
+  blockedReason: nullableText(4000),
+};
+export const taskCreate = z.strictObject({
+  projectId: uuid,
+  ...z.strictObject(editable).partial().shape,
+  title: editable.title,
+});
+export const taskPatch = z
+  .strictObject({
+    ...z.strictObject(editable).partial().shape,
+    expectedVersion: version,
+    status: manualStatus.optional(),
+  })
+  .refine((value) => Object.keys(value).length > 1);
+export const task = z.strictObject({
+  ...editable,
+  id: uuid,
+  projectId: uuid,
+  status,
+  version,
+  workRevision: version,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  completedAt: timestamp.nullable(),
+});
+export const completeInput = z.strictObject({
+  expectedVersion: version,
+  evidenceNote: requiredText(4000),
+  evidenceUrl: safeUrl.nullable().optional(),
+});
+export const reopenInput = z.strictObject({
+  expectedVersion: version,
+  reason: requiredText(4000),
+});
+export const commentInput = z.strictObject({ text: requiredText(4000) });
+export const comment = z.strictObject({
+  id: uuid,
+  taskId: uuid,
+  text: z.string(),
+  actor,
+  createdAt: timestamp,
+});
+export const completion = z.strictObject({
+  id: uuid,
+  taskId: uuid,
+  workRevision: version,
+  implementationRunId: uuid.nullable(),
+  actor: z.literal("operator"),
+  evidenceNote: z.string(),
+  evidenceUrl: safeUrl.nullable(),
+  acceptedAt: timestamp,
+});
+export const reopen = z.strictObject({
+  id: uuid,
+  taskId: uuid,
+  workRevision: version,
+  actor: z.literal("operator"),
+  reason: z.string(),
+  createdAt: timestamp,
+});
+export const taskFilters = {
+  projectId: uuid.optional(),
+  status: status.optional(),
+  priority: priority.optional(),
+  tag: requiredText(40).optional(),
+  assignedAgentId: uuid.optional(),
+  q: requiredText(200).optional(),
+};
+export const taskQuery = z.strictObject({ ...pageQuery, ...taskFilters });
+export const boardQuery = z.strictObject({
+  ...pageQuery,
+  ...taskFilters,
+  projectId: z.never().optional(),
+  status: z.never().optional(),
+  cursor: z.never().optional(),
+});
+export const taskDetailQueryV1 = z
+  .strictObject({
+    history: z.enum(["both", "completion", "reopen"]).default("both"),
+    historyLimit: z.coerce.number().int().min(1).max(100).default(50),
+    completionCursor: z.string().max(4096).optional(),
+    reopenCursor: z.string().max(4096).optional(),
+  })
+  .refine(
+    (q) =>
+      (q.history !== "reopen" || !q.completionCursor) &&
+      (q.history !== "completion" || !q.reopenCursor),
+  );
+export const completionHistoryV1 = z.strictObject({
+  items: z.array(completion),
+  nextCursor: z.string().nullable(),
+  nextUrl: z.string().nullable(),
+});
+export const reopenHistoryV1 = z.strictObject({
+  items: z.array(reopen),
+  nextCursor: z.string().nullable(),
+  nextUrl: z.string().nullable(),
+});
+export const run = z.strictObject({
+  id: uuid,
+  projectId: uuid,
+  agentId: uuid,
+  taskId: uuid.nullable(),
+  purpose: z.enum(["planning", "implementation", "review", "verification"]),
+  model: z.string().nullable(),
+  workRevision: version.nullable(),
+  state: z.enum([
+    "queued",
+    "running",
+    "succeeded",
+    "failed",
+    "cancelled",
+    "interrupted",
+  ]),
+  lastSequence: z.number().int().nonnegative(),
+  lastReceivedAt: timestamp,
+  startedAt: timestamp.nullable(),
+  endedAt: timestamp.nullable(),
+  version,
+  createdAt: timestamp,
+});
+export const taskDetailV1 = z.strictObject({
+  task,
+  currentCompletion: completion.nullable(),
+  latestRun: run.nullable(),
+  history: z.strictObject({
+    commentsUrl: z.string(),
+    completions: completionHistoryV1.nullable(),
+    reopens: reopenHistoryV1.nullable(),
+  }),
+});
 export type Task = z.infer<typeof task>;

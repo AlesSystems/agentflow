@@ -1,4 +1,9 @@
-import { ApplicationData, type ApplicationCommand, type ApplicationQuery, type CommandContext } from './application';
+import {
+  ApplicationData,
+  type ApplicationCommand,
+  type ApplicationQuery,
+  type CommandContext,
+} from "./application";
 import Database from "better-sqlite3";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
@@ -22,7 +27,10 @@ export type StoredSession = {
   principal: "operator";
   expiresAt: number;
 };
-export const migrations: Migration[] = ["0000_foundation", "0001_application"].map((id) => {
+export const migrations: Migration[] = [
+  "0000_foundation",
+  "0001_application",
+].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),
     "utf8",

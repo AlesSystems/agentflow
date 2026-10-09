@@ -57,6 +57,32 @@ async function finishRestore(
   phase?: (phase: RestorePhase) => void,
 ) {
   const dir = owner.dataDir;
+  const candidatePath = join(dir, marker.candidate);
+  const pendingPath =
+    marker.phase === "replaced" ||
+    (marker.phase === "archived" && !existsSync(candidatePath))
+      ? join(dir, "agentflow.sqlite")
+      : candidatePath;
+  validateFile(pendingPath);
+  if (!existsSync(pendingPath)) throw new Error("RESTORE_CANDIDATE_MISSING");
+  const pending = new Store(owner, pendingPath);
+  try {
+    const history = pending.validateMigrations();
+    if (!history.length) throw new Error("RESTORE_SCHEMA_UNSUPPORTED");
+    if (
+      pending.metadata().generation !== marker.generation ||
+      pending.sessionCount() !== 0
+    )
+      throw new Error("RESTORE_GENERATION_MISMATCH");
+    await pending.migrate();
+    pending.integrity();
+    pending.checkpoint();
+  } finally {
+    await pending.drain();
+    pending.close();
+  }
+  syncFile(pendingPath);
+  syncDirectory(dir);
   if (marker.phase === "staged") {
     archiveCurrent(dir, marker);
     marker = { ...marker, phase: "archived" };

@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
-import { matchEndpoint } from '../contracts/routes';
+import { matchEndpoint } from "../contracts/routes";
 import { readConfig, type RuntimeConfig } from "./config";
 import { openOwnedStore } from "../db";
 import { beginClosing, clearRuntime, publishRuntime } from "./runtime";
@@ -32,7 +32,7 @@ export async function startRuntime(
   const owned = await openOwnedStore(config.dataDir);
   let app: Awaited<ReturnType<(typeof import("next"))["default"]>> | undefined;
   let server: ReturnType<typeof createServer> | undefined;
-  const mutationBudget=new MutationBudget();
+  const mutationBudget = new MutationBudget();
   const sockets = new Set<Socket>();
   const requests = new Set<Promise<void>>();
   let shutdownPromise: Promise<void> | undefined;
@@ -93,7 +93,7 @@ export async function startRuntime(
           request.url || "/",
           `http://127.0.0.1:${config.port}`,
         ).pathname;
-        const matched=matchEndpoint(request.method||"GET",pathname);
+        const matched = matchEndpoint(request.method || "GET", pathname);
         if (
           matched ||
           pathname === "/" ||
@@ -104,18 +104,22 @@ export async function startRuntime(
           for (const [key, value] of Object.entries(request.headers)) {
             if (typeof value === "string") headers.set(key, value);
           }
-          const principal=authenticate(
+          const principal = authenticate(
             headers,
             owned.store,
             owned.credentials,
-            matched?.endpoint.access ?? (pathname === "/api/v1/foundation" ? "read" : "human"),
+            matched?.endpoint.access ??
+              (pathname === "/api/v1/foundation" ? "read" : "human"),
             () =>
               response.setHeader(
                 "AgentFlow-Generation",
                 owned.store.metadata().generation,
               ),
           );
-          if(matched?.endpoint.command){requireResourceMutation(headers,principal);mutationBudget.charge();}
+          if (matched?.endpoint.kind === "command") {
+            requireResourceMutation(headers, principal);
+            mutationBudget.charge();
+          }
         }
         rejectReadBody(request);
         await hooks.beforeDispatch?.(request);
@@ -143,12 +147,15 @@ export async function startRuntime(
         response.setHeader("Content-Type", "application/json");
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("Connection", "close");
-        if ([429,503].includes(failure.status)) response.setHeader("Retry-After", "1");
+        if ([429, 503].includes(failure.status))
+          response.setHeader("Retry-After", "1");
         response.end(
           JSON.stringify({
             error: {
               code: failure.code,
-              ...("details" in failure && failure.details ? {details:failure.details} : {}),
+              ...("details" in failure && failure.details
+                ? { details: failure.details }
+                : {}),
               message:
                 "The request could not be completed. Check the local service and request.",
             },

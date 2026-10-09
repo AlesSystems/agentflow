@@ -20,7 +20,8 @@
     "test:e2e": "playwright test",
     "test:runtime": "vitest run tests/integration/runtime.test.ts tests/integration/auth.test.ts tests/integration/recovery.test.ts tests/integration/lock.test.ts tests/integration/stream.test.ts",
     "openapi:generate": "tsx scripts/openapi.ts",
-    "openapi:check": "tsx scripts/openapi.ts --check"
+    "openapi:check": "tsx scripts/openapi.ts --check",
+    "test:performance:p02": "tsx tests/performance/p02.ts"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
