@@ -250,3 +250,11 @@ it("GET and HEAD enforce body framing and byte limits before private dispatch", 
     expect(await read(method, {})).toBe(200);
   }
 });
+it('authenticated session failures carry generation while invalid credentials do not',async()=>{
+ const cookie=await pair(server);const current=(await(await fetch(server.url+'/api/v1/foundation',{headers:{Cookie:cookie}})).json()).generation;
+ const headers={Cookie:cookie,Origin:server.url,'Content-Type':'application/json'};
+ for(const [body,status] of [['{',400],['{"extra":true}',422]] as const){const response=await fetch(server.url+'/api/v1/session',{method:'DELETE',headers,body});expect(response.status).toBe(status);expect(response.headers.get('AgentFlow-Generation')).toBe(current);expect(response.headers.get('Cache-Control')).toBe('no-store');}
+ const rejected=await fetch(server.url+'/api/v1/session',{method:'DELETE',headers:{Origin:server.url,'Content-Type':'application/json',Authorization:'Bearer '+server.credentials().reporterToken},body:'{}'});expect(rejected.status).toBe(403);expect(rejected.headers.get('AgentFlow-Generation')).toBe(current);
+ for(const Cookie of ['', 'agentflow_session=invalid']){const response=await fetch(server.url+'/api/v1/session',{method:'DELETE',headers:{Cookie,Origin:server.url,'Content-Type':'application/json'},body:'{}'});expect(response.status).toBe(401);expect(response.headers.get('AgentFlow-Generation')).toBeNull();}
+ const Database=(await import('better-sqlite3')).default;const {join}=await import('node:path');const {hashSecret}=await import('../../src/server/auth');const fixture=new Database(join(server.dir,'agentflow.sqlite'));fixture.prepare('UPDATE sessions SET expires_at=? WHERE secret_hash=?').run(Date.now()-1,hashSecret(cookie.slice(cookie.indexOf('=')+1)));fixture.close();const expired=await fetch(server.url+'/api/v1/session',{method:'DELETE',headers,body:'{}'});expect(expired.status).toBe(401);expect(expired.headers.get('AgentFlow-Generation')).toBeNull();
+});
