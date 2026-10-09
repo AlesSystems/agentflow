@@ -140,13 +140,14 @@ export async function restore(
     let generation: string;
     try {
       const history = candidate.validateMigrations();
-      if (history.length !== migrations.length)
-        throw new Error("RESTORE_SCHEMA_UNSUPPORTED");
+      if (!history.length) throw new Error("RESTORE_SCHEMA_UNSUPPORTED");
+      await candidate.migrate(migrations);
       candidate.renewGeneration();
       candidate.integrity();
       generation = candidate.metadata().generation;
       candidate.checkpoint();
     } finally {
+      await candidate.drain();
       candidate.close();
     }
     syncFile(candidatePath);
