@@ -34,7 +34,8 @@ after installation; external agent providers may still require network access.
 ## Capabilities and Constraints
 
 The repository implements the local runtime, project/task API and manual Work
-board. Reporting, CLI hooks and workflow surfaces remain later gated packages. The v1 boundary is all three phases: P01–P07, W01–W02, W03a–W03c, and W04 in
+board. P04 reporting APIs are implemented candidates; live tracking, CLI hooks and
+workflow surfaces remain later gated packages. The v1 boundary is all three phases: P01–P07, W01–W02, W03a–W03c, and W04 in
 [PLAN.md](PLAN.md). This supersedes the earlier v0.1 target.
 
 - Each project has Backlog, In progress, Review, and Completed columns.

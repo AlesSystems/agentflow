@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. P04 planning requires Astra medium approval before implementation; P05 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. P04 has an Astra-approved implementation with migration prerequisite approval, passing runtime/load gates and independent source review. Final exact documentation/evidence approval and integration remain open; P05 through W04 have not started.
 
 ## Package state
 
@@ -17,7 +17,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P01 | Runtime/storage | Integrated | Candidate `8e0e0c78f1c6579b3f2aed4dfbc065e1ca92a59b`; merge `a2e5170879602faff706e1aa2e5e7a1905d63b47`, PR #4 | [Receipt](implementation/P01.md), [synthetic evidence](evidence/P01/acceptance.json) |
 | P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
-| P04 | Agent ingestion | Planning | Baseline `cf44dd9103c091c10c9608468e5956e506c6705c`; branch `codex/v1-p04-observations` | Astra plan approval pending |
+| P04 | Agent ingestion | Final review | Runtime `1cb71db033aabec211afd6ce86728a33561f1974`; branch `codex/v1-p04-observations` | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json); final exact-candidate review/integration pending |
 | P05 | Live tracking | Not started | — | — |
 | P06 | CLI hooks | Not started | — | — |
 | P07 | Phase 2 checkpoint | Not started | — | — |
@@ -162,3 +162,7 @@ Astra medium approved plan SHA-256 `e555bef620bb0d5bc588f44820f1791edb73605a92af
 Both independent code axes approved exact candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`. The coordinator replayed nine focused contract/HTTP tests, 28 final unit tests and six final production-browser regressions, verified source hashes and the current PR head/base/patch, and merged PR #6 with the match-head guard. Candidate ancestry on main is verified at `cf44dd9103c091c10c9608468e5956e506c6705c`. All P03 boxes are complete. The owned branch was removed without force deletion, and the primary checkout fast-forwarded cleanly.
 
 Next executable gate: plan P04 and obtain Astra medium approval before the first public agent/run registration. Include the mandatory additive immutable registration-order migration, high-water allocation and both latest-query durability tests. P05 through W04 remain open.
+
+## Current P04 handoff
+
+Astra medium approved plan SHA-256 `27dd58db2397bcd5a3999897b303fb5463afea7365cee500905e88fb7a9ef77a`. The independent migration gate approved `bfba1c54e715b1528b1c56ed9b1bb9940377a700` before public implementation. Reviewed runtime `1cb71db033aabec211afd6ce86728a33561f1974` passed 60 unit, 164 integration and 22 Chrome tests, lint/types/build/OpenAPI. Root replayed 88 migration checks and 34 final identity/helper tests, checked 39 source hashes, independent retained database facts, and the final evidence. Three 1,000-sample runs and sustained/burst load pass the 250 ms ingest budget; worst native snapshot regression 9.12%. Synthetic fixture cleanup is complete. Final documentation/evidence SHA approval and PR integration remain open; all P04 boxes stay unchecked until verified merge. P05 through W04 remain unstarted.
