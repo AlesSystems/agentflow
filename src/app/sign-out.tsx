@@ -3,11 +3,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 export default function SignOut() {
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const router = useRouter();
   return (
     <>
       <button
+        disabled={busy}
         onClick={async () => {
+          if (busy) return;
+          setError("");
+          setBusy(true);
           try {
             const response = await fetch("/api/v1/session", {
               method: "DELETE",
@@ -22,10 +27,12 @@ export default function SignOut() {
             router.refresh();
           } catch {
             setError("Cannot reach AgentFlow. Try again.");
+          } finally {
+            setBusy(false);
           }
         }}
       >
-        Disconnect browser
+        {busy ? "Disconnecting…" : "Disconnect browser"}
       </button>
       <p role="alert" className="error">
         {error}

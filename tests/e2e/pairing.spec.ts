@@ -140,15 +140,67 @@ test("a paired browser on a second localhost port cannot read pages, RSC or pref
     await server.stop();
   }
 });
-test('disconnect clears errors and permits only one delayed request until it finishes',async({page})=>{
- const server=await launch();let count=0;let release!:()=>void;const delayed=new Promise<void>(resolve=>release=resolve);
- try{
-  await page.goto(server.url+'/pair');await page.getByLabel('Pairing token',{exact:true}).fill(server.credentials().pairingToken);await page.getByRole('button',{name:'Pair this browser'}).click();await expect(page.getByText('SQLite · ready')).toBeVisible();
-  await page.route('**/api/v1/session',async route=>{if(route.request().method()!=='DELETE'){await route.continue();return;}count++;if(count===1){await route.continue({postData:'{"extra":true}'});return;}await delayed;await route.continue();});
-  await page.getByRole('button',{name:'Disconnect browser'}).click();await expect(page.locator('main p[role="alert"]')).toContainText('Could not disconnect. Try again.');await expect(page.getByRole('button',{name:'Disconnect browser'})).toBeEnabled();
-  await page.getByRole('button',{name:'Disconnect browser'}).click();await expect(page.getByRole('button',{name:'Disconnecting…'})).toBeDisabled();await expect(page.locator('main p[role="alert"]')).toHaveText('');expect(count).toBe(2);
-  await page.evaluate(()=>{const button=document.querySelector('main button') as HTMLButtonElement;button.click();button.click();});expect(count).toBe(2);
-  mkdirSync('.impeccable/review/P01',{recursive:true});await page.screenshot({path:'.impeccable/review/P01/disconnect-pending.png',fullPage:true});
-  release();await expect(page.getByRole('heading',{name:'Pair your browser'})).toBeVisible();expect(count).toBe(2);expect((await page.request.get(server.url+'/api/v1/foundation')).status()).toBe(401);
- }finally{release();await server.stop();}
+test("disconnect clears errors and permits only one delayed request until it finishes", async ({
+  page,
+}) => {
+  const server = await launch();
+  let count = 0;
+  let release!: () => void;
+  const delayed = new Promise<void>((resolve) => (release = resolve));
+  try {
+    await page.goto(server.url + "/pair");
+    await page
+      .getByLabel("Pairing token", { exact: true })
+      .fill(server.credentials().pairingToken);
+    await page.getByRole("button", { name: "Pair this browser" }).click();
+    await expect(page.getByText("SQLite · ready")).toBeVisible();
+    await page.route("**/api/v1/session", async (route) => {
+      if (route.request().method() !== "DELETE") {
+        await route.continue();
+        return;
+      }
+      count++;
+      if (count === 1) {
+        await route.continue({ postData: '{"extra":true}' });
+        return;
+      }
+      await delayed;
+      await route.continue();
+    });
+    await page.getByRole("button", { name: "Disconnect browser" }).click();
+    await expect(page.locator('main p[role="alert"]')).toContainText(
+      "Could not disconnect. Try again.",
+    );
+    await expect(
+      page.getByRole("button", { name: "Disconnect browser" }),
+    ).toBeEnabled();
+    await page.getByRole("button", { name: "Disconnect browser" }).click();
+    await expect(
+      page.getByRole("button", { name: "Disconnecting…" }),
+    ).toBeDisabled();
+    await expect(page.locator('main p[role="alert"]')).toHaveText("");
+    expect(count).toBe(2);
+    await page.evaluate(() => {
+      const button = document.querySelector("main button") as HTMLButtonElement;
+      button.click();
+      button.click();
+    });
+    expect(count).toBe(2);
+    mkdirSync(".impeccable/review/P01", { recursive: true });
+    await page.screenshot({
+      path: ".impeccable/review/P01/disconnect-pending.png",
+      fullPage: true,
+    });
+    release();
+    await expect(
+      page.getByRole("heading", { name: "Pair your browser" }),
+    ).toBeVisible();
+    expect(count).toBe(2);
+    expect(
+      (await page.request.get(server.url + "/api/v1/foundation")).status(),
+    ).toBe(401);
+  } finally {
+    release();
+    await server.stop();
+  }
 });
