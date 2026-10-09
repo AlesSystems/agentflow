@@ -103,3 +103,7 @@ it("cannot release ownership while an application connection remains open", asyn
   expect(() => owned.instance.release()).toThrow("CONNECTIONS_OPEN");
   owned.close();
 });
+it('retains storage ownership until asynchronous SQLite backup finishes',async()=>{
+ const dir=mkdtempSync(join(realpathSync(tmpdir()),'agentflow-backup-drain-'));const owned=await openOwnedStore(dir);const pending=owned.store.backup(join(dir,'backups','pending.sqlite'));
+ try{expect(()=>owned.store.close()).toThrow('STORAGE_WORK_PENDING');}finally{await pending.catch(()=>undefined);owned.close();}
+});
