@@ -212,3 +212,41 @@ it("rejects a genuinely expired persisted session through production HTTP", asyn
       (await fetch(server.url + path, { headers: { Cookie: cookie } })).status,
     ).toBe(401);
 });
+it("GET and HEAD enforce body framing and byte limits before private dispatch", async () => {
+  const { request } = await import("node:http");
+  async function read(
+    method: string,
+    headers: Record<string, string>,
+    body?: string,
+  ) {
+    return new Promise<number>((resolve, reject) => {
+      const req = request(
+        server.url + "/api/v1/foundation",
+        {
+          method,
+          headers: {
+            Authorization: "Bearer " + server.credentials().reporterToken,
+            ...headers,
+          },
+        },
+        (response) => {
+          response.resume();
+          resolve(response.statusCode!);
+        },
+      );
+      req.on("error", reject);
+      req.end(body);
+    });
+  }
+  for (const method of ["GET", "HEAD"]) {
+    expect(
+      await read(method, { "Content-Length": "65537" }, "x".repeat(65537)),
+    ).toBe(413);
+    expect(
+      await read(method, { "Transfer-Encoding": "chunked" }, "x".repeat(65537)),
+    ).toBe(400);
+    expect(await read(method, { "Content-Length": "1" }, "x")).toBe(400);
+    expect(await read(method, { "Content-Length": "0" })).toBe(200);
+    expect(await read(method, {})).toBe(200);
+  }
+});
