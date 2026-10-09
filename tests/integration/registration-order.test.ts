@@ -658,6 +658,23 @@ it.each(["ordinary", "replace collision", "upsert update"])(
         db.prepare(
           "UPDATE runs SET id=id,version=version+1,last_received_at=500 WHERE id=?",
         ).run(successId);
+        db.prepare(
+          "UPDATE runs SET state='running',last_sequence=1,started_at=500,last_received_at=500,version=2 WHERE id=?",
+        ).run("10000000-0000-4000-8000-000000000004");
+        expect(
+          db
+            .prepare("SELECT state,last_sequence FROM runs WHERE id=?")
+            .get("10000000-0000-4000-8000-000000000004"),
+        ).toEqual({ state: "running", last_sequence: 1 });
+        expect(
+          db
+            .prepare(
+              "SELECT sql FROM sqlite_schema WHERE type='trigger' AND name='runs_id_immutable'",
+            )
+            .get(),
+        ).toMatchObject({
+          sql: expect.stringContaining("WHEN NEW.id IS NOT OLD.id"),
+        });
         expect(
           db
             .prepare("SELECT version,last_received_at FROM runs WHERE id=?")
@@ -678,3 +695,49 @@ it.each(["ordinary", "replace collision", "upsert update"])(
     }
   },
 );
+it("rolls additive identity trigger migration back without changing frozen order schema or facts", async () => {
+  const dir = directory();
+  const legacyOwner = await openOwnedStore(dir, migrations.slice(0, 2));
+  legacyOwner.close();
+  connection(dir, legacy);
+  const old = await openOwnedStore(dir, migrations.slice(0, 3));
+  old.close();
+  const state = (db: Database.Database) => ({
+    schema: db
+      .prepare("SELECT type,name,sql FROM sqlite_schema ORDER BY name")
+      .all(),
+    runs: db.prepare("SELECT * FROM runs ORDER BY registration_order").all(),
+    allocator: highwater(db),
+    history: db.prepare("SELECT * FROM migration_history ORDER BY id").all(),
+    metadata: db.prepare("SELECT * FROM instance_metadata").all(),
+  });
+  let before: unknown;
+  connection(dir, (db) => {
+    before = state(db);
+  });
+  const sql =
+    migrations[3].sql + "\nINSERT INTO nonexistent_identity_failure VALUES(1);";
+  await expect(
+    openOwnedStore(dir, [
+      ...migrations.slice(0, 3),
+      {
+        id: migrations[3].id,
+        sql,
+        sha256: createHash("sha256").update(sql).digest("hex"),
+      },
+    ]),
+  ).rejects.toThrow("no such table");
+  connection(dir, (db) => expect(state(db)).toEqual(before));
+  const upgraded = await openOwnedStore(dir);
+  try {
+    expect(upgraded.store.integrity().integrity).toBe("ok");
+    expect(() => complete(upgraded)).toThrow("implementation_not_current");
+  } finally {
+    upgraded.close();
+  }
+  expect(
+    createHash("sha256")
+      .update(readFileSync("migrations/0002_registration_order.sql"))
+      .digest("hex"),
+  ).toBe("6c64b1822e49c727adcf231611b820ef3711a8d712abab5229281ae3117723c6");
+});
