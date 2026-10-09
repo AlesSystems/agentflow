@@ -168,3 +168,35 @@ it("SQLite remains authority for syntactically invalid allowed DML and rolls it 
     ).toEqual([]),
   );
 });
+it.each([
+  "BEGIN",
+  "COMMIT",
+  "END",
+  "END TRANSACTION",
+  "ROLLBACK",
+  "SAVEPOINT x",
+  "RELEASE x",
+  "VACUUM",
+  "ATTACH 'x' AS x",
+  "DETACH x",
+  "PRAGMA foreign_keys=OFF",
+])("rejects %s before a trigger or within its body", async (control) => {
+  for (const sql of [
+    `${control}; ${trigger}`,
+    `CREATE TABLE guarded(value); CREATE TRIGGER x AFTER INSERT ON guarded BEGIN ${control}; END;`,
+  ]) {
+    const dir = mkdtempSync(
+      join(realpathSync(tmpdir()), "agentflow-control-position-"),
+    );
+    const old = await openOwnedStore(dir);
+    old.close();
+    await expect(
+      openOwnedStore(dir, [...migrations, candidate(sql)]),
+    ).rejects.toThrow("NONTRANSACTIONAL_MIGRATION");
+    inspect(dir, (db) =>
+      expect(
+        db.prepare("SELECT name FROM sqlite_schema WHERE name='guarded'").all(),
+      ).toEqual([]),
+    );
+  }
+});
