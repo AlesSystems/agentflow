@@ -279,6 +279,31 @@ it("guards event identity lookup with authentication, strict envelopes and atomi
     expect(collision.status).toBe(409);
     expect((await collision.json()).error.code).toBe("idempotency_conflict");
     expect(facts()).toEqual(beforeGlobal);
+    const otherStart = { ...input, eventId: randomUUID(), runId: otherId };
+    expect((await call(`/runs/${otherId}/events`, otherStart)).status).toBe(
+      201,
+    );
+    const progress = {
+      ...otherStart,
+      eventId: randomUUID(),
+      sequence: 2,
+      type: "run.progress",
+      payload: { message: "progress" },
+    };
+    expect((await call(`/runs/${otherId}/events`, progress)).status).toBe(201);
+    const canonicalFacts = facts();
+    for (const payload of [
+      { message: " progress " },
+      { message: "progress", percent: 0 },
+    ]) {
+      const changed = await call(`/runs/${otherId}/events`, {
+        ...progress,
+        payload,
+      });
+      expect(changed.status).toBe(409);
+      expect((await changed.json()).error.code).toBe("idempotency_conflict");
+      expect(facts()).toEqual(canonicalFacts);
+    }
     const gap = await call(path, {
       ...input,
       eventId: randomUUID(),

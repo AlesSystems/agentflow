@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
 import Database from "better-sqlite3";
 import { join } from "node:path";
 import { expect, it } from "vitest";
@@ -186,6 +187,31 @@ for (const mode of ["before", "after"] as const)
           work_revision: 2,
         });
         if (mode === "after") expect(recoveredFacts).toEqual(killed);
+        if (process.env.AGENTFLOW_P04_EVIDENCE_DIR)
+          writeFileSync(
+            join(
+              process.env.AGENTFLOW_P04_EVIDENCE_DIR,
+              `crash-${operation}-${mode}.json`,
+            ),
+            JSON.stringify(
+              {
+                operation,
+                mode,
+                signal: "SIGKILL",
+                request: input,
+                before,
+                killed,
+                recovered: recoveredFacts,
+                retryBody: body,
+                retryStatus: recovered.status,
+                currentGeneration: recovered.headers.get(
+                  "AgentFlow-Generation",
+                ),
+              },
+              null,
+              2,
+            ) + "\n",
+          );
       } finally {
         await server.stop();
       }
