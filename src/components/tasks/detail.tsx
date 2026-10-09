@@ -38,9 +38,8 @@ export function TaskDetail({
 }: DetailProps) {
   const path = `/tasks/${id}`;
   const query = useRead(path, taskDetailResponse);
-  const { api, pair } = useWorkspace();
+  const { api, pair, generation } = useWorkspace();
   const cache = useQueryClient();
-  const [notesDirty, setNotesDirty] = useState(false);
   const [commentNote, setCommentNote] = useState(""),
     [evidenceNote, setEvidenceNote] = useState(""),
     [evidenceUrl, setEvidenceUrl] = useState(""),
@@ -72,9 +71,36 @@ export function TaskDetail({
     completion?: string | null;
     reopen?: string | null;
   }>({});
+  const [pageScope, setPageScope] = useState<{
+    generation: string;
+    cursor?: string;
+    revision?: number;
+  }>({ generation });
+  if (
+    pageScope.generation !== generation ||
+    (query.data &&
+      (pageScope.cursor !== query.data.snapshotCursor ||
+        pageScope.revision !== query.dataUpdatedAt))
+  ) {
+    setPageScope({
+      generation,
+      cursor: query.data?.snapshotCursor,
+      revision: query.dataUpdatedAt,
+    });
+    setComments([]);
+    setCommentsCursor(null);
+    setHistory({ completion: [], reopen: [] });
+    setHistoryUrls({});
+  }
   const data = query.data?.data;
   const task = data?.task;
   const dirty = !!draft;
+  const notesDirty = !!(
+    commentNote ||
+    evidenceNote ||
+    evidenceUrl ||
+    reopenReason
+  );
   const frozen = busy || draft?.phase === "submitting";
   useEffect(
     () => onDirty(dirty || !!command || notesDirty),
@@ -103,6 +129,20 @@ export function TaskDetail({
     request: FrozenCommand,
     kind: "edit" | "action" | "comment" | "move",
   ) {
+    if (
+      kind === "action" &&
+      request.path.endsWith("/complete") &&
+      task?.status !== "review"
+    ) {
+      setNotice("Move to Review first. Your evidence note is retained.");
+      return false;
+    }
+    if ((kind === "action" || kind === "move") && draft) {
+      setNotice(
+        "Save or discard the task field draft before changing its lifecycle. Your notes are retained.",
+      );
+      return false;
+    }
     setNotice("");
     setBusy(true);
     setCommand({ request, kind });
@@ -113,15 +153,15 @@ export function TaskDetail({
       await cache.invalidateQueries();
       const fresh = await api.read(path, taskDetailResponse);
       onStatus?.(fresh.data.task);
-      if (kind !== "comment") setDraft(null);
+      if (kind === "edit") setDraft(null);
       setCommand(null);
-      setAction(null);
-      setNotesDirty(false);
       if (kind === "comment") setCommentNote("");
-      else {
-        setEvidenceNote("");
-        setEvidenceUrl("");
-        setReopenReason("");
+      if (kind === "action") {
+        if (action === "accept") {
+          setEvidenceNote("");
+          setEvidenceUrl("");
+        } else setReopenReason("");
+        setAction(null);
       }
       setComments([]);
       setCommentsCursor(null);
@@ -307,12 +347,12 @@ export function TaskDetail({
           <div className="actions">
             <StatusMenu
               task={task}
-              disabled={archived || dirty || notesDirty || busy}
+              disabled={archived || dirty || busy}
               onMove={(status) => void move(status)}
             />
             {task.status === "completed" && !archived && (
               <button
-                disabled={notesDirty || busy}
+                disabled={dirty || busy}
                 onClick={() => setAction("reopen")}
               >
                 Reopen task
@@ -363,6 +403,12 @@ export function TaskDetail({
                 >
                   Save task
                 </button>
+                {action === "accept" && task.status !== "review" && (
+                  <p role="status">
+                    Move to Review first. Your evidence note is kept for
+                    inspection of the current revision.
+                  </p>
+                )}
                 {dirty && (
                   <button
                     type="button"
@@ -402,9 +448,28 @@ export function TaskDetail({
                   </p>
                 </>
               )}
+              {action === "accept" && task.status !== "review" && (
+                <p role="status">
+                  This task is in {statusLabel[task.status]}. Move to Review
+                  first. Your evidence note is kept for inspection of the
+                  current revision.
+                </p>
+              )}
+              {dirty && (
+                <p role="status">
+                  Save or discard task field changes before accepting or
+                  reopening. Your evidence note is kept.
+                </p>
+              )}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  if (dirty) {
+                    setNotice(
+                      "Save or discard the task field draft before accepting or reopening. Your notes are retained.",
+                    );
+                    return;
+                  }
                   const form = new FormData(e.currentTarget);
                   const value =
                     action === "accept"
@@ -440,11 +505,15 @@ export function TaskDetail({
                   <textarea
                     value={action === "accept" ? evidenceNote : reopenReason}
                     onChange={(event) => {
-                      setNotesDirty(true);
                       if (action === "accept")
                         setEvidenceNote(event.target.value);
                       else setReopenReason(event.target.value);
                     }}
+                    aria-label={
+                      action === "accept"
+                        ? "Acceptance evidence note"
+                        : "Reason for reopening"
+                    }
                     name="note"
                     required
                     maxLength={4000}
@@ -460,13 +529,20 @@ export function TaskDetail({
                       disabled={busy}
                       value={evidenceUrl}
                       onChange={(event) => {
-                        setNotesDirty(true);
                         setEvidenceUrl(event.target.value);
                       }}
                     />
                   </label>
                 )}
-                <button className="primary" disabled={busy || archived}>
+                <button
+                  className="primary"
+                  disabled={
+                    busy ||
+                    archived ||
+                    dirty ||
+                    (action === "accept" && task.status !== "review")
+                  }
+                >
                   {action === "accept"
                     ? "Complete current revision"
                     : "Confirm reopen"}
@@ -476,7 +552,10 @@ export function TaskDetail({
                   disabled={busy}
                   onClick={() => {
                     setAction(null);
-                    setNotesDirty(false);
+                    if (action === "accept") {
+                      setEvidenceNote("");
+                      setEvidenceUrl("");
+                    } else setReopenReason("");
                   }}
                 >
                   Cancel
@@ -589,9 +668,9 @@ export function TaskDetail({
                   <textarea
                     value={commentNote}
                     onChange={(event) => {
-                      setNotesDirty(true);
                       setCommentNote(event.target.value);
                     }}
+                    aria-label="Add a comment"
                     name="comment"
                     required
                     maxLength={4000}
