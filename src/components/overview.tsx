@@ -6,12 +6,32 @@ import { overviewResponse } from "../contracts/responses";
 export function Overview() {
   const query = useRead("/overview?limit=50", overviewResponse, 15000);
   const data = query.data?.data;
-  const { api } = useWorkspace();
+  const { api, generation } = useWorkspace();
   const [extra, setExtra] = useState<
       NonNullable<typeof data>["attention"]["items"]
     >([]),
     [next, setNext] = useState<string | null | undefined>(),
     [error, setError] = useState("");
+  const [pageScope, setPageScope] = useState<{
+    generation: string;
+    cursor?: string;
+    revision?: number;
+  }>({ generation });
+  if (
+    pageScope.generation !== generation ||
+    (query.data &&
+      (pageScope.cursor !== query.data.snapshotCursor ||
+        pageScope.revision !== query.dataUpdatedAt))
+  ) {
+    setPageScope({
+      generation,
+      cursor: query.data?.snapshotCursor,
+      revision: query.dataUpdatedAt,
+    });
+    setExtra([]);
+    setNext(undefined);
+    setError("");
+  }
   const items = [...(data?.attention.items ?? []), ...extra].filter(
     (item, index, all) =>
       all.findIndex((value) => value.id === item.id) === index,
@@ -24,6 +44,13 @@ export function Overview() {
         `/overview?limit=50&cursor=${encodeURIComponent(cursor)}`,
         overviewResponse,
       );
+      if (
+        api.generation !== generation ||
+        result.snapshotCursor !== query.data?.snapshotCursor
+      ) {
+        void query.refetch();
+        return;
+      }
       setExtra((old) => [...old, ...result.data.attention.items]);
       setNext(result.data.attention.nextCursor);
       setError("");

@@ -16,7 +16,7 @@ export function Projects() {
     [pages, setPages] = useState<Project[]>([]);
   const path = `/projects?archived=${archived}&limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
   const query = useRead(path, projectsResponse);
-  const { api, pair } = useWorkspace();
+  const { api, pair, generation } = useWorkspace();
   const cache = useQueryClient();
   const [editing, setEditing] = useState<Project | "new" | null>(null),
     [error, setError] = useState(""),
@@ -26,6 +26,36 @@ export function Projects() {
   const [current, setCurrent] = useState<Project | null>(null),
     [dirty, setDirty] = useState(false),
     [confirmClose, setConfirmClose] = useState(false);
+  const [pageScope, setPageScope] = useState<{
+    generation: string;
+    cursor?: string;
+    path?: string;
+    revision?: number;
+  }>({ generation });
+  if (
+    pageScope.generation !== generation ||
+    (query.data &&
+      (pageScope.cursor !== query.data.snapshotCursor ||
+        (pageScope.path === path &&
+          pageScope.revision !== query.dataUpdatedAt)))
+  ) {
+    setPageScope({
+      generation,
+      cursor: query.data?.snapshotCursor,
+      path,
+      revision: query.dataUpdatedAt,
+    });
+    setPages([]);
+    setCursor(null);
+    setCurrent(null);
+  } else if (query.data && pageScope.path !== path) {
+    setPageScope({
+      generation,
+      cursor: query.data.snapshotCursor,
+      path,
+      revision: query.dataUpdatedAt,
+    });
+  }
   async function send(command: FrozenCommand) {
     setBusy(true);
     setError("");
