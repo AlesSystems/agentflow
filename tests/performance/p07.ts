@@ -18,6 +18,7 @@ import { launch, pair, freePort } from "../fixtures/server";
 import { publicProxy } from "../fixtures/p06-proxy";
 import { seedPerformance } from "../fixtures/p06-performance";
 
+import {flushBoundary} from "../fixtures/p07-flush-boundary";
 import {collectFlush,validateFlush,type FlushFacts,type Queued,type Attempt} from "../fixtures/p07-flush";
 import { loadScenario, resourceProof } from "../fixtures/p07-load";
 const baselineSha = "36f6d1bc4699c706e3f57a17cfcc85a1576c648b";
@@ -74,7 +75,7 @@ async function flushRun(index: number) {
   let outbox: Awaited<ReturnType<typeof openOutbox>> | undefined;
   const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as Queued[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as Attempt[], reconciliationRaw: null as FlushFacts|null, reconciliation: null as unknown, failure: "" };
   receipt.flush.push(result); save();
-  try {
+  await flushBoundary(result,async()=>{
     server = await launch({ dir });
     const token = join(inputs,"reporter-token"); writeFileSync(token, server.credentials().reporterToken, { mode: 0o600 });
     const pendingRequests=new WeakMap<object,Attempt>();
@@ -134,11 +135,7 @@ async function flushRun(index: number) {
     result.reconciliation=validateFlush(facts);
     result.accepted=counts.queued;result.missing=0;result.duplicate=0;result.reconciliationStatus="finalized";
     if (acceptance) assert(result.elapsedMs<120000,"1,000-event flush exceeds 120 seconds");
-  } catch (error) {
-    if(result.measuredStartedMs!==null&&result.measuredEndedMs===null){result.measuredEndedMs=performance.now();result.elapsedMs=result.measuredEndedMs-result.measuredStartedMs;}
-    result.failure = error instanceof Error ? error.message : "unknown"; throw error;
-  }
-  finally { outbox?.close(); await browser?.close(); await proxy?.close(); await server?.stop(); save(); }
+  },[["outbox",async()=>{outbox?.close();}],["browser",async()=>{await browser?.close();}],["proxy",async()=>{await proxy?.close();}],["server",async()=>{await server?.stop();}]],save);
 }
 
 async function compare(index: number, baseSource: string, seed: Awaited<ReturnType<typeof seedPerformance>>, seedDir: string) {
@@ -200,7 +197,7 @@ try {
   const baseBuildId = readFileSync(join(baseBuildDir,"BUILD_ID"),"utf8").trim();
   assert.equal(baseBuildId, readFileSync(".next/BUILD_ID","utf8").trim(), "P06 runtime source-equivalent retained head assets required");
   cpSync(baseBuildDir,join(baseSource,".next"),{recursive:true});
-  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P07_BASE_BUILD_DIR ? "explicit retained source-equivalent assets" : "ordinary fresh-install assets copied for identical runtime/build inputs",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p07.ts","tests/fixtures/p07-load.ts","tests/fixtures/p07-protocol.ts","tests/fixtures/p07-runtime.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-resource-boundary.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P06 runtime source bytes equal head runtime before helper-only changes. Ordinary fresh-install assets reused for identical runtime/build inputs; native HTTP uses each label's source."};
+  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P07_BASE_BUILD_DIR ? "explicit retained source-equivalent assets" : "ordinary fresh-install assets copied for identical runtime/build inputs",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p07.ts","tests/fixtures/p07-load.ts","tests/fixtures/p07-protocol.ts","tests/fixtures/p07-runtime.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-flush-boundary.ts","tests/fixtures/p07-resource-boundary.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P06 runtime source bytes equal head runtime before helper-only changes. Ordinary fresh-install assets reused for identical runtime/build inputs; native HTTP uses each label's source."};
   save();
   for(let index=0;index<counts.repetitions;index++) { console.log(JSON.stringify({stage:"load",index,acceptance})); const result = await loadScenario(root,index,acceptance); (receipt as unknown as Record<string,unknown[]>).loads ??= []; (receipt as unknown as Record<string,unknown[]>).loads.push(result); save(); }
   (receipt as unknown as Record<string,unknown>).resources = await resourceProof(root,acceptance); save();
