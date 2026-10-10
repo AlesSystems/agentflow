@@ -7,7 +7,7 @@ import { agentCreate, agentResponse, eventInput, eventResponse, runRegister, run
 import { projectResponse, taskResponse } from "../contracts/responses";
 import { CliError, cliConfig, deadline, readJson, type CliConfig } from "./config";
 import { request,backoff } from "./http";
-import { openOutbox, CursorAdmissionTimeout, type Job, type Outbox } from "./outbox";
+import { openOutbox, CursorAdmissionTimeout, type Job, type Outbox, type EventRecord } from "./outbox";
 const commands = {
   "project create": { path: "/projects", input: projectCreate, output: projectResponse },
   "task create": { path: "/tasks", input: taskCreate, output: taskResponse },
@@ -17,7 +17,7 @@ const commands = {
 const registrationResponses = {"/projects":projectResponse,"/tasks":taskResponse,"/agents":agentResponse,"/runs":runResponse};
 const emit = (value: unknown) => process.stdout.write(JSON.stringify(value)+"\n");
 function diagnostic(code: string,runId?: string,details?: {expectedSequence?:number;currentVersion?:number}) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),...(details?.expectedSequence===undefined?{}:{expectedSequence:details.expectedSequence}),...(details?.currentVersion===undefined?{}:{currentVersion:details.currentVersion}),repair:"Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
-async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,beforeAttempt?:()=>Promise<void>) {
+async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,beforeAttempt?:()=>Promise<void>,selectEvent?:()=>Promise<EventRecord|undefined>) {
   if (job.kind === "registration") {
     const record = job.record;
     await beforeAttempt?.();
@@ -29,9 +29,9 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,before
     }
     await outbox.removeRegistration(record,end); emit({id:reply.data.data.id,generation:reply.generation}); return reply;
   }
-  const record = await outbox.next(job.runId,end);
+  const record = selectEvent ? await selectEvent() : await outbox.next(job.runId,end);
   if (!record) return {kind:"delivered" as const,complete:true};
-  await beforeAttempt?.();
+  if(!selectEvent)await beforeAttempt?.();
   const reply = await request(config,`/runs/${job.runId}/events`,eventResponse,end,record.body);
   if(reply.kind==="blocked"&&reply.code==="sequence_gap"&&reply.expectedSequence===record.body.sequence)return{kind:"retryable" as const,delay:100};
   if (reply.kind !== "delivered") return reply;
@@ -115,7 +115,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
       const job=jobs[index],until=Math.min(end,performance.now()+500);
       position=(index+1)%jobs.length;
       attempted.add(job.id);
-      const reply=await turn(job,outbox,config,until,selected?undefined:async()=>{cursorWriting=true;await outbox!.advanceCursor(jobs[position].id,until);cursorWriting=false;});
+      const reply=await turn(job,outbox,config,until,selected?undefined:async()=>{cursorWriting=true;await outbox!.advanceCursor(jobs[position].id,until);cursorWriting=false;},selected||job.kind!=="run"?undefined:async()=>{cursorWriting=true;const record=await outbox!.selectForTurn(job.runId,jobs[position].id,until);cursorWriting=false;return record;});
       if(reply.kind==="blocked"){diagnostic(reply.code,job.kind==="run"?job.runId:job.record.path==="/runs"?String(job.record.body.id):undefined,reply);blocked.add(job.id);blockedExit=3;continue;}
       if(reply.kind==="delivered") {
         if(job.kind==="registration"||"complete"in reply&&reply.complete)done.add(job.id);

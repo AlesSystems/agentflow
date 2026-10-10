@@ -23,7 +23,7 @@ it.each(["wait","accounting","io"])("preserves clean cursor admission %s phase w
   expect(stderr).not.toContain("fixture native SQLite");expect(stderr).not.toContain(server.credentials().reporterToken);
   expect(attempts).toEqual([]);expect(readFileSync(metadata)).toEqual(original);
   for(const[name,bytes]of Object.entries(retained))expect(readFileSync(join(dir,name))).toEqual(bytes);
-  expect(JSON.parse(readFileSync(trace,"utf8")).stack).toContain("advanceCursor");
+  expect(JSON.parse(readFileSync(trace,"utf8")).stack).toContain("selectForTurn");
   expect((await f.cli(["flush"])).code).toBe(0);expect(attempts).toHaveLength(2);
  } finally {await proxy.close();await server.stop();}
 });
@@ -42,5 +42,20 @@ it("keeps blocked 3 above a later queued native cursor timeout and resumes the d
   expect(JSON.parse(readFileSync(join(f.env.AGENTFLOW_OUTBOX_DIR,"metadata.json"),"utf8")).cursor).toBe(`run:${ids[1]}`);
   reject=false;expect((await f.cli(["flush"])).code).toBe(0);
   expect(attempts.slice(1)).toEqual([`/api/v1/runs/${ids[1]}/events`,`/api/v1/runs/${ids[0]}/events`]);
+ }finally{await proxy.close();await server.stop();}
+});
+
+it("keeps actual combined-owner rollback IO failure local1 before HTTP with durable cursor and exact retained records",async()=> {
+ const server=await launch(),attempts:string[]=[];
+ const proxy=await publicProxy(server,(req,_body,reply)=>{if(!reply&&req.url?.endsWith("/events"))attempts.push(req.url);return undefined;});
+ const f=await registeredRun({...server,port:proxy.port});
+ try {
+  const config={port:proxy.port,token:server.credentials().reporterToken,outbox:f.env.AGENTFLOW_OUTBOX_DIR,explicitService:undefined},box=await openOutbox(config,performance.now()+5000);let event;
+  try{event=await box.enqueue(f.runId,"run.started",{});}finally{box.close();}
+  const recordPath=join(config.outbox,f.runId,`1-${event.body.eventId}.json`),original=readFileSync(recordPath),trace=join(f.dir,"rollback-trace.json");
+  const child=spawn(process.execPath,["--import","tsx","tests/fixtures/p06-admission-cli.ts","rollback",trace,"flush"],{env:{...process.env,...f.env},stdio:["ignore","pipe","pipe"]});let stderr="";child.stdout.resume();child.stderr.on("data",c=>stderr+=c);
+  expect(await new Promise(resolve=>child.once("exit",resolve)),stderr).toBe(1);expect(attempts).toEqual([]);expect(readFileSync(recordPath)).toEqual(original);
+  expect(JSON.parse(readFileSync(join(config.outbox,"metadata.json"),"utf8")).cursor).toBe(`run:${f.runId}`);
+  expect(stderr).not.toContain("fixture native SQLite");expect((await f.cli(["flush"])).code).toBe(0);expect(attempts).toEqual([`/api/v1/runs/${f.runId}/events`]);
  }finally{await proxy.close();await server.stop();}
 });

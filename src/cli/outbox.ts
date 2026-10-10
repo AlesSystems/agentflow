@@ -375,6 +375,13 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       throw new AdmissionExpiry("publication_busy");
     }finally{budget=previous;}
   }
+  function selectRecord(id: string) {
+    const value = state(id);
+    if (value.acknowledgedThrough === value.allocatedThrough) return undefined;
+    const file = readdirSync(join(root,id.toLowerCase())).find(name=>name.startsWith(`${value.acknowledgedThrough+1}-`));
+    if (!file) throw new CliError("missing_sequence",3);
+    return parseRetained(storedEvent,join(root,id.toLowerCase(),file),100000,"corrupt_record");
+  }
   const outbox = {
     async preserveRegistration(path: Registration["path"],key: string,body: Record<string,unknown>) {
       return locked(()=> {
@@ -432,13 +439,15 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         return record;
       });
     },
-    async next(id: string,until=end) {return locked(()=> {
-      const value = state(id);
-      if (value.acknowledgedThrough === value.allocatedThrough) return undefined;
-      const file = readdirSync(join(root,id.toLowerCase())).find(name=>name.startsWith(`${value.acknowledgedThrough+1}-`));
-      if (!file) throw new CliError("missing_sequence",3);
-      return parseRetained(storedEvent,join(root,id.toLowerCase(),file),100000,"corrupt_record");
-    },until);},
+    async next(id: string,until=end) {return locked(()=>selectRecord(id),until);},
+    async selectForTurn(id: string,cursor: string,until=end) {
+      try { return await locked(()=> {
+        const record=selectRecord(id);
+        if(record)atomic("metadata.json",{...readMetadata(),cursor});
+        return record;
+      },until); }
+      catch(error) {if(error instanceof AdmissionExpiry)throw new CursorAdmissionTimeout(error);throw error;}
+    },
     async acknowledge(record: EventRecord,generation: string,until=end) {return locked(()=> {
       const event = record.body as unknown as EventInput, value = state(event.runId);
       if (value.acknowledgedThrough+1 !== event.sequence) throw new CliError("ack_sequence_mismatch",3);
