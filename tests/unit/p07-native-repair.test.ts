@@ -1,0 +1,28 @@
+import {it,expect,vi,afterEach} from "vitest";
+const state=vi.hoisted(()=>({now:0,stops:0,stopFails:false,bodyFails:false,writeFails:false,armed:false,error:new Error("first native body error"),io:new Error("native save ENOSPC"),stop:new Error("first stop error")}));
+vi.mock("node:fs",async()=>({...await vi.importActual<typeof import("node:fs")>("node:fs"),cpSync:()=>{}}));
+vi.mock("../fixtures/server",()=>({freePort:async()=>12345,launch:async()=>({url:"http://127.0.0.1:12345",credentials:()=>({reporterToken:"synthetic"}),stop:async()=>{state.stops++;if(state.stopFails&&state.stops===1)throw state.stop;}})}));
+vi.mock("../../src/contracts/responses",()=>({tasksResponse:{parse:(x:unknown)=>x},taskDetailResponse:{parse:(x:unknown)=>x},boardResponse:{parse:(x:unknown)=>x},overviewResponse:{parse:(x:unknown)=>x}}));
+vi.mock("../../src/contracts/observations",()=>({eventResponse:{parse:(x:unknown)=>x},eventsResponse:{parse:(x:unknown)=>x}}));
+vi.mock("../../src/contracts/tracking",()=>({trackingRunsResponse:{parse:(x:unknown)=>x}}));
+import {nativeCompare} from "../fixtures/p07-native";
+import {ordinaryStages,ordinaryBoundary} from "../fixtures/p07-ordinary";
+const seed={projectId:"synthetic",tasks:["synthetic-task"],runs:["00000000-0000-4000-8000-000000000001"],agents:[],historic:["synthetic-history"],qualification:"controlled native mock"};
+function setup(){state.now=0;state.stops=0;state.stopFails=false;state.bodyFails=false;state.writeFails=false;state.armed=false;vi.spyOn(performance,"now").mockImplementation(()=>state.now);const parse=JSON.parse;vi.spyOn(JSON,"parse").mockImplementation(text=>{state.now+=100;return parse(text);});vi.stubGlobal("fetch",async()=>({status:state.bodyFails?503:200,ok:!state.bodyFails,headers:new Headers({"agentflow-generation":"synthetic"}),json:async()=>{if(state.bodyFails){state.armed=true;throw state.error;}state.now+=300;return {};},text:async()=>{if(state.bodyFails){state.armed=true;throw state.error;}state.now+=200;return "{}";}}));}
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();});
+it("actual native body failure retains status/request/end and attempts second stop despite firststop+save faults",async()=>{
+ setup();state.bodyFails=true;state.stopFails=true;state.writeFails=true;const receipt={comparisons:[] as unknown[],failures:[] as string[]};
+ await expect(nativeCompare({index:1,baseSource:"synthetic-base",seed,seedDir:"synthetic-seed",root:"synthetic-owned",counts:{samples:1,producers:1},acceptance:false,receipt,save:()=>{if(state.armed&&state.writeFails)throw state.io;}})).rejects.toBe(state.error);
+ const result=receipt.comparisons[0] as {requests:{status:number;text:string|null}[];errors:number;measuredEndedMs:number|null;failure:string};expect(result.requests).toHaveLength(1);expect(result.requests[0].status).toBe(503);expect(result.requests[0].text).toBeNull();expect(result.errors).toBe(1);expect(result.measuredEndedMs).not.toBeNull();expect(state.stops).toBe(2);
+});
+it("actual native parse timing and budget gate stop actual ordinary seam before next comparison",async()=>{
+ setup();const receipt={comparisons:[] as unknown[],failures:[] as string[]};let comparisons=0;
+ // Successful status differs for paired ingestion versus reads, preserving the seven-operation path.
+ vi.stubGlobal("fetch",async(_url:string,init:{method:string})=>({status:init.method==="POST"?201:200,ok:true,headers:new Headers({"agentflow-generation":"synthetic"}),json:async()=>{state.now+=300;return {};},text:async()=>{state.now+=200;return "{}";}}));
+ await expect(ordinaryStages({repetitions:3,load:async()=>{},resource:async()=>{},flush:async()=>{},prepareNative:async()=>seed,compare:async index=>{comparisons++;await nativeCompare({index,baseSource:"synthetic-base",seed,seedDir:"synthetic-seed",root:"synthetic-owned",counts:{samples:1,producers:1},acceptance:true,receipt,save:()=>{}});}})).rejects.toThrow();
+ expect(comparisons).toBe(1);const result=receipt.comparisons[0] as {requests:{ms:number}[]};expect(result.requests.every(row=>row.ms===300)).toBe(true);expect(receipt.failures).toHaveLength(7);
+});
+it("actual ordinary final save cannot suppress firsterror/failureexit/summary",async()=>{
+ const primary=new Error("ordinary first work error"),io=new Error("ordinary final save error");let summary=0,exit=0;
+ await expect(ordinaryBoundary({failures:[]},async()=>{throw primary;},()=>{throw io;},()=>{summary++;},()=>{exit++;})).rejects.toBe(primary);expect(summary).toBe(1);expect(exit).toBeGreaterThan(0);
+});
