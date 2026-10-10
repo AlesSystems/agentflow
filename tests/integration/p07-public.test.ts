@@ -14,6 +14,8 @@ it("public invalid evidence links never mutate storage and the listener refuses 
     const f=await registeredRun(server),headers={Authorization:"Bearer "+server.credentials().reporterToken,"Content-Type":"application/json"};
     const body={schemaVersion:1,eventId:randomUUID(),runId:f.runId,sequence:1,type:"run.started",occurredAt:new Date().toISOString(),payload:{}};
     expect((await fetch(server.url+`/api/v1/runs/${f.runId}/events`,{method:"POST",headers,body:JSON.stringify(body)})).status).toBe(201);
+    const security=[];
+    for(const [path,requestHeaders] of [["/api/v1/changes/stream",{}],["/api/v1/projects",{...headers,Host:"attacker.invalid"}],["/api/v1/projects",{...headers,Origin:"https://attacker.invalid"}]] as const){const response=await fetch(server.url+path,{headers:requestHeaders});security.push({path,status:response.status});expect(response.status).toBe(path.includes("stream")?401:403);}
     const rejected=[];
     for(const evidenceUrl of ["javascript:alert(1)","file:///synthetic/private","https://user:pass@example.com/synthetic"]){
       const response=await fetch(server.url+`/api/v1/runs/${f.runId}/events`,{method:"POST",headers,body:JSON.stringify({...body,eventId:randomUUID(),sequence:2,type:"run.succeeded",payload:{summary:"Synthetic invalid URL",evidenceUrl}})});
@@ -24,6 +26,6 @@ it("public invalid evidence links never mutate storage and the listener refuses 
     const address=Object.values(networkInterfaces()).flat().find(n=>n&&!n.internal&&n.family==="IPv4")?.address;
     const nonLoopback=address?await new Promise<string>(resolve=>{const socket=connect({host:address,port:server.port});socket.setTimeout(1000);socket.once("connect",()=>{socket.destroy();resolve("unexpected_connection");});socket.once("error",error=>resolve((error as NodeJS.ErrnoException).code??"error"));socket.once("timeout",()=>{socket.destroy();resolve("timeout");});}):"unavailable";
     expect(nonLoopback).not.toBe("unexpected_connection");
-    if(process.env.AGENTFLOW_P07_EVIDENCE_DIR)writeFileSync(join(process.env.AGENTFLOW_P07_EVIDENCE_DIR,"public-private.json"),JSON.stringify({dir:server.dir,rejected,listener,address:address??null,nonLoopback},null,2),{mode:0o600});
+    if(process.env.AGENTFLOW_P07_EVIDENCE_DIR)writeFileSync(join(process.env.AGENTFLOW_P07_EVIDENCE_DIR,"public-private.json"),JSON.stringify({dir:server.dir,rejected,security,listener,address:address??null,nonLoopback},null,2),{mode:0o600});
   }finally{await server.stop();}
 });

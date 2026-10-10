@@ -23,6 +23,10 @@ test("joined offline CLI observations and synthetic browser acceptance reopen hi
       await tab.goto(server.url + `/projects/${ids.projectId}`);
       await expect(tab.getByText("Connected updates", { exact: true })).toBeVisible();
       await expect(tab.getByRole("button", { name: "Synthetic P06 CLI walkthrough", exact: true })).toBeVisible();
+      const storage=await tab.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));
+      expect(storage).not.toContain(server.credentials().pairingToken);expect(storage).not.toContain(server.credentials().reporterToken);
+      expect(tab.url()).not.toContain(server.credentials().pairingToken);expect(tab.url()).not.toContain(server.credentials().reporterToken);
+
     }
     producer.advance(); await next("running");
     for (const tab of [page, second]) {
