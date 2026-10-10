@@ -1,3 +1,4 @@
+import {reportWarmFailure} from "../fixtures/p07-warm-error";
 import assert from "node:assert/strict";
 import {execFileSync} from "node:child_process";
 import {mkdirSync,existsSync,writeFileSync,readFileSync} from "node:fs";
@@ -28,4 +29,4 @@ const hooks:LoadHooks={
   ["retain server phase/log facts",async()=>{if(server)writeFileSync(join(root,"server.log"),server.logs(),{mode:0o600});}]
  ]
 };
-try{await loadScenario(root,0,true,hooks);console.log("WARM diagnostic completed; not acceptance");}catch(error){writeFileSync(join(root,"first-error.txt"),String(error)+"\n",{mode:0o600});console.error(error);process.exitCode=1;}
+try{await loadScenario(root,0,true,hooks);console.log("WARM diagnostic completed; not acceptance");}catch(error){reportWarmFailure(error,join(root,"first-error.txt"));}
