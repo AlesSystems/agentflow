@@ -73,7 +73,7 @@ async function flushRun(index: number) {
   let proxy: Awaited<ReturnType<typeof publicProxy>> | undefined;
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   let outbox: Awaited<ReturnType<typeof openOutbox>> | undefined;
-  const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as Queued[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as Attempt[], reconciliationRaw: null as FlushFacts|null, reconciliation: null as unknown, failure: "" };
+  const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as Queued[], queueFilesRaw: [] as {filename:string;bytesBase64:string}[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as Attempt[], reconciliationRaw: null as FlushFacts|null, reconciliation: null as unknown, failure: "" };
   receipt.flush.push(result); save();
   await flushBoundary(result,async()=>{
     server = await launch({ dir });
@@ -112,6 +112,7 @@ async function flushRun(index: number) {
     for (const runId of fixture.runs) {
       for (const filename of readdirSync(join(outboxDir,runId)).filter(name=>/^\d+-.*\.json$/.test(name))) {
         const bytes = readFileSync(join(outboxDir,runId,filename));
+        result.queueFilesRaw.push({filename:`${runId}/${filename}`,bytesBase64:bytes.toString("base64")});
         const record = JSON.parse(bytes.toString());
         assert.equal(record.digest,canonicalDigest(record.body));
         result.queuedRecords.push({ body: record.body, digest: record.digest, bytes: bytes.length, fileSha256: hash(bytes), filename: `${runId}/${filename}`, originalBytesBase64: bytes.toString("base64") });
