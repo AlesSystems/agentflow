@@ -2,6 +2,7 @@ import { expect,it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { networkInterfaces } from "node:os";
+import { request } from "node:http";
 import { connect } from "node:net";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -15,7 +16,8 @@ it("public invalid evidence links never mutate storage and the listener refuses 
     const body={schemaVersion:1,eventId:randomUUID(),runId:f.runId,sequence:1,type:"run.started",occurredAt:new Date().toISOString(),payload:{}};
     expect((await fetch(server.url+`/api/v1/runs/${f.runId}/events`,{method:"POST",headers,body:JSON.stringify(body)})).status).toBe(201);
     const security=[];
-    for(const [path,requestHeaders] of [["/api/v1/changes/stream",{}],["/api/v1/projects",{...headers,Host:"attacker.invalid"}],["/api/v1/projects",{...headers,Origin:"https://attacker.invalid"}]] as const){const response=await fetch(server.url+path,{headers:requestHeaders});security.push({path,status:response.status});expect(response.status).toBe(path.includes("stream")?401:403);}
+    for(const [path,requestHeaders] of [["/api/v1/changes/stream",{}],["/api/v1/projects",{...headers,Origin:"https://attacker.invalid"}]] as const){const response=await fetch(server.url+path,{headers:requestHeaders});security.push({path,status:response.status});expect(response.status).toBe(path.includes("stream")?401:403);}
+    const spoofed=await new Promise<number|undefined>((resolve,reject)=>{const req=request(server.url+"/api/v1/projects",{headers:{...headers,Host:"attacker.invalid"}},response=>{response.resume();resolve(response.statusCode);});req.once("error",reject);req.end();});expect(spoofed).toBe(403);security.push({path:"raw spoofed Host",status:spoofed});
     const rejected=[];
     for(const evidenceUrl of ["javascript:alert(1)","file:///synthetic/private","https://user:pass@example.com/synthetic"]){
       const response=await fetch(server.url+`/api/v1/runs/${f.runId}/events`,{method:"POST",headers,body:JSON.stringify({...body,eventId:randomUUID(),sequence:2,type:"run.succeeded",payload:{summary:"Synthetic invalid URL",evidenceUrl}})});
