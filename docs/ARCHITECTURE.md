@@ -1,8 +1,10 @@
 # AgentFlow architecture
 
-Status: accepted v1 design direction. P01 runtime/storage has automated verification
-and passed independent review and integration through PR #4; task contracts passed review and integration through PR #5; agent reporting
-and workflow modules remain planned. The user selected this direction on 2026-10-09. Detailed decisions are in [DECISIONS.md](DECISIONS.md).
+Status: accepted v1 design direction. P01–P04 are integrated through PRs #4–#7.
+P05 native replay, joined tracking and browser recovery are implemented and
+verified; final PR integration remains open. Producer CLI hooks and workflow
+modules remain planned. The user selected this direction on 2026-10-09. Detailed
+decisions are in [DECISIONS.md](DECISIONS.md).
 
 ## System boundary
 

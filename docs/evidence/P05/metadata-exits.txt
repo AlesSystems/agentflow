@@ -1,0 +1,4 @@
+openapi:generate 0
+openapi:check 0
+focused OpenAPI/contracts unit tests 0 (5 passed)
+semantic generated document equality excluding info.version/info.description 0

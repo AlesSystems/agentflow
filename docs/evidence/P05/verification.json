@@ -34,5 +34,7 @@
   "coordinatorDurableLedgerMatches": 7090,
   "coordinatorSqliteIntegrity": "ok",
   "coordinatorForeignKeyErrors": 0,
-  "coordinatorOwnedDirectoriesRemoved": 11
+  "coordinatorOwnedDirectoriesRemoved": 11,
+  "visibilityScope": "180 connected observations before sustained/burst load; no load-phase visibility sampling",
+  "metadataOnlyCorrection": "485c42d3a9b67bd1734626bc734bec57c2e3094c; generator/check/5focused contracts exit0; semantic document unchanged outside info.version/description"
 }

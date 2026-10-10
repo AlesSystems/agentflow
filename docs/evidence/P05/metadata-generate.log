@@ -1,0 +1,4 @@
+
+> agentflow@0.0.0 openapi:generate
+> tsx scripts/openapi.ts
+
