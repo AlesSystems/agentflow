@@ -24,5 +24,15 @@ it.each(["env-upper", "env-lower", "startup-upper", "startup-lower"])("keeps act
     expect({requests,connects,bearer}).toEqual({requests:0,connects:0,bearer:false});
     expect(result.code).toBe(0);
     expect(Object.keys(JSON.parse(result.stdout)).sort()).toEqual(["generation","id"]);
+    const projectId = JSON.parse(result.stdout).id;
+    const agent = await fixture.cli(["agent","register","--file",fixture.file({displayName:"Synthetic",source:"fixture",defaultRole:"implementation"}),"--idempotency-key",randomUUID()],overrides);
+    expect(agent.code).toBe(0);
+    const run = await fixture.cli(["run","register","--file",fixture.file({id:randomUUID(),projectId,agentId:JSON.parse(agent.stdout).id,purpose:"planning"}),"--idempotency-key",randomUUID()],overrides);
+    expect(run.code).toBe(0);
+    const runId = JSON.parse(run.stdout).id;
+    const report = await fixture.cli(["report","--run",runId,"--type","run.started","--payload",fixture.file({})],overrides);
+    expect(report.code).toBe(0);
+    expect(JSON.parse(report.stdout)).toMatchObject({runId,acceptedSequence:1});
+    expect({requests,connects,bearer}).toEqual({requests:0,connects:0,bearer:false});
   } finally { await new Promise<void>(resolve => proxy.close(() => resolve())); await server.stop(); }
 });
