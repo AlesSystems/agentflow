@@ -27,8 +27,9 @@ export type Job = { id: string; kind: "registration"; record: Registration } | {
 const registrationInputs = {"/projects":projectCreate,"/tasks":taskCreate,"/agents":agentCreate,"/runs":runRegister};
 const encodedBytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value));
 const overlaps = (a: string, b: string) => { const r = relative(a,b); return !r || (r !== ".." && !r.startsWith(".." + sep)); };
-const io = { createFile, renameSync, unlinkSync, syncDirectory };
-export async function openOutbox(config: CliConfig, end: number, operations = io) {
+const io = { createFile, renameSync, unlinkSync, syncDirectory, syncFile };
+export async function openOutbox(config: CliConfig, end: number, operations: Partial<typeof io> = {}) {
+  const filesystem={...io,...operations};
   const root = config.outbox;
   const metaPath = join(root, "metadata.json");
   let association: z.infer<typeof metadata> | undefined;
@@ -122,7 +123,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     for (const path of lockPaths) {
       inspectLockArtifacts();
       if (!existsSync(path)) {
-        try { operations.createFile(path); operations.syncDirectory(root); }
+        try { filesystem.createFile(path); filesystem.syncDirectory(root); }
         catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
       }
       inspectLockArtifacts();
@@ -137,7 +138,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         lock.pragma("user_version = 0");
         const initialized = lstatSync(path);
         if (initialized.dev !== before.dev || initialized.ino !== before.ino || initialized.size !== 4096) throw new CliError("lock_changed");
-        syncFile(path); operations.syncDirectory(root);
+        filesystem.syncFile(path); filesystem.syncDirectory(root);
         bootstrapPins.set(path,initialized);
       }
       inspectLockArtifacts();
@@ -257,10 +258,10 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     if (!recovering) admit(Buffer.byteLength(encoded), name.includes("/") ? name.split("/")[0] : name.startsWith("registration-") && typeof value === "object" && value !== null && "path" in value && value.path === "/runs" ? String((value as Registration).body.id).toLowerCase() : undefined);
     const temp = path+".tmp";
     validateFile(path); validateFile(temp);
-    if (existsSync(temp)) { operations.unlinkSync(temp); operations.syncDirectory(parent); }
-    operations.createFile(temp,encoded); operations.renameSync(temp,path); operations.syncDirectory(parent);
+    if (existsSync(temp)) { filesystem.unlinkSync(temp); filesystem.syncDirectory(parent); }
+    filesystem.createFile(temp,encoded); filesystem.renameSync(temp,path); filesystem.syncDirectory(parent);
   }
-  function remove(path: string) { assertPins(); pin(dirname(path)); validateFile(path); operations.unlinkSync(path); operations.syncDirectory(dirname(path)); }
+  function remove(path: string) { assertPins(); pin(dirname(path)); validateFile(path); filesystem.unlinkSync(path); filesystem.syncDirectory(dirname(path)); }
   function recover() {
     lengths(); reservations();
     if(existsSync(metaPath+".tmp") && (!existsSync(metaPath)||!readMetadata().pendingRegistration))abandonedMetadata(metaPath+".tmp");
@@ -297,6 +298,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         atomic(`${name}/state.json`,clean,true);
       }
       const current = state(name);
+      let acknowledgedDurable=false;
       const sequences = new Set<number>();
       for (const file of readdirSync(directory)) {
         if (file === "state.json") continue;
@@ -306,7 +308,10 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         const seq = Number(match[1]), record = parseRetained(storedEvent,join(directory,file),100000,"corrupt_record");
         const parsed = validateRecord(record,name,seq);
         if (parsed.eventId !== match[2] || seq > current.allocatedThrough || sequences.has(seq)) throw new CliError("corrupt_record",3);
-        if (seq <= current.acknowledgedThrough) { remove(join(directory,file)); continue; }
+        if (seq <= current.acknowledgedThrough) {
+          if(!acknowledgedDurable){filesystem.syncFile(statePath);filesystem.syncDirectory(directory);acknowledgedDurable=true;}
+          remove(join(directory,file));continue;
+        }
         sequences.add(seq);
       }
       if (sequences.size !== current.allocatedThrough-current.acknowledgedThrough) throw new CliError("missing_sequence",3);
@@ -355,7 +360,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         }
         if (reply.data.data.lastSequence !== 0) throw new CliError("producer_state_required",3);
         const value: State = {formatVersion:1,runId,allocatedThrough:0,acknowledgedThrough:0,generation:reply.generation};
-        admit(encodedBytes(value),id.toLowerCase()); secureDirectory(join(root,id.toLowerCase())); pin(join(root,id.toLowerCase())); operations.syncDirectory(root);
+        admit(encodedBytes(value),id.toLowerCase()); secureDirectory(join(root,id.toLowerCase())); pin(join(root,id.toLowerCase())); filesystem.syncDirectory(root);
         atomic(`${id.toLowerCase()}/state.json`,value);
       });
       return reply;
