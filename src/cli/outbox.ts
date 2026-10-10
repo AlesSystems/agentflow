@@ -33,11 +33,19 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
   const metaPath = join(root, "metadata.json");
   let association: z.infer<typeof metadata> | undefined;
   const read = (path: string, max = 65536) => { validateFile(path); return JSON.parse(readBounded(path,max)); };
+  function parseRetained<S extends z.ZodType>(schema: S,path: string,max: number,code: string): z.infer<S> {
+    validateFile(path);
+    try{return schema.parse(read(path,max));}
+    catch(error){if(error instanceof SyntaxError || error instanceof z.ZodError || (error as NodeJS.ErrnoException).code==="ERR_ENCODING_INVALID_ENCODED_DATA")throw new CliError(code,3);throw error;}
+  }
+  const readMetadata=()=>parseRetained(metadata,metaPath,200000,"corrupt_metadata");
   if (existsSync(root)) {
     secureDirectory(root);
     if (existsSync(metaPath)) {
-      association = metadata.parse(read(metaPath,200000));
+      association = readMetadata();
       if (association.port !== config.port || config.explicitService && config.explicitService !== association.serviceDataDir) throw new CliError("destination_mismatch");
+    } else if(readdirSync(root).some(name=>name.startsWith("registration-") || uuid.safeParse(name).success)) {
+      throw new CliError("destination_association_required",3);
     }
   }
   const reply = await request(config, "/settings", settingsResponse, Math.min(end, performance.now() + 500));
@@ -76,7 +84,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         if (directory === root ? !/^(metadata\.json(?:\.tmp)?|registration-[a-f0-9-]{36}\.json(?:\.tmp)?|(?:publication|delivery)\.sqlite(?:-journal|-wal|-shm)?)$/.test(name) : !/^(state\.json(?:\.tmp)?|[1-9][0-9]*-[a-f0-9-]{36}\.json(?:\.tmp)?)$/.test(name)) throw new CliError("unexpected_outbox_entry");
         if (directory === root && name.startsWith("registration-")) {
           const finalName = name.replace(/\.tmp$/,""), finalPath = join(root,finalName);
-          const descriptor = existsSync(metaPath) ? metadata.parse(read(metaPath,200000)).pendingRegistration : undefined;
+          const descriptor = existsSync(metaPath) ? readMetadata().pendingRegistration : undefined;
           const record = name.endsWith(".tmp") && descriptor?.filename === finalName ? descriptor.record : name.endsWith(".tmp") && existsSync(finalPath) ? readRegistration(finalPath,finalName) : readRegistration(path,finalName);
           validateRegistration(record,finalName);
           if (name.endsWith(".tmp")) validateTemporary(path,record,100000);
@@ -144,11 +152,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     }
   }
   function state(id: string): State {
-    const path=join(root,id.toLowerCase(),"state.json");
-    validateFile(path);
-    let value: State;
-    try {value=stateSchema.parse(read(path,200000));}
-    catch(error){if(error instanceof SyntaxError || error instanceof z.ZodError || (error as NodeJS.ErrnoException).code==="ERR_ENCODING_INVALID_ENCODED_DATA")throw new CliError("corrupt_state",3);throw error;}
+    const value=parseRetained(stateSchema,join(root,id.toLowerCase(),"state.json"),200000,"corrupt_state");
     if(value.runId.toLowerCase()!==id.toLowerCase() || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_state",3);
     return value;
   }
@@ -161,8 +165,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     if (filename !== `registration-${record.key.toLowerCase()}.json` || !registrationInputs[record.path].safeParse(record.body).success || canonicalDigest(record.body) !== record.digest) throw new CliError("corrupt_registration",3);
   }
   function readRegistration(path: string,filename: string): Registration {
-    try {const record=registration.parse(read(path,100000));validateRegistration(record,filename);return record;}
-    catch(error){if(error instanceof CliError)throw error;throw new CliError("corrupt_registration",3);}
+    const record=parseRetained(registration,path,100000,"corrupt_registration");validateRegistration(record,filename);return record;
   }
   function validateTemporary(path: string,value: unknown,max = 200000) {
     const expected=Buffer.from(JSON.stringify(value)),actual=readBoundedBytes(path,max);
@@ -181,7 +184,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
   function reservations(runId?: string) {
     let global=0,run=0;
     if (existsSync(metaPath)) {
-      const meta=metadata.parse(read(metaPath,200000)),p=meta.pendingRegistration;
+      const meta=readMetadata(),p=meta.pendingRegistration;
       if (p) {
         validateRegistration(p.record,p.filename);
         const clean={...meta};delete clean.pendingRegistration;
@@ -223,7 +226,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
   function recover() {
     lengths(); reservations();
     if (existsSync(metaPath)) {
-      const meta=metadata.parse(read(metaPath,200000)),p=meta.pendingRegistration;
+      const meta=readMetadata(),p=meta.pendingRegistration;
       if(p){
         if(!existsSync(join(root,p.filename)))atomic(p.filename,p.record,true);
         const clean={...meta};delete clean.pendingRegistration;atomic("metadata.json",clean,true);
@@ -247,7 +250,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
       if (value.pending) {
         const p = value.pending, target = join(directory,p.filename);
         if (existsSync(target)) {
-          const current = storedEvent.parse(read(target,100000));
+          const current = parseRetained(storedEvent,target,100000,"corrupt_record");
           if (canonicalDigest(current) !== canonicalDigest(p.record)) throw new CliError("corrupt_record",3);
         } else atomic(`${name}/${p.filename}`,p.record,true);
         const clean = {...value}; delete clean.pending;
@@ -260,7 +263,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         if (file.endsWith(".tmp")) { remove(join(directory,file)); continue; }
         const match = /^([1-9][0-9]*)-([a-f0-9-]{36})\.json$/.exec(file);
         if (!match) throw new CliError("unexpected_outbox_entry",3);
-        const seq = Number(match[1]), record = storedEvent.parse(read(join(directory,file),100000));
+        const seq = Number(match[1]), record = parseRetained(storedEvent,join(directory,file),100000,"corrupt_record");
         const parsed = validateRecord(record,name,seq);
         if (parsed.eventId !== match[2] || seq > current.allocatedThrough || sequences.has(seq)) throw new CliError("corrupt_record",3);
         if (seq <= current.acknowledgedThrough) { remove(join(directory,file)); continue; }
@@ -283,12 +286,12 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
       return locked(()=> {
         const name = `registration-${key.toLowerCase()}.json`, file = join(root,name), bodyDigest = canonicalDigest(body);
         if (existsSync(file)) {
-          const old = registration.parse(read(file,100000));
+          const old = readRegistration(file,name);
           if (canonicalDigest(old.body) !== old.digest) throw new CliError("corrupt_registration",3);
           if (old.path !== path || old.digest !== bodyDigest) throw new CliError("registration_conflict",3);
           return old;
         }
-        const meta = metadata.parse(read(metaPath,200000));
+        const meta = readMetadata();
         if (meta.nextOrder === Number.MAX_SAFE_INTEGER) throw new CliError("order_exhausted");
         const record: Registration = {formatVersion:1,path,key,body,digest:bodyDigest,order:meta.nextOrder};
         const clean={...meta,nextOrder:meta.nextOrder+1};
@@ -340,7 +343,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
       if (value.acknowledgedThrough === value.allocatedThrough) return undefined;
       const file = readdirSync(join(root,id.toLowerCase())).find(name=>name.startsWith(`${value.acknowledgedThrough+1}-`));
       if (!file) throw new CliError("missing_sequence",3);
-      return storedEvent.parse(read(join(root,id.toLowerCase(),file),100000));
+      return parseRetained(storedEvent,join(root,id.toLowerCase(),file),100000,"corrupt_record");
     });},
     async acknowledge(record: EventRecord,generation: string) {return locked(()=> {
       const event = record.body as unknown as EventInput, value = state(event.runId);
@@ -359,7 +362,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
       const jobs: Job[] = [];
       for (const name of readdirSync(root)) {
         if (name.startsWith("registration-") && name.endsWith(".json")) {
-          const record = registration.parse(read(join(root,name),100000));
+          const record = readRegistration(join(root,name),name);
           if (record.digest !== canonicalDigest(record.body)) throw new CliError("corrupt_registration",3);
           jobs.push({id:`registration:${String(record.order).padStart(16,"0")}:${record.key.toLowerCase()}`,kind:"registration",record});
         } else if (lstatSync(join(root,name)).isDirectory() && existsSync(join(root,name,"state.json"))) {
@@ -369,8 +372,8 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
       }
       return jobs.sort((a,b)=>a.id.localeCompare(b.id));
     });},
-    async cursor() {return locked(()=>metadata.parse(read(metaPath,200000)).cursor);},
-    async advanceCursor(id: string) {return locked(()=>atomic("metadata.json",{...metadata.parse(read(metaPath,200000)),cursor:id}));},
+    async cursor() {return locked(()=>readMetadata().cursor);},
+    async advanceCursor(id: string) {return locked(()=>atomic("metadata.json",{...readMetadata(),cursor:id}));},
     async removeRegistration(record: Registration) {return locked(()=>remove(join(root,`registration-${record.key.toLowerCase()}.json`)));},
     acquireDelivery() {assertPins(); try {locks[1].exec("BEGIN EXCLUSIVE"); return true;} catch {return false;}},
     close() {for (const lock of locks) {if (lock.inTransaction) lock.exec("ROLLBACK"); lock.close();}},

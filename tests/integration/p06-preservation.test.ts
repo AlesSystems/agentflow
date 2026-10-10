@@ -57,3 +57,14 @@ it("blocks an interior gap and a changed retained digest without modifying water
     const corrupt=await f.cli(["flush","--run",f.runId]);expect(corrupt.code).toBe(3);expect(corrupt.stdout+corrupt.stderr).not.toContain("PRIVATE-P06");expect(snapshot(root)).toEqual(before);
   }finally{await server.stop();}
 });
+
+it.each(["metadata-json","metadata-schema","record-json","record-schema","association-missing"])("blocks retained %s damage without replacing state or guessing its destination",async kind=> {
+  const server=await launch(),f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR;
+  try {
+    if(kind.startsWith("record")){const outbox=await openOutbox({port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},performance.now()+5000);try{await outbox.enqueue(f.runId,"run.started",{});}finally{outbox.close();}}
+    const path=kind.startsWith("metadata")||kind==="association-missing"?join(root,"metadata.json"):join(root,f.runId,readdirSync(join(root,f.runId)).find(name=>name.startsWith("1-"))!);
+    if(kind==="association-missing")unlinkSync(path);else if(kind.endsWith("json"))writeFileSync(path,"PRIVATE-P06-RETAINED-DAMAGE");else{const value=JSON.parse(readFileSync(path,"utf8"));writeFileSync(path,JSON.stringify({...value,unexpected:"PRIVATE-P06-UNKNOWN-FIELD"}));}
+    const before=snapshot(root),result=await f.cli(["report","--run",f.runId,"--type","run.started","--payload",f.file({})]);
+    expect(result.code).toBe(3);expect(result.stdout+result.stderr).not.toContain("PRIVATE-P06");expect(snapshot(root)).toEqual(before);
+  }finally{await server.stop();}
+});
