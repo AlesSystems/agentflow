@@ -1,9 +1,8 @@
 # Local API contract
 
-Status: P01–P03 are integrated. P04 observation routes are implemented and verified;
-final documentation/evidence review and integration remain the coordinator gate.
-[Generated OpenAPI](openapi.json) describes implemented operations only. P05
-Activity/SSE routes remain planned. W01–W03c add the
+Status: P01–P04 are integrated. P05 tracking, Activity and native SSE operations
+are implemented; final package verification and integration remain open.
+[Generated OpenAPI](openapi.json) describes implemented operations only. W01–W03c add the
 [Phase 3 contracts](V1_WORKFLOWS.md).
 
 ## Conventions
@@ -205,6 +204,41 @@ If the generation differs or the cursor is out of range, send `event: reset` wit
 old cursors require a fresh snapshot and protected event/receipt ledgers remain.
 
 Snapshots and changes must not leave a gap when writes occur between the initial query and subscription. The browser deduplicates by cursor and ignores already applied changes within the same generation. It refetches affected queries instead of trying to replay task business rules.
+
+## P05 tracking snapshots
+
+These additive reads preserve the original task, run and command response shapes.
+They use the same authenticated snapshot envelope, bounded pagination and strict
+registry/OpenAPI schemas. Paths are relative to `/api/v1`.
+
+| Method and path | Behavior |
+| --- | --- |
+| `GET /tracking/agents` | Agent identities with `freshRunning`, `queuedNoReport` and `staleActive` counts; original agent filters |
+| `GET /tracking/runs` | Joined attempts with agent/source, project/task labels, latest message and evidence; original run filters |
+| `GET /tracking/runs/{id}` | One joined attempt with stored lifecycle and receipt freshness |
+| `GET /tracking/tasks` | Original task filters and fields plus nullable `latestAttempt` |
+| `GET /tracking/projects/{id}/board` | Original board filters and column pages plus nullable `latestAttempt` on each task |
+| `GET /activity` | Stored reports and human tracking closures; optional `projectId`, `agentId`, `taskId`, `limit` and `cursor` |
+
+Tracking summaries are joined or batched at the bounded snapshot boundary rather
+than fetched separately for every card. `latestAttempt: null` means no stored
+attempt was found. A missing model remains null and is displayed as “Not reported”.
+Reporting freshness describes receipt age, never process liveness. Activity
+excludes heartbeats in its server query; `/runs/{id}/events` retains them in raw
+sequence history. Activity items distinguish `report` from `tracking_closed`,
+with separate occurrence/receipt times and the stored closure reason. Pagination
+retains resolved legacy identities and generation/filter-bound cursors.
+
+Each browser workspace owns one EventSource and one refresh timer. Incoming
+frames become replay-safe only after their invalidation is scheduled; replacing
+a source discards pending frames while retaining the earlier safe cursor. Reset
+recovery invalidates retained entries, refreshes active snapshots and rebases from
+their minimum safe cursor before reconnecting. A five-second fallback grows to a
+30-second cap after failures. Connected, visible workspaces still refresh every
+15 seconds so silence and local-day changes update freshness and Overview without
+a new event. Focus/visibility return refreshes immediately. Hidden refresh pauses
+until return. Generation/auth recovery retains mounted drafts and frozen command
+identities; explicit selection of another attempt starts a separate closure editor.
 
 ## CLI integration contract
 

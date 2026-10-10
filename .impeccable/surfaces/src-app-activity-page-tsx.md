@@ -14,4 +14,14 @@ Distinguish producer occurrence and server receipt. Human closure is a tracking
 fact, never a producer event or process signal. Long messages expand accessibly;
 evidence URLs use existing allowed protocols. Keep narrow/200% controls readable,
 keyboard load-more/filter paths, known data during errors and mounted task drafts.
-Finish review and source documentation are pending independent acceptance.
+Implemented-source extraction at `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5`.
+Independent finish disposition is ship for two scored fixes; package verification
+and integration remain coordinator gates. No historical QUALITY BAR was supplied.
+Native keyboard proof is bounded to the recorded P05 journey, not blanket
+platform/accessibility certification. No browser or detector reran in this extraction.
+
+The implemented feed requests 30-record pages and applies project/agent/task
+UUID filters on form submission, recording normalized filters in the URL. Long
+messages use native details above 320 characters with a 160-character preview.
+Receipt and reported occurrence remain separately labeled; human closure says
+the external process may still be running. Rows use flat dividers, not cards.

@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. P05 planning requires Astra medium approval before implementation; P06 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. P05 received Astra medium plan approval and is under final verification; P06 through W04 have not started.
 
 ## Package state
 
@@ -18,7 +18,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
-| P05 | Live tracking | Planning | Baseline `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`; branch `codex/v1-p05-live-tracking` | Astra plan approval pending |
+| P05 | Live tracking | Verifying | Functional source `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5`; branch `codex/v1-p05-live-tracking` | [Transport receipt](implementation/P05-transport.md); final package evidence pending |
 | P06 | CLI hooks | Not started | — | — |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
@@ -172,3 +172,25 @@ Astra medium approved plan SHA-256 `27dd58db2397bcd5a3999897b303fb5463afea7365ce
 Both review axes approved exact candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; Root independently verified runtime hashes, focused tests, retained DB facts/cleanup and the current head/base/patch. PR #7 merged with the match-head guard and candidate ancestry is verified at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. Main had no required checks; no bypass was used. Historical migrations are frozen, and P04 boxes are complete. The primary checkout is clean and the owned merged branch is removed.
 
 Next executable gate: plan P05 live replay/recovery and the selected Agents/Activity UI, obtain Astra medium approval, then implement under bounded Impeccable review and truthful reporting/connection-state contracts. P06 through W04 remain open.
+
+## Current P05 verification checkpoint
+
+Astra medium approved plan SHA-256
+`e70c35a7431cad373eb11c7987de785307232ca6f486ab2d5afa952013192031`.
+The native transport prerequisite received independent approval at `8558427`
+before the client/query/UI slice started. Source `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5`
+implements one browser subscription owner, joined tracking snapshots, Agents,
+Activity, attempt history and browser-only stale-record closure. Independent
+review exposed reconnect/reset cursor failures and closure editor lifetime/identity
+failures; focused regressions and repairs precede this source. The scoped finish
+review scored accepted long-name wrapping and actual keyboard/focus evidence
+resolved. Actual production journeys prove two-tab convergence, silence-driven
+staleness, stopped restore/pairing and retained drafts/exact retry identities.
+
+Final full checks, validated production load/latency/memory evidence, extracted
+design documentation, exact final-candidate reviews and coordinator integration
+remain open. Prepared measurement helpers were rejected for timing, verdict,
+dataset and cleanup gaps before any long scenario ran; corrections require
+independent review. Historical full-suite results belong to earlier source and
+are not final-candidate evidence. All P05 checkboxes remain unchecked, and P06
+through W04 remain unstarted.

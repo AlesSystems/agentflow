@@ -12,8 +12,8 @@ related_targets: ["src/app/projects/[projectId]/tasks/[taskId]/page.tsx"]
 Mode: Operate. P03 implements the manual Work board and shared addressable task
 record, alongside Overview, project management and Settings. This brief records
 the implemented candidate; final package acceptance/integration remains subject
-to the execution policy and coordinator gates. P05 report tracking and W01
-workflow graph/list remain planned. AgentFlow observes external execution.
+to the execution policy and coordinator gates. P05 tracking is implemented in the candidate; W01 workflow graph/list remains
+planned. P05 package verification and integration remain open. AgentFlow observes external execution.
 
 ## Task and content
 
@@ -31,8 +31,8 @@ readable, with a little cartoon character in lane tabs and controls.
 tabs, restrained ink outlines, one blue action accent and human-acceptance stamps.
 
 **STORY:** Scan work, inspect evidence and record human acceptance. P03's manual
-movement reaches Review before acceptance reaches Completed; successful external
-implementation runs and expanded reporting remain the later reporting contract.
+movement reaches Review before acceptance reaches Completed; successful external implementation runs reach Review under P04, while P05
+shows received facts and uncertainty separately from human acceptance.
 
 **FIRST VIEWPORT:** Compact navigation at left; project title, Create task and
 filters above four equal desktop lanes: Backlog, In progress, Review, Completed.
@@ -72,15 +72,18 @@ narrow reloads, and does not steal editor focus during background refresh.
   with 50 initially loaded per lane and explicit Load more/error retry.
 - Filters persist normalized search, priority, tag and assigned-agent UUID in the
   URL. Cards show title, priority, optional role/assignment UUID, blocker and tags.
-  The board list DTO has no latest-run or completion object; no run N+1 fetches,
-  guessed “No reports”, inferred execution status or report timeline are added.
+  The board carries a bounded latest-attempt summary with written freshness,
+  identity/model or “No registered attempts”; there is no run N+1 fetch or
+  inferred process liveness.
 - Keyboard status menus and pointer lane drops use the same movement intent.
   Dedicated SVG drag handles activate after 8px movement; cancelled/same-lane
   movement issues no command. Completed movement requires Review first, then
   opens acceptance without moving the authoritative card before commit.
 - Detail shows real latestRun when present, current completion/evidence and
   independently paginated acceptance/reopen history; comments page separately.
-  There is no agent execution control, graph, Agents or Activity navigation yet.
+  P05 adds Reported attempts after the independent histories, with selected
+  detail detached from its list row. Agents and Activity are in navigation;
+  no agent execution control or graph is implemented.
 - Archived projects/tasks are read-only. Completed fields require Reopen with a
   reason. Human completion requires the current Review record and evidence note;
   run/revision gates remain server enforced. Lifecycle and comment actions are
@@ -92,10 +95,10 @@ narrow reloads, and does not steal editor focus during background refresh.
   draft loss. Exact retries preserve frozen request/key after uncertain response.
   Background refresh does not replace an active field draft or retained notes.
 - Query failure retains existing data and offers retry. Re-pairing stays in-app to
-  keep mounted drafts. P03 has no subscription/connectivity or agent-freshness
-  banner and makes no live-report claim; those richer states belong to P05.
+  keep mounted drafts. P05 adds the shared browser connection strip and reported freshness labels.
+  Browser connectivity never implies an external process is alive.
 - Settings exposes server timezone, observational storage and pairing/sign-out.
-  Overview and project lists use stored records; no invented activity feed ships.
+  Overview and project lists use stored records; Activity displays real stored report/closure records, excluding heartbeat noise.
 
 ## Evidence and limits
 
@@ -108,25 +111,20 @@ It reports 16 production-browser passes, native Chrome 200% zoom (1440/DPR1 to
 behavior and an empty detector result. The recording was sampled, not fully
 played by the reviewer. No historical QUALITY BAR card was supplied.
 
-This extraction reflects committed runtime source
-`7dbc8b76bc36c2d19a88ad550216a38af0a4656d`;
-it does not claim the older captures depict those repairs or rerun any UI check.
-Coordinator reports five targeted regressions passing; the scoped acceptance-guidance review scored its states resolved; final
-exact-candidate code review and integration remain separate gates. CSS
-still implements the selected system unchanged: 192px rail, 240px minimum lanes,
-16px lane gaps, 1247px single-lane breakpoint, 700px stacked-shell breakpoint,
-440px desktop detail and 150ms scrim fade disabled under reduced motion.
+This extraction reflects source `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5`.
+The P05 finish review scored its two ordered fixes resolved and returned ship;
+this does not approve the whole package or integration. The documenter reran no
+UI checks. Long unbroken identities wrap in run headings and card metadata.
+Source identities:
 
-Source identities for this extraction:
-
-- `src/app/globals.css`: SHA-256 `d4b69a972fa7d9bd51ae6b0492e31e253a16f736a689184701a770b52464592f`.
-- `src/components/board/board.tsx`: SHA-256 `27f578f8821fb96cc0ed91f53bc654b09901c76ffaaddb0ce8ff8aa11711ee79`.
-- `src/components/tasks/detail.tsx`: SHA-256 `b9a438fa131376f003e09a877823fcbda0f8dcff5fe421aca86bdf6830e3ea7a`.
-- `src/components/tasks/page.tsx`: SHA-256 `13484f507df6b6ce1f86876ecd6abd00baa4679f8976eb6df19596230088367b`.
-- `src/app/projects/[projectId]/tasks/[taskId]/page.tsx`: SHA-256 `9a595388ee93e479622c3615d3d0629a8f99a65935f0ea443322b26e15d3fd82`.
+- `src/app/globals.css`: SHA-256 `4f287281e9530128a082d423f8acf69b8ccfa012a326ea1a03390973341a263e`.
+- `src/components/board/board.tsx`: SHA-256 `a9ed464d86a0f67b7abad8d0e2134c411a7e0de221f5f07f321dce633a532c84`.
+- `src/components/tasks/detail.tsx`: SHA-256 `e47116bb627dd71685e873f28f060348d55a20c6bdc0a39d58280d4ccf233a2b`.
+- `src/components/tracking.tsx`: SHA-256 `53652452a4fe37abfb14fadc5b2f2bbd1d6e3c7c6f4409da634fb158c6b04db4`.
+- `src/components/connection.tsx`: SHA-256 `530f7224de78620a3a8dd955694050418ebbdbcfb4749f3e37d0d7afcd2c5701`.
 
 [DESIGN.md](../../DESIGN.md) contains actual tokens and component rules;
 [the design brief](../../docs/design/WORK_BOARD.md) retains static studies and
-future tracking scope. No blanket WCAG 2.2 AA compliance is claimed. Shared
+historical tracking studies. No blanket WCAG 2.2 AA compliance is claimed. Shared
 schema feedback and the small title-button target remain limitations to assess
 rather than canonize. PRODUCT.md now records the implemented package boundary.

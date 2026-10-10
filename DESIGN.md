@@ -83,6 +83,13 @@ components:
     backgroundColor: "{colors.backlog}"
     rounded: "{rounded.card}"
     padding: "3px 8px"
+  report-label:
+    backgroundColor: "{colors.backlog}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.small}"
+    padding: "4px 8px"
+  report-label-stale:
+    backgroundColor: "{colors.review}"
   accepted-stamp:
     backgroundColor: "{colors.completed}"
     rounded: "{rounded.small}"
@@ -94,16 +101,16 @@ components:
 
 **Creative North Star: "The friendly work board"**
 
-The implemented P03 system preserves the user's selected Work board (seed
+The implemented P03–P05 candidate system preserves the user's selected Work board (seed
 `73cf6fb7`, pick) and its slightly cartoonish Fizzy-inspired direction. Original
 paper cards, bold upright titles, colored lane capsules and small acceptance
 stamps carry the character; evidence and recovery copy stay plain. Fizzy is a
 reference, with no borrowed source, logos or assets.
 
 This is a code-first extraction from `src/app/globals.css` and the implemented
-shell, board, task, project and settings components on 2026-10-10. It describes
-P03's manual workspace, not completion of v1. PRODUCT.md records the current package boundary; its observer, local-data,
-offline-font and human-acceptance constraints still apply. P05 reporting and W01 graph surfaces remain planned.
+shell, board, task, project, settings and tracking components on 2026-10-10. It describes
+the manual workspace and P05 tracking candidate, not integration or completion of v1. PRODUCT.md records the current package boundary; its observer, local-data,
+offline-font and human-acceptance constraints still apply. P05 tracking is implemented on the candidate branch; W01 graph surfaces remain planned. Package gates and integration remain separate coordinator decisions.
 No generated raster assets ship; review captures contain synthetic fixtures.
 
 **Key Characteristics:**
@@ -153,6 +160,9 @@ system-font direction. There is no separate display or mono font token.
 Brand text uses 22px/800. Dialog titles use 22px; primary buttons use 650.
 Counts and Overview metrics use tabular numerals. Paragraphs have a 75ch maximum;
 long titles and evidence wrap, and multiline evidence retains line breaks.
+Run-detail h3 headings and task-card metadata use `overflow-wrap: anywhere`,
+including unbroken accepted identity strings; tracking list rows and fact values
+also wrap without truncating stored content.
 
 **The Title First Rule.** Keep card titles upright, wrapping and stronger than
 metadata. Do not substitute a handwriting face or remote font.
@@ -219,11 +229,16 @@ represent all matching tasks rather than only loaded records.
 
 ### Cards and task records
 White outlined records hold title, priority, optional target role/assignment UUID,
-blocker and tags. Cards do not carry latest-run data in their list DTO. Completed
+blocker and tags. Cards carry a bounded latest-attempt summary with written freshness, identity
+and model (or Model not reported), or “No registered attempts”. No per-card run
+fetch fan-out is implemented. Completed
 cards show “Human accepted” from authoritative lifecycle status. Detail shows
 actual latest-run facts when present, current completion evidence and independently
-paged acceptance/reopen histories; no timeline, inferred execution status or
-per-card run-fetch fan-out is implemented.
+paged acceptance/reopen histories; task detail additionally shows independently paged Reported attempts after
+comments and acceptance/reopen histories. Its selected RunDetail is detached from
+the list row and keyed by attempt identifier, preserving same-attempt closure
+notes through refresh without carrying them into another selection. No inferred
+process liveness is implemented.
 
 ### Inputs and recovery
 Labeled native inputs/selects/textarea use 10px padding, 42px minimum height and
@@ -234,7 +249,7 @@ beside the retained draft: Prepare reapply establishes the new base for inspecti
 then Save submits; discard/reload requires confirmation. No automatic merge occurs.
 
 ### Navigation and protected detail
-Navigation exposes Overview, Projects and Settings, with browser sign-out.
+Navigation exposes Overview, Projects, Agents, Activity and Settings, with browser sign-out.
 Radix modal dialogs provide named focus containment and background protection;
 the board restores focus to a visible task title, prior trigger or Create task.
 Closing after movement selects the current narrow-screen lane. URL-addressable
@@ -242,6 +257,23 @@ selection retains board filters; direct routes provide a board-return control.
 Dirty close offers Stay or Discard and leave. Dirty link/reload navigation also
 uses browser confirmation. Memory drafts survive mounted refresh/failure and
 in-app pairing repair; full reload loses them, as the pairing dialog discloses.
+
+### Browser updates and reported records
+The shell places browser connection above route content. Connected updates uses
+ink text at weight 650 and a quiet divider; polling, recovering and authentication
+repair use Review fill, 12px padding and 10px corners. Last fetched and retained
+last-known-data wording describe browser freshness, never agent liveness.
+
+Tracking lists use flat divider-separated rows with 20px vertical padding, no
+card shadow, and title-first links. Report labels use a 1px ink border, 6px corners,
+4px/8px padding and Backlog fill; stale reports use Review fill and explicitly say
+execution is uncertain. Run facts use a 140px label column and flexible value
+column with 8px/16px gaps; at 700px they stack with 4px gaps. Tracking filters
+are at most 400px wide. Long messages above 320 characters use native details
+with a 160-character preview and full preserved text. Raw sequence history retains
+heartbeats and separates producer occurrence from server receipt. Evidence is an
+explicit link. Close stale tracking retains a reason, requires confirmation,
+and offers exact retry after an uncertain response; it sends no process signal.
 
 ### Lifecycle and action feedback
 Status menus provide the keyboard movement path; dragging has a dedicated SVG
@@ -280,3 +312,12 @@ No historical QUALITY BAR card was supplied, and none is invented here. Direct r
 background refresh does not steal editor focus. Shared rather than per-field
 schema feedback and the small title-button hit area remain limitations to assess
 as the system expands, not patterns to canonize.
+
+P05 extraction source: `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5`. The independent
+finish disposition is ship for its two scored fixes (long identity wrapping and
+focused native keyboard evidence), not whole-package acceptance. Its reported
+keyboard proof covers filters, paging, message disclosure, closure and retained
+focus/draft during refresh. Native/browser behavior beyond those recorded cases
+remains subject to final package verification. Historical QUALITY BAR remains
+unavailable. No browser, detector, build or runtime test was rerun by this
+documenter; prior captures apply only to their disclosed source/unchanged regions.
