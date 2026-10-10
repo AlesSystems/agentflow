@@ -9,7 +9,7 @@ import Database from "better-sqlite3";
 import {resourceBoundary,type ResourceInterval} from "./p07-resource-boundary";
 import { launch, pair } from "./server";
 import { seedPerformance } from "./p06-performance";
-import { eventsResponse,eventResponse } from "../../src/contracts/observations";
+import { eventsResponse,eventResponse,eventInput,eventRecord } from "../../src/contracts/observations";
 import { canonicalDigest } from "../../src/domain/request-digest";
 import { plan, targets, acknowledge, cadence, reconcile, distribution, type Target } from "./p07-protocol";
 async function untilDue(due:number){while(performance.now()<due)await wait(due-performance.now());}
@@ -51,6 +51,9 @@ export async function confirm(page: Page, row: Target) {
   if(result) { row.confirmedMs=performance.now();row.observedReceipt=result.receivedAt;row.observation=result; return result; }
   return null;
 }
+type ReportFact={body:unknown;digest:string;status:number;ack:unknown};
+type StoredEvent={event_id:string;run_id:string;sequence:number;body:string;digest:string;acknowledgement:string;received_at:number;occurred_at:number};
+type CapturedPage={runId:string;cursor:string|null;status:number;generation:string|null;text:string|null;error:ReturnType<typeof failureFact>|null;parsed:ReturnType<typeof eventsResponse.parse>|null};
 type LoadPhase={phase:"sustained"|"burst";startedMs:number;endedMs:number|null;cadence:unknown;http:unknown;failure:string|null};
 type LoadServer=Awaited<ReturnType<typeof launch>>;
 export type LoadHooks={
@@ -63,11 +66,11 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
   const counts=acceptance?{tasks:1000,events:10000,producers:10}:{tasks:12,events:20,producers:2};
   const fixture=await seedPerformance(dir,counts,Date.now()-3600000);
   const events=plan(fixture.runs,index,!acceptance),observations=targets(events);
-  const result={index,acceptance,counts,fixture,events,observations,setup:[] as unknown[],final:[] as unknown[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as LoadPhase[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null,retention:undefined as {artifactStatus:string;saveFailures:{boundary:string;error:ReturnType<typeof failureFact>}[];cleanupFailures:{action:string;error:ReturnType<typeof failureFact>}[]}|undefined,diagnostic:hooks?{scope:"service+controller across sustained and burst; start before sustained, no interphase handshake",start:null as unknown,phaseAnchors:[] as unknown[],profileFacts:hooks.facts,profileCleanup:null as {failures:{action:string;error:string;facts?:unknown}[]}|null,cleanup:null as {failures:{action:string;error:string}[]}|null}:undefined};
+  const result={index,acceptance,counts,fixture,events,observations,setup:[] as ReportFact[],final:[] as ReportFact[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as LoadPhase[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null,retention:undefined as {artifactStatus:string;saveFailures:{boundary:string;error:ReturnType<typeof failureFact>}[];cleanupFailures:{action:string;error:ReturnType<typeof failureFact>}[]}|undefined,postTiming:{status:"unfinalized",startedMs:null as number|null,endedMs:null as number|null,responseEncoding:"captured UTF-8 response text decoded by Fetch; not wire framing/compressed bytes",producerSerialization:"producer envelopes retained; serialized byte lengths would be reconstructed, not original transport capture",api:[] as CapturedPage[],database:{generation:null as string|null,rows:null as StoredEvent[]|null,counts:null as Record<string,number|null>|null,integrity:null as unknown,foreignKeys:null as unknown,error:null as ReturnType<typeof failureFact>|null},expected:null as {eventIds:string[];counts:Record<string,number>}|null},diagnostic:hooks?{scope:"service+controller across sustained and burst; start before sustained, no interphase handshake",start:null as unknown,phaseAnchors:[] as unknown[],profileFacts:hooks.facts,profileCleanup:null as {failures:{action:string;error:string;facts?:unknown}[]}|null,cleanup:null as {failures:{action:string;error:string}[]}|null}:undefined};
   let failed=false,primary:unknown;
   function capture(error:unknown){
     if(!failed){failed=true;primary=error;result.failure=error instanceof Error?error.message:"non-Error thrown value";try{if(error!==null&&(typeof error==="object"||typeof error==="function"))Object.defineProperty(error,"loadFacts",{value:result,configurable:true});}catch{}}
-    result.reconciliation=null;
+    result.reconciliation=null;result.postTiming.status="unfinalized";
   }
   function retention(){return result.retention??={artifactStatus:"unknown after persistence failure",saveFailures:[],cleanupFailures:[]};}
   function save(boundary="receipt",critical=true){
@@ -139,22 +142,46 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events`,{method:"POST",headers,body:JSON.stringify(body)});
       const ack=await response.json();result.final.push({body,digest:canonicalDigest(body),status:response.status,ack});assert.equal(response.status,201);eventResponse.parse(ack);
     }
+    result.postTiming.startedMs=performance.now();
+    const expected=[...result.setup,...result.requests,...result.final];
+    result.postTiming.expected={eventIds:expected.map(row=>eventInput.parse(row.body).eventId),counts:{tasks:counts.tasks,agents:counts.producers,runs:counts.producers*2,run_events:counts.events+expected.length}};
+    const database=result.postTiming.database,persisted=new Database(join(dir,"agentflow.sqlite"),{readonly:true});
+    try{
+      database.generation=(persisted.prepare("SELECT generation FROM instance_metadata").get() as {generation:string}|undefined)?.generation??null;
+      database.rows=persisted.prepare(`SELECT event_id,run_id,sequence,digest,body,acknowledgement,received_at,occurred_at FROM run_events WHERE run_id IN (${fixture.runs.map(()=>"?").join(",")}) ORDER BY run_id,sequence`).all(...fixture.runs) as StoredEvent[];
+      database.counts={};for(const table of ["projects","tasks","agents","runs","run_events","changes"])database.counts[table]=(persisted.prepare(`SELECT count(*) n FROM ${table}`).get() as {n:number}|undefined)?.n??null;
+      database.integrity=persisted.pragma("integrity_check",{simple:true});database.foreignKeys=persisted.pragma("foreign_key_check");
+    }catch(error){database.error=failureFact(error);capture(error);throw primary;}
+    finally{try{persisted.close();}catch(error){capture(error);retention().cleanupFailures.push({action:"close post-timing database",error:failureFact(error)});}}
+    if(failed)throw primary;
     const api: (typeof eventsResponse)["_output"]["data"]["items"] = [];
     for(const runId of fixture.runs){let cursor:string|null=null;do{
-      const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events?limit=100`+(cursor?`&cursor=${encodeURIComponent(cursor)}`:""),{headers});assert.equal(response.status,200);
-      const page=eventsResponse.parse(await response.json());api.push(...page.data.items);cursor=page.data.nextCursor;
+      const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events?limit=100`+(cursor?`&cursor=${encodeURIComponent(cursor)}`:""),{headers});
+      const page:CapturedPage={runId,cursor,status:response.status,generation:response.headers.get("agentflow-generation"),text:null,error:null,parsed:null};result.postTiming.api.push(page);
+      try{page.text=await response.text();}catch(error){page.error=failureFact(error);throw error;}
+      assert.equal(response.status,200,"API_STATUS");page.parsed=eventsResponse.parse(JSON.parse(page.text));api.push(...page.parsed.data.items);cursor=page.parsed.data.nextCursor;
     }while(cursor);}
-    assert.equal(api.length,events.length+counts.producers*2);
-    const persisted=new Database(join(dir,"agentflow.sqlite"),{readonly:true});
-    try {
-      const actual=persisted.prepare("SELECT event_id,body,digest FROM run_events").all() as {event_id:string;body:string;digest:string}[];
-      for(const request of result.requests){const row=actual.find(row=>row.event_id===request.eventId);assert(row,"PERSISTED_EVENT_MISSING");assert.equal(row.digest,request.digest);const {receivedAt,...input}=JSON.parse(row.body);assert.equal(canonicalDigest(input),request.digest);const ack=(request.ack as {data:{receivedAt:string}}).data;assert.equal(receivedAt,ack.receivedAt);const publicEvent=api.find(event=>event.eventId===request.eventId);assert(publicEvent,"PUBLIC_EVENT_MISSING");const {receivedAt:apiReceipt,...apiInput}=publicEvent;assert.equal(apiReceipt,receivedAt);assert.equal(canonicalDigest(apiInput),request.digest);}
-      assert.equal(persisted.pragma("integrity_check",{simple:true}),"ok");assert.deepEqual(persisted.pragma("foreign_key_check"),[]);
-      result.reconciliation={status:"finalized",expected:events.length,storedTimed:result.requests.length,apiCount:api.length,setupCount:result.setup.length,finalCount:result.final.length,summaries,burstPrecision:"four samples per full scenario/tab; nearest-rank p95 is maximum"};
-    }finally{persisted.close();}
+    assert.equal(new Set(result.postTiming.expected.eventIds).size,expected.length,"DUPLICATE_EXPECTED_EVENT");
+    assert.equal(api.length,expected.length,"API_COUNT");assert.equal(new Set(api.map(event=>event.eventId)).size,expected.length,"DUPLICATE_API_EVENT");
+    assert.equal(database.rows!.length,expected.length,"DATABASE_CURRENT_EVENT_COUNT");assert.equal(new Set(database.rows!.map(row=>row.event_id)).size,expected.length,"DUPLICATE_DATABASE_EVENT");
+    assert(database.generation,"DATABASE_GENERATION");for(const page of result.postTiming.api){assert.equal(page.generation,database.generation,"API_HEADER_GENERATION");assert.equal(page.parsed!.generation,database.generation,"API_BODY_GENERATION");}
+    for(const [table,count]of Object.entries(result.postTiming.expected.counts))assert.equal(database.counts![table],count,"DATABASE_COUNT_"+table);
+    for(const report of expected){
+      const input=eventInput.parse(report.body),row=database.rows!.find(row=>row.event_id===input.eventId);assert(row,"PERSISTED_EVENT_MISSING");
+      assert.equal(report.status,201,"ORIGINAL_EVENT_STATUS");const stored=eventRecord.parse(JSON.parse(row.body)),{receivedAt,...storedInput}=stored;
+      assert.deepEqual(storedInput,input,"STORED_INPUT");assert.equal(row.digest,report.digest,"STORED_DIGEST");assert.equal(canonicalDigest(storedInput),report.digest,"STORED_BODY_DIGEST");
+      assert.equal(row.run_id,input.runId,"STORED_RUN");assert.equal(row.sequence,input.sequence,"STORED_SEQUENCE");assert.equal(row.occurred_at,Date.parse(input.occurredAt),"STORED_OCCURRED_TIME");assert.equal(row.received_at,Date.parse(receivedAt),"STORED_RECEIVED_TIME");
+      const originalAck=eventResponse.parse(report.ack),storedAck=eventResponse.parse(JSON.parse(row.acknowledgement));assert.equal(originalAck.generation,database.generation,"ORIGINAL_ACK_GENERATION");assert.equal(storedAck.generation,database.generation,"STORED_ACK_GENERATION");
+      assert.deepEqual(originalAck.data,{eventId:input.eventId,runId:input.runId,acceptedSequence:input.sequence,receivedAt},"ORIGINAL_ACK_BODY");assert.deepEqual(storedAck.data,originalAck.data,"STORED_ACK_BODY");
+      const publicEvent=api.find(event=>event.eventId===input.eventId);assert(publicEvent,"PUBLIC_EVENT_MISSING");assert.deepEqual(publicEvent,stored,"PUBLIC_BODY_RECEIPT");
+    }
+    assert.equal(database.integrity,"ok","DATABASE_INTEGRITY");assert.deepEqual(database.foreignKeys,[],"DATABASE_FOREIGN_KEYS");
+    result.postTiming.status="finalized";result.postTiming.endedMs=performance.now();
+    result.reconciliation={status:"finalized",expected:events.length,storedTimed:result.requests.length,apiCount:api.length,setupCount:result.setup.length,finalCount:result.final.length,summaries,burstPrecision:"four samples per full scenario/tab; nearest-rank p95 is maximum"};
   }catch(error){capture(error);throw primary;}
   finally{
     for(const phase of result.phases)if(phase.endedMs===null){phase.endedMs=performance.now();if(failed)phase.failure=result.failure;}
+    if(result.postTiming.startedMs!==null&&result.postTiming.endedMs===null)result.postTiming.endedMs=performance.now();
     result.finishedMs=performance.now();save("before outer cleanup",false);
     await finishProfiles();
     if(hooks)result.diagnostic!.cleanup={failures:[]};
