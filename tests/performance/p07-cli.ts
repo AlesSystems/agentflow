@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import {existsSync,mkdirSync,mkdtempSync,realpathSync,statSync,writeFileSync} from "node:fs";
+import {join} from "node:path";
+import {tmpdir} from "node:os";
+import {flushRun} from "../fixtures/p07-flush-stage";
+import {cliStages,ordinaryBoundary} from "../fixtures/p07-ordinary";
+import {retainedApplication} from "../fixtures/p07-app-build";
+assert.equal(process.argv[2],"--acceptance","Separately released CLI acceptance only");
+assert.equal(process.env.AGENTFLOW_TEST_BROWSER,"chrome","Explicit actual Chrome required");
+const evidence=process.env.AGENTFLOW_P07_EVIDENCE_DIR;assert(evidence&&statSync(evidence).isDirectory());assert(!existsSync(join(evidence,"performance.json")),"Fresh evidence namespace required");
+const root=mkdtempSync(join(realpathSync(tmpdir()),"agentflow-p07-cli-"));mkdirSync(join(root,"inputs"),{mode:0o700});
+const receipt={mode:"cli-acceptance",acceptance:true,startedAt:new Date().toISOString(),owned:[root],flush:[] as unknown[],failures:[] as string[],provenance:{} as unknown};
+const write=()=>writeFileSync(join(evidence,"performance.json"),JSON.stringify(receipt,null,2)+"\n",{mode:0o600});
+await ordinaryBoundary(receipt,async save=>{receipt.provenance=retainedApplication("36f6d1bc4699c706e3f57a17cfcc85a1576c648b");save();await cliStages({flush:index=>flushRun(index,{root,counts:{tasks:1000,events:10000,producers:10,queued:1000},acceptance:true,receipt,writeReceipt:write})});},write,()=>console.log(JSON.stringify({mode:receipt.mode,flushRuns:receipt.flush.length,failures:receipt.failures})),()=>{process.exitCode=1;}).catch(()=>{process.exitCode=1;});

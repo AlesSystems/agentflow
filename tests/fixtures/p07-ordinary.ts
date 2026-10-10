@@ -1,3 +1,4 @@
+export async function cliStages(steps:{flush:(index:number)=>Promise<void>}){for(let index=1;index<=3;index++)await steps.flush(index);}
 import {proofErrors,type ProofErrorFacts} from "./p07-proof-errors";
 import {failureFact} from "./p07-warm-error";
 export async function ordinaryStages<T>(steps:{repetitions:number;load:(index:number)=>Promise<void>;resource:()=>Promise<void>;flush:(index:number)=>Promise<void>;prepareNative:()=>Promise<T>;compare:(index:number,input:T)=>Promise<void>}){
