@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 implementation is underway; P07 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 producer, performance, and full validation checks passed; final independent review and integration remain open. P07 through W04 have not started.
 
 ## Package state
 
@@ -19,7 +19,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
-| P06 | CLI hooks | Implementing | Reviewed preservation `66800378ef93e617288408c46125a9b77a3c3816`; branch `codex/v1-p06-cli-hooks` | [Preservation checkpoint](#p06-preservation-checkpoint); delivery scheduling and full acceptance open |
+| P06 | CLI hooks | Implementing | Tested runtime `4bb6dee4c269f493723c6b684eec1e8606a07528`; branch `codex/v1-p06-cli-hooks` | [Acceptance checkpoint](#p06-acceptance-checkpoint); final review and integration open |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
@@ -221,6 +221,8 @@ W01 through W04 remain open and no release has been published.
 
 ## P06 preservation checkpoint
 
+Historical bounded checkpoint. The current gate is recorded in the acceptance checkpoint below.
+
 Astra medium approved implementation plan SHA256
 `fc209b31a1d587f3fa1d8952503351b0179ffa8eb8acbb7bbdd02473affc63b1`
 before P06 source work. Independent review approved the implemented preservation
@@ -253,6 +255,8 @@ unchecked. P07 still owns combined-load observer visibility; later packages have
 not started.
 
 ## P06 delivery checkpoint
+
+Historical bounded checkpoint. The producer and performance gates described here have since passed; see the acceptance checkpoint below.
 
 Independent review approved the delivery implementation and two bounded repairs
 at `09f75b7caa3202bca82388891424e27e5c6c6968`. Review SHA256 is
@@ -291,3 +295,63 @@ by reviewed performance helpers and the authorized quiet acceptance runs. Three
 full unit/integration/browser checks, OpenAPI verification, documentation, final
 Standards/Spec review and guarded PR merge remain required. P07 combined-load
 observer sampling remains a later gate; P06 throughput cannot supply it.
+
+## P06 acceptance checkpoint
+
+The original Astra-approved plan and two separately approved performance amendments
+govern this candidate. The second amendment plan SHA256 is
+`05fe5f6810a18d3d4b445bf588187215912d0dcb617eff40931a9589a985f39a`;
+Astra approval SHA256 is
+`5c50594516490cb210d6b8ae4667cbceafeb862d5513742fb05375790b5253f3`.
+Independent bounded review approved runtime
+`4bb6dee4c269f493723c6b684eec1e8606a07528`, passing 13 selected subprocess tests.
+This approval does not replace final package Standards and Spec reviews.
+The scoped documentation/evidence commit is
+`ba67b2ffd6e691b6ba1fb512c2678560d8c15af8`.
+
+[The P06 receipt](implementation/P06.md) records the public-HTTP CLI, private
+durable outbox, registration dependencies, fair delivery, crash recovery, restore
+limits, and executable external producer. Actual PTY checks prove exits 0/2/1/3.
+The fresh two-tab producer journey retains nine exact implementation/verification
+events and leaves the task in Review with zero completion records. AgentFlow
+continues to observe externally owned execution; no provider-private state or
+automatic human acceptance is introduced.
+
+Three fresh 1,000-observation flush trials passed in 98.344, 102.539, and 101.670
+seconds, including CLI startup. Setup remains separate. Each outbox finishes at
+1,000 allocated/acknowledged observations with zero pending, missing, or duplicate
+events. Three native comparisons retain 4,620 requests and 42 distributions:
+maximum p95 1.852875ms, worst positive regression 6.2067 percent. Root independently
+checked all 3,000 original event identities, payloads, digests, queued byte
+descriptors, stored/stdout ACKs and times, watermarks, database counts, integrity
+and foreign keys. Root recomputed every distribution and separately checked 330
+paired ingestion bodies and 660 stored acknowledgements.
+
+[Synthetic evidence](implementation/evidence/P06/README.md) includes the exact
+original compressed receipts for both failed attempts and the passing attempt.
+The failed partial datasets are not acceptance runs. Typed API pagination checks
+event IDs/counts; full body/digest checks are SQLite/original-queue evidence.
+Performance used cached P05 assets with the current CLI; it does not claim a CLI
+baseline speedup or combined-load observer visibility.
+
+The separate fresh production build is `sDI0xsv04jaYR13VYrGHA`. On the named macOS
+27.0 (26A428) arm64 host with Node v24.15.0/npm 11.12.1, `npm run build`,
+`npm run test:unit` (70 tests/17 files), `npm run test:integration` (383 tests/57
+files, 498.87s), and `npm run test:e2e` (31 actual Chrome tests) all passed.
+Integration/browser commands used `AGENTFLOW_TEST_BROWSER=chrome` and a fresh
+private evidence directory. Unit/CLI tests execute current source through pinned
+tsx; HTTP/browser fixtures use the new production build. Full lint, type checking,
+OpenAPI verification, and diff checks passed. No runtime repair was needed.
+These counts are full current suites; earlier overlapping focused counts are not
+added to them. The named installed host does not supply P07's fresh-checkout
+installation evidence.
+
+Root matched 210 committed/working source, documentation and public-proof hashes,
+394 production asset hashes, 20 private proof hashes and the loaded SQLite addon.
+Owned synthetic fixtures are inventoried and retained for final review; resources
+closed with zero open files. Historical cleanup receipts remain separate. Final
+Standards and Spec reviews of the coordinator's candidate, guarded PR creation and
+merge, and remaining scoped cleanup are open. P06 boxes remain unchecked until
+verified integration. P07 must then receive its own Astra-approved plan, including
+combined-load observer sampling and isolated-install evidence. Later packages and
+the v1 source release remain open.
