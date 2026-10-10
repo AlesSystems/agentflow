@@ -7,7 +7,7 @@ import { activeAppRoot, inspectManaged, privateDestination } from "../server/fil
 export class CliError extends Error {
   constructor(readonly code: string, readonly exit: 1 | 3 = 1) { super(code); }
 }
-export function readBounded(path: string, max = 65536, privateFile = false): string {
+export function readBoundedBytes(path: string, max = 65536, privateFile = false): Buffer {
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = fstatSync(fd);
@@ -24,8 +24,11 @@ export function readBounded(path: string, max = 65536, privateFile = false): str
       count += n;
     }
     if (count > max) throw new CliError("invalid_file");
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, count));
+    return bytes.subarray(0,count);
   } finally { closeSync(fd); }
+}
+export function readBounded(path: string,max = 65536,privateFile = false): string {
+  return new TextDecoder("utf-8",{fatal:true}).decode(readBoundedBytes(path,max,privateFile));
 }
 export function readJson(path: string): Record<string, unknown> {
   const value: unknown = JSON.parse(readBounded(path));

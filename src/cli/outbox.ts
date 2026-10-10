@@ -10,13 +10,13 @@ import { activeAppRoot, createFile, privateDestination, secureDirectory, syncDir
 import { projectCreate } from "../contracts/projects";
 import { taskCreate } from "../contracts/tasks";
 import { settingsResponse } from "../contracts/responses";
-import { CliError, readBounded, type CliConfig } from "./config";
+import { CliError, readBounded, readBoundedBytes, type CliConfig } from "./config";
 import { request } from "./http";
 const GLOBAL_LIMIT = 100 * 1024 * 1024, RUN_LIMIT = 10 * 1024 * 1024, BOOTSTRAP = 65536;
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const watermark = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
-const metadata = z.strictObject({ formatVersion: z.literal(1), port: z.number().int().min(1024).max(65535), serviceDataDir: z.string(), generation: uuid, cursor: z.string().nullable(), nextOrder: watermark.default(0) });
-const registration = z.strictObject({ formatVersion: z.literal(1), key: uuid, path: z.enum(["/projects", "/tasks", "/agents", "/runs"]), body: z.record(z.string(), z.unknown()), digest, order: watermark });
+const registration = z.strictObject({ formatVersion: z.literal(1), path: z.enum(["/projects", "/tasks", "/agents", "/runs"]), key: uuid, body: z.record(z.string(), z.unknown()), digest, order: watermark });
+const metadata = z.strictObject({ formatVersion: z.literal(1), port: z.number().int().min(1024).max(65535), serviceDataDir: z.string(), generation: uuid, cursor: z.string().nullable(), nextOrder: watermark.default(0), pendingRegistration: z.strictObject({record:registration,filename:z.string(),remainingPeak:watermark}).optional() });
 const storedEvent = z.strictObject({ formatVersion: z.literal(1), body: z.record(z.string(),z.unknown()), digest });
 const pending = z.strictObject({ record: storedEvent, filename: z.string(), remainingPeak: watermark });
 const stateSchema = z.strictObject({ formatVersion: z.literal(1), runId: uuid, allocatedThrough: watermark, acknowledgedThrough: watermark, generation: uuid, pending: pending.optional() });
@@ -36,7 +36,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
   if (existsSync(root)) {
     secureDirectory(root);
     if (existsSync(metaPath)) {
-      association = metadata.parse(read(metaPath));
+      association = metadata.parse(read(metaPath,200000));
       if (association.port !== config.port || config.explicitService && config.explicitService !== association.serviceDataDir) throw new CliError("destination_mismatch");
     }
   }
@@ -74,9 +74,12 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         validateFile(path);
         if ((stat.mode & 0o777) !== 0o600) throw new CliError("unsafe_outbox_permissions");
         if (directory === root ? !/^(metadata\.json(?:\.tmp)?|registration-[a-f0-9-]{36}\.json(?:\.tmp)?|(?:publication|delivery)\.sqlite(?:-journal|-wal|-shm)?)$/.test(name) : !/^(state\.json(?:\.tmp)?|[1-9][0-9]*-[a-f0-9-]{36}\.json(?:\.tmp)?)$/.test(name)) throw new CliError("unexpected_outbox_entry");
-        if (directory === root && name.startsWith("registration-") && !name.endsWith(".tmp")) {
-          const record = registration.parse(read(path,100000));
-          if (record.key.toLowerCase() !== name.slice(13,-5) || !registrationInputs[record.path].safeParse(record.body).success || canonicalDigest(record.body) !== record.digest) throw new CliError("corrupt_registration",3);
+        if (directory === root && name.startsWith("registration-")) {
+          const finalName = name.replace(/\.tmp$/,""), finalPath = join(root,finalName);
+          const descriptor = existsSync(metaPath) ? metadata.parse(read(metaPath,200000)).pendingRegistration : undefined;
+          const record = name.endsWith(".tmp") && descriptor?.filename === finalName ? descriptor.record : name.endsWith(".tmp") && existsSync(finalPath) ? readRegistration(finalPath,finalName) : readRegistration(path,finalName);
+          validateRegistration(record,finalName);
+          if (name.endsWith(".tmp")) validateTemporary(path,record,100000);
           if (record.path === "/runs" && String(record.body.id).toLowerCase() === runId) run += stat.size;
         }
         global += stat.size;
@@ -150,27 +153,58 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     if (!parsed.success || canonicalDigest(record.body) !== record.digest || parsed.data.runId !== id.toLowerCase() || parsed.data.sequence !== sequence || encodedBytes(record.body) > 65536) throw new CliError("corrupt_record",3);
     return parsed.data;
   }
+  function validateRegistration(record: Registration,filename: string) {
+    if (filename !== `registration-${record.key.toLowerCase()}.json` || !registrationInputs[record.path].safeParse(record.body).success || canonicalDigest(record.body) !== record.digest) throw new CliError("corrupt_registration",3);
+  }
+  function readRegistration(path: string,filename: string): Registration {
+    try {const record=registration.parse(read(path,100000));validateRegistration(record,filename);return record;}
+    catch(error){if(error instanceof CliError)throw error;throw new CliError("corrupt_registration",3);}
+  }
+  function validateTemporary(path: string,value: unknown,max = 200000) {
+    const expected=Buffer.from(JSON.stringify(value)),actual=readBoundedBytes(path,max);
+    if(actual.length>expected.length || !expected.subarray(0,actual.length).equals(actual))throw new CliError("corrupt_temporary",3);
+    return actual.length;
+  }
+  function remaining(final: string,value: unknown,max = 200000) {
+    const bytes=encodedBytes(value), temp=final+".tmp";
+    const temporary=existsSync(temp)?validateTemporary(temp,value,max):0;
+    if (existsSync(final)) {
+      if (readBounded(final,max)!==JSON.stringify(value)) throw new CliError("corrupt_record",3);
+      return 0;
+    }
+    return bytes-temporary;
+  }
   function reservations(runId?: string) {
-    let global = 0, run = 0;
-    for (const name of readdirSync(root)) {
-      if (!lstatSync(join(root,name)).isDirectory() || !existsSync(join(root,name,"state.json"))) continue;
-      const value = state(name);
-      if (value.pending) {
-        const p = value.pending;
-        validateRecord(p.record,name,value.allocatedThrough);
-        const expected = `${value.allocatedThrough}-${String(p.record.body.eventId).toLowerCase()}.json`;
-        const clean = {...value}; delete clean.pending;
-        if (p.filename !== expected || p.remainingPeak !== encodedBytes(p.record)+encodedBytes(clean)) throw new CliError("corrupt_reservation",3);
-        const existing = existsSync(join(root,name,p.filename)) ? lstatSync(join(root,name,p.filename)).size : 0;
-        const remaining = Math.max(0,p.remainingPeak-existing);
-        global += remaining; if (name === runId) run += remaining;
+    let global=0,run=0;
+    if (existsSync(metaPath)) {
+      const meta=metadata.parse(read(metaPath,200000)),p=meta.pendingRegistration;
+      if (p) {
+        validateRegistration(p.record,p.filename);
+        const clean={...meta};delete clean.pendingRegistration;
+        if (p.record.order+1 !== meta.nextOrder || p.remainingPeak !== encodedBytes(p.record)+encodedBytes(clean)) throw new CliError("corrupt_reservation",3);
+        const journal=remaining(join(root,p.filename),p.record,100000);
+        const replacement=existsSync(metaPath+".tmp")?Math.max(0,encodedBytes(clean)-validateTemporary(metaPath+".tmp",clean)):encodedBytes(clean);
+        global+=journal+replacement;
+        if (p.record.path === "/runs" && String(p.record.body.id).toLowerCase()===runId)run+=journal;
       }
+    }
+    for (const name of readdirSync(root)) {
+      if (!lstatSync(join(root,name)).isDirectory() || !existsSync(join(root,name,"state.json")))continue;
+      const value=state(name),p=value.pending;
+      if (!p)continue;
+      validateRecord(p.record,name,value.allocatedThrough);
+      const expected=`${value.allocatedThrough}-${String(p.record.body.eventId).toLowerCase()}.json`,clean={...value};delete clean.pending;
+      if (p.filename!==expected || p.remainingPeak!==encodedBytes(p.record)+encodedBytes(clean))throw new CliError("corrupt_reservation",3);
+      const record=remaining(join(root,name,p.filename),p.record,100000);
+      const temp=join(root,name,"state.json.tmp");
+      const replacement=existsSync(temp)?Math.max(0,encodedBytes(clean)-validateTemporary(temp,clean)):encodedBytes(clean);
+      global+=record+replacement;if(name===runId)run+=record+replacement;
     }
     return {global,run};
   }
-  function admit(additional: number, runId?: string) {
-    assertPins(); const actual = lengths(root,runId), reserved = reservations(runId);
-    if (actual.global+reserved.global+additional > GLOBAL_LIMIT || runId && actual.run+reserved.run+additional > RUN_LIMIT) throw new CliError("outbox_full");
+  function admit(additional: number,runId?: string,runAdditional=additional) {
+    assertPins();const actual=lengths(root,runId),reserved=reservations(runId);
+    if(actual.global+reserved.global+additional>GLOBAL_LIMIT || runId && actual.run+reserved.run+runAdditional>RUN_LIMIT)throw new CliError("outbox_full");
   }
   function atomic(name: string,value: unknown, recovering = false) {
     assertPins(); const path = join(root,name), parent = dirname(path); pin(parent);
@@ -184,6 +218,13 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
   function remove(path: string) { assertPins(); pin(dirname(path)); validateFile(path); operations.unlinkSync(path); operations.syncDirectory(dirname(path)); }
   function recover() {
     lengths(); reservations();
+    if (existsSync(metaPath)) {
+      const meta=metadata.parse(read(metaPath,200000)),p=meta.pendingRegistration;
+      if(p){
+        if(!existsSync(join(root,p.filename)))atomic(p.filename,p.record,true);
+        const clean={...meta};delete clean.pendingRegistration;atomic("metadata.json",clean,true);
+      }
+    }
     for (const name of readdirSync(root)) {
       const directory = join(root,name);
       if (!lstatSync(directory).isDirectory()) {
@@ -243,11 +284,14 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
           if (old.path !== path || old.digest !== bodyDigest) throw new CliError("registration_conflict",3);
           return old;
         }
-        const meta = metadata.parse(read(metaPath));
+        const meta = metadata.parse(read(metaPath,200000));
         if (meta.nextOrder === Number.MAX_SAFE_INTEGER) throw new CliError("order_exhausted");
         const record: Registration = {formatVersion:1,path,key,body,digest:bodyDigest,order:meta.nextOrder};
-        admit(encodedBytes(record)+encodedBytes({...meta,nextOrder:meta.nextOrder+1}),path === "/runs" ? String(body.id).toLowerCase() : undefined);
-        atomic("metadata.json",{...meta,nextOrder:meta.nextOrder+1}); atomic(name,record); return record;
+        const clean={...meta,nextOrder:meta.nextOrder+1};
+        const descriptor={...clean,pendingRegistration:{record,filename:name,remainingPeak:encodedBytes(record)+encodedBytes(clean)}};
+        const peak=Math.max(encodedBytes(descriptor),encodedBytes(descriptor)-lstatSync(metaPath).size+encodedBytes(record)+encodedBytes(clean));
+        admit(peak,path === "/runs"?String(body.id).toLowerCase():undefined,encodedBytes(record));
+        atomic("metadata.json",descriptor,true);atomic(name,record,true);atomic("metadata.json",clean,true);return record;
       });
     },
     async initializeRun(id: string,until = end) {
@@ -280,7 +324,7 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
         const clean: State = {...previous,allocatedThrough:body.sequence};
         const filename = `${body.sequence}-${body.eventId}.json`;
         const descriptor: State = {...clean,pending:{record,filename,remainingPeak:encodedBytes(record)+encodedBytes(clean)}};
-        admit(encodedBytes(descriptor)+encodedBytes(record)+encodedBytes(clean),id.toLowerCase());
+        admit(Math.max(encodedBytes(descriptor),encodedBytes(descriptor)-lstatSync(join(root,id.toLowerCase(),"state.json")).size+encodedBytes(record)+encodedBytes(clean)),id.toLowerCase());
         atomic(`${id.toLowerCase()}/state.json`,descriptor,true);
         atomic(`${id.toLowerCase()}/${filename}`,record,true);
         atomic(`${id.toLowerCase()}/state.json`,clean,true);
@@ -321,8 +365,8 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
       }
       return jobs.sort((a,b)=>a.id.localeCompare(b.id));
     });},
-    async cursor() {return locked(()=>metadata.parse(read(metaPath)).cursor);},
-    async advanceCursor(id: string) {return locked(()=>atomic("metadata.json",{...metadata.parse(read(metaPath)),cursor:id}));},
+    async cursor() {return locked(()=>metadata.parse(read(metaPath,200000)).cursor);},
+    async advanceCursor(id: string) {return locked(()=>atomic("metadata.json",{...metadata.parse(read(metaPath,200000)),cursor:id}));},
     async removeRegistration(record: Registration) {return locked(()=>remove(join(root,`registration-${record.key.toLowerCase()}.json`)));},
     acquireDelivery() {assertPins(); try {locks[1].exec("BEGIN EXCLUSIVE"); return true;} catch {return false;}},
     close() {for (const lock of locks) {if (lock.inTransaction) lock.exec("ROLLBACK"); lock.close();}},
