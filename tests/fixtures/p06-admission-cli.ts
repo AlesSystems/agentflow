@@ -10,6 +10,6 @@ process.exitCode = await main(args, async (config,end) => {
     const clock=performance.now.bind(performance);
     if(phase==="accounting")performance.now=()=>new Error().stack?.includes("lengths")?entered+2:entered;
     try { return await box.advanceCursor(id,expired); }
-    catch(error) { performance.now=clock; writeFileSync(trace,JSON.stringify({qualification:"new controlled reproduction, not historical failure stack",globalEnd:end,turnEnd:until,entered,forcedAdmissionEnd:expired,thrownAt:performance.now(),stack:error instanceof Error?error.stack:"unknown"})+"\n",{mode:0o600});throw error; } finally {performance.now=clock;}
+    catch(error) { performance.now=clock; writeFileSync(trace,JSON.stringify({qualification:"new controlled reproduction, not historical failure stack",globalEnd:end,turnEnd:until,entered,forcedAdmissionEnd:expired,thrownAt:performance.now(),stack:error instanceof Error?error.stack:"unknown",cause:error instanceof Error&&error.cause instanceof Error?error.cause.stack:undefined})+"\n",{mode:0o600});throw error; } finally {performance.now=clock;}
   } };
 });

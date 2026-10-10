@@ -7,7 +7,7 @@ import { agentCreate, agentResponse, eventInput, eventResponse, runRegister, run
 import { projectResponse, taskResponse } from "../contracts/responses";
 import { CliError, cliConfig, deadline, readJson, type CliConfig } from "./config";
 import { request,backoff } from "./http";
-import { openOutbox, type Job, type Outbox } from "./outbox";
+import { openOutbox, CursorAdmissionTimeout, type Job, type Outbox } from "./outbox";
 const commands = {
   "project create": { path: "/projects", input: projectCreate, output: projectResponse },
   "task create": { path: "/tasks", input: taskCreate, output: taskResponse },
@@ -128,6 +128,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
     }
     diagnostic("queued");return blockedExit||2;
   } catch (error) {
+    if((preserved||knownPending)&&error instanceof CursorAdmissionTimeout){diagnostic("queued");return blockedExit||2;}
     if(!cursorWriting&&(preserved||knownPending)&&error instanceof CliError&&["accounting_deadline","publication_busy"].includes(error.code)){diagnostic("queued");return blockedExit||2;}
     diagnostic(error instanceof CliError ? error.code : "local_failure");
     return error instanceof CliError ? error.exit : 1;

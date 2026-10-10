@@ -21,6 +21,10 @@ const metadata = z.strictObject({ formatVersion: z.literal(1), port: z.number().
 const storedEvent = z.strictObject({ formatVersion: z.literal(1), body: z.record(z.string(),z.unknown()), digest });
 const pending = z.strictObject({ record: storedEvent, filename: z.string(), remainingPeak: watermark });
 const stateSchema = z.strictObject({ formatVersion: z.literal(1), runId: uuid, allocatedThrough: watermark, acknowledgedThrough: watermark, generation: uuid, pending: pending.optional() });
+class AdmissionExpiry extends CliError {}
+export class CursorAdmissionTimeout extends CliError {
+  constructor(error: CliError) { super(error.code); this.cause = error; }
+}
 export type Registration = z.infer<typeof registration>;
 export type EventRecord = z.infer<typeof storedEvent>;
 type State = z.infer<typeof stateSchema>;
@@ -76,7 +80,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     pin(directory);
     let global = 0, run = 0;
     for (const name of readdirSync(directory)) {
-      if (performance.now() >= budget) throw new CliError("accounting_deadline");
+      if (performance.now() >= budget) throw new AdmissionExpiry("accounting_deadline");
       const path = join(directory,name), stat = lstatSync(path);
       if (stat.isDirectory()) {
         if (directory !== root || !uuid.safeParse(name).success || name !== name.toLowerCase()) throw new CliError("unexpected_outbox_entry");
@@ -342,7 +346,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       let acknowledgedDurable=false;
       const sequences = new Set<number>();
       for (const file of readdirSync(directory)) {
-        if(performance.now()>=budget)throw new CliError("accounting_deadline");
+        if(performance.now()>=budget)throw new AdmissionExpiry("accounting_deadline");
         if (file === "state.json") continue;
         if (file.endsWith(".tmp")) { remove(join(directory,file)); continue; }
         const match = /^([1-9][0-9]*)-([a-f0-9-]{36})\.json$/.exec(file);
@@ -368,7 +372,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         try { locks[0].exec("BEGIN EXCLUSIVE"); } catch { await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,budget-performance.now())))); continue; }
         try { recover(); return operation(); } finally { locks[0].exec("ROLLBACK"); }
       }
-      throw new CliError("publication_busy");
+      throw new AdmissionExpiry("publication_busy");
     }finally{budget=previous;}
   }
   const outbox = {
@@ -463,7 +467,10 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       return jobs.sort((a,b)=>a.id.localeCompare(b.id));
     });},
     async cursor() {return locked(()=>readMetadata().cursor);},
-    async advanceCursor(id: string,until=end) {return locked(()=>atomic("metadata.json",{...readMetadata(),cursor:id}),until);},
+    async advanceCursor(id: string,until=end) {
+      try { return await locked(()=>atomic("metadata.json",{...readMetadata(),cursor:id}),until); }
+      catch(error) { if(error instanceof AdmissionExpiry)throw new CursorAdmissionTimeout(error);throw error; }
+    },
     async removeRegistration(record: Registration,until=end) {return locked(()=>remove(join(root,`registration-${record.key.toLowerCase()}.json`)),until);},
     acquireDelivery() {assertPins(); try {locks[1].exec("BEGIN EXCLUSIVE"); return true;} catch {return false;}},
     close() {for (const lock of locks) {if (lock.inTransaction) lock.exec("ROLLBACK"); lock.close();}},
