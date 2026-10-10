@@ -13,6 +13,7 @@ import { settingsResponse } from "../contracts/responses";
 import { CliError, readBounded, readBoundedBytes, type CliConfig } from "./config";
 import { request } from "./http";
 const GLOBAL_LIMIT = 100 * 1024 * 1024, RUN_LIMIT = 10 * 1024 * 1024, BOOTSTRAP = 65536;
+const nativeContention = (error: unknown) => error instanceof Database.SqliteError && ["SQLITE_BUSY","SQLITE_LOCKED"].includes(error.code);
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const watermark = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const registration = z.strictObject({ formatVersion: z.literal(1), path: z.enum(["/projects", "/tasks", "/agents", "/runs"]), key: uuid, body: z.record(z.string(), z.unknown()), digest, order: watermark });
@@ -369,7 +370,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     try {
       while (performance.now() < budget) {
         assertPins();
-        try { locks[0].exec("BEGIN EXCLUSIVE"); } catch(error) { if(!(error instanceof Database.SqliteError)||!["SQLITE_BUSY","SQLITE_LOCKED"].includes(error.code))throw error; await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,budget-performance.now())))); continue; }
+        try { locks[0].exec("BEGIN EXCLUSIVE"); } catch(error) { if(!nativeContention(error))throw error; await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,budget-performance.now())))); continue; }
         try { recover(); return operation(); } finally { locks[0].exec("ROLLBACK"); }
       }
       throw new AdmissionExpiry("publication_busy");
@@ -482,7 +483,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       catch(error) { if(error instanceof AdmissionExpiry)throw new CursorAdmissionTimeout(error);throw error; }
     },
     async removeRegistration(record: Registration,until=end) {return locked(()=>remove(join(root,`registration-${record.key.toLowerCase()}.json`)),until);},
-    acquireDelivery() {assertPins(); try {locks[1].exec("BEGIN EXCLUSIVE"); return true;} catch {return false;}},
+    acquireDelivery() {assertPins(); try {locks[1].exec("BEGIN EXCLUSIVE"); return true;} catch(error) {if(!nativeContention(error))throw error;return false;}},
     close() {for (const lock of locks) {if (lock.inTransaction) lock.exec("ROLLBACK"); lock.close();}},
   };
   try {await locked(()=>{if (!existsSync(metaPath)) atomic("metadata.json",association);}); return outbox;} catch (error) {outbox.close();throw error;}
