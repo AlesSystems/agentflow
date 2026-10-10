@@ -37,7 +37,7 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
     if (response.status === 429 || response.status === 503) {
       const retryHeader = response.headers["retry-after"];
       const retry = typeof retryHeader === "string" ? retryHeader : undefined;
-      const delay = retry && /^\d+$/.test(retry) ? Number(retry) * 1000 : retry ? Math.max(0, Date.parse(retry) - Date.now()) : 100;
+      const delay = retry && /^\d+$/.test(retry) ? Math.min(30,Number(retry)) * 1000 : retry ? Math.max(0, Date.parse(retry) - Date.now()) : 100;
       return { kind: "retryable", delay: Number.isFinite(delay) ? Math.min(30000, delay) : 100 };
     }
     if (response.status >= 300 && response.status < 400) return { kind: "blocked", code: "redirect_refused" };
