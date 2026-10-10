@@ -19,7 +19,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
-| P06 | CLI hooks | Implementing | Tested runtime `4bb6dee4c269f493723c6b684eec1e8606a07528`; branch `codex/v1-p06-cli-hooks` | [Acceptance checkpoint](#p06-acceptance-checkpoint); final review and integration open |
+| P06 | CLI hooks | Implementing | CLI repair `154a921`; measured runtime `4bb6dee`; branch `codex/v1-p06-cli-hooks` | [Delivery-lock repair](#p06-delivery-lock-repair-checkpoint); final re-review and integration open |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
@@ -298,6 +298,8 @@ observer sampling remains a later gate; P06 throughput cannot supply it.
 
 ## P06 acceptance checkpoint
 
+Initial full validation checkpoint. The subsequent final-review repair is recorded below.
+
 The original Astra-approved plan and two separately approved performance amendments
 govern this candidate. The second amendment plan SHA256 is
 `05fe5f6810a18d3d4b445bf588187215912d0dcb617eff40931a9589a985f39a`;
@@ -355,3 +357,48 @@ merge, and remaining scoped cleanup are open. P06 boxes remain unchecked until
 verified integration. P07 must then receive its own Astra-approved plan, including
 combined-load observer sampling and isolated-install evidence. Later packages and
 the v1 source release remain open.
+
+## P06 delivery-lock repair checkpoint
+
+Final Standards review approved `341ccda1d7c9e188d997b86cc1618ba4f4c34eca`.
+Final Spec review reproduced one P2: delivery acquisition caught native SQLite
+I/O errors as contention and returned queued 2 instead of local 1. The controlled
+fault retained the event unchanged, made no event POST, and recovered with one
+exact event through fresh flush. No actual disk fault or data loss was observed.
+
+Astra medium approved repair plan SHA256
+`5ff958f7375a9b45a2618fb654e5377aa6e3bfdd0612ed5c3c7b842c8ee2d53d`;
+approval SHA256 is
+`df15ff6980d86219712e4bec0c2e50477989d9c20d9dddaf7d8120491234062b`.
+RED `6fc92cb` pinned native IOERR and forged nonnative BUSY failures. Fix `154a921`
+shares the existing nominal native BUSY/LOCKED predicate and propagates every
+other delivery BEGIN error. No successful-send, lock lifetime, cleanup/rollback,
+cursor, ACK, quota, HTTP, deadline, schema, dependency or application input changes.
+Documentation/evidence candidate is `798bade19f39b9682d838227f892813e02b4d416`.
+
+Ten fresh focused delivery/publication tests passed. Native I/O and forged errors
+produce local 1; genuine BUSY/LOCKED and a deterministically held OS lock produce
+queued 2. Original record bytes, digest, sequence, watermarks and lock identity
+remain intact, with zero associated POST before exact fresh recovery.
+One full combined unit/integration execution on fixed source passed **458 tests
+in 75 files**, 469.07s: 70 unit/17 files and 388 integration/58 files. Lint, types,
+OpenAPI and diff checks passed. The relevant actual Chrome P06 producer journey
+passed in 14.2s (15.0s total) using the repaired source CLI and retained production
+build `sDI0xsv04jaYR13VYrGHA`. Other 30 Chrome cases and the production build retain
+their prior completed executions with unchanged application/browser inputs.
+
+Astra explicitly accepts the prior successful-path performance evidence for this
+exception-only repair, conditional on exact final-diff verification and fresh
+controls. Measurements remain attributed to `4bb6dee`; they are not new repaired-
+source measurements or a waived budget. Root verified the executable delta is
+only the private predicate extraction and delivery error propagation, matched
+363 committed/working tracked-file hashes, 30 private proof hashes and all 394
+retained build asset hashes. [The P06 receipt](implementation/P06.md) preserves
+the provenance and original failed/passing raw receipts.
+
+The new validation used an inventoried private temporary parent outside every
+checkout, with 52,253 entries and zero observed open files. Its fixtures remain
+for final review and enumerated cleanup. Earlier unenumerated RED roots are not
+claimed or removed. Source is frozen for independent Spec re-review of the
+original counterexample and Standards delta review at the coordinator's final
+candidate. Guarded PR/merge, cleanup and P07 remain held; P06 stays unchecked.
