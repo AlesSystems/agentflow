@@ -1,0 +1,215 @@
+{
+  "source": "4bb6dee4c269f493723c6b684eec1e8606a07528",
+  "rawSha256": "9a7cbb106d733b5abfffc3161b2cf395ec15bbf84beceba998fcfbb49a760554",
+  "flush": [
+    {
+      "index": 1,
+      "setupMs": 222828.005042,
+      "elapsedMs": 98344.17116599999,
+      "CLIInvocations": 20,
+      "CLIWallSumMs": 98343.98633399999,
+      "accepted": 1000,
+      "httpStatusCounts": {
+        "201": 1000,
+        "200": 9
+      },
+      "stdoutACKs": 1000,
+      "queuedBytes": 307900,
+      "identityPayloadDigestACKTimeAndRecordByteChecks": 1000,
+      "allocated": 1000,
+      "acknowledged": 1000,
+      "pending": 0,
+      "dbCounts": {
+        "tasks": 1000,
+        "agents": 10,
+        "runs": 20,
+        "run_events": 11000
+      },
+      "integrity": "ok",
+      "foreignKeys": 0
+    },
+    {
+      "index": 2,
+      "setupMs": 232337.02220900002,
+      "elapsedMs": 102538.96012499998,
+      "CLIInvocations": 21,
+      "CLIWallSumMs": 102538.77108199999,
+      "accepted": 1000,
+      "httpStatusCounts": {
+        "201": 1000,
+        "200": 12
+      },
+      "stdoutACKs": 1000,
+      "queuedBytes": 307900,
+      "identityPayloadDigestACKTimeAndRecordByteChecks": 1000,
+      "allocated": 1000,
+      "acknowledged": 1000,
+      "pending": 0,
+      "dbCounts": {
+        "tasks": 1000,
+        "agents": 10,
+        "runs": 20,
+        "run_events": 11000
+      },
+      "integrity": "ok",
+      "foreignKeys": 0
+    },
+    {
+      "index": 3,
+      "setupMs": 231273.43574999995,
+      "elapsedMs": 101669.62300000002,
+      "CLIInvocations": 20,
+      "CLIWallSumMs": 101669.43491500034,
+      "accepted": 1000,
+      "httpStatusCounts": {
+        "201": 1000,
+        "200": 11
+      },
+      "stdoutACKs": 1000,
+      "queuedBytes": 307900,
+      "identityPayloadDigestACKTimeAndRecordByteChecks": 1000,
+      "allocated": 1000,
+      "acknowledged": 1000,
+      "pending": 0,
+      "dbCounts": {
+        "tasks": 1000,
+        "agents": 10,
+        "runs": 20,
+        "run_events": 11000
+      },
+      "integrity": "ok",
+      "foreignKeys": 0
+    }
+  ],
+  "native": [
+    {
+      "index": 1,
+      "rawRequests": 1540,
+      "distributions": {
+        "ingestion": {
+          "baseP95Ms": 1.6898339999606833,
+          "headP95Ms": 1.7295409999787807,
+          "changePercent": 2.3497574329207183
+        },
+        "tasks": {
+          "baseP95Ms": 1.4119169999612495,
+          "headP95Ms": 1.4364589999895543,
+          "changePercent": 1.7382041599455444
+        },
+        "detail": {
+          "baseP95Ms": 1.1744999999646097,
+          "headP95Ms": 1.112250000005588,
+          "changePercent": -5.3001277105915285
+        },
+        "board": {
+          "baseP95Ms": 1.6173750000307336,
+          "headP95Ms": 1.5499169999966398,
+          "changePercent": -4.170832369290489
+        },
+        "overview": {
+          "baseP95Ms": 1.8329999999841675,
+          "headP95Ms": 1.8092080000787973,
+          "changePercent": -1.29798144602159
+        },
+        "tracking": {
+          "baseP95Ms": 1.5348329999251291,
+          "headP95Ms": 1.5357500000391155,
+          "changePercent": 0.059745921154363835
+        },
+        "events": {
+          "baseP95Ms": 1.1952080000191927,
+          "headP95Ms": 1.1965830000117421,
+          "changePercent": 0.11504273670586151
+        }
+      },
+      "pairedIngestionIdentities": 110
+    },
+    {
+      "index": 2,
+      "rawRequests": 1540,
+      "distributions": {
+        "ingestion": {
+          "baseP95Ms": 1.542916000005789,
+          "headP95Ms": 1.434917000005953,
+          "changePercent": -6.9996681607703115
+        },
+        "tasks": {
+          "baseP95Ms": 1.3680419999873266,
+          "headP95Ms": 1.403249999973923,
+          "changePercent": 2.573605195375772
+        },
+        "detail": {
+          "baseP95Ms": 1.009667000034824,
+          "headP95Ms": 1.0723340000258759,
+          "changePercent": 6.206699831616813
+        },
+        "board": {
+          "baseP95Ms": 1.5889169999863952,
+          "headP95Ms": 1.5237920000217855,
+          "changePercent": -4.09870370605685
+        },
+        "overview": {
+          "baseP95Ms": 1.7519999999785796,
+          "headP95Ms": 1.8528749999823049,
+          "changePercent": 5.757705479735087
+        },
+        "tracking": {
+          "baseP95Ms": 1.5089999999618158,
+          "headP95Ms": 1.5359170000301674,
+          "changePercent": 1.7837640867483628
+        },
+        "events": {
+          "baseP95Ms": 1.4220419999910519,
+          "headP95Ms": 1.423791000037454,
+          "changePercent": 0.12299215117508311
+        }
+      },
+      "pairedIngestionIdentities": 110
+    },
+    {
+      "index": 3,
+      "rawRequests": 1540,
+      "distributions": {
+        "ingestion": {
+          "baseP95Ms": 1.5058749999152496,
+          "headP95Ms": 1.5057909999741241,
+          "changePercent": -0.005578148327733956
+        },
+        "tasks": {
+          "baseP95Ms": 1.408958000014536,
+          "headP95Ms": 1.4008339999709278,
+          "changePercent": -0.576596324626033
+        },
+        "detail": {
+          "baseP95Ms": 1.0288330001058057,
+          "headP95Ms": 1.0787909999489784,
+          "changePercent": 4.8557929069183325
+        },
+        "board": {
+          "baseP95Ms": 1.5487919999286532,
+          "headP95Ms": 1.5247080000117421,
+          "changePercent": -1.5550183574050358
+        },
+        "overview": {
+          "baseP95Ms": 1.7915829999838024,
+          "headP95Ms": 1.7472910000942647,
+          "changePercent": -2.472227069018751
+        },
+        "tracking": {
+          "baseP95Ms": 1.522666999953799,
+          "headP95Ms": 1.5012499999720603,
+          "changePercent": -1.4065452250812904
+        },
+        "events": {
+          "baseP95Ms": 1.1760410000570118,
+          "headP95Ms": 1.2147500000428408,
+          "changePercent": 3.2914668777663803
+        }
+      },
+      "pairedIngestionIdentities": 110
+    }
+  ],
+  "qualification": "Independent read-only SQLite, raw receipt and outbox reconciliation; helper API check compares IDs/counts, not every API payload.",
+  "worstRegressionPercent": 6.206699831616813,
+  "worstP95Ms": 1.8528749999823049
+}

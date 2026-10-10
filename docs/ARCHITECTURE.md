@@ -86,6 +86,16 @@ that CWD root and Next uses it; case aliases are recognized by directory identit
 raw symlinks are rejected before dot normalization, and no global repository scan
 or root override is introduced. No data belongs in the public checkout. The application rejects a relative override and documents that network filesystems are unsupported.
 
+P06 global event selection and durable delivery-cursor publication share one
+existing publication owner. Network delivery occurs after release. ACK watermark
+advancement and cleanup have a separate owner and return completion at that
+boundary; later enqueues remain future work. Every acquisition keeps full recovery,
+identity/coverage, path/pin/permission, sidecar, logical-length and outstanding-peak
+validation. No validation cache survives ownership. The cursor is not an execution
+scheduler; the external harness still owns processes. Performance evidence used
+cached P05 application assets with the candidate CLI, followed by a separately
+recorded fresh production build. See [the P06 receipt](implementation/P06.md).
+
 Normal use works without internet after dependencies are installed. External links open only after a user action. No repository scanning, transcript discovery, remote analytics, or provider credential storage is part of the first release.
 
 ## Growth boundaries

@@ -87,11 +87,24 @@ acknowledgement and current header generation.
 
 A stable delivery lock allows one sender. Network work releases publication
 ownership so other subprocesses can preserve observations. Multi-run flush uses
-a durable fair cursor across registration and run work. Each invocation retains
-a five-second retry budget, including validation reads. Retryable network, 429, and
+a durable fair cursor across registration and run work. Global event selection
+and durable publication of the existing scheduler successor share one publication
+owner. Empty selection writes no cursor. Targeted report or `flush --run` leaves
+the global cursor unchanged. Registration dependencies keep their separate path.
+Every actual acquisition fully validates and recovers owned files, pins,
+permissions, sidecars, contiguous identities, current logical lengths, and remaining
+peak reservations. There is no cache across owners or same-value write elision.
+Each invocation retains a five-second retry budget, including validation reads,
+with turns bounded by the remaining invocation budget and 500 ms. Retryable network, 429, and
 503 responses use bounded backoff. Blocked work retains its record while independent
 work can progress. The CLI advances the durable acknowledged watermark before
-removing an event file. IDs, sequences, and request digests remain unchanged on retry.
+removing and syncing an event file. Its completion result describes current
+allocated work under that ACK owner. Reports enqueued afterward remain for their
+own or a future flush. IDs, sequences, and request digests remain unchanged on retry.
+For local deadline failures, only proven native admission or lock-wait expiry
+with durable pending work returns
+queued 2. Actual recovery, cursor, rollback, or noncontention SQLite I/O failure
+remains local 1. Corruption, coverage, and permission checks still fail closed.
 
 | Exit | Meaning |
 | --- | --- |
@@ -112,7 +125,8 @@ regular-file lengths for owned records, metadata, journals, locks, sidecars,
 temporary copies, and damaged retained files. It excludes filesystem allocated
 blocks, directory metadata, sparse allocation, and APFS copy-on-write overhead.
 Metadata and transient publication copies need headroom. Lock bootstrap reserves
-64 KiB globally before initializing the two stable lock families. Quota or fsync
+64 KiB globally before initializing the two stable lock families. Remaining peak reservations are recomputed at each publication acquisition,
+including an already-open process following another owner's crash. Quota or fsync
 failure prevents a success or durable-queued claim. Nothing silently drops pending
 observations. Do not modify, replace, or delete stable lock files while producers run.
 
@@ -157,5 +171,5 @@ The final `done` checkpoint requires no response. The external harness owns
 service lifecycle and browser pairing. Never run this synthetic controller against
 operator data. Producer input files are retained on failure for inspection.
 
-[The P06 receipt](implementation/P06.md) distinguishes focused helper preparation
-from later production build, full-suite, and performance acceptance gates.
+[The P06 receipt](implementation/P06.md) records the producer journey, failed and
+passing performance attempts, fresh production verification, and pending final review.

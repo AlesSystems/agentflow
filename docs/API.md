@@ -243,13 +243,24 @@ identities; explicit selection of another attempt starts a separate closure edit
 
 The local `npm run --silent agentflow -- ...` command provides `project create`, `task create`, `agent register`, `run register`, `report`, and `flush` through public HTTP and shared schemas. Registration commands require a JSON file and explicit UUID idempotency key. Output is exactly `{id, generation}`. Report accepts a run ID, event type, and payload file and prints only acknowledgement fields with current header generation. See [CLI.md](CLI.md) for token-file access, the executable external producer, and recovery limits. No global executable or provider adapter is installed.
 
-`report` allocates event ID, timestamp, and sequence atomically under a per-run outbox lock, writes an immutable record to disk, then attempts delivery. Only one producer owns each run's sequence. Calling `report` for a new logical event allocates a new ID; uncertain delivery retries use `flush`, never a second report call.
+`report` allocates event ID, timestamp, and sequence atomically under the stable global publication lock, preserving each run's allocation invariant, writes an immutable record to disk, then attempts delivery. Only one producer owns each run's sequence. Calling `report` for a new logical event allocates a new ID; uncertain delivery retries use `flush`, never a second report call.
 
 The separate private outbox is durable with a 10 MiB limit per run and 100 MiB overall, measured as the sum of owned logical regular-file lengths, including metadata, temporary copies, locks, and sidecars. Filesystem allocation overhead is excluded. A new association validates public `/settings` dataLocation and generation before mutation. It never silently drops unacknowledged events. Disk-full or limit exhaustion returns a clear failure. `flush` sends each run in sequence and deletes a record only after a committed acknowledgement. Retryable network, `429`, and `503` responses use exponential backoff with jitter, capped at 30 seconds. A sequence gap triggers resend from the missing outbox entry. A conflict, terminal run, or missing outbox entry stops that run's flush for operator action.
 
 A single invocation retries for at most five seconds, then exits. Exit codes are `0` delivered, `2` durably queued after retryable delivery failure, `1` invalid input or unable to preserve the report, and `3` delivery blocked pending operator repair. Code `3` covers credential rejection, non-retryable server rejection such as conflicting or terminal reports, and an unrecoverable sequence gap. Preserve unacknowledged outbox records and report the affected run, error code, and actionable repair without secrets. Multi-run `flush` uses precedence `1`, then `3`, then `2`, then `0`; blocked runs do not prevent independent runs from flushing. The harness decides whether reporting failure affects its own job. A later hook or explicit `flush` retries queued data; no background daemon is implied.
 
 A replay after database restoration validates the current run prefix against retained local allocated and acknowledged watermarks. A lost acknowledged prefix or externally advanced sequence blocks rather than inventing records. Missing entities require explicit re-registration where original IDs are supported, or intentional recreation and remapping where project/task creation generates IDs. A restore cannot guarantee observations acknowledged after the backup.
+
+Global event flush selects the oldest immutable record and durably publishes the
+scheduler's existing successor cursor under one publication ownership before HTTP.
+Targeted and empty selection do not write the global cursor. Every actual acquisition
+retains full recovery, coverage, security, logical-length, and peak-reservation checks.
+ACK completion is observed after durable watermark and cleanup under its owner,
+not a claim that no future report can arrive. Safe native admission/wait expiry
+with durable pending work yields queued 2; actual recovery/cursor/rollback/SQLite
+I/O uncertainty remains local 1. Turns retain their 500 ms bound inside the one
+five-second invocation budget. [The P06 receipt](implementation/P06.md) records
+actual producer and performance proof; P07 combined-load visibility stays separate.
 
 The harness must explicitly emit events. AgentFlow does not scrape Codex or Claude Code private state. Provider-specific adapters can follow after the generic integration has end-to-end evidence.
 
