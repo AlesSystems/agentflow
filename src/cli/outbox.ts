@@ -369,7 +369,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     try {
       while (performance.now() < budget) {
         assertPins();
-        try { locks[0].exec("BEGIN EXCLUSIVE"); } catch { await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,budget-performance.now())))); continue; }
+        try { locks[0].exec("BEGIN EXCLUSIVE"); } catch(error) { if(!(error instanceof Database.SqliteError)||!["SQLITE_BUSY","SQLITE_LOCKED"].includes(error.code))throw error; await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,budget-performance.now())))); continue; }
         try { recover(); return operation(); } finally { locks[0].exec("ROLLBACK"); }
       }
       throw new AdmissionExpiry("publication_busy");
