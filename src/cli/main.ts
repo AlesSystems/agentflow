@@ -31,6 +31,7 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
   const record = await outbox.next(job.runId,end);
   if (!record) return {kind:"delivered" as const,complete:true};
   const reply = await request(config,`/runs/${job.runId}/events`,eventResponse,end,record.body);
+  if(reply.kind==="blocked"&&reply.code==="sequence_gap"&&reply.expectedSequence===record.body.sequence)return{kind:"retryable" as const,delay:100};
   if (reply.kind !== "delivered") return reply;
   const ack = reply.data.data;
   if (ack.eventId.toLowerCase() !== String(record.body.eventId).toLowerCase() || ack.runId.toLowerCase() !== String(record.body.runId).toLowerCase() || ack.acceptedSequence !== record.body.sequence) return {kind:"blocked" as const,code:"ack_identity_mismatch"};

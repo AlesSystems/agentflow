@@ -44,9 +44,9 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
     let raw: unknown;
     try { raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(response.bytes)); } catch { return { kind: "blocked", code: "invalid_response" }; }
     if (response.status < 200 || response.status >= 300) {
-      const error = z.object({ error: z.object({ code: z.string(), expectedSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(), currentVersion: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional() }) }).safeParse(raw);
+      const error = z.object({ error: z.object({ code: z.string(), details:z.object({expectedSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(), currentVersion: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional()}).optional() }) }).safeParse(raw);
       if (!error.success || !safeCodes.has(error.data.error.code)) return { kind: "blocked", code: "server_rejected" };
-      return { kind: "blocked", ...error.data.error };
+      return { kind: "blocked", code:error.data.error.code,...error.data.error.details };
     }
     const generation = response.headers["agentflow-generation"];
     const parsed = schema.safeParse(raw);
