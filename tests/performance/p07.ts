@@ -47,7 +47,8 @@ const receipt: { mode: string; acceptance: boolean; startedAt: string; runtime: 
   runtime: { node: process.version, osRelease: release(), platform: process.platform, arch: process.arch, macOS: execFileSync("sw_vers", [], { encoding: "utf8" }).trim(), npm: execFileSync("npm", ["--version"], { encoding: "utf8" }).trim() },
   provenance: {}, owned, flush: [], comparisons: [], failures: [],
 };
-function save() { writeFileSync(join(evidence!, "performance.json"), JSON.stringify(receipt,null,2)+"\n", { mode: 0o600 }); }
+function writeReceipt() { writeFileSync(join(evidence!, "performance.json"), JSON.stringify(receipt,null,2)+"\n", { mode: 0o600 }); }
+let save=writeReceipt;
 async function cli(args: string[], env: Record<string,string>) {
   const t = performance.now();
   const child = spawn(process.execPath, ["--import", "tsx", "src/cli/main.ts", ...args], { env: { ...process.env, ...env, FORCE_COLOR: undefined }, stdio: ["ignore", "pipe", "pipe"] });
@@ -67,8 +68,9 @@ async function flushRun(index: number) {
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   let outbox: Awaited<ReturnType<typeof openOutbox>> | undefined;
   const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as Queued[], queueFilesRaw: [] as {filename:string;bytesBase64:string}[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as Attempt[], reconciliationRaw: null as FlushFacts|null, reconciliation: null as unknown, failure: "" };
-  receipt.flush.push(result); save();
+  receipt.flush.push(result);
   await flushBoundary(result,async()=>{
+    save();
     server = await launch({ dir });
     const token = join(inputs,"reporter-token"); writeFileSync(token, server.credentials().reporterToken, { mode: 0o600 });
     const pendingRequests=new WeakMap<object,Attempt>();
@@ -133,7 +135,8 @@ async function flushRun(index: number) {
 }
 
 
-await ordinaryBoundary(receipt,async()=>{
+await ordinaryBoundary(receipt,async safeSave=>{
+  save=safeSave;
   assert.equal(execFileSync("git",["diff",baselineSha,"--","src","migrations","package.json","package-lock.json","next.config.ts"],{encoding:"utf8"}),"","Retained baseline build only applies to byte-identical runtime/build inputs");
   const baseSource=join(root,"p06-source");mkdirSync(baseSource,{mode:0o700});
   const archive=execFileSync("git",["archive",baselineSha],{maxBuffer:20*1024*1024});
@@ -145,7 +148,7 @@ await ordinaryBoundary(receipt,async()=>{
   const baseBuildId = readFileSync(join(baseBuildDir,"BUILD_ID"),"utf8").trim();
   assert.equal(baseBuildId, readFileSync(".next/BUILD_ID","utf8").trim(), "P06 runtime source-equivalent retained head assets required");
   cpSync(baseBuildDir,join(baseSource,".next"),{recursive:true});
-  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P07_BASE_BUILD_DIR ? "explicit retained source-equivalent assets" : "ordinary fresh-install assets copied for identical runtime/build inputs",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p07.ts","tests/fixtures/p07-load.ts","tests/fixtures/p07-protocol.ts","tests/fixtures/p07-runtime.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-flush-boundary.ts","tests/fixtures/p07-resource-boundary.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P06 runtime source bytes equal head runtime before helper-only changes. Ordinary fresh-install assets reused for identical runtime/build inputs; native HTTP uses each label's source."};
+  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P07_BASE_BUILD_DIR ? "explicit retained source-equivalent assets" : "ordinary fresh-install assets copied for identical runtime/build inputs",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p07.ts","tests/fixtures/p07-load.ts","tests/fixtures/p07-protocol.ts","tests/fixtures/p07-runtime.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-flush-boundary.ts","tests/fixtures/p07-native.ts","tests/fixtures/p07-ordinary.ts","tests/fixtures/p07-proof-errors.ts","tests/fixtures/p07-resource-boundary.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P06 runtime source bytes equal head runtime before helper-only changes. Ordinary fresh-install assets reused for identical runtime/build inputs; native HTTP uses each label's source."};
   save();
   await ordinaryStages({repetitions:counts.repetitions,
     load:async index=>{console.log(JSON.stringify({stage:"load",index,acceptance}));const result=await loadScenario(root,index,acceptance);(receipt as unknown as Record<string,unknown[]>).loads??=[];(receipt as unknown as Record<string,unknown[]>).loads.push(result);save();},
@@ -154,4 +157,4 @@ await ordinaryBoundary(receipt,async()=>{
     compare:async(index,input)=>{await nativeCompare({index,baseSource,...input,root,counts,acceptance,receipt,save});}
   });
   assert.equal(receipt.failures.length,0,"performance budget failures remain open");
-},save,()=>console.log(JSON.stringify({mode:receipt.mode,acceptance,flushRuns:receipt.flush.length,comparisons:receipt.comparisons.length,failures:receipt.failures})),()=>{process.exitCode=1;}).catch(()=>{process.exitCode=1;});
+},writeReceipt,()=>console.log(JSON.stringify({mode:receipt.mode,acceptance,flushRuns:receipt.flush.length,comparisons:receipt.comparisons.length,failures:receipt.failures})),()=>{process.exitCode=1;}).catch(()=>{process.exitCode=1;});
