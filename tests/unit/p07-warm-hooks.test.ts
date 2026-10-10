@@ -16,7 +16,7 @@ it("actual optional load caller retains first dispatch failure before failing pr
  const hooks:LoadHooks={start:async()=>{started++;},phase:()=>{phase++;},cleanup:()=>[["failing profile",async()=>{const x=JSON.parse(readFileSync(join(root,"load-0.json"),"utf8"));expect(x.failure).toBe("actual transport boundary failure");expect(x.requests.length).toBe(2);expect(x.phases[0].endedMs).toBeTypeOf("number");expect(x.requests.every((r:{dispatchMs:number})=>typeof r.dispatchMs==="number")).toBe(true);inspected=true;throw new Error("profile stop boundary failure");}],["remaining profile",async()=>{remaining=true;}]]};
  await expect(loadScenario(root,0,false,hooks)).rejects.toThrow("actual transport boundary failure");
  expect({started,phase,inspected,remaining,stops:seam.stops,closes:seam.closes}).toEqual({started:1,phase:1,inspected:true,remaining:true,stops:1,closes:1});
- const x=JSON.parse(readFileSync(join(root,"load-0.json"),"utf8"));expect(x.diagnostic.cleanup.failures[0].error).toBe("profile stop boundary failure");expect(seam.fetches).toEqual([1,1,2,2]);
+ const x=JSON.parse(readFileSync(join(root,"load-0.json"),"utf8"));expect(x.diagnostic.profileCleanup.failures[0].error).toBe("profile stop boundary failure");expect(seam.fetches).toEqual([1,1,2,2]);
 });
 
 it("actual caller retains failed profiling-start duration before cleanup without timed dispatch",async()=>{

@@ -93,7 +93,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         await wait(10);
       }
     })());
-    if(hooks){const startedMs=performance.now();await hooks.start?.(server);result.diagnostic!.start={startedMs,endedMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()};save();}
+    if(hooks){const anchor={startedMs:performance.now(),endedMs:null as number|null,wallMs:Date.now(),memory:process.memoryUsage()};result.diagnostic!.start=anchor;try{await hooks.start?.(server);}finally{anchor.endedMs=performance.now();save();}}
     for(const phase of ["sustained","burst"] as const) {
       if(hooks){const startedMs=performance.now();hooks.phase?.(phase);result.diagnostic!.phaseAnchors.push({phase,startedMs,endedMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()});}
       const start=performance.now(),duration=phase==="sustained"?(acceptance?300000:6000):(acceptance?10000:3000),interval=phase==="sustained"?500:100;
