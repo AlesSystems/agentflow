@@ -1,0 +1,63 @@
+{
+  "scope": "Eleven explicitly attributed closed-resource P05 measurement/capture directories only; no wildcard deletion",
+  "operatorDataAccessed": false,
+  "openHandlesChecked": "lsof +D returned no holders before removal",
+  "directories": [
+    {
+      "name": "agentflow-http-EeMF2v",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-http-YVu3qP",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-http-sCXAo6",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-http-ve9vyf",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-measured-12yGBJ",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-measured-RvZfj6",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-measured-XRoLEj",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-measured-chc38E",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-measured-m5iHdX",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-zoom-confirm-PM3vSI",
+      "existed": true,
+      "removed": true
+    },
+    {
+      "name": "agentflow-p05-zoom-qpnDor",
+      "existed": true,
+      "removed": true
+    }
+  ],
+  "preserved": "Private evidence, raw failed/success logs, rejected helper bytes and baseline archive; timing-only/uncertain generic candidates untouched"
+}
