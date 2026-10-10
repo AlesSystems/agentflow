@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 planning is underway; P07 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 implementation is underway; P07 through W04 have not started.
 
 ## Package state
 
@@ -19,7 +19,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
-| P06 | CLI hooks | Planning | Baseline `787865132d89a9b03f613942f64945887bc13f95`; branch `codex/v1-p06-cli-hooks` | Astra plan approval pending |
+| P06 | CLI hooks | Implementing | Reviewed preservation `66800378ef93e617288408c46125a9b77a3c3816`; branch `codex/v1-p06-cli-hooks` | [Preservation checkpoint](#p06-preservation-checkpoint); delivery scheduling and full acceptance open |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
@@ -214,7 +214,41 @@ Main had no required checks or protection bypass. All P05 boxes are complete;
 global performance boxes remain open for the combined integration/release gates.
 The owned merged branch was removed and the primary checkout fast-forwarded.
 
-Next executable gate: plan P06 public-HTTP CLI hooks and durable bounded outbox,
+Following gate at integration: plan P06 public-HTTP CLI hooks and durable bounded outbox,
 obtain Astra medium approval, then implement without provider-specific agent
 dependencies. P07 remains a checkpoint with combined-load observer evidence;
 W01 through W04 remain open and no release has been published.
+
+## P06 preservation checkpoint
+
+Astra medium approved implementation plan SHA256
+`fc209b31a1d587f3fa1d8952503351b0179ffa8eb8acbb7bbdd02473affc63b1`
+before P06 source work. Independent review approved the implemented preservation
+boundary and bounded repairs at exact clean source
+`66800378ef93e617288408c46125a9b77a3c3816`; review SHA256 is
+`99e23bed96794742829f248f143aabf2779d3981f4de67205bf51e43d8d63773`.
+This checkpoint does not complete P06 or authorize a release.
+
+The unchanged source passed 153 focused tests in 12 files in 193.66 seconds,
+typechecking, scoped lint, and diff checks. Root matched 26 source hashes,
+36 proof hashes, and their private archive copies. The independent reviewer
+passed 18 selected repair tests, with 39 unselected tests, plus nine native HTTP
+semantics cases. Original counterexamples now show no proxy traffic, retained
+corrupt temporary files, and prompt FIFO rejection. Registration, concurrent FIFO
+reporting, quota-boundary crashes, acknowledgement ordering, filesystem faults,
+and retained identity use synthetic subprocess, public HTTP, SQLite, and file
+fixtures. Evidence remains private until the package acceptance receipt.
+
+Six valid-content cases exercise actual recovery writes at the logical global
+quota with nonempty mutation samples. Separate sparse-file cases establish only
+preflight accounting and bounded-artifact rejection. Logical file lengths and
+injected failures are distinct from physical disk exhaustion and power loss.
+The tests reuse the P05 production application build while executing current CLI
+source through pinned tsx; no rebuilt P06 or full-project acceptance is claimed.
+
+Next gate: implement the approved durable fair delivery ring, bounded retry turns,
+safe recovery diagnostics, lost acknowledgements, legacy identity, and restored
+prefix handling. Producer and PTY walkthroughs, throughput, rebuilt production,
+full regression suites, cleanup, final Standards and Spec review, PR publication,
+and integration remain open. P06 checkboxes stay unchecked. P07 still owns
+combined-load observer visibility; later packages have not started.
