@@ -1,3 +1,4 @@
+import {privateCopy,registerCopy,type CopyIdentity} from "../fixtures/p07-copy-permissions";
 import assert from "node:assert/strict";
 import {existsSync,mkdirSync,readFileSync,writeFileSync,copyFileSync} from "node:fs";
 import {join} from "node:path";
@@ -14,6 +15,7 @@ const source=process.env.AGENTFLOW_P07_DIAGNOSTIC_SOURCE!;assert(source);
 const original=JSON.parse(readFileSync(join(source,"load-0.json"),"utf8"));
 const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 const prepared=existsSync(join(root,"inputs.json"));
+assert(!existsSync(join(root,"attempts-started.json")),"ATTEMPT_NAMESPACE_ALREADY_USED");
 const inputs:ReturnType<typeof plan>=prepared?JSON.parse(readFileSync(join(root,"inputs.json"),"utf8")):plan(original.fixture.runs,0).filter(event=>event.phase==="burst");
 if(!prepared)for(const event of inputs){event.body.sequence+=100; if(event.message){event.message=`P07 diagnostic p${event.producer} q${event.body.sequence} ${event.body.eventId}`;event.body.payload.message=event.message;}}
 if(!prepared)mkdirSync(root,{mode:0o700});
@@ -21,8 +23,16 @@ if(!prepared)mkdirSync(root,{mode:0o700});
 if(!prepared)for(const name of ["A","B"]){const dir=join(root,name);mkdirSync(dir,{mode:0o700});const db=new Database(join(source,"load-0","agentflow.sqlite"),{readonly:true});try{await db.backup(join(dir,"agentflow.sqlite"));}finally{db.close();}copyFileSync(join(source,"load-0","credentials.json"),join(dir,"credentials.json"));}
 writeFileSync(join(root,"inputs.json"),JSON.stringify(inputs,null,2)+"\n",{mode:0o600});
 const starting=(dir:string)=>{const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});try{return {schema:db.prepare("SELECT type,name,sql FROM sqlite_master ORDER BY name").all(),counts:Object.fromEntries(["tasks","agents","runs","run_events","changes"].map(table=>[table,db.prepare(`SELECT count(*) n FROM ${table}`).get()])),runs:db.prepare("SELECT * FROM runs ORDER BY id").all(),mix:db.prepare("SELECT type,count(*) n FROM run_events GROUP BY type ORDER BY type").all(),integrity:db.pragma("integrity_check"),foreignKeys:db.pragma("foreign_key_check"),databaseHash:createHash("sha256").update(readFileSync(join(dir,"agentflow.sqlite"))).digest("hex")};}finally{db.close();}};
+const registryPath=join(root,"copy-identities.json");
+const registry:Record<string,CopyIdentity>=prepared?JSON.parse(readFileSync(registryPath,"utf8")):Object.fromEntries(["A","B"].map(name=>[name,registerCopy(join(root,name))]));
+if(!prepared)writeFileSync(registryPath,JSON.stringify(registry,null,2)+"\n",{mode:0o600});
+// All preparatory SQLite reads precede normalization on both invocation paths.
 const starts=[starting(join(root,"A")),starting(join(root,"B"))];assert.deepEqual(starts[0],starts[1]);writeFileSync(join(root,"starting.json"),JSON.stringify(starts,null,2)+"\n",{mode:0o600});
+const permissionFacts=Object.fromEntries(["A","B"].map(name=>[name,privateCopy(join(root,name),registry[name],true)]));
+writeFileSync(join(root,prepared?"execution-permissions.json":"prepare-permissions.json"),JSON.stringify(permissionFacts,null,2)+"\n",{mode:0o600});
 if(process.argv.includes("--prepare"))process.exit(0);
+const qualification=JSON.parse(readFileSync(process.env.AGENTFLOW_P07_QUALIFICATION!,"utf8"));assert.equal(qualification.reconciliationStatus,"qualified");assert.equal(qualification.failure,"");assert.equal(qualification.startupAttempts,1);
+writeFileSync(join(root,"attempts-started.json"),JSON.stringify({oldUsed:2,oldRemaining:0,newAllowed:2,started:[],qualificationRequired:true})+"\n",{mode:0o600,flag:"wx"});
 for(const name of ["A","B"]){
  const dir=join(root,name),observations=targets(inputs);
  const result={name,source,starting:starts[name==="A"?0:1],instrumentation:"same inspector CPU sampling; GC PerformanceObserver;100ms loop/runtime snapshots; no forced GC; fresh process, no300s controller warmup",observerWork:name==="A",observations,requests:[] as {eventId:string;runId:string;sequence:number;type:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;raw:string|null;ack:unknown;error:string|null}[],measuredStartedMs:null as number|null,measuredEndedMs:null as number|null,elapsedMs:null as number|null,failure:"",reconciliationStatus:"unfinalized",reconciliation:null as unknown,controllerProfile:null as unknown,serverProfile:null as unknown,browser:null as string|null,snapshots:[] as {path:string;method:string}[],cadence:null as unknown,http:null as unknown};
@@ -30,6 +40,8 @@ for(const name of ["A","B"]){
  let server:Awaited<ReturnType<typeof launch>>|undefined,tabs:Awaited<ReturnType<typeof pages>>|undefined,finish:(()=>Promise<unknown>)|undefined,observing=true;const observers:Promise<void>[]=[];
  async function marker(action:string){server!.child.stdin!.write(JSON.stringify({action,path:join(root,`${name}-server-profile.json`)})+"\n");const start=performance.now();for(;;){const line=server!.logs().split("\n").find(line=>line.startsWith("DIAGNOSTIC ")&&JSON.parse(line.slice(11)).action===action);if(line)return JSON.parse(line.slice(11));assert(performance.now()-start<10000,"PROFILE_MARKER_TIMEOUT");await wait(10);}}
  try{await flushBoundary(result,async()=>{
+  privateCopy(dir,registry[name]); // No SQLite preparation read follows this final gate.
+  const allowance=JSON.parse(readFileSync(join(root,"attempts-started.json"),"utf8"));allowance.started.push(name);writeFileSync(join(root,"attempts-started.json"),JSON.stringify(allowance)+"\n",{mode:0o600});
   server=await launch({dir,entry:"tests/fixtures/p07-diagnostic-runtime.ts",stdin:true});
   if(name==="A"){
    tabs=await pages(server,original.fixture.projectId);result.browser=tabs.browser.version();
