@@ -1,0 +1,49 @@
+{
+  "source": "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5",
+  "buildId": "-XFCApdUeMp9I9ZS7HRW5",
+  "target": ".impeccable/review/P05/task-attempt-evidence.png",
+  "sha256": "7628691b530aa9a9f5af084b3091a4d8cb435616a52be017428e1cf466940d0c",
+  "narrowTarget": ".impeccable/review/P05/attempt-narrow.png",
+  "narrowSha256": "7874d228c2bef2bca2cf5299ed27e0caad11c00b3d0177f511754c691445df8f",
+  "narrowLayout": {
+    "fonts": "loaded",
+    "width": 375,
+    "scrollWidth": 375,
+    "fullHeading": "implementation · LongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentityLongReportedIdentity",
+    "wrap": "anywhere"
+  },
+  "acceptedNameLength": 200,
+  "capturedAt": "2026-10-10T00:17:14.736Z",
+  "browser": "154.0.8037.99",
+  "synthetic": true,
+  "scope": "ROOT-released two scored finish-fix recaptures only; accepted200char unbroken identity; 375direct and desktop1440 complete current panel",
+  "layout": {
+    "fonts": "loaded",
+    "width": 1440,
+    "height": 2795,
+    "scrollWidth": 1440,
+    "panelScrollTop": 0,
+    "panelScrollHeight": 2795,
+    "header": {
+      "top": 24,
+      "bottom": 66.296875
+    },
+    "attempt": {
+      "top": 1321.828125,
+      "bottom": 2727.09375
+    },
+    "detail": {
+      "top": 1746.5625,
+      "bottom": 2727.09375
+    },
+    "evidence": {
+      "top": 2239.078125,
+      "bottom": 2256.078125
+    }
+  },
+  "sourceHashes": {
+    "src/components/tracking.tsx": "53652452a4fe37abfb14fadc5b2f2bbd1d6e3c7c6f4409da634fb158c6b04db4",
+    "src/components/tasks/detail.tsx": "e47116bb627dd71685e873f28f060348d55a20c6bdc0a39d58280d4ccf233a2b",
+    "src/app/globals.css": "4f287281e9530128a082d423f8acf69b8ccfa012a326ea1a03390973341a263e"
+  }
+}

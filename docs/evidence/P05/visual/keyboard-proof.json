@@ -1,0 +1,220 @@
+{
+  "synthetic": true,
+  "qualification": "Actual public API/production Chrome keyboard navigation and activation, not human attestation; stale fixture aged while stopped, not silence proof",
+  "steps": [
+    {
+      "step": "Agents navigation",
+      "navigation": "Tab",
+      "active": {
+        "tag": "A",
+        "name": "Agents",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Agents navigation",
+      "activation": "Enter"
+    },
+    {
+      "step": "Agent identity",
+      "navigation": "Tab",
+      "active": {
+        "tag": "A",
+        "name": "Synthetic keyboard tracking producer",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Agent identity",
+      "activation": "Enter"
+    },
+    {
+      "step": "Reported attempt",
+      "navigation": "Tab",
+      "active": {
+        "tag": "A",
+        "name": "implementation · Synthetic keyboard tracking producer",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Reported attempt",
+      "activation": "Enter"
+    },
+    {
+      "step": "Activity navigation",
+      "navigation": "Tab",
+      "active": {
+        "tag": "A",
+        "name": "Activity",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Activity navigation",
+      "activation": "Enter"
+    },
+    {
+      "step": "Activity task filter",
+      "navigation": "Tab",
+      "active": {
+        "tag": "INPUT",
+        "name": "",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Activity task filter",
+      "input": "keyboard typing",
+      "value": "195b2264-b28a-436e-a02a-4e1252928986"
+    },
+    {
+      "step": "Apply Activity filters",
+      "navigation": "Tab",
+      "active": {
+        "tag": "BUTTON",
+        "name": "Apply filters",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Apply Activity filters",
+      "activation": "Enter"
+    },
+    {
+      "step": "Load stored activity page",
+      "navigation": "Tab",
+      "active": {
+        "tag": "BUTTON",
+        "name": "Load more activity",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Load stored activity page",
+      "activation": "Enter"
+    },
+    {
+      "step": "Expand full reported message",
+      "navigation": "Tab",
+      "active": {
+        "tag": "SUMMARY",
+        "name": "Keyboard full report Full stored message remains available through native details. Full stored messa",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Expand full reported message",
+      "activation": "Space"
+    },
+    {
+      "step": "Collapse full reported message",
+      "activation": "Space"
+    },
+    {
+      "step": "Task from stored activity",
+      "navigation": "Tab",
+      "active": {
+        "tag": "A",
+        "name": "Synthetic shared task",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Task from stored activity",
+      "activation": "Enter"
+    },
+    {
+      "step": "Inline reported attempt",
+      "navigation": "Tab",
+      "active": {
+        "tag": "BUTTON",
+        "name": "implementation · Synthetic keyboard tracking producer",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Inline reported attempt",
+      "activation": "Enter"
+    },
+    {
+      "step": "Begin stale tracking closure",
+      "navigation": "Tab",
+      "active": {
+        "tag": "BUTTON",
+        "name": "Close stale tracking",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Begin stale tracking closure",
+      "activation": "Enter"
+    },
+    {
+      "step": "Required closure reason",
+      "navigation": "Tab",
+      "active": {
+        "tag": "TEXTAREA",
+        "name": "",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Required closure reason",
+      "input": "keyboard typing",
+      "value": "Synthetic keyboard closure keeps external execution uncertain"
+    },
+    {
+      "step": "Background public change refresh",
+      "before": {
+        "focused": true,
+        "focusVisible": true,
+        "value": "Synthetic keyboard closure keeps external execution uncertain"
+      },
+      "after": {
+        "focused": true,
+        "focusVisible": true,
+        "value": "Synthetic keyboard closure keeps external execution uncertain"
+      }
+    },
+    {
+      "step": "Confirm synthetic tracking closure",
+      "navigation": "Tab",
+      "active": {
+        "tag": "BUTTON",
+        "name": "Confirm tracking closure",
+        "focusVisible": true,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      }
+    },
+    {
+      "step": "Confirm synthetic tracking closure",
+      "activation": "Enter"
+    }
+  ]
+}
