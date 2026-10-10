@@ -121,8 +121,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
         if(job.kind==="registration"||"complete"in reply&&reply.complete)done.add(job.id);
         retries.delete(job.id);
         if(done.size===jobs.length)return blockedExit;
-        // A run with a remaining FIFO event gets a new first turn.
-        attempted.delete(job.id);continue;
+        continue;
       }
       const count=(retries.get(job.id)?.count??0)+1;
       retries.set(job.id,{count,at:performance.now()+backoff(count,reply.delay)});
