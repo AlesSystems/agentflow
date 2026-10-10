@@ -291,9 +291,9 @@ export function openapiDocument() {
     openapi: "3.1.0",
     info: {
       title: "AgentFlow local API",
-      version: "v1-p05-transport",
+      version: "v1-p05",
       description:
-        "Implemented P01–P04 operations and the P05 native stream transport. Activity, browser live tracking and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
+        "Implemented P01–P05 operations, including native SSE, joined tracking and Activity snapshots, and the browser subscription/recovery owner. Producer CLI hooks and workflows remain planned. Metadata is inert; credentials never belong in URLs. Cookie mutations require exact Origin and same-origin Fetch Metadata. Reporter mutations permit originless requests or an exact allowed local Origin. JSON bodies are capped at 64 KiB and five seconds. Mutation budget is installation-wide 100 per second with burst 200.",
     },
     servers: [{ url: "http://127.0.0.1:3000" }],
     paths,
