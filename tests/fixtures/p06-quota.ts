@@ -41,13 +41,15 @@ export function seedRunToBytes(root: string,id: string,target: number) {
   if(logicalBytes(directory)!==target)throw new Error("quota fixture length mismatch");
   return sequence;
 }
-export async function globalQuotaFixture(server: Awaited<ReturnType<typeof import("./server").launch>>) {
+export async function globalQuotaFixture(server: Awaited<ReturnType<typeof import("./server").launch>>, prepare?: (root:string,ids:string[],sequences:number[])=>number) {
   const {registeredRun}=await import("./p06-cli");const {openOutbox}=await import("../../src/cli/outbox");
   const f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR,config={port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},ids=[f.runId];
   const initializer=await openOutbox(config,performance.now()+5000);
   try{for(let i=0;i<10;i++){const id=randomUUID(),response=await fetch(server.url+"/api/v1/runs",{method:"POST",headers:{Authorization:`Bearer ${config.token}`,"Content-Type":"application/json","Idempotency-Key":randomUUID()},body:JSON.stringify({id,projectId:f.projectId,agentId:f.agentId,purpose:"planning"})});if(response.status!==201||(await initializer.initializeRun(id)).kind!=="delivered")throw new Error("quota fixture public initialization failed");ids.push(id);}}finally{initializer.close();}
   const rootBytes=readdirSync(root).reduce((sum,name)=>sum+(lstatSync(join(root,name)).isFile()?lstatSync(join(root,name)).size:0),0),first=9*1024*1024;
-  const sequences=[seedRunToBytes(root,ids[0],first),seedRunToBytes(root,ids[1],first)];let remaining=GLOBAL_BYTES-60000-rootBytes-2*first;
+  const sequences=[seedRunToBytes(root,ids[0],first),seedRunToBytes(root,ids[1],first)];
+  const reserved=prepare?.(root,ids,sequences);
+  let remaining=reserved===undefined?GLOBAL_BYTES-60000-rootBytes-2*first:GLOBAL_BYTES-logicalBytes(root)-reserved+ids.slice(2).reduce((sum,id)=>sum+logicalBytes(join(root,id)),0);
   for(let i=2;i<ids.length;i++){const size=Math.floor(remaining/(ids.length-i));sequences.push(seedRunToBytes(root,ids[i],size));remaining-=size;}
   return {...f,root,config,ids,sequences};
 }

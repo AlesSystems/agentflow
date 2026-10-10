@@ -62,7 +62,7 @@ it("recovers a descriptor-owned event temp whose partial write ends inside a UTF
   } finally{await server.stop();}
 });
 
-it.each(["descriptor","partial-record","record-temp","record","partial-state","state-temp"])("credits existing publication copies exactly at the logical global ceiling after %s",async phase=> {
+it.each(["descriptor","partial-record","record-temp","record","partial-state","state-temp"])("rejects oversized sparse metadata before recovery at the logical global ceiling after %s",async phase=> {
   const {createFile,syncDirectory}=await import("../../src/server/filesystem");
   const {renameSync,unlinkSync,writeFileSync,openSync,ftruncateSync,closeSync}=await import("node:fs");
   const server=await launch(),f=await registeredRun(server);
@@ -83,7 +83,7 @@ it.each(["descriptor","partial-record","record-temp","record","partial-state","s
     expect(logicalBytes(root)+reserved).toBe(100*1024*1024);
     const samples:number[]=[];const sample=()=>samples.push(logicalBytes(root));
     await expect(openOutbox({port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},performance.now()+5000,{createFile(path,value){createFile(path,value);sample();},renameSync(from,to){renameSync(from,to);sample();},unlinkSync(path){if(path===filler)throw new Error("fixture stops before unrelated abandoned-temp cleanup");unlinkSync(path);sample();},syncDirectory(path){syncDirectory(path);sample();}})).rejects.toThrow("invalid_file");
-    expect(samples.every(bytes=>bytes<=100*1024*1024)).toBe(true);
+    expect(samples).toEqual([]);
     expect(JSON.parse(readFileSync(statePath,"utf8")).allocatedThrough).toBe(1);
   }finally{await server.stop();}
 });
@@ -155,4 +155,36 @@ it("serializes racing independent CLI admissions at the global ceiling without d
     return state.allocatedThrough-f.sequences[index];
   });
   expect(allocations.sort()).toEqual([0,1]);expect(logicalBytes(f.root)).toBeLessThanOrEqual(100*1024*1024);
+});
+
+it.each(["descriptor","partial-record","record-temp","record","partial-state","state-temp"])("recovers valid immutable records with nonempty mutation samples at the exact global ceiling after %s",async phase=> {
+  const {globalQuotaFixture,GLOBAL_BYTES}=await import("../fixtures/p06-quota");
+  const {createFile,syncDirectory}=await import("../../src/server/filesystem");
+  const {writeFileSync,renameSync,unlinkSync,readdirSync}=await import("node:fs");
+  const server=await launch();
+  let record: {formatVersion:number;body:Record<string,unknown>;digest:string},clean:Record<string,unknown>,filename="",reserved=0;
+  try {
+    const f=await globalQuotaFixture(server,(root,ids,sequences)=> {
+      const directory=join(root,ids[0]),statePath=join(directory,"state.json"),old=JSON.parse(readFileSync(statePath,"utf8"));
+      const body={schemaVersion:1,eventId:randomUUID(),runId:ids[0],sequence:sequences[0]+1,type:"run.progress",occurredAt:"2026-10-10T00:00:00.000Z",payload:{message:"exact retained original"}};
+      record={formatVersion:1,body,digest:canonicalDigest(body)};clean={...old,allocatedThrough:body.sequence};filename=`${body.sequence}-${body.eventId}.json`;
+      const recordText=JSON.stringify(record),stateText=JSON.stringify(clean),peak=Buffer.byteLength(recordText)+Buffer.byteLength(stateText);
+      writeFileSync(statePath,JSON.stringify({...clean,pending:{record,filename,remainingPeak:peak}}));
+      let credit=0;
+      if(phase==="partial-record"||phase==="record-temp") {const bytes=Buffer.from(recordText),copy=phase==="partial-record"?bytes.subarray(0,Math.floor(bytes.length/2)):bytes;writeFileSync(join(directory,filename+".tmp"),copy,{mode:0o600});credit+=copy.length;}
+      if(["record","partial-state","state-temp"].includes(phase)){writeFileSync(join(directory,filename),recordText,{mode:0o600});credit+=Buffer.byteLength(recordText);}
+      if(phase==="partial-state"||phase==="state-temp"){const bytes=Buffer.from(stateText),copy=phase==="partial-state"?bytes.subarray(0,Math.floor(bytes.length/2)):bytes;writeFileSync(statePath+".tmp",copy,{mode:0o600});credit+=copy.length;}
+      reserved=peak-credit;return reserved;
+    });
+    expect(logicalBytes(f.root)+reserved).toBe(GLOBAL_BYTES);
+    const directory=join(f.root,f.runId),samples:{global:number;run:number}[]=[];
+    const sample=(path:string)=>{if(path===directory||path.startsWith(directory+"/"))samples.push({global:logicalBytes(f.root),run:logicalBytes(directory)});};
+    const outbox=await openOutbox(f.config,performance.now()+5000,{createFile(path,value){createFile(path,value);sample(path);},renameSync(from,to){renameSync(from,to);sample(String(to));},unlinkSync(path){unlinkSync(path);sample(String(path));},syncDirectory(path){syncDirectory(path);sample(path);}});
+    outbox.close();
+    expect(samples.length).toBeGreaterThan(0);expect(samples.every(s=>s.global<=GLOBAL_BYTES&&s.run<=RUN_BYTES)).toBe(true);
+    expect(JSON.parse(readFileSync(join(directory,"state.json"),"utf8"))).toEqual(clean!);
+    expect(JSON.parse(readFileSync(join(directory,filename),"utf8"))).toEqual(record!);
+    expect(readdirSync(directory).filter(name=>/^\d+-/.test(name))).toHaveLength(f.sequences[0]+1);
+    expect(readdirSync(directory).some(name=>name.endsWith(".tmp"))).toBe(false);
+  }finally{await server.stop();}
 });
