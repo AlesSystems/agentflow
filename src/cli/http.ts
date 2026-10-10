@@ -8,11 +8,13 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
   if (performance.now() >= end) return { kind: "retryable", delay: 0 };
   const agent = new Agent({ proxyEnv: {} as NodeJS.ProcessEnv });
   let active: ReturnType<typeof httpRequest> | undefined;
+  let responseStarted=false,timedOut=false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const response = await new Promise<{ status: number; headers: Record<string,string | string[] | undefined>; bytes: Buffer; oversized?: boolean }>((resolve,reject) => {
       const payload = body ? JSON.stringify(body) : undefined;
       active = httpRequest({ hostname: "127.0.0.1", port: config.port, path: `/api/v1${path}`, method: body ? "POST" : "GET", agent, headers: { Host: `127.0.0.1:${config.port}`, Authorization: `Bearer ${config.token}`, ...(body ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload!) } : {}), ...(key ? { "Idempotency-Key": key } : {}) } }, incoming => {
+        responseStarted=true;
         const status = incoming.statusCode ?? 0;
         if (status === 429 || status === 503 || status >= 300 && status < 400) {
           resolve({status,headers:incoming.headers,bytes:Buffer.alloc(0)}); incoming.destroy(); return;
@@ -28,7 +30,7 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
         incoming.on("aborted", () => reject(new Error("response interrupted")));
       });
       active.on("error",reject);
-      timer = setTimeout(() => active?.destroy(new Error("request deadline")),Math.max(1,end-performance.now()));
+      timer = setTimeout(() => {timedOut=true;active?.destroy(new Error("request deadline"));},Math.max(1,end-performance.now()));
       active.end(payload);
     });
     if (response.status === 429 || response.status === 503) {
@@ -52,6 +54,6 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
     return { kind: "delivered", data: parsed.data, generation: generation as string };
   } catch (error) {
     if (error instanceof CliError) throw error;
-    return { kind: "retryable", delay: 100 };
+    return responseStarted&&!timedOut?{kind:"blocked",code:"invalid_response"}:{ kind: "retryable", delay: 100 };
   } finally { clearTimeout(timer); active?.destroy(); agent.destroy(); }
 }
