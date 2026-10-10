@@ -1,10 +1,10 @@
 import {it,expect,vi,afterEach} from "vitest";
 const state=vi.hoisted(()=>({now:0,stops:0,launches:0,launchThrow:false,thrown:undefined as unknown,stopFails:false,bodyFails:false,writeFails:false,armed:false,error:new Error("first native body error"),io:new Error("native save ENOSPC"),stop:new Error("first stop error")}));
 vi.mock("node:fs",async()=>({...await vi.importActual<typeof import("node:fs")>("node:fs"),cpSync:()=>{}}));
-vi.mock("../fixtures/server",()=>({freePort:async()=>12345,launch:async()=>{state.launches++;if(state.launchThrow)throw state.thrown;return ({url:"http://127.0.0.1:12345",credentials:()=>({reporterToken:"synthetic"}),stop:async()=>{state.stops++;if(state.stopFails&&state.stops===1)throw state.stop;}});}}));
-vi.mock("../../src/contracts/responses",()=>({tasksResponse:{parse:(x:unknown)=>x},taskDetailResponse:{parse:(x:unknown)=>x},boardResponse:{parse:(x:unknown)=>x},overviewResponse:{parse:(x:unknown)=>x}}));
-vi.mock("../../src/contracts/observations",()=>({eventResponse:{parse:(x:unknown)=>x},eventsResponse:{parse:(x:unknown)=>x}}));
-vi.mock("../../src/contracts/tracking",()=>({trackingRunsResponse:{parse:(x:unknown)=>x}}));
+vi.mock("../fixtures/server",()=>({freePort:async()=>12345,launch:async()=>{state.launches++;if(state.launchThrow)throw state.thrown;return ({url:"http://127.0.0.1:12345",credentials:()=>({reporterToken:"synthetic"}),stop:async()=>{state.stops++;state.now+=20;if(state.stopFails&&state.stops===1)throw state.stop;}});}}));
+vi.mock("../../src/contracts/responses",()=>({tasksResponse:{parse:(x:unknown)=>{state.now+=50;return x;}},taskDetailResponse:{parse:(x:unknown)=>{state.now+=50;return x;}},boardResponse:{parse:(x:unknown)=>{state.now+=50;return x;}},overviewResponse:{parse:(x:unknown)=>{state.now+=50;return x;}}}));
+vi.mock("../../src/contracts/observations",()=>({eventResponse:{parse:(x:unknown)=>{state.now+=50;return x;}},eventsResponse:{parse:(x:unknown)=>{state.now+=50;return x;}}}));
+vi.mock("../../src/contracts/tracking",()=>({trackingRunsResponse:{parse:(x:unknown)=>{state.now+=50;return x;}}}));
 import {nativeCompare} from "../fixtures/p07-native";
 import {ordinaryStages,ordinaryBoundary} from "../fixtures/p07-ordinary";
 const seed={projectId:"synthetic",tasks:["synthetic-task"],runs:["00000000-0000-4000-8000-000000000001"],agents:[],historic:["synthetic-history"],qualification:"controlled native mock"};
@@ -38,4 +38,14 @@ it("actual native initial write failure leaves unstarted clocks/null distributio
 });
 it("actual ordinary initial write aborts work but final summary remains reachable",async()=>{
  let work=0,summary=0,exit=0;const io=new Error("initial save IO");await expect(ordinaryBoundary({failures:[]},async()=>{work++;},()=>{throw io;},()=>{summary++;},()=>{exit++;})).rejects.toBe(io);expect(work).toBe(0);expect(summary).toBe(1);expect(exit).toBeGreaterThan(0);
+});
+
+it("actual native success keeps accepted counts and JSONparse timing before schema work",async()=>{
+ setup();const receipt={comparisons:[] as unknown[],failures:[] as string[]};vi.stubGlobal("fetch",async(_url:string,init:{method:string})=>({status:init.method==="POST"?201:200,ok:true,headers:new Headers({"agentflow-generation":"known header"}),text:async()=>{state.now+=200;return "{}";}}));
+ await nativeCompare({index:1,baseSource:"synthetic",seed,seedDir:"synthetic",root:"synthetic",counts:{samples:1,producers:1},acceptance:false,receipt,save:()=>{}});
+ const result=receipt.comparisons[0] as {status:string;requests:{ms:number;warmup:boolean}[];operations:Record<string,{base:{count:number};head:{count:number}}>};expect(result.status).toBe("finalized");expect(result.requests).toHaveLength(154);expect(result.requests.filter(row=>!row.warmup)).toHaveLength(14);expect(result.requests.every(row=>row.ms===300)).toBe(true);expect(Object.values(result.operations).every(row=>row.base.count===1&&row.head.count===1)).toBe(true);expect(state.stops).toBe(2);
+});
+it("actual ordinary/native nesting retains work error despite native persistence failure and still summarizes",async()=>{
+ setup();state.bodyFails=true;state.stopFails=true;const receipt={comparisons:[] as unknown[],failures:[] as string[]};let summary=0,exit=0;const write=()=>{if(state.armed)throw state.io;};
+ await expect(ordinaryBoundary(receipt,async()=>{await ordinaryStages({repetitions:3,load:async()=>{},resource:async()=>{},flush:async()=>{},prepareNative:async()=>seed,compare:async index=>{await nativeCompare({index,baseSource:"synthetic",seed,seedDir:"synthetic",root:"synthetic",counts:{samples:1,producers:1},acceptance:false,receipt,save:write});}});},write,()=>{summary++;},()=>{exit++;})).rejects.toBe(state.error);expect(summary).toBe(1);expect(exit).toBeGreaterThan(0);expect(receipt.comparisons).toHaveLength(1);expect(state.stops).toBe(2);
 });
