@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { readFileSync,writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { main } from "../../src/cli/main";
 import { openOutbox } from "../../src/cli/outbox";
 import { createFile,syncDirectory } from "../../src/server/filesystem";
