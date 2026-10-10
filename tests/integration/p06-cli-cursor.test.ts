@@ -41,3 +41,8 @@ it("targeted flush leaves global cursor unchanged and missing/new ring identitie
     expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toEqual([`/api/v1/runs/${x.ids[0]}/events`,`/api/v1/runs/${x.ids[1]}/events`,`/api/v1/runs/${added}/events`]);
   }finally{await x.proxy.close();await x.server.stop();}
 });
+
+it("keeps the next unattempted cursor when validation consumes its entire bounded turn",async()=> {
+  const x=await fixture();
+  try{const original=readFileSync(join(x.config.outbox,"metadata.json"));expect((await child(x.f,"validation")).code).toBe(2);expect(x.attempts).toEqual([]);expect(readFileSync(join(x.config.outbox,"metadata.json"))).toEqual(original);expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toEqual(x.ids.map(id=>`/api/v1/runs/${id}/events`));}finally{await x.proxy.close();await x.server.stop();}
+});
