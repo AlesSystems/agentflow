@@ -12,12 +12,13 @@ import { cliConfig } from "../../src/cli/config";
 import { openOutbox } from "../../src/cli/outbox";
 import { canonicalDigest } from "../../src/domain/request-digest";
 import { taskDetailResponse, tasksResponse, boardResponse, overviewResponse } from "../../src/contracts/responses";
-import { eventResponse, eventsResponse } from "../../src/contracts/observations";
+import { eventResponse,eventsResponse } from "../../src/contracts/observations";
 import { trackingRunsResponse } from "../../src/contracts/tracking";
 import { launch, pair, freePort } from "../fixtures/server";
 import { publicProxy } from "../fixtures/p06-proxy";
 import { seedPerformance } from "../fixtures/p06-performance";
 
+import {collectFlush,validateFlush,type FlushFacts,type Queued,type Attempt} from "../fixtures/p07-flush";
 import { loadScenario, resourceProof } from "../fixtures/p07-load";
 const baselineSha = "36f6d1bc4699c706e3f57a17cfcc85a1576c648b";
 const mode = process.argv[2];
@@ -71,19 +72,16 @@ async function flushRun(index: number) {
   let proxy: Awaited<ReturnType<typeof publicProxy>> | undefined;
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   let outbox: Awaited<ReturnType<typeof openOutbox>> | undefined;
-  const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as { body: Record<string,unknown>; digest: string; bytes: number; fileSha256: string }[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as { eventId: string; sequence: number; digest: string; bytes: number; status: number }[], reconciliation: null as unknown, failure: "" };
+  const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as Queued[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as Attempt[], reconciliationRaw: null as FlushFacts|null, reconciliation: null as unknown, failure: "" };
   receipt.flush.push(result); save();
   try {
     server = await launch({ dir });
     const token = join(inputs,"reporter-token"); writeFileSync(token, server.credentials().reporterToken, { mode: 0o600 });
+    const pendingRequests=new WeakMap<object,Attempt>();
     proxy = await publicProxy(server, (req, body, reply) => {
-      if (reply && req.method === "POST" && req.url?.endsWith("/events")) {
-        const event = JSON.parse(body.toString());
-        result.requests.push({ eventId: event.eventId, sequence: event.sequence, digest: canonicalDigest(event), bytes: body.length, status: reply.status });
-        result.requestCounts.attempts++;
-        if ([200,201].includes(reply.status)) result.requestCounts.accepted++;
-        else if (reply.status === 429) result.requestCounts.limited429++;
-        else result.requestCounts.errors++;
+      if(req.method==="POST"&&req.url?.endsWith("/events")){
+        if(!reply){const attempt={requestBytesBase64:body.toString("base64"),responseBytesBase64:null,status:null,generation:null};result.requests.push(attempt);pendingRequests.set(req,attempt);result.requestCounts.attempts++;}
+        else{const attempt=pendingRequests.get(req)!;attempt.responseBytesBase64=reply.body.toString("base64");attempt.status=reply.status;attempt.generation=reply.generation;if([200,201].includes(reply.status))result.requestCounts.accepted++;else if(reply.status===429)result.requestCounts.limited429++;else result.requestCounts.errors++;}
       }
       return undefined;
     });
@@ -115,7 +113,7 @@ async function flushRun(index: number) {
         const bytes = readFileSync(join(outboxDir,runId,filename));
         const record = JSON.parse(bytes.toString());
         assert.equal(record.digest,canonicalDigest(record.body));
-        result.queuedRecords.push({ body: record.body, digest: record.digest, bytes: bytes.length, fileSha256: hash(bytes) });
+        result.queuedRecords.push({ body: record.body, digest: record.digest, bytes: bytes.length, fileSha256: hash(bytes), filename: `${runId}/${filename}`, originalBytesBase64: bytes.toString("base64") });
       }
     }
     result.queuedRecords.sort((a,b)=>String(a.body.runId).localeCompare(String(b.body.runId))||Number(a.body.sequence)-Number(b.body.sequence));
@@ -130,35 +128,11 @@ async function flushRun(index: number) {
       if (performance.now()-measured >= 120000) break;
     }
     result.measuredEndedMs=performance.now(); result.elapsedMs = result.measuredEndedMs-measured;
-    const db = new Database(join(dir,"agentflow.sqlite"), { readonly: true });
-    try {
-      const actual = db.prepare("SELECT event_id,run_id,sequence,digest,body FROM run_events WHERE run_id IN ("+fixture.runs.map(()=>"?").join(",")+") ORDER BY run_id,sequence").all(...fixture.runs) as {event_id:string;run_id:string;sequence:number;digest:string;body:string}[];
-      const ids = new Set(actual.map(row=>row.event_id));
-      result.accepted = actual.length; result.duplicate = actual.length-ids.size;
-      result.missing = result.queuedRecords.filter(row=>!ids.has(String(row.body.eventId))).length;
-      for (const row of result.queuedRecords) {
-        const persisted = actual.find(event=>event.event_id===row.body.eventId);
-        assert(persisted,"immutable queued event missing");
-        assert.equal(persisted.digest,row.digest); assert.equal(persisted.sequence,row.body.sequence);
-        const { receivedAt, ...storedInput } = JSON.parse(persisted.body);
-        assert.equal(typeof receivedAt,"string"); assert.equal(canonicalDigest(storedInput),row.digest);
-      }
-      const api: unknown[] = [];
-      for (const runId of fixture.runs) {
-        let cursor: string | null = null;
-        do {
-          const reply: Response = await fetch(server.url+`/api/v1/runs/${runId}/events?limit=100`+(cursor?`&cursor=${encodeURIComponent(cursor)}`:""),{headers:{Authorization:"Bearer "+server.credentials().reporterToken}});
-          assert.equal(reply.status,200);
-          const page = eventsResponse.parse(await reply.json()); api.push(...page.data.items); cursor=page.data.nextCursor;
-        } while(cursor);
-      }
-      assert.deepEqual((api as {eventId:string}[]).map(e=>e.eventId).sort(),[...ids].sort());
-      result.reconciliation = { tasks: (db.prepare("SELECT count(*) n FROM tasks").get() as {n:number}).n, agents: (db.prepare("SELECT count(*) n FROM agents").get() as {n:number}).n, runs: (db.prepare("SELECT count(*) n FROM runs").get() as {n:number}).n, events: (db.prepare("SELECT count(*) n FROM run_events").get() as {n:number}).n, apiCount: api.length, immutableIdsSha256: hash(JSON.stringify([...ids].sort())) };
-      assert.equal((result.reconciliation as {events:number}).events,counts.events+counts.queued);
-      result.reconciliationStatus="finalized";
-    } finally { db.close(); }
-    assert.equal(result.missing,0); assert.equal(result.duplicate,0); assert.equal(result.accepted,counts.queued);
-    assert.equal(result.requestCounts.errors,0);
+    const facts:FlushFacts={expected:{...counts,runs:fixture.runs},queued:result.queuedRecords,attempts:result.requests,stdout:result.flushInvocations.map(invocation=>invocation.stdout),generation:null,database:null,pages:[],files:[]};
+    result.reconciliationRaw=facts;save();
+    await collectFlush(facts,dir,outboxDir,server);
+    result.reconciliation=validateFlush(facts);
+    result.accepted=counts.queued;result.missing=0;result.duplicate=0;result.reconciliationStatus="finalized";
     if (acceptance) assert(result.elapsedMs<120000,"1,000-event flush exceeds 120 seconds");
   } catch (error) {
     if(result.measuredStartedMs!==null&&result.measuredEndedMs===null){result.measuredEndedMs=performance.now();result.elapsedMs=result.measuredEndedMs-result.measuredStartedMs;}
@@ -226,7 +200,7 @@ try {
   const baseBuildId = readFileSync(join(baseBuildDir,"BUILD_ID"),"utf8").trim();
   assert.equal(baseBuildId, readFileSync(".next/BUILD_ID","utf8").trim(), "P06 runtime source-equivalent retained head assets required");
   cpSync(baseBuildDir,join(baseSource,".next"),{recursive:true});
-  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P07_BASE_BUILD_DIR ? "explicit retained source-equivalent assets" : "ordinary fresh-install assets copied for identical runtime/build inputs",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p07.ts","tests/fixtures/p07-load.ts","tests/fixtures/p07-protocol.ts","tests/fixtures/p07-runtime.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P06 runtime source bytes equal head runtime before helper-only changes. Ordinary fresh-install assets reused for identical runtime/build inputs; native HTTP uses each label's source."};
+  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P07_BASE_BUILD_DIR ? "explicit retained source-equivalent assets" : "ordinary fresh-install assets copied for identical runtime/build inputs",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p07.ts","tests/fixtures/p07-load.ts","tests/fixtures/p07-protocol.ts","tests/fixtures/p07-runtime.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-resource-boundary.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P06 runtime source bytes equal head runtime before helper-only changes. Ordinary fresh-install assets reused for identical runtime/build inputs; native HTTP uses each label's source."};
   save();
   for(let index=0;index<counts.repetitions;index++) { console.log(JSON.stringify({stage:"load",index,acceptance})); const result = await loadScenario(root,index,acceptance); (receipt as unknown as Record<string,unknown[]>).loads ??= []; (receipt as unknown as Record<string,unknown[]>).loads.push(result); save(); }
   (receipt as unknown as Record<string,unknown>).resources = await resourceProof(root,acceptance); save();

@@ -4,6 +4,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium, expect, type Page } from "@playwright/test";
 import Database from "better-sqlite3";
+import {resourceBoundary,type ResourceInterval} from "./p07-resource-boundary";
 import { launch, pair } from "./server";
 import { seedPerformance } from "./p06-performance";
 import { eventsResponse,eventResponse } from "../../src/contracts/observations";
@@ -130,15 +131,15 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
 export async function resourceProof(root:string,acceptance:boolean){
   const dir=join(root,"resources"),proof=join(root,"resources.json");
   const fixture=await seedPerformance(dir,acceptance?{tasks:1000,events:10000,producers:10}:{tasks:12,events:20,producers:2},Date.now()-3600000);
-  const result={status:"unfinalized",dir,plannedCycles:acceptance?100:2,cycles:0,before:null as unknown,after:null as unknown,shutdown:null as unknown,countsBefore:null as unknown,countsAfter:null as unknown,failure:null as string|null,startedMs:performance.now(),endedMs:null as number|null};
+  const result:ResourceInterval & {dir:string;plannedCycles:number;cycles:number;before:unknown;after:unknown;shutdown:unknown;countsBefore:unknown;countsAfter:unknown;startedMs:number}={status:"unfinalized",dir,plannedCycles:acceptance?100:2,cycles:0,before:null as unknown,after:null as unknown,shutdown:null as unknown,countsBefore:null as unknown,countsAfter:null as unknown,failure:null as string|null,startedMs:performance.now(),endedMs:null as number|null};
   const save=()=>writeFileSync(proof,JSON.stringify(result,null,2)+"\n",{mode:0o600});
   const counts=()=>{const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});try{return Object.fromEntries(["tasks","run_events","runs","changes"].map(table=>[table,(db.prepare(`SELECT count(*) n FROM ${table}`).get() as {n:number}).n]));}finally{db.close();}};
   let server:Awaited<ReturnType<typeof launch>>|undefined,tabs:Awaited<ReturnType<typeof pages>>|undefined;
-  try{
+  let ordinal=0;
+  async function diagnose(){const id=++ordinal;server!.child.stdin!.write(JSON.stringify({id})+"\n");const start=performance.now();for(;;){const line=server!.logs().split("\n").find(line=>line.startsWith("MEASURE ")&&JSON.parse(line.slice(8)).id===id);if(line)return JSON.parse(line.slice(8));assert(performance.now()-start<10000,"METRICS_TIMEOUT");await wait(25);}}
+  await resourceBoundary(result,async()=>{
     server=await launch({dir,entry:"tests/fixtures/p07-runtime.ts",nodeArgs:["--expose-gc"],stdin:true});
     tabs=await pages(server,fixture.projectId);await wait(1000);
-    let ordinal=0;
-    async function diagnose(){const id=++ordinal;server!.child.stdin!.write(JSON.stringify({id})+"\n");const start=performance.now();for(;;){const line=server!.logs().split("\n").find(line=>line.startsWith("MEASURE ")&&JSON.parse(line.slice(8)).id===id);if(line)return JSON.parse(line.slice(8));assert(performance.now()-start<10000,"METRICS_TIMEOUT");await wait(25);}}
     result.countsBefore=counts();result.before=await diagnose();
     const cookie=await pair(server);
     const snapshot=await (await fetch(server.url+"/api/v1/overview?timezone=UTC",{headers:{Cookie:cookie}})).json();
@@ -148,12 +149,12 @@ export async function resourceProof(root:string,acceptance:boolean){
     await wait(500);result.after=await diagnose();result.countsAfter=counts();assert.deepEqual(result.countsAfter,result.countsBefore);
     const before=result.before as {memory:{heapUsed:number};streams:{leases:number}},after=result.after as typeof before;
     assert.equal(after.streams.leases,before.streams.leases);if(acceptance)assert(after.memory.heapUsed<=before.memory.heapUsed*1.2,"SERVER_HEAP_BUDGET");
-    await tabs.browser.close();tabs=undefined;await wait(200);
-    const closed=await diagnose();assert.equal(closed.streams.leases,0);assert.equal(closed.streams.timers,0);
-    await server.stop();const line=server.logs().split("\n").find(line=>line.startsWith("SHUTDOWN "));assert(line,"SHUTDOWN_METRICS_MISSING");result.shutdown=JSON.parse(line.slice(9));
-    const shutdown=result.shutdown as {streams:{leases:number;timers:number};runtime:{activeSockets:number;requests:number}};assert.equal(shutdown.streams.leases,0);assert.equal(shutdown.streams.timers,0);assert.equal(shutdown.runtime.activeSockets,0);assert.equal(shutdown.runtime.requests,0);
-    result.status="finalized";
-  }catch(error){result.failure=(error as Error).message;throw error;}
-  finally{result.endedMs=performance.now();save();await tabs?.browser.close();await server?.stop();}
+  },[
+    ["close tabs",async()=>{await tabs?.browser.close();tabs=undefined;}],
+    ["closed stream checks",async()=>{if(!server)return;await wait(200);const closed=await diagnose();assert.equal(closed.streams.leases,0);assert.equal(closed.streams.timers,0);}],
+    ["stop server",async()=>{await server?.stop();}],
+    ["shutdown checks",async()=>{if(!server)return;const line=server.logs().split("\n").find(line=>line.startsWith("SHUTDOWN "));assert(line,"SHUTDOWN_METRICS_MISSING");result.shutdown=JSON.parse(line.slice(9));const shutdown=result.shutdown as {streams:{leases:number;timers:number};runtime:{activeSockets:number;requests:number}};assert.equal(shutdown.streams.leases,0);assert.equal(shutdown.streams.timers,0);assert.equal(shutdown.runtime.activeSockets,0);assert.equal(shutdown.runtime.requests,0);}],
+    ["remaining teardown",async()=>{await tabs?.browser.close();await server?.stop();}]
+  ],save);
   return result;
 }
