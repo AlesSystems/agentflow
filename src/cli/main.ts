@@ -39,7 +39,7 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,before
   if (ack.eventId.toLowerCase() !== String(record.body.eventId).toLowerCase() || ack.runId.toLowerCase() !== String(record.body.runId).toLowerCase() || ack.acceptedSequence !== record.body.sequence) return {kind:"blocked" as const,code:"ack_identity_mismatch"};
   const validated = await outbox.validateRemote(job.runId,reply.generation,end);
   if (validated.kind !== "delivered") return validated;
-  await outbox.acknowledge(record,reply.generation,end); emit({...ack,generation:reply.generation}); return {...reply,complete:!await outbox.next(job.runId,end)};
+  const result=await outbox.acknowledge(record,reply.generation,end); emit({...ack,generation:reply.generation}); return {...reply,complete:result.complete};
 }
 export async function main(args = process.argv.slice(2), open = openOutbox) {
   const end = deadline();

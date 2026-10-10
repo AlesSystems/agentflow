@@ -17,6 +17,7 @@ it.each(["before","after"])("observes ACK completion with a concurrent enqueue %
   expect(response.status).toBe(201);const generation=response.headers.get("agentflow-generation")!;
   const path=join(f.dir,"ack-record.json");writeFileSync(path,JSON.stringify(first),{mode:0o600});
   child=spawn(process.execPath,["--import","tsx","tests/fixtures/p06-ack-owner.ts",phase,path,generation],{env:{...process.env,...f.env},stdio:["pipe","pipe","pipe"]});
+  const exit=new Promise(resolve=>child!.once("exit",resolve));
   let errors="";child.stderr!.on("data",c=>errors+=c);
   const lines=createInterface({input:child.stdout!})[Symbol.asyncIterator]();
   expect((await lines.next()).value).toBe("ready");
@@ -28,7 +29,7 @@ it.each(["before","after"])("observes ACK completion with a concurrent enqueue %
    await Promise.resolve();expect(completed).toBe(false);child.stdin!.write("continue\n");second=await pending;
   }
   const result=JSON.parse((await lines.next()).value!);
-  expect(await new Promise(resolve=>child!.once("exit",resolve)),errors).toBe(0);
+  expect(await exit,errors).toBe(0);
   expect(result).toEqual({result:{complete:phase==="after"}});
   const state=JSON.parse(readFileSync(join(config.outbox,f.runId,"state.json"),"utf8"));
   expect(state).toMatchObject({allocatedThrough:2,acknowledgedThrough:1});

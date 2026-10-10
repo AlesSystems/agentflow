@@ -444,6 +444,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       if (value.acknowledgedThrough+1 !== event.sequence) throw new CliError("ack_sequence_mismatch",3);
       atomic(`${event.runId.toLowerCase()}/state.json`,{...value,acknowledgedThrough:event.sequence,generation});
       remove(join(root,event.runId.toLowerCase(),`${event.sequence}-${event.eventId.toLowerCase()}.json`));
+      return {complete:event.sequence===value.allocatedThrough};
     },until);},
     async validateRemote(id: string,generation: string,until: number) {
       const local = await locked(()=>state(id),until);
