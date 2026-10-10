@@ -167,7 +167,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     assert(database.generation,"DATABASE_GENERATION");for(const page of result.postTiming.api){assert.equal(page.generation,database.generation,"API_HEADER_GENERATION");assert.equal(page.parsed!.generation,database.generation,"API_BODY_GENERATION");}
     for(const [table,count]of Object.entries(result.postTiming.expected.counts))assert.equal(database.counts![table],count,"DATABASE_COUNT_"+table);
     for(const report of expected){
-      const input=eventInput.parse(report.body),row=database.rows!.find(row=>row.event_id===input.eventId);assert(row,"PERSISTED_EVENT_MISSING");
+      const input=eventInput.parse(report.body);const row:StoredEvent|undefined=database.rows!.find(row=>row.event_id===input.eventId);assert(row,"PERSISTED_EVENT_MISSING");
       assert.equal(report.status,201,"ORIGINAL_EVENT_STATUS");const stored=eventRecord.parse(JSON.parse(row.body)),{receivedAt,...storedInput}=stored;
       assert.deepEqual(storedInput,input,"STORED_INPUT");assert.equal(row.digest,report.digest,"STORED_DIGEST");assert.equal(canonicalDigest(storedInput),report.digest,"STORED_BODY_DIGEST");
       assert.equal(row.run_id,input.runId,"STORED_RUN");assert.equal(row.sequence,input.sequence,"STORED_SEQUENCE");assert.equal(row.occurred_at,Date.parse(input.occurredAt),"STORED_OCCURRED_TIME");assert.equal(row.received_at,Date.parse(receivedAt),"STORED_RECEIVED_TIME");
