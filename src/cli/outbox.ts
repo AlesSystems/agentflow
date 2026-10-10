@@ -144,8 +144,12 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     }
   }
   function state(id: string): State {
-    const value = stateSchema.parse(read(join(root,id.toLowerCase(),"state.json"),200000));
-    if (value.runId.toLowerCase() !== id.toLowerCase() || value.acknowledgedThrough > value.allocatedThrough) throw new CliError("corrupt_state",3);
+    const path=join(root,id.toLowerCase(),"state.json");
+    validateFile(path);
+    let value: State;
+    try {value=stateSchema.parse(read(path,200000));}
+    catch(error){if(error instanceof SyntaxError || error instanceof z.ZodError || (error as NodeJS.ErrnoException).code==="ERR_ENCODING_INVALID_ENCODED_DATA")throw new CliError("corrupt_state",3);throw error;}
+    if(value.runId.toLowerCase()!==id.toLowerCase() || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_state",3);
     return value;
   }
   function validateRecord(record: EventRecord, id: string, sequence: number) {
