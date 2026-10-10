@@ -211,6 +211,6 @@ try {
 } catch(error) {
   receipt.failures.push(error instanceof Error?error.message:"unknown failure"); process.exitCode=1;
 } finally {
-  receipt.finishedAt=new Date().toISOString(); receipt.cleanup="All owned browsers, server children, proxy sockets, timers, outbox/SQLite connections closed in finally. Synthetic root retained for exact-candidate review and enumerated cleanup.";save();
+  receipt.finishedAt=new Date().toISOString(); receipt.cleanup="Owned teardown attempted in finally; resource cleanup timings/errors and shutdown facts are retained separately. Synthetic root retained for exact-candidate review and enumerated cleanup.";save();
   console.log(JSON.stringify({mode:receipt.mode,acceptance,flushRuns:receipt.flush.length,comparisons:receipt.comparisons.length,failures:receipt.failures}));
 }
