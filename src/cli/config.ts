@@ -8,7 +8,7 @@ export class CliError extends Error {
   constructor(readonly code: string, readonly exit: 1 | 3 = 1) { super(code); }
 }
 export function readBoundedBytes(path: string, max = 65536, privateFile = false): Buffer {
-  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const stat = fstatSync(fd);
     if (!stat.isFile() || stat.size > max) throw new CliError("invalid_file");
