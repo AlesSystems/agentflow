@@ -50,19 +50,33 @@ export async function confirm(page: Page, row: Target) {
   if(result) { row.confirmedMs=performance.now();row.observedReceipt=result.receivedAt;row.observation=result; return result; }
   return null;
 }
-export async function loadScenario(root: string,index: number,acceptance: boolean) {
+type LoadServer=Awaited<ReturnType<typeof launch>>;
+export type LoadHooks={
+ launchOptions?:{entry:string;stdin:boolean};beforeLaunch?:(dir:string)=>void;
+ start?:(server:LoadServer)=>Promise<void>;phase?:(phase:"sustained"|"burst")=>void;
+ cleanup?:(server:LoadServer|undefined)=>[string,()=>Promise<void>][];facts?:unknown;
+};
+export async function loadScenario(root: string,index: number,acceptance: boolean,hooks?:LoadHooks) {
   const dir=join(root,`load-${index}`),proof=join(root,`load-${index}.json`);
   const counts=acceptance?{tasks:1000,events:10000,producers:10}:{tasks:12,events:20,producers:2};
   const fixture=await seedPerformance(dir,counts,Date.now()-3600000);
   const events=plan(fixture.runs,index,!acceptance),observations=targets(events);
-  const result={index,acceptance,counts,fixture,events,observations,setup:[] as unknown[],final:[] as unknown[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as unknown[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null};
+  const result={index,acceptance,counts,fixture,events,observations,setup:[] as unknown[],final:[] as unknown[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as unknown[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null,diagnostic:hooks?{scope:"service+controller across sustained and burst; start before sustained, no interphase handshake",start:null as unknown,phaseAnchors:[] as unknown[],profileFacts:hooks.facts,profileCleanup:null as {failures:{action:string;error:string}[]}|null,cleanup:null as {failures:{action:string;error:string}[]}|null}:undefined};
   const save=()=>writeFileSync(proof,JSON.stringify(result,null,2)+"\n",{mode:0o600});
   save();let server:Awaited<ReturnType<typeof launch>>|undefined,tabs:Awaited<ReturnType<typeof pages>>|undefined;
   let observing=true;const observers:Promise<void>[]=[];
+  let profilesFinished=false;
+  async function finishProfiles(){
+    if(!hooks||profilesFinished)return;profilesFinished=true;save();
+    result.diagnostic!.profileCleanup={failures:[]};
+    for(const [action,work]of hooks.cleanup?.(server)??[]){try{await work();}catch(error){result.diagnostic!.profileCleanup.failures.push({action,error:(error as Error).message});}}
+    save();
+  }
   try {
     const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});
     try { const latest=db.prepare("SELECT max(received_at) latest FROM run_events").get() as {latest:number};result.seedLatestReceipt=new Date(latest.latest).toISOString();assert(latest.latest<Date.now(),"SEED_RECEIPT_IN_FUTURE"); } finally {db.close();}
-    server=await launch({dir});
+    hooks?.beforeLaunch?.(dir);
+    server=await launch({dir,...hooks?.launchOptions});
     const headers={Authorization:"Bearer "+server.credentials().reporterToken,"Content-Type":"application/json"};
     for(const runId of fixture.runs) {
       const body={schemaVersion:1,eventId:randomUUID(),runId,sequence:1,type:"run.started",occurredAt:new Date().toISOString(),payload:{}};
@@ -79,7 +93,9 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         await wait(10);
       }
     })());
+    if(hooks){const startedMs=performance.now();await hooks.start?.(server);result.diagnostic!.start={startedMs,endedMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()};save();}
     for(const phase of ["sustained","burst"] as const) {
+      if(hooks){const startedMs=performance.now();hooks.phase?.(phase);result.diagnostic!.phaseAnchors.push({phase,startedMs,endedMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()});}
       const start=performance.now(),duration=phase==="sustained"?(acceptance?300000:6000):(acceptance?10000:3000),interval=phase==="sustained"?500:100;
       const timed={phase,startedMs:start,endedMs:null as number|null,cadence:null as unknown,http:null as unknown,failure:null as string|null};result.phases.push(timed);save();
       try {
@@ -100,6 +116,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         if(acceptance&&phase==="sustained") assert((timed.http as {p95Ms:number}).p95Ms<250,"SUSTAINED_HTTP_BUDGET");
       } catch(error) {timed.endedMs??=performance.now();timed.failure=(error as Error).message;throw error;} finally {save();}
     }
+    await finishProfiles();if(result.diagnostic?.profileCleanup?.failures.length)throw new Error("PROFILE_FINALIZATION_FAILED");
     const drain=performance.now();while(observations.some(row=>row.confirmedMs===null)&&performance.now()-drain<10000)await wait(25);
     observing=false;await Promise.all(observers);
     const summaries=[];for(const phase of ["sustained","burst"])for(const tab of [0,1])summaries.push({phase,tab,...reconcile(observations.filter(row=>row.tab===tab&&row.event.phase===phase),acceptance)});
@@ -123,7 +140,15 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       result.reconciliation={status:"finalized",expected:events.length,storedTimed:result.requests.length,apiCount:api.length,setupCount:result.setup.length,finalCount:result.final.length,summaries,burstPrecision:"four samples per full scenario/tab; nearest-rank p95 is maximum"};
     }finally{persisted.close();}
   }catch(error){result.failure=(error as Error).message;throw error;}
-  finally{result.finishedMs=performance.now();save();observing=false;await Promise.allSettled(observers);await tabs?.browser.close();await server?.stop();save();}
+  finally{
+    result.finishedMs=performance.now();save();
+    if(!hooks){observing=false;await Promise.allSettled(observers);await tabs?.browser.close();await server?.stop();save();}
+    else{
+      await finishProfiles();result.diagnostic!.cleanup={failures:[]};
+      for(const [action,work]of [["stop observer polling",async()=>{observing=false;await Promise.allSettled(observers);}], ["close browser",async()=>{await tabs?.browser.close();}], ["stop server",async()=>{await server?.stop();}]] as [string,()=>Promise<void>][]){try{await work();}catch(error){result.diagnostic!.cleanup.failures.push({action,error:(error as Error).message});}}
+      save();if(!result.failure&&(result.diagnostic!.profileCleanup?.failures.length||result.diagnostic!.cleanup.failures.length))throw new Error("DIAGNOSTIC_CLEANUP_FAILED");
+    }
+  }
   return result;
 }
 export async function resourceProof(root:string,acceptance:boolean){

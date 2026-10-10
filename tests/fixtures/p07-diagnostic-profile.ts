@@ -10,5 +10,10 @@ export async function profile(path:string,extra:()=>unknown=()=>null){
  await post("Profiler.enable");await post("Profiler.start");
  const anchor={monotonicMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage(),pid:process.pid};
  const timer=setInterval(()=>{loop.push({ms:performance.now(),maxMs:delay.max/1e6,p99Ms:delay.percentile(99)/1e6,extra:extra()});delay.reset();},100);
- return async()=>{clearInterval(timer);delay.disable();observer.disconnect();const cpu=await post("Profiler.stop");session.disconnect();const result={anchor,end:{monotonicMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()},gc,loop,cpu:cpu.profile};writeFileSync(path,JSON.stringify(result)+"\n",{mode:0o600});return {anchor:result.anchor,end:result.end,gcCount:gc.length,loopSamples:loop.length};};
+ return async()=>{
+  clearInterval(timer);delay.disable();observer.disconnect();
+  const result={anchor,end:{monotonicMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()},gc,loop,cpu:null as unknown,status:"CPU_UNFINALIZED"};
+  writeFileSync(path+".partial.json",JSON.stringify(result)+"\n",{mode:0o600});
+  try{const cpu=await post("Profiler.stop");result.cpu=cpu.profile;result.status="finalized";writeFileSync(path,JSON.stringify(result)+"\n",{mode:0o600});return {anchor:result.anchor,end:result.end,gcCount:gc.length,loopSamples:loop.length};}finally{session.disconnect();}
+ };
 }
