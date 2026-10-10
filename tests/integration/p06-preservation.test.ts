@@ -101,3 +101,24 @@ it.each(["after-create","after-rename"])("rechecks the run directory before the 
     try{await expect(outbox.enqueue(f.runId,"run.started",{})).rejects.toThrow("path_changed");expect(readFileSync(join(directory,"state.json.tmp"),"utf8")).toBe("PRIVATE-P06-UNRELATED-TEMP");expect(unsafeSync).toBe(false);}finally{outbox.close();}
   }finally{await server.stop();}
 });
+
+it.each(["metadata","state"])("validates the JSON context before recovering split UTF-8 in %s temps",async kind=> {
+  const {existsSync}=await import("node:fs");
+  const server=await launch(),f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR;
+  const base=kind==="metadata"?join(root,"metadata.json"):join(root,f.runId,"state.json"),path=base+".tmp";
+  const value=JSON.parse(readFileSync(base,"utf8"));
+  const prefix=kind==="metadata"?JSON.stringify({formatVersion:1,port:value.port,serviceDataDir:value.serviceDataDir,generation:value.generation}).slice(0,-1):JSON.stringify({formatVersion:1,runId:value.runId}).slice(0,-1);
+  const config={port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined};
+  try {
+    for(const suffix of [',"cursor":!',',"cursor":', '}',' ,"cursor":"\\',',"cursor":"\\u',',"cursor":"\\u12']) {
+      writeFileSync(path,Buffer.concat([Buffer.from(prefix+suffix),Buffer.from([0xc3])]),{mode:0o600});
+      const before=snapshot(root);
+      await expect(openOutbox(config,performance.now()+5000)).rejects.toThrow("corrupt_temporary");
+      expect(snapshot(root)).toEqual(before);unlinkSync(path);
+    }
+    for(const scalar of ["é","€","😀"])for(let split=1;split<Buffer.byteLength(scalar);split++) {
+      writeFileSync(path,Buffer.concat([Buffer.from(prefix+',"cursor":"ordinary'),Buffer.from(scalar).subarray(0,split)]),{mode:0o600});
+      const outbox=await openOutbox(config,performance.now()+5000);outbox.close();expect(existsSync(path)).toBe(false);
+    }
+  }finally{await server.stop();}
+});
