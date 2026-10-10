@@ -1,3 +1,4 @@
+import {failureFact} from "./p07-warm-error";
 import {scheduleGroups} from "./p07-scheduler";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -50,6 +51,7 @@ export async function confirm(page: Page, row: Target) {
   if(result) { row.confirmedMs=performance.now();row.observedReceipt=result.receivedAt;row.observation=result; return result; }
   return null;
 }
+type LoadPhase={phase:"sustained"|"burst";startedMs:number;endedMs:number|null;cadence:unknown;http:unknown;failure:string|null};
 type LoadServer=Awaited<ReturnType<typeof launch>>;
 export type LoadHooks={
  launchOptions?:{entry:string;stdin:boolean};beforeLaunch?:(dir:string)=>void;
@@ -61,18 +63,29 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
   const counts=acceptance?{tasks:1000,events:10000,producers:10}:{tasks:12,events:20,producers:2};
   const fixture=await seedPerformance(dir,counts,Date.now()-3600000);
   const events=plan(fixture.runs,index,!acceptance),observations=targets(events);
-  const result={index,acceptance,counts,fixture,events,observations,setup:[] as unknown[],final:[] as unknown[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as unknown[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null,diagnostic:hooks?{scope:"service+controller across sustained and burst; start before sustained, no interphase handshake",start:null as unknown,phaseAnchors:[] as unknown[],profileFacts:hooks.facts,profileCleanup:null as {failures:{action:string;error:string}[]}|null,cleanup:null as {failures:{action:string;error:string}[]}|null}:undefined};
-  const save=()=>writeFileSync(proof,JSON.stringify(result,null,2)+"\n",{mode:0o600});
-  save();let server:Awaited<ReturnType<typeof launch>>|undefined,tabs:Awaited<ReturnType<typeof pages>>|undefined;
+  const result={index,acceptance,counts,fixture,events,observations,setup:[] as unknown[],final:[] as unknown[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as LoadPhase[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null,retention:undefined as {artifactStatus:string;saveFailures:{boundary:string;error:ReturnType<typeof failureFact>}[];cleanupFailures:{action:string;error:ReturnType<typeof failureFact>}[]}|undefined,diagnostic:hooks?{scope:"service+controller across sustained and burst; start before sustained, no interphase handshake",start:null as unknown,phaseAnchors:[] as unknown[],profileFacts:hooks.facts,profileCleanup:null as {failures:{action:string;error:string}[]}|null,cleanup:null as {failures:{action:string;error:string}[]}|null}:undefined};
+  let failed=false,primary:unknown;
+  function capture(error:unknown){
+    if(!failed){failed=true;primary=error;result.failure=error instanceof Error?error.message:"non-Error thrown value";try{if(error!==null&&(typeof error==="object"||typeof error==="function"))Object.defineProperty(error,"loadFacts",{value:result,configurable:true});}catch{}}
+    result.reconciliation=null;
+  }
+  function retention(){return result.retention??={artifactStatus:"unknown after persistence failure",saveFailures:[],cleanupFailures:[]};}
+  function save(boundary="receipt",critical=true){
+    const prior=failed;
+    try{writeFileSync(proof,JSON.stringify(result,null,2)+"\n",{mode:0o600});}
+    catch(error){capture(error);retention().saveFailures.push({boundary,error:failureFact(error)});if(critical&&!prior)throw primary;}
+  }
+  let server:Awaited<ReturnType<typeof launch>>|undefined,tabs:Awaited<ReturnType<typeof pages>>|undefined;
   let observing=true;const observers:Promise<void>[]=[];
   let profilesFinished=false;
   async function finishProfiles(){
-    if(!hooks||profilesFinished)return;profilesFinished=true;save();
+    if(!hooks||profilesFinished)return;profilesFinished=true;save("before profile cleanup",false);
     result.diagnostic!.profileCleanup={failures:[]};
-    for(const [action,work]of hooks.cleanup?.(server)??[]){try{await work();}catch(error){result.diagnostic!.profileCleanup.failures.push({action,error:(error as Error).message});}}
-    save();
+    for(const [action,work]of hooks.cleanup?.(server)??[]){try{await work();}catch(error){result.diagnostic!.profileCleanup.failures.push({action,error:error instanceof Error?error.message:"non-Error thrown value"});capture(error);}}
+    save("after profile cleanup",false);
   }
   try {
+    save("initial");
     const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});
     try { const latest=db.prepare("SELECT max(received_at) latest FROM run_events").get() as {latest:number};result.seedLatestReceipt=new Date(latest.latest).toISOString();assert(latest.latest<Date.now(),"SEED_RECEIPT_IN_FUTURE"); } finally {db.close();}
     hooks?.beforeLaunch?.(dir);
@@ -93,11 +106,11 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         await wait(10);
       }
     })());
-    if(hooks){const anchor={startedMs:performance.now(),endedMs:null as number|null,wallMs:Date.now(),memory:process.memoryUsage()};result.diagnostic!.start=anchor;try{await hooks.start?.(server);}finally{anchor.endedMs=performance.now();save();}}
+    if(hooks){const anchor={startedMs:performance.now(),endedMs:null as number|null,wallMs:Date.now(),memory:process.memoryUsage()};result.diagnostic!.start=anchor;try{await hooks.start?.(server);}catch(error){capture(error);throw primary;}finally{anchor.endedMs=performance.now();save("profile start bookkeeping");}}
     for(const phase of ["sustained","burst"] as const) {
       if(hooks){const startedMs=performance.now();hooks.phase?.(phase);result.diagnostic!.phaseAnchors.push({phase,startedMs,endedMs:performance.now(),wallMs:Date.now(),memory:process.memoryUsage()});}
       const start=performance.now(),duration=phase==="sustained"?(acceptance?300000:6000):(acceptance?10000:3000),interval=phase==="sustained"?500:100;
-      const timed={phase,startedMs:start,endedMs:null as number|null,cadence:null as unknown,http:null as unknown,failure:null as string|null};result.phases.push(timed);save();
+      const timed={phase,startedMs:start,endedMs:null as number|null,cadence:null as unknown,http:null as unknown,failure:null as string|null};result.phases.push(timed);save("phase start");
       try {
         const batch=events.filter(event=>event.phase===phase);
         await scheduleGroups(batch,counts.producers,start,event=>event.dueMs,async(event,dispatchMs)=>{
@@ -114,9 +127,9 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         const records=result.requests.filter(record=>batch.some(event=>event.body.eventId===record.eventId));
         assert.equal(records.length,batch.length);if(hooks)timed.http=distribution(records.map(record=>record.responseMs!-record.dispatchMs));timed.cadence=cadence(duration,interval,start,timed.endedMs,records);timed.http??=distribution(records.map(record=>record.responseMs!-record.dispatchMs));
         if(acceptance&&phase==="sustained") assert((timed.http as {p95Ms:number}).p95Ms<250,"SUSTAINED_HTTP_BUDGET");
-      } catch(error) {timed.endedMs??=performance.now();timed.failure=(error as Error).message;throw error;} finally {save();}
+      } catch(error) {timed.endedMs??=performance.now();timed.failure=error instanceof Error?error.message:"non-Error thrown value";capture(error);throw primary;} finally {save("phase finally");}
     }
-    if(hooks)await finishProfiles();if(result.diagnostic?.profileCleanup?.failures.length)throw new Error("PROFILE_FINALIZATION_FAILED");
+    if(hooks)await finishProfiles();if(failed)throw primary;
     const drain=performance.now();while(observations.some(row=>row.confirmedMs===null)&&performance.now()-drain<10000)await wait(25);
     observing=false;await Promise.all(observers);
     const summaries=[];for(const phase of ["sustained","burst"])for(const tab of [0,1])summaries.push({phase,tab,...reconcile(observations.filter(row=>row.tab===tab&&row.event.phase===phase),acceptance)});
@@ -139,15 +152,14 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       assert.equal(persisted.pragma("integrity_check",{simple:true}),"ok");assert.deepEqual(persisted.pragma("foreign_key_check"),[]);
       result.reconciliation={status:"finalized",expected:events.length,storedTimed:result.requests.length,apiCount:api.length,setupCount:result.setup.length,finalCount:result.final.length,summaries,burstPrecision:"four samples per full scenario/tab; nearest-rank p95 is maximum"};
     }finally{persisted.close();}
-  }catch(error){result.failure=(error as Error).message;throw error;}
+  }catch(error){capture(error);throw primary;}
   finally{
-    result.finishedMs=performance.now();save();
-    if(!hooks){observing=false;await Promise.allSettled(observers);await tabs?.browser.close();await server?.stop();save();}
-    else{
-      await finishProfiles();result.diagnostic!.cleanup={failures:[]};
-      for(const [action,work]of [["stop observer polling",async()=>{observing=false;await Promise.allSettled(observers);}], ["close browser",async()=>{await tabs?.browser.close();}], ["stop server",async()=>{await server?.stop();}]] as [string,()=>Promise<void>][]){try{await work();}catch(error){result.diagnostic!.cleanup.failures.push({action,error:(error as Error).message});}}
-      save();if(!result.failure&&(result.diagnostic!.profileCleanup?.failures.length||result.diagnostic!.cleanup.failures.length))throw new Error("DIAGNOSTIC_CLEANUP_FAILED");
-    }
+    for(const phase of result.phases)if(phase.endedMs===null){phase.endedMs=performance.now();if(failed)phase.failure=result.failure;}
+    result.finishedMs=performance.now();save("before outer cleanup",false);
+    await finishProfiles();
+    if(hooks)result.diagnostic!.cleanup={failures:[]};
+    for(const [action,work]of [["stop observer polling",async()=>{observing=false;await Promise.allSettled(observers);}], ["close browser",async()=>{await tabs?.browser.close();}], ["stop server",async()=>{await server?.stop();}]] as [string,()=>Promise<void>][]){try{await work();}catch(error){capture(error);retention().cleanupFailures.push({action,error:failureFact(error)});result.diagnostic?.cleanup?.failures.push({action,error:error instanceof Error?error.message:"non-Error thrown value"});}}
+    save("after outer cleanup",false);if(failed)throw primary;
   }
   return result;
 }
