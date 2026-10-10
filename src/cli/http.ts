@@ -4,6 +4,7 @@ import { uuid } from "../contracts/common";
 import { CliError, type CliConfig } from "./config";
 export type Reply<T> = { kind: "delivered"; data: T; generation: string } | { kind: "retryable"; delay: number } | { kind: "blocked"; code: string; expectedSequence?: number; currentVersion?: number };
 const safeCodes = new Set(["sequence_gap", "sequence_conflict", "idempotency_conflict", "run_terminal", "run_conflict", "authentication_required", "resource_not_found", "version_conflict", "active_run", "task_project_mismatch", "run_transition_invalid", "human_required", "invalid_input", "task_completed", "project_archived"]);
+export function backoff(attempt:number,minimum:number,random=Math.random()) {return Math.max(minimum,random*Math.min(30000,100*2**Math.min(attempt-1,20)));}
 export async function request<T>(config: CliConfig, path: string, schema: z.ZodType<T>, end: number, body?: Record<string, unknown>, key?: string): Promise<Reply<T>> {
   if (performance.now() >= end) return { kind: "retryable", delay: 0 };
   const agent = new Agent({ proxyEnv: {} as NodeJS.ProcessEnv });

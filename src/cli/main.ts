@@ -6,7 +6,7 @@ import { taskCreate } from "../contracts/tasks";
 import { agentCreate, agentResponse, eventInput, eventResponse, runRegister, runResponse } from "../contracts/observations";
 import { projectResponse, taskResponse } from "../contracts/responses";
 import { CliError, cliConfig, deadline, readJson, type CliConfig } from "./config";
-import { request } from "./http";
+import { request,backoff } from "./http";
 import { openOutbox, type Job, type Outbox } from "./outbox";
 const commands = {
   "project create": { path: "/projects", input: projectCreate, output: projectResponse },
@@ -125,8 +125,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
         attempted.delete(job.id);continue;
       }
       const count=(retries.get(job.id)?.count??0)+1;
-      const jitter=Math.random()*Math.min(30000,100*2**Math.min(count-1,20));
-      retries.set(job.id,{count,at:performance.now()+Math.max(reply.delay,jitter)});
+      retries.set(job.id,{count,at:performance.now()+backoff(count,reply.delay)});
     }
     diagnostic("queued");return blockedExit||2;
   } catch (error) {
