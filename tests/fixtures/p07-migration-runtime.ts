@@ -1,4 +1,10 @@
+import { createHash } from "node:crypto";
+import { openOwnedStore,migrations } from "../../src/db";
 import { startRuntime } from "../../src/server/launcher";
 import { readConfig } from "../../src/server/config";
+const sql="CREATE TABLE p07_transaction_work(value); INSERT INTO p07_transaction_work VALUES(1); INSERT INTO missing_p07 VALUES(1);";
+const config=readConfig(process.env,"production");
+const owned=await openOwnedStore(config.dataDir,[...migrations,{id:"9999_p07_fault",sql,sha256:createHash("sha256").update(sql).digest("hex")}]);
+owned.close();
 const running = await startRuntime(readConfig(process.env,"production"));
 process.once("SIGTERM",()=>void running.shutdown().then(()=>process.exit(0)));

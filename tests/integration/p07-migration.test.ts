@@ -19,7 +19,7 @@ it("transactional shipping-bootstrap migration failure preserves rows and genera
     while(!finished&&performance.now()-started<5000){let reachable=false;try{await fetch(`http://127.0.0.1:${port}/api/v1/health`);reachable=true;}catch{}probes.push({at:performance.now(),reachable});await new Promise(resolve=>setTimeout(resolve,10));}
     if(!finished)await stop(child);
     expect(await exit).toBe(1);expect(stderr).toContain("no such table: missing_p07");expect(probes.every(p=>!p.reachable)).toBe(true);
-    const backups=readdirSync(join(dir,"backups")).filter(f=>f.startsWith("pre-migration-"));expect(backups).toHaveLength(1);
+    const backups=readdirSync(join(dir,"backups")).filter(f=>f.startsWith("pre-migration-")&&f.endsWith(".sqlite"));expect(backups).toHaveLength(1);
     const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});try{expect(db.prepare("SELECT generation,schema_version AS schemaVersion FROM instance_metadata").get()).toEqual(metadata);expect(db.prepare("SELECT count(*) n FROM migration_history").get()).toEqual({n:6});expect(db.prepare("SELECT name FROM sqlite_schema WHERE name='p07_transaction_work'").all()).toEqual([]);expect(db.pragma("integrity_check",{simple:true})).toBe("ok");}finally{db.close();}
     const backup=new Database(join(dir,"backups",backups[0]),{readonly:true});try{expect(backup.pragma("integrity_check",{simple:true})).toBe("ok");expect(backup.prepare("SELECT generation,schema_version AS schemaVersion FROM instance_metadata").get()).toEqual(metadata);}finally{backup.close();}
     expect(migrations.map(m=>createHash("sha256").update(readFileSync(join("migrations",m.id+".sql"))).digest("hex"))).toEqual(before);

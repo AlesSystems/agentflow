@@ -8,6 +8,7 @@ import { launch, pair } from "./server";
 import { seedPerformance } from "./p06-performance";
 import { canonicalDigest } from "../../src/domain/request-digest";
 import { plan, targets, acknowledge, cadence, reconcile, distribution, type Target } from "./p07-protocol";
+async function untilDue(due:number){while(performance.now()<due)await wait(due-performance.now());}
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, Math.max(0,ms)));
 async function pages(server: Awaited<ReturnType<typeof launch>>, projectId: string) {
   const browser = await chromium.launch({ channel: "chrome" });
@@ -78,7 +79,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       try {
         const batch=events.filter(event=>event.phase===phase);
         for(let offset=0;offset<batch.length;offset+=counts.producers) {
-          const group=batch.slice(offset,offset+counts.producers);await wait(start+group[0].dueMs-performance.now());
+          const group=batch.slice(offset,offset+counts.producers);await untilDue(start+group[0].dueMs);
           await Promise.all(group.map(async event=>{
             const record={eventId:event.body.eventId,body:event.body,digest:canonicalDigest(event.body),dueMs:event.dueMs,dispatchMs:performance.now(),responseMs:null as number|null,status:null as number|null,ack:null as unknown,error:null as string|null};result.requests.push(record);
             observations.filter(row=>row.event===event).forEach(row=>row.dispatchMs=record.dispatchMs);
@@ -90,7 +91,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
             } catch(error) {record.error=(error as Error).message;throw error;}
           }));
         }
-        await wait(start+duration-performance.now());timed.endedMs=performance.now();
+        await untilDue(start+duration);timed.endedMs=performance.now();
         const records=result.requests.filter(record=>batch.some(event=>event.body.eventId===record.eventId));
         assert.equal(records.length,batch.length);timed.cadence=cadence(duration,interval,start,timed.endedMs,records);timed.http=distribution(records.map(record=>record.responseMs!-record.dispatchMs));
         if(acceptance&&phase==="sustained") assert((timed.http as {p95Ms:number}).p95Ms<250,"SUSTAINED_HTTP_BUDGET");
