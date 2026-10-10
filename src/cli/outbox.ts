@@ -172,6 +172,44 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     if(actual.length>expected.length || !expected.subarray(0,actual.length).equals(actual))throw new CliError("corrupt_temporary",3);
     return actual.length;
   }
+  function abandoned<T>(path: string,schema: z.ZodType<T>,prefix: string,validate: (value:T)=>void) {
+    validateFile(path);const bytes=readBoundedBytes(path,200000),header=Buffer.from(prefix);
+    if(!header.subarray(0,bytes.length).equals(bytes) && !bytes.subarray(0,header.length).equals(header))throw new CliError("corrupt_temporary",3);
+    let raw: unknown;
+    try{raw=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes));}
+    catch(error){
+      const position=error instanceof SyntaxError?/at position ([0-9]+)/.exec(error.message):null;
+      if((error as NodeJS.ErrnoException).code==="ERR_ENCODING_INVALID_ENCODED_DATA") {
+        for(let width=1;width<=3&&width<=bytes.length;width++) {
+          const tail=bytes.subarray(bytes.length-width),lead=tail[0],required=lead>=0xc2&&lead<=0xdf?2:lead>=0xe0&&lead<=0xef?3:lead>=0xf0&&lead<=0xf4?4:0;
+          if(!required||width>=required||!tail.subarray(1).every(byte=>byte>=0x80&&byte<=0xbf)||width>1&&(lead===0xe0&&tail[1]<0xa0||lead===0xed&&tail[1]>0x9f||lead===0xf0&&tail[1]<0x90||lead===0xf4&&tail[1]>0x8f))continue;
+          try{new TextDecoder("utf-8",{fatal:true}).decode(bytes.subarray(0,bytes.length-width));return;}catch{}
+        }
+      }
+      if(error instanceof SyntaxError && (error.message==="Unexpected end of JSON input" || error.message.startsWith("Unterminated string") || position&&Number(position[1])===bytes.toString("utf8").length))return;
+      throw new CliError("corrupt_temporary",3);
+    }
+    const parsed=schema.safeParse(raw);if(!parsed.success)throw new CliError("corrupt_temporary",3);validate(parsed.data);
+  }
+  function abandonedMetadata(path: string) {
+    const reference=existsSync(metaPath)?readMetadata():association!;
+    const prefix=JSON.stringify({formatVersion:1,port:reference.port,serviceDataDir:reference.serviceDataDir,generation:reference.generation}).slice(0,-1);
+    abandoned(path,metadata,prefix,value=> {
+      if(value.port!==reference.port || value.serviceDataDir!==reference.serviceDataDir || value.generation!==reference.generation || value.nextOrder<reference.nextOrder || value.nextOrder>reference.nextOrder+1)throw new CliError("corrupt_temporary",3);
+      if(value.pendingRegistration){const p=value.pendingRegistration,clean={...value};delete clean.pendingRegistration;validateRegistration(p.record,p.filename);if(p.record.order+1!==value.nextOrder||p.remainingPeak!==encodedBytes(p.record)+encodedBytes(clean))throw new CliError("corrupt_temporary",3);}
+    });
+  }
+  function abandonedState(path: string,id: string,reference?: State) {
+    const bytes=readBoundedBytes(path,200000),prefix=JSON.stringify({formatVersion:1,runId:reference?.runId||id}).slice(0,-1);
+    const lower=Buffer.from(bytes.toString("utf8").toLowerCase()),header=Buffer.from(prefix.toLowerCase());
+    if(!header.subarray(0,lower.length).equals(lower)&&!lower.subarray(0,header.length).equals(header))throw new CliError("corrupt_temporary",3);
+    const exactPrefix=bytes.subarray(0,Math.min(bytes.length,Buffer.byteLength(prefix))).toString("utf8");
+    abandoned(path,stateSchema,exactPrefix,value=> {
+      const allocated=reference?.allocatedThrough||0,acknowledged=reference?.acknowledgedThrough||0;
+      if(value.runId.toLowerCase()!==id.toLowerCase() || value.allocatedThrough<allocated || value.allocatedThrough>allocated+1 || value.acknowledgedThrough<acknowledged || value.acknowledgedThrough>acknowledged+1 || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_temporary",3);
+      if(value.pending){const p=value.pending,clean={...value};delete clean.pending;validateRecord(p.record,id,value.allocatedThrough);if(p.filename!==`${value.allocatedThrough}-${String(p.record.body.eventId).toLowerCase()}.json`||p.remainingPeak!==encodedBytes(p.record)+encodedBytes(clean))throw new CliError("corrupt_temporary",3);}
+    });
+  }
   function remaining(final: string,value: unknown,max = 200000) {
     const bytes=encodedBytes(value), temp=final+".tmp";
     const temporary=existsSync(temp)?validateTemporary(temp,value,max):0;
@@ -225,6 +263,8 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
   function remove(path: string) { assertPins(); pin(dirname(path)); validateFile(path); operations.unlinkSync(path); operations.syncDirectory(dirname(path)); }
   function recover() {
     lengths(); reservations();
+    if(existsSync(metaPath+".tmp") && (!existsSync(metaPath)||!readMetadata().pendingRegistration))abandonedMetadata(metaPath+".tmp");
+    for(const name of readdirSync(root))if(lstatSync(join(root,name)).isDirectory()&&existsSync(join(root,name,"state.json.tmp"))){const path=join(root,name,"state.json");if(!existsSync(path)||!state(name).pending)abandonedState(path+".tmp",name,existsSync(path)?state(name):undefined);}
     if (existsSync(metaPath)) {
       const meta=readMetadata(),p=meta.pendingRegistration;
       if(p){
