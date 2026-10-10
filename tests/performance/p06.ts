@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir, release } from "node:os";
 import { join, relative } from "node:path";
 import { chromium, expect } from "@playwright/test";
@@ -28,6 +29,9 @@ assert(!existsSync(join(evidence, "performance.json")), "Use a fresh evidence di
 const counts = acceptance ? { tasks: 1000, events: 10000, producers: 10, queued: 1000, samples: 100, repetitions: 3 } : { tasks: 12, events: 20, producers: 2, queued: 4, samples: 5, repetitions: 1 };
 const root = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p06-performance-"));
 const owned: string[] = [root];
+const addonProbe = new Database(":memory:"); addonProbe.close();
+const sqliteAddon = Object.keys(createRequire(import.meta.url).cache).find(path => path.includes("/better-sqlite3/") && path.endsWith(".node"));
+assert(sqliteAddon,"loaded SQLite addon fingerprint required");
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
 function fileHashes(dir: string): Record<string, string> {
   const result: Record<string,string> = {};
@@ -211,7 +215,7 @@ try {
   assert.equal(hash(readFileSync("package-lock.json")),hash(readFileSync(join(baseSource,"package-lock.json"))),"baseline/head dependency lock must match");
   symlinkSync(join(process.cwd(),"node_modules"),join(baseSource,"node_modules"));
   cpSync(".next",join(baseSource,".next"),{recursive:true});
-  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync("node_modules/better-sqlite3/build/Release/better_sqlite3.node")),cachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p06.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P05 has no CLI. Cached assets copied before later head rebuild; native HTTP uses each label's source."};
+  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),cachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p06.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P05 has no CLI. Cached assets copied before later head rebuild; native HTTP uses each label's source."};
   save();
   for(let index=1;index<=counts.repetitions;index++)await flushRun(index);
   const seedDir=join(root,"comparison-seed");const seed=await seedPerformance(seedDir,counts);
