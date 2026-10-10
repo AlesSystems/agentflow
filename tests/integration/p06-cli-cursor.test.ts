@@ -46,3 +46,17 @@ it("keeps the next unattempted cursor when validation consumes its entire bounde
   const x=await fixture();
   try{const original=readFileSync(join(x.config.outbox,"metadata.json"));expect((await child(x.f,"validation")).code).toBe(2);expect(x.attempts).toEqual([]);expect(readFileSync(join(x.config.outbox,"metadata.json"))).toEqual(original);expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toEqual(x.ids.map(id=>`/api/v1/runs/${id}/events`));}finally{await x.proxy.close();await x.server.stop();}
 });
+
+it("gives cursor IO exit1 precedence over an earlier blocked3 and keeps independent records",async()=> {
+  const x=await fixture();let reject=true;
+  const blocker=await publicProxy(x.server,(req,_body,reply)=>{if(!reply&&reject&&req.url===`/api/v1/runs/${x.ids[0]}/events`)return{status:409,body:JSON.stringify({error:{code:"run_terminal",message:"Synthetic rejection"}})};});
+  try {
+    // The established association pins its destination port; use a new owned
+    // destination to execute this separate controlled public HTTP boundary.
+    const f=await registeredRun({...x.server,port:blocker.port}),config={...x.config,port:blocker.port,outbox:f.env.AGENTFLOW_OUTBOX_DIR};
+    const box=await openOutbox(config,performance.now()+5000);try{for(const id of x.ids){expect((await box.initializeRun(id)).kind).toBe("delivered");await box.enqueue(id,"run.started",{});}}finally{box.close();}
+    const result=await child(f,"sync-second");expect(result.code).toBe(1);expect(result.stderr).toContain("run_terminal");expect(result.stdout).toBe("");
+    for(const id of x.ids)expect(JSON.parse(readFileSync(join(config.outbox,id,"state.json"),"utf8")).acknowledgedThrough).toBe(0);
+    reject=false;expect((await f.cli(["flush"])).code).toBe(0);
+  }finally{await blocker.close();await x.proxy.close();await x.server.stop();}
+});

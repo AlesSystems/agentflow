@@ -188,3 +188,15 @@ it.each(["descriptor","partial-record","record-temp","record","partial-state","s
     expect(readdirSync(directory).some(name=>name.endsWith(".tmp"))).toBe(false);
   }finally{await server.stop();}
 });
+
+it("refuses root cursor replacement at the exact valid global cap before writing its temporary",async()=> {
+  const {globalQuotaFixture,GLOBAL_BYTES}=await import("../fixtures/p06-quota");
+  const {existsSync}=await import("node:fs");
+  const server=await launch();
+  try {
+    const f=await globalQuotaFixture(server,()=>0),path=join(f.root,"metadata.json"),original=readFileSync(path);expect(logicalBytes(f.root)).toBe(GLOBAL_BYTES);
+    const box=await openOutbox(f.config,performance.now()+20000);
+    try{await expect(box.advanceCursor(`run:${f.runId}`)).rejects.toThrow("outbox_full");}finally{box.close();}
+    expect(readFileSync(path)).toEqual(original);expect(existsSync(path+".tmp")).toBe(false);expect(logicalBytes(f.root)).toBe(GLOBAL_BYTES);
+  }finally{await server.stop();}
+});

@@ -35,24 +35,26 @@ it("continues a durable ring beyond ten slow runs and unrelated/dependent regist
       await outbox.preserveRegistration("/runs",randomUUID(),{id:dependentRun,projectId:f.projectId,agentId,purpose:"planning"});
     }finally{outbox.close();}
     const originals=ids.slice(0,12).map(id=>readFileSync(join(config.outbox,id,readdirSync(join(config.outbox,id)).find(name=>/^1-/.test(name))!)));
-    for(let i=0;i<2;i++){const start=performance.now();expect((await f.cli(["flush"])).code).toBe(2);expect(performance.now()-start).toBeLessThan(5700);}
+    for(let i=0;i<2;i++){const start=performance.now();expect((await f.cli(["flush"])).code).toBe(2);expect(performance.now()-start).toBeLessThan(5700);if(i===0)expect(JSON.parse(readFileSync(join(config.outbox,ids[12],"state.json"),"utf8")).acknowledgedThrough).toBe(0);}
     expect(JSON.parse(readFileSync(join(config.outbox,ids[12],"state.json"),"utf8")).acknowledgedThrough).toBe(1);
-    expect(dependent).toBe(0);expect(attempts).toContain(ids[12]);
+    expect(dependent).toBe(0);expect(attempts.indexOf(ids[12])).toBeLessThanOrEqual(14);
     for(const [i,id]of ids.slice(0,12).entries())expect(readFileSync(join(config.outbox,id,readdirSync(join(config.outbox,id)).find(name=>/^1-/.test(name))!))).toEqual(originals[i]);
     expect(JSON.parse(readFileSync(join(config.outbox,"metadata.json"),"utf8")).cursor).toBeTruthy();
   }finally{await proxy.close();await server.stop();}
 });
 
 it("continues independent work after a blocked run and prints only safe error fields",async()=> {
-  const server=await launch();let blocked="";
-  const proxy=await publicProxy(server,(req,_body,reply)=>{if(!reply&&req.url===`/api/v1/runs/${blocked}/events`)return{status:409,body:JSON.stringify({error:{code:"sequence_conflict",details:{expectedSequence:9,currentVersion:12},message:"PRIVATE-P06-ERROR",repositoryPath:"PRIVATE-P06-PATH"}})};});
+  const server=await launch();let blocked="",delayed="";
+  const proxy=await publicProxy(server,(req,_body,reply)=>{if(!reply&&req.url===`/api/v1/runs/${blocked}/events`)return{status:409,body:JSON.stringify({error:{code:"sequence_conflict",details:{expectedSequence:9,currentVersion:12},message:"PRIVATE-P06-ERROR",repositoryPath:"PRIVATE-P06-PATH"}})};if(!reply&&delayed&&req.url===`/api/v1/runs/${delayed}/events`)return{status:503,body:"",headers:{"Retry-After":"2"}};});
   try {
     const f=await registeredRun({...server,port:proxy.port});blocked=f.runId;
     const second=await f.cli(["run","register","--file",f.file({id:randomUUID(),projectId:f.projectId,agentId:f.agentId,purpose:"planning"}),"--idempotency-key",randomUUID()]);expect(second.code).toBe(0);const healthy=JSON.parse(second.stdout).id;
+    const pending=await f.cli(["run","register","--file",f.file({id:randomUUID(),projectId:f.projectId,agentId:f.agentId,purpose:"planning"}),"--idempotency-key",randomUUID()]);expect(pending.code).toBe(0);delayed=JSON.parse(pending.stdout).id;
     const box=await openOutbox({port:proxy.port,token:server.credentials().reporterToken,outbox:f.env.AGENTFLOW_OUTBOX_DIR,explicitService:undefined},performance.now()+5000);
-    try{await box.enqueue(blocked,"run.started",{});await box.enqueue(healthy,"run.started",{});}finally{box.close();}
+    try{await box.enqueue(blocked,"run.started",{});await box.enqueue(healthy,"run.started",{});await box.enqueue(delayed,"run.started",{});}finally{box.close();}
     const result=await f.cli(["flush"]);expect(result.code).toBe(3);
     expect(result.stderr).toContain('"expectedSequence":9');expect(result.stderr).toContain('"currentVersion":12');expect(result.stderr).not.toContain("PRIVATE-P06");
     expect(JSON.parse(readFileSync(join(f.env.AGENTFLOW_OUTBOX_DIR,healthy,"state.json"),"utf8")).acknowledgedThrough).toBe(1);
+    expect(JSON.parse(readFileSync(join(f.env.AGENTFLOW_OUTBOX_DIR,delayed,"state.json"),"utf8")).acknowledgedThrough).toBe(0);
   }finally{await proxy.close();await server.stop();}
 });
