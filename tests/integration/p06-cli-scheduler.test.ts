@@ -58,3 +58,28 @@ it("continues independent work after a blocked run and prints only safe error fi
     expect(JSON.parse(readFileSync(join(f.env.AGENTFLOW_OUTBOX_DIR,delayed,"state.json"),"utf8")).acknowledgedThrough).toBe(0);
   }finally{await proxy.close();await server.stop();}
 });
+
+it("gives an expired retry its ring turn while another run still has a healthy FIFO backlog",async()=> {
+  const server=await launch(),a="00000000-0000-4000-8000-000000000001",b="ffffffff-ffff-4fff-bfff-ffffffffffff",order:string[]=[];let attemptsB=0;
+  const proxy=await publicProxy(server,async(req,_body,reply)=> {
+    if(reply||!req.url?.endsWith("/events"))return;
+    const id=req.url.split("/").at(-2)!;order.push(id);
+    if(id===b&&++attemptsB===1)return{status:503,body:"",headers:{"Retry-After":"0"}};
+    if(id===a)await new Promise(resolve=>setTimeout(resolve,80));
+  });
+  try {
+    const f=await registeredRun({...server,port:proxy.port}),root=f.env.AGENTFLOW_OUTBOX_DIR,config={port:proxy.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined};
+    const box=await openOutbox(config,performance.now()+20000);
+    try {
+      for(const id of [a,b]){expect((await fetch(server.url+"/api/v1/runs",{method:"POST",headers:{Authorization:`Bearer ${config.token}`,"Content-Type":"application/json","Idempotency-Key":randomUUID()},body:JSON.stringify({id,projectId:f.projectId,agentId:f.agentId,purpose:"planning"})})).status).toBe(201);expect((await box.initializeRun(id)).kind).toBe("delivered");}
+      for(let i=0;i<100;i++)await box.enqueue(a,i?"run.heartbeat":"run.started",{});await box.enqueue(b,"run.started",{});
+    }finally{box.close();}
+    const originals=new Map(readdirSync(join(root,a)).filter(name=>/^\d+-/.test(name)).map(name=>[name,readFileSync(join(root,a,name))]));
+    const firstB=readdirSync(join(root,b)).find(name=>/^1-/.test(name))!,originalB=JSON.parse(readFileSync(join(root,b,firstB),"utf8"));
+    expect((await f.cli(["flush"])).code).toBe(2);
+    const stateA=JSON.parse(readFileSync(join(root,a,"state.json"),"utf8"));expect(stateA.acknowledgedThrough).toBeGreaterThan(0);expect(stateA.acknowledgedThrough).toBeLessThan(100);
+    expect(JSON.parse(readFileSync(join(root,b,"state.json"),"utf8")).acknowledgedThrough).toBe(1);expect(attemptsB).toBe(2);expect(order.lastIndexOf(b)).toBeLessThanOrEqual(5);
+    for(const name of readdirSync(join(root,a)).filter(name=>/^\d+-/.test(name)))expect(readFileSync(join(root,a,name))).toEqual(originals.get(name));
+    const {default:Database}=await import("better-sqlite3"),db=new Database(join(server.dir,"agentflow.sqlite"),{readonly:true});try{expect(db.prepare("SELECT event_id FROM run_events WHERE run_id=?").get(b)).toEqual({event_id:originalB.body.eventId});expect(db.prepare("SELECT count(*) n FROM run_events WHERE run_id=?").get(a)).toEqual({n:stateA.acknowledgedThrough});}finally{db.close();}
+  }finally{await proxy.close();await server.stop();}
+});
