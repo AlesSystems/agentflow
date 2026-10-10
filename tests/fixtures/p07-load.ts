@@ -1,3 +1,4 @@
+import {scheduleGroups} from "./p07-scheduler";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
@@ -12,7 +13,7 @@ import { canonicalDigest } from "../../src/domain/request-digest";
 import { plan, targets, acknowledge, cadence, reconcile, distribution, type Target } from "./p07-protocol";
 async function untilDue(due:number){while(performance.now()<due)await wait(due-performance.now());}
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, Math.max(0,ms)));
-async function pages(server: Awaited<ReturnType<typeof launch>>, projectId: string) {
+export async function pages(server: Awaited<ReturnType<typeof launch>>, projectId: string) {
   const browser = await chromium.launch({ channel: "chrome" });
   const result: Page[] = [];
   try {
@@ -83,10 +84,8 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       const timed={phase,startedMs:start,endedMs:null as number|null,cadence:null as unknown,http:null as unknown,failure:null as string|null};result.phases.push(timed);save();
       try {
         const batch=events.filter(event=>event.phase===phase);
-        for(let offset=0;offset<batch.length;offset+=counts.producers) {
-          const group=batch.slice(offset,offset+counts.producers);await untilDue(start+group[0].dueMs);
-          await Promise.all(group.map(async event=>{
-            const record={eventId:event.body.eventId,body:event.body,digest:canonicalDigest(event.body),dueMs:event.dueMs,dispatchMs:performance.now(),responseMs:null as number|null,status:null as number|null,ack:null as unknown,error:null as string|null};result.requests.push(record);
+        await scheduleGroups(batch,counts.producers,start,event=>event.dueMs,async(event,dispatchMs)=>{
+            const record={eventId:event.body.eventId,body:event.body,digest:canonicalDigest(event.body),dueMs:event.dueMs,dispatchMs,responseMs:null as number|null,status:null as number|null,ack:null as unknown,error:null as string|null};result.requests.push(record);
             observations.filter(row=>row.event===event).forEach(row=>row.dispatchMs=record.dispatchMs);
             try {
               const response: Response=await fetch(server!.url+`/api/v1/runs/${event.body.runId}/events`,{method:"POST",headers,body:JSON.stringify(event.body)});
@@ -94,8 +93,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
               assert.equal(response.status,201,"NEW_EVENT_REJECTED");const ack=acknowledge(record.ack,event);
               observations.filter(row=>row.event===event).forEach(row=>row.receivedAt=ack.data.receivedAt);
             } catch(error) {record.error=(error as Error).message;throw error;}
-          }));
-        }
+        });
         await untilDue(start+duration);timed.endedMs=performance.now();
         const records=result.requests.filter(record=>batch.some(event=>event.body.eventId===record.eventId));
         assert.equal(records.length,batch.length);timed.cadence=cadence(duration,interval,start,timed.endedMs,records);timed.http=distribution(records.map(record=>record.responseMs!-record.dispatchMs));
