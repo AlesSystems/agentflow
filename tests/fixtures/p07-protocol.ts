@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eventResponse } from "../../src/contracts/observations";
 export type Planned = { scenario: number; phase: "sustained" | "burst"; producer: number; dueMs: number; body: { schemaVersion: 1; eventId: string; runId: string; sequence: number; type: "run.heartbeat" | "run.progress"; occurredAt: string; payload: { message?: string } }; message: string | null };
-export type Target = { event: Planned; tab: number; dispatchMs: number | null; confirmedMs: number | null; receivedAt: string | null; observedReceipt: string | null; errors: string[] };
+export type Target = { event: Planned; tab: number; dispatchMs: number | null; confirmedMs: number | null; receivedAt: string | null; observedReceipt: string | null; errors: string[]; observation: unknown | null };
 export function plan(runs: string[], scenario: number, smoke = false): Planned[] {
   assert.equal(runs.length, smoke ? 2 : 10);
   const sequence = runs.map(() => 1);
@@ -23,7 +23,7 @@ export function plan(runs: string[], scenario: number, smoke = false): Planned[]
   return events;
 }
 export function targets(events: Planned[]): Target[] {
-  return events.filter(event => event.message).flatMap(event => [0, 1].map(tab => ({ event, tab, dispatchMs: null, confirmedMs: null, receivedAt: null, observedReceipt: null, errors: [] })));
+  return events.filter(event => event.message).flatMap(event => [0, 1].map(tab => ({ event, tab, dispatchMs: null, confirmedMs: null, receivedAt: null, observedReceipt: null, errors: [], observation: null })));
 }
 export function acknowledge(raw: unknown, event: Planned) {
   const parsed = eventResponse.parse(raw);

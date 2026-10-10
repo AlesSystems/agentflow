@@ -28,7 +28,7 @@ assert(evidence, "AGENTFLOW_P07_EVIDENCE_DIR required");
 assert(statSync(evidence).isDirectory(), "evidence directory required");
 assert(!existsSync(join(evidence, "performance.json")), "Use a fresh evidence directory; never overwrite a run");
 const counts = acceptance ? { tasks: 1000, events: 10000, producers: 10, queued: 1000, samples: 100, repetitions: 3 } : { tasks: 12, events: 20, producers: 2, queued: 4, samples: 5, repetitions: 1 };
-const root = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p06-performance-"));
+const root = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p07-performance-"));
 const owned: string[] = [root];
 const addonProbe = new Database(":memory:"); addonProbe.close();
 const sqliteAddon = Object.keys(createRequire(import.meta.url).cache).find(path => path.includes("/better-sqlite3/") && path.endsWith(".node"));
@@ -171,7 +171,7 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
   const labels = index % 2 ? ["base","head"] as const : ["head","base"] as const;
   const servers: Partial<Record<"base"|"head", Awaited<ReturnType<typeof launch>>>> = {};
   const operations: Record<string,{base:number[];head:number[]}> = Object.fromEntries(["ingestion","tasks","detail","board","overview","tracking","events"].map(name=>[name,{base:[],head:[]} ]));
-  const result = { index, order: labels, requests: [] as {label:string;operation:string;ordinal:number;warmup:boolean;status:number;ms:number;eventId?:string;digest?:string}[], operations: {} as Record<string,unknown>, missing: 0, limited429: 0, errors: 0, failure: "" };
+  const result = { index, measuredStartedMs: performance.now(), measuredEndedMs: null as number|null, order: labels, requests: [] as {label:string;operation:string;ordinal:number;warmup:boolean;status:number;ms:number;input?:unknown;response?:unknown;eventId?:string;digest?:string}[], operations: {} as Record<string,unknown>, missing: 0, limited429: 0, errors: 0, failure: "" };
   receipt.comparisons.push(result); save();
   try {
     for (const label of labels) {
@@ -188,7 +188,7 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
           const t=performance.now();
           const reply=await fetch(server.url+"/api/v1"+(operation==="ingestion"?`/runs/${body.runId}/events`:reads[operation].path),{method:operation==="ingestion"?"POST":"GET",headers:{Authorization:"Bearer "+server.credentials().reporterToken,...(operation==="ingestion"?{"Content-Type":"application/json"}:{})},body:operation==="ingestion"?JSON.stringify(body):undefined,redirect:"manual"});
           const raw=await reply.json(); const ms=performance.now()-t;
-          result.requests.push({label,operation,ordinal,warmup:ordinal<10,status:reply.status,ms,...(operation==="ingestion"?{eventId:body.eventId,digest:canonicalDigest(body)}:{})});
+          result.requests.push({label,operation,ordinal,warmup:ordinal<10,status:reply.status,ms,input:operation==="ingestion"?body:reads[operation].path,response:raw,...(operation==="ingestion"?{eventId:body.eventId,digest:canonicalDigest(body)}:{})});
           if(reply.status===429)result.limited429++;else if(!reply.ok)result.errors++;
           assert.equal(reply.status,operation==="ingestion"?201:200,"native operation rejected; retain failed raw sample");
           (operation==="ingestion"?eventResponse:reads[operation].schema).parse(raw);
@@ -205,6 +205,7 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
     result.missing=Object.values(operations).reduce((sum,s)=>sum+2*counts.samples-s.base.length-s.head.length,0);
   } catch(error) { result.failure=error instanceof Error?error.message:"unknown"; throw error; }
   finally {
+    result.measuredEndedMs=performance.now();
     for(const [operation,samples] of Object.entries(operations)) if(!result.operations[operation]) {
       const absent = { count: 0, p50Ms: null, p95Ms: null, maxMs: null, samplesMs: [] };
       result.operations[operation] = { base: samples.base.length ? distribution(samples.base) : absent, head: samples.head.length ? distribution(samples.head) : absent };
@@ -214,7 +215,8 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
   }
 }
 try {
-  const baseSource=join(root,"p05-source");mkdirSync(baseSource,{mode:0o700});
+  assert.equal(execFileSync("git",["diff",baselineSha,"--","src","migrations","package.json","package-lock.json","next.config.ts"],{encoding:"utf8"}),"","Retained baseline build only applies to byte-identical runtime/build inputs");
+  const baseSource=join(root,"p06-source");mkdirSync(baseSource,{mode:0o700});
   const archive=execFileSync("git",["archive",baselineSha],{maxBuffer:20*1024*1024});
   execFileSync("tar",["-xf","-","-C",baseSource],{input:archive});
   assert.equal(hash(readFileSync("package-lock.json")),hash(readFileSync(join(baseSource,"package-lock.json"))),"baseline/head dependency lock must match");

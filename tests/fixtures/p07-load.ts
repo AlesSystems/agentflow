@@ -26,8 +26,8 @@ async function pages(server: Awaited<ReturnType<typeof launch>>, projectId: stri
     return {browser,pages:result};
   } catch(error) { await browser.close(); throw error; }
 }
-async function confirm(page: Page, row: Target) {
-  const result = await page.evaluate<{receivedAt:string|null}|null>(`(async () => {
+export async function confirm(page: Page, row: Target) {
+  const result = await page.evaluate<{receivedAt:string|null;twoFrames:boolean}|null>(`(async () => {
     const {message,runId} = ${JSON.stringify({message:row.event.message!,runId:row.event.body.runId})};
     function inspect() {
       const node=[...document.querySelectorAll(".activity-list .preserve-lines")].find(node => node.textContent===message);
@@ -42,9 +42,9 @@ async function confirm(page: Page, row: Target) {
     const first=inspect();if(!first)return null;
     await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
     const second=inspect();if(!second||second.receivedAt!==first.receivedAt)return null;
-    return second;
+    return {...second,message,runId,twoFrames:true};
   })()`);
-  if(result) { row.confirmedMs=performance.now();row.observedReceipt=result.receivedAt; return result; }
+  if(result) { row.confirmedMs=performance.now();row.observedReceipt=result.receivedAt;row.observation=result; return result; }
   return null;
 }
 export async function loadScenario(root: string,index: number,acceptance: boolean) {
@@ -69,8 +69,8 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     await Promise.all(tabs.pages.map((page,tab)=>confirm(page,observations.find(row=>row.tab===tab)!)));
     for(const [tab,page]of tabs.pages.entries()) observers.push((async()=>{
       while(observing){
-        for(const row of observations.filter(row=>row.tab===tab&&row.dispatchMs!==null&&row.confirmedMs===null)) {
-          try { await confirm(page,row); } catch(error) {row.errors.push((error as Error).message); row.confirmedMs=-1;}
+        for(const row of observations.filter(row=>row.tab===tab&&row.dispatchMs!==null&&row.confirmedMs===null&&row.errors.length===0)) {
+          try { await confirm(page,row); } catch(error) {row.errors.push((error as Error).message);}
         }
         await wait(10);
       }
@@ -129,7 +129,7 @@ export async function resourceProof(root:string,acceptance:boolean){
     const cookie=await pair(server);
     const snapshot=await (await fetch(server.url+"/api/v1/overview?timezone=UTC",{headers:{Cookie:cookie}})).json();
     for(let cycle=0;cycle<result.plannedCycles;cycle++){
-      const abort=new AbortController();const response: Response=await fetch(server.url+`/api/v1/changes/stream?after=${snapshot.snapshotCursor}&generation=${snapshot.generation}`,{headers:{Cookie:cookie},signal:abort.signal});assert.equal(response.status,200);const reader=response.body!.getReader();await reader.read();abort.abort();await reader.cancel().catch(()=>{});result.cycles++;
+      const abort=new AbortController();const response: Response=await fetch(server.url+`/api/v1/changes/stream?after=0&generation=${snapshot.generation}`,{headers:{Cookie:cookie},signal:abort.signal});assert.equal(response.status,200);const reader=response.body!.getReader();await reader.read();abort.abort();await reader.cancel().catch(()=>{});result.cycles++;
     }
     await wait(500);result.after=await diagnose();result.countsAfter=counts();assert.deepEqual(result.countsAfter,result.countsBefore);
     const before=result.before as {memory:{heapUsed:number};streams:{leases:number}},after=result.after as typeof before;
