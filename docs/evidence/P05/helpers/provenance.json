@@ -1,0 +1,20 @@
+{
+  "scope": "Documentary helper text, not directly executable or shipped runtime; machine paths normalized, measured private originals retained under their approved hashes. Timing, validators and cleanup logic unchanged.",
+  "files": [
+    {
+      "reference": "measure.ts.txt",
+      "approvedPrivateSha256": "7d8fe5c65feb65e89a47d76e677cbb621f6de60a2e7670eec0a746a2f0c0787f",
+      "publicReferenceSha256": "7ae3e30ac79f96bcc7da250e3a370e30227a28569aeab5a7363d2b856b4eaea8"
+    },
+    {
+      "reference": "measure-runtime.ts.txt",
+      "approvedPrivateSha256": "519eb1de1275b84dd4b11c086ba31f69afa593a5a4a489df7481dbf6a2ba809a",
+      "publicReferenceSha256": "519eb1de1275b84dd4b11c086ba31f69afa593a5a4a489df7481dbf6a2ba809a"
+    },
+    {
+      "reference": "measure-policy.ts.txt",
+      "approvedPrivateSha256": "779a669f3f049ee62087bc5aa3115b27b061c4d69871cf634dc93de1d499cde1",
+      "publicReferenceSha256": "779a669f3f049ee62087bc5aa3115b27b061c4d69871cf634dc93de1d499cde1"
+    }
+  ]
+}

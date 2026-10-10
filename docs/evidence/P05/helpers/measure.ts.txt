@@ -1,0 +1,219 @@
+import assert from "node:assert/strict";
+import { chromium, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { spawn, execFileSync, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { randomUUID, createHash } from "node:crypto";
+import { mkdtempSync, realpathSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir, release, hostname } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { connect, type Socket } from "node:net";
+import Database from "better-sqlite3";
+import { openOwnedStore, migrations } from "../../../src/db";
+import { ApplicationData, type ApplicationCommand, type ApplicationQuery } from "../../../src/db/application";
+import { canonicalDigest } from "../../../src/domain/request-digest";
+import { freePort } from "../../../tests/fixtures/server";
+import { eventsResponse } from "../../../src/contracts/observations";
+import type { z } from "zod";
+import { trackingTasksResponse, activityResponse } from "../../../src/contracts/tracking";
+import { distribution, acknowledgement, below, regression, clearResources, boundedResources, policySelfCheck } from "./measure-policy";
+const output = process.env.AGENTFLOW_P05_EVIDENCE_DIR;
+assert(output, "EVIDENCE_DIRECTORY_REQUIRED"); mkdirSync(output, { recursive: true });
+const smoke = process.argv.includes("--smoke");
+const config = { smoke, comparisonRounds: 110, latencyPerRun: smoke ? 3 : 30, snapshotPerRun: smoke ? 3 : 100, sustainedSeconds: smoke ? 2 : 300, burstSeconds: smoke ? 1 : 10, cycles: smoke ? 5 : 100 };
+const wait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+async function until(check: () => Promise<boolean> | boolean, timeout = 10000) { const start = performance.now(); while (!(await check())) { assert(performance.now() - start < timeout, "CONDITION_TIMEOUT"); await wait(25); } }
+type Diagnostics = { id: number; memory: NodeJS.MemoryUsage; streams: { leases: number; bytes: number; blocked: number; timers: number; listeners: number; peakBytes: number }; runtime: { requests: number; activeSockets: number }; collection: string };
+type Runtime = { child: ChildProcessWithoutNullStreams; url: string; port: number; diagnose: () => Promise<Diagnostics>; stop: () => Promise<void> };
+type Visible = { eventId: string; runId: string; sequence: number; message: string; receivedAt: string; browserMono: number; rect: { x: number; y: number; width: number; height: number }; viewport: { width: number; height: number }; visibility: string };
+type ReportRecord = { phase: string; producer: number; sequence: number; eventId: string; runId: string; message: string; dispatchMono: number; dispatchWall: number; responseMono?: number; responseWall?: number; status?: number; receivedAt?: string; receivedMono?: number; error?: string; scheduleDueMono?: number; dispatchLagMs?: number; requestMs?: number; responseBody?: unknown };
+const proof: Record<string, unknown> = { startedAt: new Date().toISOString(), scope: smoke ? "REDUCED HELPER SMOKE, NOT P05 ACCEPTANCE OR PERFORMANCE EVIDENCE" : "FULL P05 CANDIDATE MEASUREMENT", config, host: hostname(), node: process.version, os: release(), platform: process.platform, arch: process.arch, source: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(), functionalSource: "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5", buildId: readFileSync(".next/BUILD_ID", "utf8"), fixture: { tasks: 1000, preseededEvents: 10000, producers: 10, tabs: 2 }, errors: [], validations: [], helperHashes: Object.fromEntries(["measure.ts", "measure-runtime.ts", "measure-policy.ts"].map(name => [name, createHash("sha256").update(readFileSync(join("work/poteto/P05", name))).digest("hex")])) };
+let owned: Awaited<ReturnType<typeof openOwnedStore>> | undefined;
+let browser: Browser | undefined;
+const runtimes = new Set<Runtime>(), contexts = new Set<BrowserContext>(), sockets = new Set<Socket>();
+const records: ReportRecord[] = [], visible: unknown[] = [], comparisons: { run: number; name: string; base: ReturnType<typeof distribution>; head: ReturnType<typeof distribution>; p95ChangePercent: number }[] = [], snapshots: number[] = [], errors: unknown[] = [], validations: string[] = [];
+proof.records = records; proof.visible = visible; proof.comparisons = comparisons; proof.errors = errors; proof.validations = validations;
+function check(name: string, action: () => void) { try { action(); validations.push(name + " PASS"); } catch (error) { errors.push({ validation: name, error: (error as Error).message }); } }
+async function runtime(dir: string): Promise<Runtime> {
+  const port = await freePort(), url = `http://127.0.0.1:${port}`;
+  const child = spawn(process.execPath, ["--expose-gc", "--import", "tsx", "work/poteto/P05/measure-runtime.ts"], { env: { ...process.env, AGENTFLOW_DATA_DIR: dir, PORT: String(port), NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1" }, stdio: ["pipe", "pipe", "pipe"] });
+  let buffer = "", id = 0, shutdown: unknown, stopped = false;
+  const pending = new Map<number, { resolve: (value: Diagnostics) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
+  child.stdout.on("data", chunk => { buffer += chunk; let boundary: number; while ((boundary = buffer.indexOf("\n")) >= 0) { const line = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 1); if (line.startsWith("MEASURE ")) { const value = JSON.parse(line.slice(8)); const waiter = pending.get(value.id); if (waiter) { clearTimeout(waiter.timer); waiter.resolve(value); pending.delete(value.id); } } else if (line.startsWith("SHUTDOWN ")) shutdown = JSON.parse(line.slice(9)); } });
+  child.stderr.on("data", () => {});
+  const value: Runtime = { child, url, port, diagnose: () => new Promise((resolve, reject) => { const requestId = ++id; const timer = setTimeout(() => { pending.delete(requestId); reject(new Error("DIAGNOSTIC_TIMEOUT")); }, 10000); pending.set(requestId, { resolve, reject, timer }); child.stdin.write(JSON.stringify({ id: requestId }) + "\n"); }), stop: async () => { if (stopped) return; stopped = true; if (child.exitCode === null && child.signalCode === null) { const exited = new Promise<void>(resolve => child.once("exit", () => resolve())); child.kill("SIGTERM"); await exited; } for (const waiter of pending.values()) { clearTimeout(waiter.timer); waiter.reject(new Error("RUNTIME_STOPPED")); } pending.clear(); proof.shutdowns = [...((proof.shutdowns as unknown[]) ?? []), { port, exitCode: child.exitCode, signal: child.signalCode, shutdown }]; if (shutdown) { check("shutdown before Store close", () => { const sample = shutdown as { streams: Diagnostics["streams"]; runtime: Diagnostics["runtime"] }; clearResources(sample.streams); assert.equal(sample.runtime.requests, 0); assert.equal(sample.runtime.activeSockets, 0); }); } runtimes.delete(value); } };
+  runtimes.add(value);
+  await until(async () => { if (child.exitCode !== null) throw new Error("RUNTIME_EARLY_EXIT"); try { return (await fetch(url + "/api/v1/health")).ok; } catch { return false; } }, 30000);
+  return value;
+}
+async function pair(running: Runtime, dir: string) {
+  const credentials = JSON.parse(readFileSync(join(dir, "credentials.json"), "utf8"));
+  const response = await fetch(running.url + "/api/v1/session", { method: "POST", headers: { Origin: running.url, "Content-Type": "application/json" }, body: JSON.stringify({ token: credentials.pairingToken }) }); assert.equal(response.status, 200); return { cookie: response.headers.get("set-cookie")!.split(";")[0], reporter: credentials.reporterToken };
+}
+async function warm(running: Runtime, cookie: string, projectId: string, runId: string) {
+  const chunks = new Set<string>();
+  for (const path of ["/agents", "/activity", `/runs/${runId}`, `/api/v1/tracking/projects/${projectId}/board?limit=50`]) { const response = await fetch(running.url + path, { headers: { Cookie: cookie } }); assert.equal(response.status, 200); const text = await response.text(); for (const match of text.matchAll(/<script[^>]+src="([^"]+)"/g)) if (match[1].startsWith("/_next/")) chunks.add(match[1].replaceAll("&amp;", "&")); }
+  for (const path of chunks) await (await fetch(running.url + path)).arrayBuffer();
+}
+function counts(dir: string) { const db = new Database(join(dir, "agentflow.sqlite"), { readonly: true }); try { return Object.fromEntries(["tasks", "runs", "run_events", "changes"].map(table => [table, (db.prepare(`SELECT count(*) AS count FROM ${table}`).get() as { count: number }).count])); } finally { db.close(); } }
+async function tabs(running: Runtime, cookie: string, projectId: string) {
+  const pages: Page[] = [];
+  for (let i = 0; i < 2; i++) { const context = await browser!.newContext({ viewport: { width: 1440, height: 1000 } }); contexts.add(context); await context.addCookies([{ name: cookie.split("=")[0], value: cookie.split("=")[1], url: running.url, httpOnly: true }]); const page = await context.newPage(); await page.goto(running.url + `/activity?projectId=${projectId}`); await page.getByText("Connected updates", { exact: true }).waitFor(); pages.push(page); }
+  return pages;
+}
+async function closeTabs(pages: Page[]) { for (const page of pages) { const context = page.context(); await context.close(); contexts.delete(context); } }
+async function pageAll<T extends { id?: string; eventId?: string; sequence?: number }>(running: Runtime, cookie: string, path: string, schema: z.ZodType<{ generation: string; snapshotCursor: string; data: { items: T[]; nextCursor: string | null } }>, expected: number) {
+  const ids: string[] = [], cursors: string[] = [], sequences: number[] = [];
+  let cursor: string | null = null, generation: string | undefined;
+  const progress: Record<string, unknown> = { path, expected, pages: [] };
+  proof.publicPaging = [...((proof.publicPaging as unknown[]) ?? []), progress];
+  do {
+    const query = new URL(path, running.url);
+    if (cursor) { query.searchParams.set("cursor", cursor); for (const key of ["projectId", "agentId", "taskId"]) if (query.searchParams.has(key)) query.searchParams.set(key, query.searchParams.get(key)!.toLowerCase()); }
+    const response: Response = await fetch(query, { headers: { Cookie: cookie } });
+    assert.equal(response.status, 200);
+    const body = schema.parse(await response.json()); generation ??= body.generation; assert.equal(body.generation, generation);
+    ids.push(...body.data.items.map(item => item.id ?? item.eventId!)); sequences.push(...body.data.items.flatMap(item => item.sequence === undefined ? [] : [item.sequence]));
+    (progress.pages as unknown[]).push({ url: query.pathname + query.search, items: body.data.items.length, generation: body.generation, snapshotCursor: body.snapshotCursor, nextCursor: body.data.nextCursor });
+    cursor = body.data.nextCursor;
+    if (cursor) { assert(!cursors.includes(cursor), "PAGING_CURSOR_REUSED"); cursors.push(cursor); }
+  } while (cursor);
+  assert.equal(ids.length, expected); assert.equal(new Set(ids).size, expected);
+  if (sequences.length) assert.deepEqual(sequences, Array.from({ length: expected }, (_, index) => index + 1), "RAW_SEQUENCE_PAGING");
+  Object.assign(progress, { total: expected, distinctIds: ids.length, generation, traversedCursors: cursors.length, rawSequences: sequences.length ? sequences : undefined });
+  return progress;
+}
+async function observe(page: Page) {
+  await page.evaluate(String.raw`(() => {
+    const targets = {}, seen = {};
+    Object.assign(window, { P05Targets: targets, P05Seen: seen });
+    let scheduled = false;
+    const scan = () => {
+      scheduled = false;
+      for (const target of Object.values(targets)) {
+        if (seen[target.eventId] || !target.receivedAt) continue;
+        for (const message of document.querySelectorAll(".activity-list .preserve-lines")) {
+          if (message.textContent !== target.message) continue;
+          const li = message.closest("li");
+          const run = li.querySelector("a[href='/runs/" + target.runId + "']");
+          const receipt = li.querySelector("time");
+          if (!run || receipt?.getAttribute("datetime") !== target.receivedAt) continue;
+          const rect = message.getBoundingClientRect(), style = getComputedStyle(message);
+          const x = Math.max(0, Math.min(innerWidth - 1, rect.left + rect.width / 2));
+          const y = Math.max(0, Math.min(innerHeight - 1, rect.top + rect.height / 2));
+          const hit = document.elementFromPoint(x, y);
+          if (document.visibilityState !== "visible" || rect.width <= 0 || rect.height <= 0 || rect.bottom <= 0 || rect.top >= innerHeight || rect.right <= 0 || rect.left >= innerWidth || style.display === "none" || style.visibility !== "visible" || Number(style.opacity) === 0 || hit?.closest("li") !== li) continue;
+          seen[target.eventId] = { ...target, browserMono: performance.now(), rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }, viewport: { width: innerWidth, height: innerHeight }, visibility: document.visibilityState };
+        }
+      }
+    };
+    const schedule = () => { if (scheduled) return; scheduled = true; requestAnimationFrame(() => requestAnimationFrame(scan)); };
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true });
+    Object.assign(window, { P05Scan: schedule });
+  })()`);
+}
+async function align(page: Page) { const samples: { nodeStart: number; nodeEnd: number; browserMono: number; offset: number; uncertaintyMs: number }[] = []; for (let i = 0; i < 5; i++) { const nodeStart = performance.now(), browserMono = await page.evaluate(() => performance.now()), nodeEnd = performance.now(); samples.push({ nodeStart, nodeEnd, browserMono, offset: (nodeStart + nodeEnd) / 2 - browserMono, uncertaintyMs: (nodeEnd - nodeStart) / 2 }); } const best = samples.reduce((a, b) => a.uncertaintyMs < b.uncertaintyMs ? a : b); assert(best.uncertaintyMs < 25, "CLOCK_ALIGNMENT_UNCERTAINTY"); return { ...best, samples }; }
+let dir = "";
+try {
+  proof.policyNegativeChecks = policySelfCheck();
+  dir = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p05-measured-")); owned = await openOwnedStore(dir);
+  const send = (command: ApplicationCommand) => owned!.store.command(command, { principal: "reporter", method: "POST", path: command.kind, key: randomUUID(), digest: canonicalDigest(command.input), now: Date.now() }).body.data as { id: string };
+  const projectId = send({ kind: "project.create", input: { name: "Synthetic P05 measured load" } }).id;
+  const tasks: string[] = [], runs: string[] = [];
+  for (let i = 0; i < 1000; i++) tasks.push(send({ kind: "task.create", input: { projectId, title: `Synthetic measured task ${i}` } }).id);
+  for (let producer = 0; producer < 10; producer++) { const agentId = send({ kind: "agent.create", input: { displayName: `Synthetic producer ${producer}`, source: "public load fixture", defaultRole: "implementation" } }).id; const id = randomUUID(); runs.push(id); send({ kind: "run.register", input: { id, projectId, agentId, taskId: tasks[producer], purpose: "implementation", expectedTaskVersion: 1 } }); for (let sequence = 1; sequence <= 1000; sequence++) send({ kind: "run.event", id, input: { schemaVersion: 1, eventId: randomUUID(), runId: id, sequence, type: sequence === 1 ? "run.started" : "run.heartbeat", occurredAt: new Date().toISOString(), payload: {} } }); }
+  owned.store.command({ kind: "settings.patch", input: { expectedVersion: 1, timezone: "UTC" } }, { principal: "operator", method: "PATCH", path: "/api/v1/settings", key: randomUUID(), digest: canonicalDigest({ expectedVersion: 1, timezone: "UTC" }), now: Date.now() });
+  proof.fixture = { ...(proof.fixture as object), dataDir: dir, schemaVersion: owned.store.metadata().schemaVersion, migrations: migrations.map(({id,sha256})=>({id,sha256})) };
+  proof.lockfileHash = createHash("sha256").update(readFileSync("package-lock.json")).digest("hex");
+  proof.sourceHashes = Object.fromEntries(["src/server/launcher.ts", "src/server/change-stream.ts", "src/db/application.ts", "src/client/tracking-owner.ts", "src/client/tracking.ts", "src/contracts/tracking.ts", "src/components/tracking.tsx"].map(path => [path, createHash("sha256").update(readFileSync(path)).digest("hex")]));
+  owned.close(); owned = undefined;
+  browser = await chromium.launch({ channel: "chrome" });
+  const resourceRuntime = await runtime(dir), resourceAuth = await pair(resourceRuntime, dir); await warm(resourceRuntime, resourceAuth.cookie, projectId, runs[0]);
+  const fixedBefore = counts(dir), idle = await resourceRuntime.diagnose();
+  const resource: Record<string, unknown> = { scope: "separate fixed-dataset server-process proof before any comparison/load write; browser heap is not measured; timezone initialized in seed before idle so browser mount writes nothing", fixedBefore, idle, plannedCycles: config.cycles, cyclesDone: 0 };
+  proof.resources = resource; clearResources(idle.streams);
+  const resourcePages = await tabs(resourceRuntime, resourceAuth.cookie, projectId); await wait(smoke ? 300 : 3000); const steady = await resourceRuntime.diagnose(); resource.steady = steady; assert.equal(steady.streams.leases, 2); boundedResources(steady.streams);
+  const generation = (await (await fetch(resourceRuntime.url + "/api/v1/settings", { headers: { Cookie: resourceAuth.cookie } })).json()).generation;
+  const socket = connect(resourceRuntime.port, "127.0.0.1"); sockets.add(socket); socket.on("error", () => {}); await new Promise<void>((resolve, reject) => { socket.once("connect", resolve); socket.once("error", reject); }); socket.pause(); socket.write(`GET /api/v1/changes/stream?after=0&generation=${generation} HTTP/1.1\r\nHost: 127.0.0.1:${resourceRuntime.port}\r\nCookie: ${resourceAuth.cookie}\r\n\r\n`);
+  await until(async () => (await resourceRuntime.diagnose()).streams.leases === 3); const paused = await resourceRuntime.diagnose(); resource.paused = { ...paused, clientReadableFlowing: socket.readableFlowing }; assert.equal(socket.readableFlowing, false); boundedResources(paused.streams); socket.destroy(); sockets.delete(socket); await closeTabs(resourcePages);
+  await until(async () => (await resourceRuntime.diagnose()).streams.leases === 0); const current = await (await fetch(resourceRuntime.url + "/api/v1/settings", { headers: { Cookie: resourceAuth.cookie } })).json();
+  for (let cycle = 0; cycle < config.cycles; cycle++) { const controller = new AbortController(); const response = await fetch(resourceRuntime.url + `/api/v1/changes/stream?after=${current.snapshotCursor}&generation=${generation}`, { headers: { Cookie: resourceAuth.cookie }, signal: controller.signal }); assert.equal(response.status, 200); controller.abort(); resource.cyclesDone = cycle + 1; if (cycle % 10 === 9) await until(async () => (await resourceRuntime.diagnose()).streams.leases === 0); }
+  await until(async () => (await resourceRuntime.diagnose()).streams.leases === 0); const postClose = await resourceRuntime.diagnose(), fixedAfter = counts(dir); resource.postClose = postClose; resource.fixedAfter = fixedAfter; clearResources(postClose.streams); assert.deepEqual(fixedAfter, fixedBefore); boundedResources(postClose.streams);
+  const heapChangePercent = (postClose.memory.heapUsed / idle.memory.heapUsed - 1) * 100, rssChangePercent = (postClose.memory.rss / idle.memory.rss - 1) * 100;
+  Object.assign(resource, { heapChangePercent, rssChangePercent });
+  check("same-dataset post-close heap within20percent", () => assert(heapChangePercent <= 20, "POST_CLOSE_HEAP_BUDGET")); await resourceRuntime.stop();
+  owned = await openOwnedStore(dir);
+  const basePath = "[PRIMARY_CHECKOUT]", baseCommit = execFileSync("git", ["-C", basePath, "rev-parse", "HEAD"], { encoding: "utf8" }).trim(); assert.equal(baseCommit, "d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe");
+  const copiedBasePath = realpathSync("work/poteto/P05/baseline-d84");
+  const { ApplicationData: Base } = await import(pathToFileURL(join(copiedBasePath, "src/db/application.ts")).href); proof.base = { commit: baseCommit, path: basePath, runtimeCopy: copiedBasePath, sharedDependencies: realpathSync(join(copiedBasePath, "node_modules")), copiedSourceHash: createHash("sha256").update(readFileSync(join(copiedBasePath, "src/db/application.ts"))).digest("hex"), sourceHash: createHash("sha256").update(readFileSync(join(basePath, "src/db/application.ts"))).digest("hex"), timing: "Original snapshot/command operations interleaved unchanged; no equivalence normalization" };
+  let queryCount = 0; const unregister = owned.instance.registerConnection(); const db = new Database(join(dir, "agentflow.sqlite"), { readonly: false, verbose: () => queryCount++ });
+  let initialSequences: number[] = [];
+  try {
+    db.pragma("foreign_keys=ON"); db.pragma("synchronous=FULL");
+    const base = new Base(db, dir), head = new ApplicationData(db, dir);
+    const queries: { [name: string]: ApplicationQuery } = { tasks: { kind: "tasks", input: { projectId, limit: 50 } }, board: { kind: "board", id: projectId, input: { limit: 50 } }, detail: { kind: "task", id: tasks[0], input: { history: "both", historyLimit: 50 } }, overview: { kind: "overview", input: { timezone: "UTC", limit: 50 } } };
+    const at = Date.now();
+    for (let run = 1; run <= 3; run++) for (const [name, query] of Object.entries(queries)) {
+      assert.deepEqual(head.snapshot(query, at), base.snapshot(query, at));
+      const samples = { base: [] as number[], head: [] as number[] };
+      for (let i = 0; i < config.comparisonRounds; i++) for (const label of (i % 2 ? ["head", "base"] : ["base", "head"]) as ("base" | "head")[]) { const t = performance.now(); (label === "base" ? base : head).snapshot(query, at); if (i >= 10) samples[label].push(performance.now() - t); }
+      const b = distribution(samples.base), h = distribution(samples.head); comparisons.push({ run, name, base: b, head: h, p95ChangePercent: ((h.p95Ms / b.p95Ms) - 1) * 100 });
+    }
+    let comparisonSequence = 1000;
+    for (let run = 1; run <= 3; run++) {
+      const samples = { base: [] as number[], head: [] as number[] };
+      for (let i = 0; i < config.comparisonRounds; i++) for (const label of (i % 2 ? ["head", "base"] : ["base", "head"]) as ("base" | "head")[]) { const input = { schemaVersion: 1 as const, eventId: randomUUID(), runId: runs[0], sequence: ++comparisonSequence, type: "run.progress" as const, occurredAt: new Date().toISOString(), payload: { message: "Synthetic equivalent ingestion comparison" } }; const command: ApplicationCommand = { kind: "run.event", id: runs[0], input }; const context = { principal: "reporter" as const, method: "POST", path: `/api/v1/runs/${runs[0]}/events`, key: randomUUID(), digest: canonicalDigest(input), now: Date.now() }; const start = performance.now(); const result = (label === "base" ? base : head).command(command, context); assert.equal(result.status, 201); if (i >= 10) samples[label].push(performance.now() - start); }
+      const b = distribution(samples.base), h = distribution(samples.head); comparisons.push({ run, name: "ingestion", base: b, head: h, p95ChangePercent: ((h.p95Ms / b.p95Ms) - 1) * 100 });
+    }
+    const queryCounts: unknown[] = [];
+    for (const limit of [1, 50, 100]) for (const page of [0, 1]) { const first = head.snapshot({ kind: "tracking.tasks", input: { projectId, limit } }, at).body.data as { nextCursor: string | null }; const input = { projectId, limit, ...(page && first.nextCursor ? { cursor: first.nextCursor } : {}) }; queryCount = 0; head.snapshot({ kind: "tracking.tasks", input }, at); queryCounts.push({ limit, page, queries: queryCount }); }
+    check("tracking tasks constant query count first/next pages1/50/100", () => assert.equal(new Set(queryCounts.map(row => (row as { queries: number }).queries)).size, 1)); proof.queryCounts = queryCounts;
+    initialSequences = runs.map(id => (db.prepare("SELECT last_sequence AS sequence FROM runs WHERE id=?").get(id) as { sequence: number }).sequence);
+  } finally { db.close(); unregister(); }
+  owned.close(); owned = undefined;
+  for (const item of comparisons) check(`relative regression ${item.name} run${item.run}`, () => regression(item.p95ChangePercent));
+  const running = await runtime(dir), auth = await pair(running, dir); await warm(running, auth.cookie, projectId, runs[0]);
+  await pageAll(running, auth.cookie, `/api/v1/tracking/tasks?projectId=${projectId.toUpperCase()}&limit=100`, trackingTasksResponse, 1000);
+  await pageAll(running, auth.cookie, `/api/v1/activity?projectId=${projectId.toUpperCase()}&limit=20`, activityResponse, 10 + config.comparisonRounds * 2 * 3);
+  await pageAll(running, auth.cookie, `/api/v1/runs/${runs[0].toUpperCase()}/events?limit=100`, eventsResponse, initialSequences[0]);
+  const pages = await tabs(running, auth.cookie, projectId); for (const page of pages) await observe(page);
+  const sequences = [...initialSequences];
+  async function emit(producer: number, phase: string, scheduleDueMono?: number) {
+    const sequence = sequences[producer] + 1, eventId = randomUUID(), runId = runs[producer], message = `P05 measured event=${eventId} run=${runId} seq=${sequence} phase=${phase}`;
+    const record: ReportRecord = { phase, producer, sequence, eventId, runId, message, dispatchMono: performance.now(), dispatchWall: Date.now(), scheduleDueMono, dispatchLagMs: scheduleDueMono === undefined ? undefined : performance.now() - scheduleDueMono }; records.push(record);
+    try {
+      const response = await fetch(running.url + `/api/v1/runs/${runId}/events`, { method: "POST", headers: { Authorization: "Bearer " + auth.reporter, "Content-Type": "application/json" }, body: JSON.stringify({ schemaVersion: 1, eventId, runId, sequence, type: "run.progress", occurredAt: new Date().toISOString(), payload: { message } }) }); record.responseMono = performance.now(); record.responseWall = Date.now(); record.requestMs = record.responseMono - record.dispatchMono; record.status = response.status; const body = await response.json(); record.responseBody = body;
+      if (response.status === 201) { const parsed = acknowledgement(body, record); record.receivedAt = parsed.data.receivedAt; const receiptWall = Date.parse(record.receivedAt); assert(receiptWall >= record.dispatchWall - 2 && receiptWall <= record.responseWall + 2, "RECEIPT_WALL_OUTSIDE_REQUEST"); const wallElapsed = record.responseWall - record.dispatchWall; assert(Math.abs(wallElapsed - record.requestMs) < 25, "REQUEST_WALL_MONOTONIC_DRIFT"); record.receivedMono = record.dispatchMono + receiptWall - record.dispatchWall; sequences[producer] = sequence; } else if (response.status !== 429) { record.error = body?.error?.code ?? "UNEXPECTED_HTTP_STATUS"; errors.push({ phase, eventId, status: response.status, error: record.error }); }
+    } catch (error) { record.error = (error as Error).message; errors.push({ phase, eventId, error: record.error }); }
+    return record;
+  }
+  const clockAlignments: unknown[] = [];
+  for (let run = 1; run <= 3; run++) {
+    const offsets = await Promise.all(pages.map(page => align(page))); clockAlignments.push({ run, offsets });
+    for (let i = 0; i < config.latencyPerRun; i++) { const record = await emit(i % 10, `latency${run}`); if (record.status !== 201 || !record.receivedAt) continue;
+      for (let tab = 0; tab < pages.length; tab++) { const page = pages[tab]; await page.evaluate(target => { (window as unknown as { P05Targets: { [eventId: string]: unknown }; P05Scan: () => void }).P05Targets[target.eventId] = target; (window as unknown as { P05Scan: () => void }).P05Scan(); }, { eventId: record.eventId, runId: record.runId, sequence: record.sequence, message: record.message, receivedAt: record.receivedAt });
+        try { await page.waitForFunction(eventId => !!(window as unknown as { P05Seen: { [id: string]: unknown } }).P05Seen[eventId], record.eventId, { timeout: 10000 }); const observation = await page.evaluate(eventId => (window as unknown as { P05Seen: { [id: string]: Visible } }).P05Seen[eventId], record.eventId); proof.rawObservations = [...((proof.rawObservations as unknown[]) ?? []), { run, tab, expected: { eventId: record.eventId, runId: record.runId, sequence: record.sequence, receivedAt: record.receivedAt }, observation }]; assert.equal(observation.eventId, record.eventId); assert.equal(observation.runId, record.runId); assert.equal(observation.sequence, record.sequence); assert.equal(observation.message, record.message); assert.equal(observation.receivedAt, record.receivedAt); const visibleNodeMono = observation.browserMono + offsets[tab].offset, ms = visibleNodeMono - record.receivedMono!; assert(ms >= -offsets[tab].uncertaintyMs - 2, "VISIBLE_PRECEDES_RECEIPT"); visible.push({ run, tab, eventId: record.eventId, receivedAt: record.receivedAt, receivedNodeMono: record.receivedMono, visibleNodeMono, latencyMs: Math.max(0, ms), alignmentUncertaintyMs: offsets[tab].uncertaintyMs, observation }); } catch (error) { errors.push({ phase: record.phase, tab, eventId: record.eventId, error: (error as Error).message }); }
+      }
+    }
+    for (let i = 0; i < config.snapshotPerRun; i++) { const start = performance.now(); const response = await fetch(running.url + `/api/v1/tracking/projects/${projectId}/board?limit=50`, { headers: { Cookie: auth.cookie } }); assert.equal(response.status, 200); await response.json(); snapshots.push(performance.now() - start); }
+    console.log(JSON.stringify({ phase: "latency", run, matchedVisible: visible.filter(item => (item as { run: number }).run === run).length, smoke }));
+  }
+  proof.clockAlignment = { mechanism: "five monotonic browser/Node ping samples per tab/run, minimum-RTT midpoint offset with recorded uncertainty; same-host public receivedAt wall timestamp mapped to Node monotonic using dispatch wall/mono anchor, bounded inside HTTP interval and wall/mono drift checked; visibility sampled after two animation frames with exact report/run/receipt/unique event+sequence message and hit-tested viewport intersection", clockAlignments };
+  async function paced(phase: string, rate: number, seconds: number) { const start = performance.now(), count = rate * seconds; for (let tick = 0; tick < count / 10; tick++) { const due = start + tick * 10000 / rate; await wait(Math.max(0, due - performance.now())); await Promise.all(runs.map((_, producer) => emit(producer, phase, due))); if (tick % Math.round(rate * 6) === 0) console.log(JSON.stringify({ phase, elapsedSeconds: (performance.now() - start) / 1000, smoke })); } await wait(Math.max(0, start + seconds * 1000 - performance.now())); const end = performance.now(), phaseRecords = records.filter(record => record.phase === phase); const result = { phase, requestedRate: rate, requestedSeconds: seconds, expectedRequests: count, actualDispatches: phaseRecords.length, startedMono: start, finishedMono: end, elapsedSeconds: (end - start) / 1000, achievedRequestsPerSecond: phaseRecords.length / ((end - start) / 1000), dispatchLag: distribution(phaseRecords.map(record => Math.max(0, record.dispatchLagMs!))) }; check(phase + " actual pacing", () => { assert.equal(result.actualDispatches, count); assert(result.achievedRequestsPerSecond >= rate * .95 && result.achievedRequestsPerSecond <= rate * 1.05, "ACHIEVED_PACING_RATE"); assert(Math.abs(result.elapsedSeconds - seconds) <= Math.max(.5, seconds * .01), "ACHIEVED_DURATION"); }); return result; }
+  proof.pacing = [await paced("sustained20", 20, config.sustainedSeconds), await paced("burst100", 100, config.burstSeconds)];
+  proof.reportDistributions = Object.fromEntries(["latency1", "latency2", "latency3", "sustained20", "burst100"].map(phase => { const rows = records.filter(record => record.phase === phase), accepted = rows.filter(record => record.status === 201); let result; check(phase + " accepted report latency", () => { result = below(accepted.map(record => record.requestMs!), 250, phase.startsWith("latency") ? config.latencyPerRun : 1, phase); }); return [phase, { total: rows.length, accepted: accepted.length, limited429: rows.filter(record => record.status === 429).length, non429Errors: rows.filter(record => record.error).length, distribution: result ?? null }]; }));
+  const latency: unknown[] = [];
+  for (let run = 1; run <= 3; run++) for (let tab = 0; tab < 2; tab++) { const rows = (visible as { run: number; tab: number; latencyMs: number }[]).filter(item => item.run === run && item.tab === tab); let result; check(`visible run${run} tab${tab}`, () => { result = below(rows.map(item => item.latencyMs), 2000, config.latencyPerRun, "visible"); }); latency.push({ run, tab, distribution: result ?? null }); }
+  proof.latency = latency; check("bounded board snapshots", () => { proof.board = below(snapshots, 250, config.snapshotPerRun * 3, "board"); }); proof.finalDatasetCounts = counts(dir);
+  await closeTabs(pages); await running.stop();
+} catch (error) { errors.push({ fatal: (error as Error).message }); }
+finally {
+  for (const socket of sockets) socket.destroy(); sockets.clear();
+  for (const context of contexts) { try { await context.close(); } catch (error) { errors.push({ cleanup: "browser context", error: (error as Error).message }); } } contexts.clear();
+  if (browser) try { await browser.close(); } catch (error) { errors.push({ cleanup: "browser", error: (error as Error).message }); }
+  for (const running of [...runtimes]) try { await running.stop(); } catch (error) { errors.push({ cleanup: "runtime", error: (error as Error).message }); }
+  if (owned) try { owned.close(); } catch (error) { errors.push({ cleanup: "Store", error: (error as Error).message }); }
+  proof.finishedAt = new Date().toISOString(); proof.cleanup = { ownedRuntimes: runtimes.size, ownedContexts: contexts.size, ownedSockets: sockets.size }; proof.privacy = "Synthetic external fixture; credentials kept only in process memory; no shipping diagnostic API or clock override; all raw errors and partial measurements written before a failing verdict";
+  writeFileSync(join(output, smoke ? "smoke.json" : "performance.json"), JSON.stringify(proof, null, 2));
+}
+console.log(JSON.stringify({ scope: proof.scope, errors: errors.length, evidence: join(output, smoke ? "smoke.json" : "performance.json"), qualification: smoke ? "reduced helper validity/cleanup exercise, not P05 acceptance" : "budget verdict requires every check and nonempty distribution" }));
+if (errors.length) throw new Error("MEASUREMENT_VALIDATION_FAILED; inspect preserved evidence");

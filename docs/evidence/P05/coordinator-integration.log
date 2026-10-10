@@ -1,0 +1,13 @@
+
+> agentflow@0.0.0 test:integration
+> vitest run tests/integration tests/integration/change-batch.test.ts tests/integration/p05-tracking.test.ts tests/integration/p05-native-transport.test.ts
+
+
+ RUN  v5.0.3 [REVIEW_WORKTREE]
+
+
+ Test Files  28 passed (28)
+      Tests  167 passed (167)
+   Start at  03:55:33
+   Duration  59.76s (tests 98%, import 1%)
+

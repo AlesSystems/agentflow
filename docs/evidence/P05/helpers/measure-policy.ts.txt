@@ -1,0 +1,35 @@
+import assert from "node:assert/strict";
+import { eventResponse } from "../../../src/contracts/observations";
+export function distribution(values: number[]) {
+  assert(values.length > 0, "EMPTY_DISTRIBUTION");
+  assert(values.every(value => Number.isFinite(value) && value >= 0), "INVALID_DISTRIBUTION_SAMPLE");
+  const sorted = [...values].sort((a, b) => a - b);
+  return { count: values.length, p95Ms: sorted[Math.ceil(values.length * .95) - 1], maxMs: sorted.at(-1)!, samplesMs: values };
+}
+export function acknowledgement(body: unknown, expected: { eventId: string; runId: string; sequence: number }) {
+  const parsed = eventResponse.parse(body);
+  assert.equal(parsed.data.eventId, expected.eventId, "ACK_EVENT_ID");
+  assert.equal(parsed.data.runId, expected.runId, "ACK_RUN_ID");
+  assert.equal(parsed.data.acceptedSequence, expected.sequence, "ACK_SEQUENCE");
+  return parsed;
+}
+export function below(values: number[], budget: number, minimum: number, name: string) {
+  const result = distribution(values);
+  assert(result.count >= minimum, name + "_SAMPLE_COUNT");
+  assert(result.p95Ms < budget, name + "_P95_BUDGET");
+  return result;
+}
+export function regression(percent: number) { assert(Number.isFinite(percent) && percent <= 20, "RELATIVE_REGRESSION_REQUIRES_APPROVAL"); }
+export function clearResources(value: { leases: number; bytes: number; blocked: number; timers: number; listeners: number }) {
+  for (const field of ["leases", "bytes", "blocked", "timers", "listeners"] as const) assert.equal(value[field], 0, "POST_CLOSE_" + field);
+}
+export function boundedResources(value: { leases: number; bytes: number; peakBytes: number }) {
+  assert(value.leases <= 20, "LEASE_LIMIT"); assert(value.bytes <= value.leases * 1048576, "AGGREGATE_QUEUE_LIMIT"); assert(value.peakBytes <= 1048576, "CONNECTION_QUEUE_LIMIT");
+}
+export function policySelfCheck() {
+  const checks: string[] = [];
+  for (const [name, action] of [["empty distribution", () => distribution([])], ["invalid monotonic sample", () => distribution([NaN])], ["latency budget", () => below([2000], 2000, 1, "visible")], ["accepted report budget", () => below([250], 250, 1, "report")], ["relative regression", () => regression(20.1)], ["residual timer", () => clearResources({ leases: 0, bytes: 0, blocked: 0, timers: 1, listeners: 0 })], ["queue bound", () => boundedResources({ leases: 1, bytes: 1048577, peakBytes: 1048577 })], ["malformed acknowledgement", () => acknowledgement({}, { eventId: "missing", runId: "missing", sequence: 1 })]] as const) {
+    assert.throws(action, name); checks.push(name + " rejected");
+  }
+  return checks;
+}

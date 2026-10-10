@@ -1,0 +1,34 @@
+{
+  "status": "final-candidate review and integration pending",
+  "testedSource": "5d633accfab86a43ed8e5ed5c1cf976514529560",
+  "functionalSource": "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5",
+  "buildId": "hL87_8rkkJoB-OPCgH1dH",
+  "planSha256": "e70c35a7431cad373eb11c7987de785307232ca6f486ab2d5afa952013192031",
+  "tests": {
+    "unit": 69,
+    "integration": 167,
+    "chrome": 30,
+    "coordinatorIntegration": 167
+  },
+  "commandsExitCodes": {
+    "unit": 0,
+    "integration": 0,
+    "chrome": 0,
+    "lint": 0,
+    "types": 0,
+    "build": 0,
+    "openapi": 0,
+    "measurement": 0
+  },
+  "frozenMigrationAndLockHashesVerified": 7,
+  "performanceSourceHashesVerified": 7,
+  "privateRawMeasurementSha256": "9c74e2518af94c7024c29d3d8b70113ce3a351f7dd9f29ff947b574f46e94ffc",
+  "publicMeasurementSha256": "d0187c17a38577e1e7b749b5584e1632b13dd71c303dfdc1ab4f2d49f48958b6",
+  "cleanup": {
+    "ownedRuntimes": 0,
+    "ownedContexts": 0,
+    "ownedSockets": 0
+  },
+  "qualified": true,
+  "qualifications": "Receipt and raw resource/shutdown facts own scope limits; no actual human attestation or v1 completion."
+}

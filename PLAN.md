@@ -276,4 +276,4 @@ Unit tests cover transitions and validation. Integration tests cover the actual 
 
 For each PR, record the head SHA, test commands/results, scenario logs, screenshots where UI changes, source of synthetic data, and known limitations. Store runtime evidence outside the tracked data directory and upload only synthetic, redacted artifacts. Keep provider credentials, real repository paths, prompts, and private task text out of public PRs.
 
-Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The P01 receipt records foundation verification; later package gates have not run.
+Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The delivery ledger records executed package gates; unchecked items remain open.

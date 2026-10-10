@@ -1,0 +1,10 @@
+{"phase":"latency","run":1,"matchedVisible":60,"smoke":false}
+{"phase":"latency","run":2,"matchedVisible":60,"smoke":false}
+{"phase":"latency","run":3,"matchedVisible":60,"smoke":false}
+{"phase":"sustained20","elapsedSeconds":0.009776624999998602,"smoke":false}
+{"phase":"sustained20","elapsedSeconds":60.02081625,"smoke":false}
+{"phase":"sustained20","elapsedSeconds":120.022085042,"smoke":false}
+{"phase":"sustained20","elapsedSeconds":180.02314008300002,"smoke":false}
+{"phase":"sustained20","elapsedSeconds":240.03007325000002,"smoke":false}
+{"phase":"burst100","elapsedSeconds":0.016679874999972526,"smoke":false}
+{"scope":"FULL P05 CANDIDATE MEASUREMENT","errors":0,"evidence":"[REVIEW_WORKTREE]/work/poteto/P05/final/measurement/performance.json","qualification":"budget verdict requires every check and nonempty distribution"}

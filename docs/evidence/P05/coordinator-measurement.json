@@ -1,0 +1,11 @@
+{
+  "rawSha256": "9c74e2518af94c7024c29d3d8b70113ce3a351f7dd9f29ff947b574f46e94ffc",
+  "source": "5d633accfab86a43ed8e5ed5c1cf976514529560",
+  "result": "PASS",
+  "acceptedRecords": 7090,
+  "matchedVisible": 180,
+  "recomputedDistributions": 37,
+  "comparisons": 15,
+  "independentChecks": "ack identity/sequence/receipt; visible bounds/monotonic/uncertainty; raw p95/counts/budgets; actual pacing; fixed dataset/heap/resources/cleanup; source+lock hashes",
+  "qualifications": "Hit-testing follows independently reviewed helper; renderer heap unmeasured; paused reader blocked0; destroyed socket owner-set counts retained before process exit."
+}

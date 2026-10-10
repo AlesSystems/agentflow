@@ -18,7 +18,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
-| P05 | Live tracking | Verifying | Functional source `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5`; branch `codex/v1-p05-live-tracking` | [Transport receipt](implementation/P05-transport.md); final package evidence pending |
+| P05 | Live tracking | Final review | Tested/measured source `5d633accfab86a43ed8e5ed5c1cf976514529560`; functional `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5` | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json); integration pending |
 | P06 | CLI hooks | Not started | — | — |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
@@ -187,10 +187,18 @@ review scored accepted long-name wrapping and actual keyboard/focus evidence
 resolved. Actual production journeys prove two-tab convergence, silence-driven
 staleness, stopped restore/pairing and retained drafts/exact retry identities.
 
-Final full checks, validated production load/latency/memory evidence, extracted
-design documentation, exact final-candidate reviews and coordinator integration
-remain open. Prepared measurement helpers were rejected for timing, verdict,
-dataset and cleanup gaps before any long scenario ran; corrections require
-independent review. Historical full-suite results belong to earlier source and
-are not final-candidate evidence. All P05 checkboxes remain unchecked, and P06
-through W04 remain unstarted.
+Final source passed 69 unit, 167 integration and 30 Chrome tests, lint, types,
+build and OpenAPI verification. Corrected measurement helpers received independent
+exact-hash approval before the full/default run. Its 180 matched visible samples
+have worst p95 532.411 ms; board p95 2.685 ms; sustained 6,000 accepted in 300.002 s
+and burst 1,000 in 10.00198 s, with zero errors/429s. Worst of 15 equivalent native
+comparisons is +2.620%. Fixed-dataset 100 cycles return heap within +4.831% and all
+tracked stream resources to zero. Renderer heap and paused-reader pressure remain
+explicitly qualified in the receipt. Root independently reran 167 integration
+tests and recomputed raw protocol/timing/budget/cleanup facts. Public evidence
+normalizes private hostname/local paths while retaining original hashes.
+
+Extracted design documentation and qualified visual evidence are complete. Final
+exact-candidate code reviews, PR publication and coordinator integration remain
+open. All P05 checkboxes stay unchecked until verified merge; P06 through W04
+remain unstarted.

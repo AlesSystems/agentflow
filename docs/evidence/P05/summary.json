@@ -1,0 +1,416 @@
+{
+  "scope": "FULL P05 CANDIDATE MEASUREMENT",
+  "source": "5d633accfab86a43ed8e5ed5c1cf976514529560",
+  "build": "hL87_8rkkJoB-OPCgH1dH",
+  "startedAt": "2026-10-10T00:45:18.554Z",
+  "finishedAt": "2026-10-10T00:51:26.570Z",
+  "config": {
+    "smoke": false,
+    "comparisonRounds": 110,
+    "latencyPerRun": 30,
+    "snapshotPerRun": 100,
+    "sustainedSeconds": 300,
+    "burstSeconds": 10,
+    "cycles": 100
+  },
+  "errors": [],
+  "latency": [
+    {
+      "run": 1,
+      "tab": 0,
+      "count": 30,
+      "p95": 345.55445018452156,
+      "max": 376.8349189315413
+    },
+    {
+      "run": 1,
+      "tab": 1,
+      "count": 30,
+      "p95": 498.1254238095207,
+      "max": 577.6805019285603
+    },
+    {
+      "run": 2,
+      "tab": 0,
+      "count": 30,
+      "p95": 460.1072807589371,
+      "max": 461.49536669047666
+    },
+    {
+      "run": 2,
+      "tab": 1,
+      "count": 30,
+      "p95": 529.9552416845181,
+      "max": 531.1671557470181
+    },
+    {
+      "run": 3,
+      "tab": 0,
+      "count": 30,
+      "p95": 462.80100974404195,
+      "max": 506.45349998735765
+    },
+    {
+      "run": 3,
+      "tab": 1,
+      "count": 30,
+      "p95": 532.4110517440422,
+      "max": 543.1635419813974
+    }
+  ],
+  "board": {
+    "count": 300,
+    "p95": 2.685084000000643,
+    "max": 7.362375000000611
+  },
+  "reports": {
+    "latency1": {
+      "total": 30,
+      "accepted": 30,
+      "limited429": 0,
+      "errors": 0,
+      "p95": 4.39129099999991
+    },
+    "latency2": {
+      "total": 30,
+      "accepted": 30,
+      "limited429": 0,
+      "errors": 0,
+      "p95": 4.81708300000173
+    },
+    "latency3": {
+      "total": 30,
+      "accepted": 30,
+      "limited429": 0,
+      "errors": 0,
+      "p95": 3.7007919999959995
+    },
+    "sustained20": {
+      "total": 6000,
+      "accepted": 6000,
+      "limited429": 0,
+      "errors": 0,
+      "p95": 21.611166999995476
+    },
+    "burst100": {
+      "total": 1000,
+      "accepted": 1000,
+      "limited429": 0,
+      "errors": 0,
+      "p95": 21.411541000008583
+    }
+  },
+  "comparisons": [
+    {
+      "run": 1,
+      "name": "tasks",
+      "baseP95": 0.43695800000023155,
+      "headP95": 0.41291699999965203,
+      "changePercent": -5.501901784740593
+    },
+    {
+      "run": 1,
+      "name": "board",
+      "baseP95": 0.5498329999991256,
+      "headP95": 0.5300000000006548,
+      "changePercent": -3.6070952450111826
+    },
+    {
+      "run": 1,
+      "name": "detail",
+      "baseP95": 0.12241700000049605,
+      "headP95": 0.12008299999979499,
+      "changePercent": -1.9065979403935729
+    },
+    {
+      "run": 1,
+      "name": "overview",
+      "baseP95": 0.6568330000009155,
+      "headP95": 0.6740419999987353,
+      "changePercent": 2.6199962544201982
+    },
+    {
+      "run": 2,
+      "name": "tasks",
+      "baseP95": 0.37129099999947357,
+      "headP95": 0.374707999999373,
+      "changePercent": 0.9203024042878205
+    },
+    {
+      "run": 2,
+      "name": "board",
+      "baseP95": 0.521416000001409,
+      "headP95": 0.5159579999999551,
+      "changePercent": -1.0467649633764897
+    },
+    {
+      "run": 2,
+      "name": "detail",
+      "baseP95": 0.12304200000107812,
+      "headP95": 0.12183300000106101,
+      "changePercent": -0.9825913102895933
+    },
+    {
+      "run": 2,
+      "name": "overview",
+      "baseP95": 0.6972909999985859,
+      "headP95": 0.6893749999999272,
+      "changePercent": -1.1352505623440923
+    },
+    {
+      "run": 3,
+      "name": "tasks",
+      "baseP95": 0.36854200000016135,
+      "headP95": 0.37408399999912945,
+      "changePercent": 1.503763478508735
+    },
+    {
+      "run": 3,
+      "name": "board",
+      "baseP95": 0.5195420000000013,
+      "headP95": 0.525167000001602,
+      "changePercent": 1.0826843646135842
+    },
+    {
+      "run": 3,
+      "name": "detail",
+      "baseP95": 0.12312500000007276,
+      "headP95": 0.11837500000001455,
+      "changePercent": -3.857868020349564
+    },
+    {
+      "run": 3,
+      "name": "overview",
+      "baseP95": 0.6037919999998849,
+      "headP95": 0.6106670000008307,
+      "changePercent": 1.1386371467239087
+    },
+    {
+      "run": 1,
+      "name": "ingestion",
+      "baseP95": 0.23841600000014296,
+      "headP95": 0.2193329999990965,
+      "changePercent": -8.004076908024215
+    },
+    {
+      "run": 2,
+      "name": "ingestion",
+      "baseP95": 0.25170799999978044,
+      "headP95": 0.22766600000068138,
+      "changePercent": -9.551543852050804
+    },
+    {
+      "run": 3,
+      "name": "ingestion",
+      "baseP95": 0.21533300000010058,
+      "headP95": 0.20395800000005693,
+      "changePercent": -5.282515917225106
+    }
+  ],
+  "pacing": [
+    {
+      "phase": "sustained20",
+      "total": 6000,
+      "seconds": 300.00245775,
+      "rate": 19.99983615134233,
+      "lagP95": 3.9504999999771826,
+      "lagMax": 5.189041999998153
+    },
+    {
+      "phase": "burst100",
+      "total": 1000,
+      "seconds": 10.001977291999967,
+      "rate": 99.98023098891107,
+      "lagP95": 2.994834000011906,
+      "lagMax": 3.529374999983702
+    }
+  ],
+  "paging": [
+    {
+      "path": "/api/v1/tracking/tasks?projectId=931AA986-A607-4B7B-8EB7-1C603CBF46D8&limit=100",
+      "total": 1000,
+      "pages": 10,
+      "cursors": 9
+    },
+    {
+      "path": "/api/v1/activity?projectId=931AA986-A607-4B7B-8EB7-1C603CBF46D8&limit=20",
+      "total": 670,
+      "pages": 34,
+      "cursors": 33
+    },
+    {
+      "path": "/api/v1/runs/D2924F86-83F1-47B7-B84E-ED525267815B/events?limit=100",
+      "total": 1660,
+      "pages": 17,
+      "cursors": 16
+    }
+  ],
+  "queryCounts": [
+    {
+      "limit": 1,
+      "page": 0,
+      "queries": 10
+    },
+    {
+      "limit": 1,
+      "page": 1,
+      "queries": 10
+    },
+    {
+      "limit": 50,
+      "page": 0,
+      "queries": 10
+    },
+    {
+      "limit": 50,
+      "page": 1,
+      "queries": 10
+    },
+    {
+      "limit": 100,
+      "page": 0,
+      "queries": 10
+    },
+    {
+      "limit": 100,
+      "page": 1,
+      "queries": 10
+    }
+  ],
+  "resources": {
+    "countsBefore": {
+      "tasks": 1000,
+      "runs": 10,
+      "run_events": 10000,
+      "changes": 21042
+    },
+    "countsAfter": {
+      "tasks": 1000,
+      "runs": 10,
+      "run_events": 10000,
+      "changes": 21042
+    },
+    "cycles": 100,
+    "heapPercent": 4.831010424338511,
+    "rssPercent": 9.821021802798558,
+    "idle": {
+      "rss": 251740160,
+      "heapTotal": 216367104,
+      "heapUsed": 78881552,
+      "external": 10084882,
+      "arrayBuffers": 3198704
+    },
+    "steady": {
+      "rss": 270270464,
+      "heapTotal": 220217344,
+      "heapUsed": 82660048,
+      "external": 10109144,
+      "arrayBuffers": 3198704
+    },
+    "paused": {
+      "rss": 276037632,
+      "heapTotal": 221528064,
+      "heapUsed": 89599504,
+      "external": 10223832,
+      "arrayBuffers": 3313392
+    },
+    "pausedStreams": {
+      "writes": 5400,
+      "lastWriteAt": 4306.223458,
+      "invalidAt": 0,
+      "pressureAt": 0,
+      "peakBytes": 12850,
+      "stalledCloses": 0,
+      "leases": 3,
+      "bytes": 0,
+      "blocked": 0,
+      "timers": 9,
+      "listeners": 9
+    },
+    "postClose": {
+      "rss": 276463616,
+      "heapTotal": 220479488,
+      "heapUsed": 82692328,
+      "external": 10109144,
+      "arrayBuffers": 3198704
+    },
+    "postCloseStreams": {
+      "writes": 5500,
+      "lastWriteAt": 4309.387708,
+      "invalidAt": 0,
+      "pressureAt": 0,
+      "peakBytes": 12850,
+      "stalledCloses": 0,
+      "leases": 0,
+      "bytes": 0,
+      "blocked": 0,
+      "timers": 0,
+      "listeners": 0
+    }
+  },
+  "cleanup": {
+    "ownedRuntimes": 0,
+    "ownedContexts": 0,
+    "ownedSockets": 0
+  },
+  "shutdowns": [
+    {
+      "port": 53908,
+      "exitCode": 0,
+      "signal": null,
+      "shutdown": {
+        "streams": {
+          "writes": 5500,
+          "lastWriteAt": 4309.387708,
+          "invalidAt": 0,
+          "pressureAt": 0,
+          "peakBytes": 12850,
+          "stalledCloses": 0,
+          "leases": 0,
+          "bytes": 0,
+          "blocked": 0,
+          "timers": 0,
+          "listeners": 0
+        },
+        "runtime": {
+          "requests": 0,
+          "sockets": 2,
+          "activeSockets": 0
+        },
+        "beforeStoreClose": true
+      }
+    },
+    {
+      "port": 54069,
+      "exitCode": 0,
+      "signal": null,
+      "shutdown": {
+        "streams": {
+          "writes": 28366,
+          "lastWriteAt": 356517.984209,
+          "invalidAt": 0,
+          "pressureAt": 0,
+          "peakBytes": 12900,
+          "stalledCloses": 0,
+          "leases": 0,
+          "bytes": 0,
+          "blocked": 0,
+          "timers": 0,
+          "listeners": 0
+        },
+        "runtime": {
+          "requests": 0,
+          "sockets": 12,
+          "activeSockets": 0
+        },
+        "beforeStoreClose": true
+      }
+    }
+  ],
+  "finalCounts": {
+    "tasks": 1000,
+    "runs": 10,
+    "run_events": 17750,
+    "changes": 36542
+  }
+}
