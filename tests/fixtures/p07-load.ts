@@ -116,7 +116,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         if(acceptance&&phase==="sustained") assert((timed.http as {p95Ms:number}).p95Ms<250,"SUSTAINED_HTTP_BUDGET");
       } catch(error) {timed.endedMs??=performance.now();timed.failure=(error as Error).message;throw error;} finally {save();}
     }
-    await finishProfiles();if(result.diagnostic?.profileCleanup?.failures.length)throw new Error("PROFILE_FINALIZATION_FAILED");
+    if(hooks)await finishProfiles();if(result.diagnostic?.profileCleanup?.failures.length)throw new Error("PROFILE_FINALIZATION_FAILED");
     const drain=performance.now();while(observations.some(row=>row.confirmedMs===null)&&performance.now()-drain<10000)await wait(25);
     observing=false;await Promise.all(observers);
     const summaries=[];for(const phase of ["sustained","burst"])for(const tab of [0,1])summaries.push({phase,tab,...reconcile(observations.filter(row=>row.tab===tab&&row.event.phase===phase),acceptance)});
