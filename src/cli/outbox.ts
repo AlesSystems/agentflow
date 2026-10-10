@@ -16,7 +16,8 @@ const GLOBAL_LIMIT = 100 * 1024 * 1024, RUN_LIMIT = 10 * 1024 * 1024, BOOTSTRAP 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const watermark = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const registration = z.strictObject({ formatVersion: z.literal(1), path: z.enum(["/projects", "/tasks", "/agents", "/runs"]), key: uuid, body: z.record(z.string(), z.unknown()), digest, order: watermark });
-const metadata = z.strictObject({ formatVersion: z.literal(1), port: z.number().int().min(1024).max(65535), serviceDataDir: z.string(), generation: uuid, cursor: z.string().nullable(), nextOrder: watermark.default(0), pendingRegistration: z.strictObject({record:registration,filename:z.string(),remainingPeak:watermark}).optional() });
+const cursorIdentity=z.string().regex(/^(?:run:|registration:[0-9]{16}:)[a-f0-9-]{36}$/).refine(value=>uuid.safeParse(value.split(":").at(-1)).success&&(!value.startsWith("registration:")||Number.isSafeInteger(Number(value.split(":")[1]))));
+const metadata = z.strictObject({ formatVersion: z.literal(1), port: z.number().int().min(1024).max(65535), serviceDataDir: z.string(), generation: uuid, cursor: cursorIdentity.nullable(), nextOrder: watermark.default(0), pendingRegistration: z.strictObject({record:registration,filename:z.string(),remainingPeak:watermark}).optional() });
 const storedEvent = z.strictObject({ formatVersion: z.literal(1), body: z.record(z.string(),z.unknown()), digest });
 const pending = z.strictObject({ record: storedEvent, filename: z.string(), remainingPeak: watermark });
 const stateSchema = z.strictObject({ formatVersion: z.literal(1), runId: uuid, allocatedThrough: watermark, acknowledgedThrough: watermark, generation: uuid, pending: pending.optional() });
