@@ -97,7 +97,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     return {global,run};
   }
   const bootstrapPins = new Map<string,{dev:number;ino:number;size:number}>();
-  function inspectLockArtifacts() {
+  function inspectLockArtifacts(bootstrapOwned=false) {
     pin(root);
     let bytes = 0;
     for (const name of readdirSync(root)) {
@@ -108,11 +108,17 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       if ((stat.mode & 0o777) !== 0o600) throw new CliError("unsafe_outbox_permissions");
       if (!lockPaths.includes(path)) throw new CliError("unexpected_lock_sidecar");
       const original = bootstrapPins.get(path);
-      if (original && (stat.dev !== original.dev || stat.ino !== original.ino || stat.size !== original.size)) throw new CliError("lock_changed");
+      if(original&&(stat.dev!==original.dev||stat.ino!==original.ino||stat.size!==original.size&&!(bootstrapOwned&&locks[0]?.inTransaction&&original.size===0&&stat.size===4096)))throw new CliError("lock_changed");
       bootstrapPins.set(path,stat);
       bytes += stat.size;
     }
     if (bytes > BOOTSTRAP) throw new CliError("bootstrap_oversize");
+  }
+  function bootstrapRoom() {
+    const actual=lengths().global,reserved=reservations().global;
+    const owned=readdirSync(root).filter(name=>/^(publication|delivery)\.sqlite(?:-journal|-wal|-shm)?$/.test(name)).reduce((sum,name)=>sum+lstatSync(join(root,name)).size,0);
+    if(owned>BOOTSTRAP)throw new CliError("bootstrap_oversize");
+    if(actual+reserved+Math.max(0,BOOTSTRAP-owned)>GLOBAL_LIMIT)throw new CliError("bootstrap_full");
   }
   const locks: Database.Database[] = [];
   try {
@@ -128,22 +134,35 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       }
       inspectLockArtifacts();
     }
-    for (const path of lockPaths) {
-      inspectLockArtifacts();
-      const before = lstatSync(path);
-      const lock = new Database(path); locks.push(lock); lock.pragma("busy_timeout = 0");
-      const opened = lstatSync(path);
-      if (opened.dev !== before.dev || opened.ino !== before.ino || opened.size !== before.size) throw new CliError("lock_changed");
-      if (before.size === 0) {
-        lock.pragma("user_version = 0");
-        const initialized = lstatSync(path);
-        if (initialized.dev !== before.dev || initialized.ino !== before.ino || initialized.size !== 4096) throw new CliError("lock_changed");
-        filesystem.syncFile(path); filesystem.syncDirectory(root);
-        bootstrapPins.set(path,initialized);
-      }
-      inspectLockArtifacts();
+    let publication: Database.Database|undefined;
+    while(performance.now()<end) {
+      inspectLockArtifacts();const candidate=new Database(lockPaths[0]);candidate.pragma("busy_timeout=0");
+      try{candidate.exec("BEGIN EXCLUSIVE");publication=candidate;locks.push(candidate);break;}
+      catch(error){candidate.close();if(!["SQLITE_BUSY","SQLITE_LOCKED"].includes((error as {code:string}).code))throw error;await new Promise(resolve=>setTimeout(resolve,Math.min(10+Math.random()*25,Math.max(0,end-performance.now()))));}
     }
-  } catch (error) { for (const lock of locks) lock.close(); throw error; }
+    if(!publication)throw new CliError("bootstrap_busy");
+    const publicationBefore=lstatSync(lockPaths[0]),publicationPin=bootstrapPins.get(lockPaths[0])!;
+    if(publicationBefore.dev!==publicationPin.dev||publicationBefore.ino!==publicationPin.ino)throw new CliError("lock_changed");
+    if(publicationBefore.size===0){
+      bootstrapRoom();
+      publication.pragma("user_version=0");publication.exec("COMMIT");
+      const initialized=lstatSync(lockPaths[0]);
+      if(initialized.dev!==publicationPin.dev||initialized.ino!==publicationPin.ino||initialized.size!==4096)throw new CliError("lock_changed");
+      filesystem.syncFile(lockPaths[0]);filesystem.syncDirectory(root);bootstrapPins.set(lockPaths[0],initialized);
+      try{publication.exec("BEGIN EXCLUSIVE");}catch{throw new CliError("bootstrap_busy");}
+    }else if(publicationBefore.size!==4096||publication.pragma("user_version",{simple:true})!==0)throw new CliError("lock_changed");
+    inspectLockArtifacts(true);
+    if(lstatSync(lockPaths[1]).size===0)bootstrapRoom();else if(lengths().global+reservations().global>GLOBAL_LIMIT)throw new CliError("bootstrap_full");
+    const delivery=new Database(lockPaths[1]);locks.push(delivery);delivery.pragma("busy_timeout=0");
+    const deliveryBefore=lstatSync(lockPaths[1]),deliveryPin=bootstrapPins.get(lockPaths[1])!;
+    if(deliveryBefore.dev!==deliveryPin.dev||deliveryBefore.ino!==deliveryPin.ino)throw new CliError("lock_changed");
+    if(deliveryBefore.size===0)delivery.pragma("user_version=0");
+    const initializedDelivery=lstatSync(lockPaths[1]);
+    const deliveryHeader=readBoundedBytes(lockPaths[1],4096);
+    if(initializedDelivery.dev!==deliveryPin.dev||initializedDelivery.ino!==deliveryPin.ino||initializedDelivery.size!==4096||deliveryHeader.subarray(0,16).toString("binary")!=="SQLite format 3\0"||deliveryHeader.readUInt32BE(60)!==0)throw new CliError("lock_changed");
+    filesystem.syncFile(lockPaths[1]);filesystem.syncDirectory(root);bootstrapPins.set(lockPaths[1],initializedDelivery);
+    inspectLockArtifacts();publication.exec("ROLLBACK");
+  } catch (error) {for(const lock of locks){if(lock.inTransaction)lock.exec("ROLLBACK");lock.close();}throw error;}
   const lockPins = lockPaths.map(path=>lstatSync(path));
   function assertPins() {
     inspectLockArtifacts();
