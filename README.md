@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P05 integrated; live tracking is available.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI hooks and workflow packages remain gated by PLAN.md.
+**Status: P01–P06 integrated; P07 checkpoint verification is in progress.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -59,6 +59,8 @@ root (the canonical directory used by Next), including public/ and build/scratch
 folders. Contained paths fail before private files are created. Directories require owner-only permissions (0700), files 0600, and current-user ownership. Unsafe existing files fail with a repair code. Use canonical paths; symlinks, including parent aliases such as macOS `/tmp`, are rejected. Network filesystems are unsupported; reliable portable network-volume detection is not claimed.
 
 Sessions expire after 12 hours. Cookie reads accept same-origin and direct navigation; a different localhost port is rejected as same-site. Direct clients without Fetch Metadata remain compatible when supplied Origin is allowed.
+
+See [the setup and recovery runbook](docs/RECOVERY.md) for migration failures, session revocation and outbox prefix limits.
 
 Stop the service before maintenance:
 
