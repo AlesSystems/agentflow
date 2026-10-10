@@ -12,11 +12,11 @@ vi.mock("@playwright/test",()=>({chromium:{launch:async()=>({version:()=>"mock c
 import {canonicalDigest} from "../../src/domain/request-digest";
 import {loadScenario} from "../fixtures/p07-load";
 afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
-it.each(["success","malformed","non200","read","changedBody","changedTime","readOnceWrite","readPersistentWrite","dbReadFail"])("actual post-timing caller retains original API/DB evidence mode=%s",async mode=>{
+it.each(["success","malformed","non200","read","changedBody","changedTime","readOnceWrite","readPersistentWrite","dbReadFail","changedCursor"])("actual post-timing caller retains original API/DB evidence mode=%s",async mode=>{
  vi.useFakeTimers({toFake:["setTimeout","clearTimeout","Date","performance"]});vi.setSystemTime(new Date(receipt));state.rows=[];state.closes=0;state.stops=0;state.apiCalls=0;state.mode=mode;state.armed=false;state.writes=0;
  const root=mkdtempSync(join(tmpdir(),"p07-load-capture-test-"));chmodSync(root,0o700);let firstApiAt:number|null=null,rawFirst:string|null=null;
  vi.stubGlobal("fetch",async(url:string,init?:{body:string})=>{
-  if(init?.body){const body=JSON.parse(init.body),ack={data:{eventId:body.eventId,runId:body.runId,acceptedSequence:body.sequence,receivedAt:receipt},snapshotCursor:"0",generation};state.rows.push({event_id:body.eventId,run_id:body.runId,sequence:body.sequence,body:JSON.stringify({...body,receivedAt:receipt}),digest:canonicalDigest(body),acknowledgement:JSON.stringify(ack),received_at:Date.parse(receipt),occurred_at:Date.parse(body.occurredAt)});return {status:201,json:async()=>ack};}
+  if(init?.body){const body=JSON.parse(init.body),ack={data:{eventId:body.eventId,runId:body.runId,acceptedSequence:body.sequence,receivedAt:receipt},snapshotCursor:"0",generation};state.rows.push({event_id:body.eventId,run_id:body.runId,sequence:body.sequence,body:JSON.stringify({...body,receivedAt:receipt}),digest:canonicalDigest(body),acknowledgement:JSON.stringify(mode==="changedCursor"&&state.rows.length===0?{...ack,snapshotCursor:"999"}:ack),received_at:Date.parse(receipt),occurred_at:Date.parse(body.occurredAt)});return {status:201,json:async()=>ack};}
   firstApiAt??=performance.now();const parsed=new URL(url),runId=parsed.pathname.split("/runs/")[1].split("/")[0],offset=Number(parsed.searchParams.get("cursor")??0),items=state.rows.filter(row=>row.run_id===runId).map(row=>JSON.parse(row.body));let status=200;
   if(state.apiCalls===0&&mode==="changedBody")items.find(item=>item.type==="run.progress").payload.message+=" changed";
   if(state.apiCalls===0&&mode==="changedTime")items.find(item=>item.sequence===2).receivedAt="2026-10-10T00:00:01.000Z";
