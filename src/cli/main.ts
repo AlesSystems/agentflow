@@ -16,7 +16,7 @@ const commands = {
 } as const;
 const registrationResponses = {"/projects":projectResponse,"/tasks":taskResponse,"/agents":agentResponse,"/runs":runResponse};
 const emit = (value: unknown) => process.stdout.write(JSON.stringify(value)+"\n");
-function diagnostic(code: string,runId?: string) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),repair:"Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
+function diagnostic(code: string,runId?: string,details?: {expectedSequence?:number;currentVersion?:number}) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),...(details?.expectedSequence===undefined?{}:{expectedSequence:details.expectedSequence}),...(details?.currentVersion===undefined?{}:{currentVersion:details.currentVersion}),repair:"Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
 async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
   if (job.kind === "registration") {
     const record = job.record;
@@ -26,22 +26,23 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
       const initialized = await outbox.initializeRun(reply.data.data.id,end);
       if (initialized.kind !== "delivered") return initialized;
     }
-    await outbox.removeRegistration(record); emit({id:reply.data.data.id,generation:reply.generation}); return reply;
+    await outbox.removeRegistration(record,end); emit({id:reply.data.data.id,generation:reply.generation}); return reply;
   }
-  const record = await outbox.next(job.runId);
-  if (!record) return {kind:"delivered" as const};
+  const record = await outbox.next(job.runId,end);
+  if (!record) return {kind:"delivered" as const,complete:true};
   const reply = await request(config,`/runs/${job.runId}/events`,eventResponse,end,record.body);
   if (reply.kind !== "delivered") return reply;
   const ack = reply.data.data;
   if (ack.eventId.toLowerCase() !== String(record.body.eventId).toLowerCase() || ack.runId.toLowerCase() !== String(record.body.runId).toLowerCase() || ack.acceptedSequence !== record.body.sequence) return {kind:"blocked" as const,code:"ack_identity_mismatch"};
   const validated = await outbox.validateRemote(job.runId,reply.generation,end);
   if (validated.kind !== "delivered") return validated;
-  await outbox.acknowledge(record,reply.generation); emit({...ack,generation:reply.generation}); return reply;
+  await outbox.acknowledge(record,reply.generation,end); emit({...ack,generation:reply.generation}); return {...reply,complete:!await outbox.next(job.runId,end)};
 }
 export async function main(args = process.argv.slice(2), open = openOutbox) {
   const end = deadline();
   let outbox: Outbox | undefined;
-  let preserved=false;
+  let preserved=false,knownPending=false,cursorWriting=false;
+  let blockedExit=0;
   try {
     if (args.length === 1 && ["--help","help"].includes(args[0])) {process.stdout.write("agentflow project create | task create | agent register | run register --file <json> --idempotency-key <uuid>\nagentflow report --run <uuid> --type <event-type> --payload <json>\nagentflow flush [--run <uuid>]\nAll commands accept --port <port>.\n");return 0;}
     const command = commands[args.slice(0,2).join(" ") as keyof typeof commands];
@@ -86,24 +87,48 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
       selected = {kind:"run",id:`run:${flags["--run"].toLowerCase()}`,runId:flags["--run"]};
     }
     if (!outbox.acquireDelivery()) {diagnostic("queued");return 2;}
-    let attempt = 0;
-    while (performance.now()<end) {
-      const jobs = selected ? [selected] : await outbox.jobs();
-      if (!jobs.length) return 0;
-      for (const job of jobs) {
-        const reply = await turn(job,outbox,config,end);
-        if (reply.kind === "blocked") {diagnostic(reply.code,job.kind === "run" ? job.runId : undefined);return 3;}
-        if (reply.kind === "delivered") {
-          if (job.kind === "registration") return 0;
-          if (!await outbox.next(job.runId)) return 0;
-          continue;
-        }
-        await new Promise(resolve=>setTimeout(resolve,Math.min(Math.max(reply.delay,Math.random()*Math.min(30000,100*2**attempt++)),Math.max(0,end-performance.now()))));
-      }
+    const jobs=selected?[selected]:await outbox.jobs();
+    if(!jobs.length)return 0;
+    knownPending=true;
+    const dependencies=selected?await outbox.jobs():jobs;
+    const cursor=selected?null:await outbox.cursor();
+    let position=cursor?jobs.findIndex(job=>job.id>=cursor):0;if(position<0)position=0;
+    const done=new Set<string>(),blocked=new Set<string>(),attempted=new Set<string>();
+    const retries=new Map<string,{count:number;at:number}>();
+    function dependent(job:Job) {
+      const registrations=dependencies.filter(other=>other.kind==="registration"&&!done.has(other.id));
+      if(job.kind==="run")return registrations.some(other=>other.kind==="registration"&&other.record.path==="/runs"&&String(other.record.body.id).toLowerCase()===job.runId.toLowerCase());
+      if(job.record.path!=="/runs")return false;
+      return registrations.some(other=>other.id!==job.id&&other.kind==="registration"&&other.record.path==="/agents"&&typeof other.record.body.id==="string"&&other.record.body.id.toLowerCase()===String(job.record.body.agentId).toLowerCase());
     }
-    diagnostic("queued");return 2;
+    while(performance.now()<end) {
+      const eligible=jobs.filter(job=>!done.has(job.id)&&!blocked.has(job.id)&&!dependent(job));
+      if(!eligible.length)return blockedExit||2;
+      const first=eligible.filter(job=>!attempted.has(job.id));
+      const ready=first.length?first:eligible.filter(job=>(retries.get(job.id)?.at??0)<=performance.now());
+      if(!ready.length){const next=Math.min(...eligible.map(job=>retries.get(job.id)?.at??0));await new Promise(resolve=>setTimeout(resolve,Math.min(Math.max(0,next-performance.now()),Math.max(0,end-performance.now()))));continue;}
+      let index=position;
+      for(let offset=0;offset<jobs.length;offset++){const candidate=(position+offset)%jobs.length;if(ready.some(job=>job.id===jobs[candidate].id)){index=candidate;break;}}
+      const job=jobs[index],until=Math.min(end,performance.now()+500);
+      position=(index+1)%jobs.length;
+      if(!selected){cursorWriting=true;await outbox.advanceCursor(jobs[position].id,until);cursorWriting=false;}
+      attempted.add(job.id);
+      const reply=await turn(job,outbox,config,until);
+      if(reply.kind==="blocked"){diagnostic(reply.code,job.kind==="run"?job.runId:undefined,reply);blocked.add(job.id);blockedExit=3;continue;}
+      if(reply.kind==="delivered") {
+        if(job.kind==="registration"||"complete"in reply&&reply.complete)done.add(job.id);
+        retries.delete(job.id);
+        if(done.size===jobs.length)return blockedExit;
+        // A run with a remaining FIFO event gets a new first turn.
+        attempted.delete(job.id);continue;
+      }
+      const count=(retries.get(job.id)?.count??0)+1;
+      const jitter=Math.random()*Math.min(30000,100*2**Math.min(count-1,20));
+      retries.set(job.id,{count,at:performance.now()+Math.max(reply.delay,jitter)});
+    }
+    diagnostic("queued");return blockedExit||2;
   } catch (error) {
-    if(preserved && error instanceof CliError && ["accounting_deadline","publication_busy"].includes(error.code)){diagnostic("queued");return 2;}
+    if(!cursorWriting&&(preserved||knownPending)&&error instanceof CliError&&["accounting_deadline","publication_busy"].includes(error.code)){diagnostic("queued");return blockedExit||2;}
     diagnostic(error instanceof CliError ? error.code : "local_failure");
     return error instanceof CliError ? error.exit : 1;
   } finally {outbox?.close();}

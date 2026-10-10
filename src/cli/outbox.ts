@@ -30,6 +30,7 @@ const overlaps = (a: string, b: string) => { const r = relative(a,b); return !r 
 const io = { createFile, renameSync, unlinkSync, syncDirectory, syncFile };
 export async function openOutbox(config: CliConfig, end: number, operations: Partial<typeof io> = {}) {
   const filesystem={...io,...operations};
+  let budget=end;
   const root = config.outbox;
   const metaPath = join(root, "metadata.json");
   let association: z.infer<typeof metadata> | undefined;
@@ -74,7 +75,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     pin(directory);
     let global = 0, run = 0;
     for (const name of readdirSync(directory)) {
-      if (performance.now() >= end) throw new CliError("accounting_deadline");
+      if (performance.now() >= budget) throw new CliError("accounting_deadline");
       const path = join(directory,name), stat = lstatSync(path);
       if (stat.isDirectory()) {
         if (directory !== root || !uuid.safeParse(name).success || name !== name.toLowerCase()) throw new CliError("unexpected_outbox_entry");
@@ -340,6 +341,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       let acknowledgedDurable=false;
       const sequences = new Set<number>();
       for (const file of readdirSync(directory)) {
+        if(performance.now()>=budget)throw new CliError("accounting_deadline");
         if (file === "state.json") continue;
         if (file.endsWith(".tmp")) { remove(join(directory,file)); continue; }
         const match = /^([1-9][0-9]*)-([a-f0-9-]{36})\.json$/.exec(file);
@@ -357,13 +359,16 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     }
     lengths();
   }
-  async function locked<T>(operation: () => T): Promise<T> {
-    while (performance.now() < end) {
-      assertPins();
-      try { locks[0].exec("BEGIN EXCLUSIVE"); } catch { await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,end-performance.now())))); continue; }
-      try { recover(); return operation(); } finally { locks[0].exec("ROLLBACK"); }
-    }
-    throw new CliError("publication_busy");
+  async function locked<T>(operation: () => T,until=end): Promise<T> {
+    const previous=budget;budget=Math.min(end,until);
+    try {
+      while (performance.now() < budget) {
+        assertPins();
+        try { locks[0].exec("BEGIN EXCLUSIVE"); } catch { await new Promise(resolve => setTimeout(resolve,Math.min(20,Math.max(0,budget-performance.now())))); continue; }
+        try { recover(); return operation(); } finally { locks[0].exec("ROLLBACK"); }
+      }
+      throw new CliError("publication_busy");
+    }finally{budget=previous;}
   }
   const outbox = {
     async preserveRegistration(path: Registration["path"],key: string,body: Record<string,unknown>) {
@@ -401,7 +406,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         const value: State = {formatVersion:1,runId,allocatedThrough:0,acknowledgedThrough:0,generation:reply.generation};
         admit(encodedBytes(value),id.toLowerCase()); secureDirectory(join(root,id.toLowerCase())); pin(join(root,id.toLowerCase())); filesystem.syncDirectory(root);
         atomic(`${id.toLowerCase()}/state.json`,value);
-      });
+      },until);
       return reply;
     },
     async tracked(id: string) {return locked(()=>existsSync(join(root,id.toLowerCase(),"state.json")));},
@@ -422,24 +427,24 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         return record;
       });
     },
-    async next(id: string) {return locked(()=> {
+    async next(id: string,until=end) {return locked(()=> {
       const value = state(id);
       if (value.acknowledgedThrough === value.allocatedThrough) return undefined;
       const file = readdirSync(join(root,id.toLowerCase())).find(name=>name.startsWith(`${value.acknowledgedThrough+1}-`));
       if (!file) throw new CliError("missing_sequence",3);
       return parseRetained(storedEvent,join(root,id.toLowerCase(),file),100000,"corrupt_record");
-    });},
-    async acknowledge(record: EventRecord,generation: string) {return locked(()=> {
+    },until);},
+    async acknowledge(record: EventRecord,generation: string,until=end) {return locked(()=> {
       const event = record.body as unknown as EventInput, value = state(event.runId);
       if (value.acknowledgedThrough+1 !== event.sequence) throw new CliError("ack_sequence_mismatch",3);
       atomic(`${event.runId.toLowerCase()}/state.json`,{...value,acknowledgedThrough:event.sequence,generation});
       remove(join(root,event.runId.toLowerCase(),`${event.sequence}-${event.eventId.toLowerCase()}.json`));
-    });},
+    },until);},
     async validateRemote(id: string,generation: string,until: number) {
-      const local = await locked(()=>state(id));
+      const local = await locked(()=>state(id),until);
       if (local.generation === generation) return {kind:"delivered" as const};
       const current = await outbox.initializeRun(id,until);
-      if (current.kind === "delivered") await locked(()=>atomic(`${id.toLowerCase()}/state.json`,{...state(id),generation:current.generation}));
+      if (current.kind === "delivered") await locked(()=>atomic(`${id.toLowerCase()}/state.json`,{...state(id),generation:current.generation}),until);
       return current;
     },
     async jobs() {return locked(()=> {
@@ -451,14 +456,14 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
           jobs.push({id:`registration:${String(record.order).padStart(16,"0")}:${record.key.toLowerCase()}`,kind:"registration",record});
         } else if (lstatSync(join(root,name)).isDirectory() && existsSync(join(root,name,"state.json"))) {
           const value = state(name);
-          if (value.acknowledgedThrough < value.allocatedThrough) jobs.push({id:`run:${name}`,kind:"run",runId:name});
+          if (value.acknowledgedThrough < value.allocatedThrough) jobs.push({id:`run:${name}`,kind:"run",runId:value.runId});
         }
       }
       return jobs.sort((a,b)=>a.id.localeCompare(b.id));
     });},
     async cursor() {return locked(()=>readMetadata().cursor);},
-    async advanceCursor(id: string) {return locked(()=>atomic("metadata.json",{...readMetadata(),cursor:id}));},
-    async removeRegistration(record: Registration) {return locked(()=>remove(join(root,`registration-${record.key.toLowerCase()}.json`)));},
+    async advanceCursor(id: string,until=end) {return locked(()=>atomic("metadata.json",{...readMetadata(),cursor:id}),until);},
+    async removeRegistration(record: Registration,until=end) {return locked(()=>remove(join(root,`registration-${record.key.toLowerCase()}.json`)),until);},
     acquireDelivery() {assertPins(); try {locks[1].exec("BEGIN EXCLUSIVE"); return true;} catch {return false;}},
     close() {for (const lock of locks) {if (lock.inTransaction) lock.exec("ROLLBACK"); lock.close();}},
   };
