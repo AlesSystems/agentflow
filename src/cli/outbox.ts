@@ -130,9 +130,8 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
   const locks: Database.Database[] = [];
   try {
     inspectLockArtifacts();
-    const bootstrapLengths = lengths();
     const allowance = lockPaths.every(path=>existsSync(path) && lstatSync(path).size > 0) ? 0 : BOOTSTRAP;
-    if (bootstrapLengths.global + reservations().global + allowance > GLOBAL_LIMIT) throw new CliError("bootstrap_full");
+    if (allowance && lengths().global + reservations().global + allowance > GLOBAL_LIMIT) throw new CliError("bootstrap_full");
     for (const path of lockPaths) {
       inspectLockArtifacts();
       if (!existsSync(path)) {

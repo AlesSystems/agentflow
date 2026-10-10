@@ -13,7 +13,8 @@ it("allocates concurrent durable observations contiguously and refuses a missing
   await server.stop();
   const args = ["report","--run",fixture.runId,"--type","run.started","--payload",fixture.file({})];
   const results = await Promise.all(Array.from({length:6},()=>fixture.cli(args)));
-  expect(results.every(result=>result.code===2)).toBe(true);
+  writeFileSync(join(fixture.dir,"concurrent-results.json"),JSON.stringify(results,null,2),{mode:0o600});
+  expect(results.map(result=>result.code)).toEqual([2,2,2,2,2,2]);
   const directory = join(fixture.env.AGENTFLOW_OUTBOX_DIR,fixture.runId);
   const files = readdirSync(directory).filter(name=>/^\d+-/.test(name));
   const events = files.map(name=>JSON.parse(readFileSync(join(directory,name),"utf8")).body);
