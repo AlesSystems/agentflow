@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { copyFileSync } from "node:fs";
 import { join } from "node:path";
+import Database from "better-sqlite3";
 import { restore } from "../../src/db/recovery";
 import { launch } from "../fixtures/server";
 import { fixture, pairPage, command } from "../fixtures/p03";
@@ -164,4 +165,46 @@ test("local-day metrics roll over on the healthy visible tick and focus refreshe
     await expect(completed).toHaveText("0", { timeout: 3000 });
     await expect(page.getByText("Connected updates", { exact: true })).toBeVisible();
   } finally { await page.close(); await server.stop(); }
+});
+
+test("latest stale attempt closure reason and frozen retry survive an actual restored generation", async ({ page }) => {
+  test.setTimeout(40000);
+  let server = await launch();
+  try {
+    const f = await fixture(page, server);
+    const agent = await producer(server, "/agents", { displayName: "Synthetic restored close producer", source: "public HTTP", defaultRole: "implementation" });
+    const runId = randomUUID();
+    await producer(server, "/runs", { id: runId, projectId: f.project.id, taskId: f.task.id, agentId: agent.data.id, purpose: "implementation", expectedTaskVersion: 1 });
+    await producer(server, `/runs/${runId}/events`, { schemaVersion: 1, eventId: randomUUID(), runId, sequence: 1, type: "run.started", occurredAt: new Date().toISOString(), payload: {} });
+    const dir = server.dir, port = server.port;
+    await server.stop();
+    const db = new Database(join(dir, "agentflow.sqlite"));
+    db.prepare("UPDATE runs SET last_received_at=? WHERE id=?").run(Date.now() - 120000, runId); db.close();
+    const backup = join(dir, "p05-stale-editor-backup.sqlite");
+    copyFileSync(join(dir, "agentflow.sqlite"), backup);
+    server = await launch({ dir, port });
+    await page.goto(f.boardUrl);
+    await page.getByRole("button", { name: f.task.title, exact: true }).click();
+    await page.getByLabel("Add a comment", { exact: true }).fill("Task note stays through close recovery");
+    await page.getByRole("button", { name: "implementation · Synthetic restored close producer", exact: true }).click();
+    await page.getByRole("button", { name: "Close stale tracking", exact: true }).click();
+    await page.getByLabel("Reason", { exact: true }).fill("Reason and exact close identity survive restore");
+    const requests: { body: string; key: string }[] = [];
+    await page.route(`**/api/v1/runs/${runId}/close`, async route => {
+      requests.push({ body: route.request().postData()!, key: route.request().headers()["idempotency-key"] });
+      if (requests.length === 1) { await route.fetch(); await route.abort(); } else await route.continue();
+    });
+    await page.getByRole("button", { name: "Confirm tracking closure", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Retry exact closure", exact: true })).toBeVisible();
+    await server.stop(); await restore(dir, backup); server = await launch({ dir, port });
+    await expect(page.getByRole("heading", { name: "Pair again to keep editing" })).toBeVisible({ timeout: 20000 });
+    await page.getByLabel("Pairing token", { exact: true }).fill(server.credentials().pairingToken);
+    await page.getByRole("button", { name: "Pair this browser", exact: true }).click();
+    await expect(page.getByLabel("Reason", { exact: true })).toHaveValue("Reason and exact close identity survive restore");
+    await expect(page.getByRole("button", { name: "Retry exact closure", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Retry exact closure", exact: true }).click();
+    await expect(page.getByText("Tracking record closed. No process signal was sent.", { exact: true })).toBeVisible();
+    expect(requests[1]).toEqual(requests[0]);
+    await expect(page.getByLabel("Add a comment", { exact: true })).toHaveValue("Task note stays through close recovery");
+  } finally { await page.unrouteAll({ behavior: "ignoreErrors" }); await page.close(); await server.stop(); }
 });
