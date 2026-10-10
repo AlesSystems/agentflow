@@ -9,7 +9,7 @@ import { publicProxy } from "../fixtures/p06-proxy";
 import { openOutbox } from "../../src/cli/outbox";
 it("resends a validated retained entry when sequence_gap requests that exact entry",async()=> {
   const server=await launch();let gap=true;
-  const proxy=await publicProxy(server,(req,body,reply)=>{if(!reply&&gap&&req.url?.endsWith("/events")){gap=false;return{status:409,body:JSON.stringify({error:{code:"sequence_gap",expectedSequence:JSON.parse(body.toString()).sequence}})};}});
+  const proxy=await publicProxy(server,(req,body,reply)=>{if(!reply&&gap&&req.url?.endsWith("/events")){gap=false;return{status:409,body:JSON.stringify({error:{code:"sequence_gap",details:{expectedSequence:JSON.parse(body.toString()).sequence}}})};}});
   try{const f=await registeredRun({...server,port:proxy.port});const result=await f.cli(["report","--run",f.runId,"--type","run.started","--payload",f.file({})]);expect(result.code).toBe(0);expect(JSON.parse(result.stdout).acceptedSequence).toBe(1);}finally{await proxy.close();await server.stop();}
 });
 it.each(["malformed","oversize","wrong-event","wrong-run","wrong-sequence","private-error","forbidden"])("preserves original event and sanitized streams after %s",async kind=> {

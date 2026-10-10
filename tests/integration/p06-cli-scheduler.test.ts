@@ -45,7 +45,7 @@ it("continues a durable ring beyond ten slow runs and unrelated/dependent regist
 
 it("continues independent work after a blocked run and prints only safe error fields",async()=> {
   const server=await launch();let blocked="";
-  const proxy=await publicProxy(server,(req,_body,reply)=>{if(!reply&&req.url===`/api/v1/runs/${blocked}/events`)return{status:409,body:JSON.stringify({error:{code:"sequence_conflict",expectedSequence:9,currentVersion:12,message:"PRIVATE-P06-ERROR",repositoryPath:"PRIVATE-P06-PATH"}})};});
+  const proxy=await publicProxy(server,(req,_body,reply)=>{if(!reply&&req.url===`/api/v1/runs/${blocked}/events`)return{status:409,body:JSON.stringify({error:{code:"sequence_conflict",details:{expectedSequence:9,currentVersion:12},message:"PRIVATE-P06-ERROR",repositoryPath:"PRIVATE-P06-PATH"}})};});
   try {
     const f=await registeredRun({...server,port:proxy.port});blocked=f.runId;
     const second=await f.cli(["run","register","--file",f.file({id:randomUUID(),projectId:f.projectId,agentId:f.agentId,purpose:"planning"}),"--idempotency-key",randomUUID()]);expect(second.code).toBe(0);const healthy=JSON.parse(second.stdout).id;
