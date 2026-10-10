@@ -112,7 +112,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
         });
         await untilDue(start+duration);timed.endedMs=performance.now();
         const records=result.requests.filter(record=>batch.some(event=>event.body.eventId===record.eventId));
-        assert.equal(records.length,batch.length);timed.cadence=cadence(duration,interval,start,timed.endedMs,records);timed.http=distribution(records.map(record=>record.responseMs!-record.dispatchMs));
+        assert.equal(records.length,batch.length);if(hooks)timed.http=distribution(records.map(record=>record.responseMs!-record.dispatchMs));timed.cadence=cadence(duration,interval,start,timed.endedMs,records);timed.http??=distribution(records.map(record=>record.responseMs!-record.dispatchMs));
         if(acceptance&&phase==="sustained") assert((timed.http as {p95Ms:number}).p95Ms<250,"SUSTAINED_HTTP_BUDGET");
       } catch(error) {timed.endedMs??=performance.now();timed.failure=(error as Error).message;throw error;} finally {save();}
     }
