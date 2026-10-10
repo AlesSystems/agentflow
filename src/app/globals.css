@@ -777,3 +777,4 @@ dd {
 .long-report summary span { color: var(--action); text-decoration: underline; }
 .attempt-title { text-align: left; }
 @media (max-width: 700px) { .report-facts { grid-template-columns: minmax(0, 1fr); gap: 4px; } .report-facts dd { margin-bottom: 12px; } }
+.run-detail h3, .task-card .metadata { overflow-wrap: anywhere; }

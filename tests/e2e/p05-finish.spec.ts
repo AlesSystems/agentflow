@@ -30,17 +30,22 @@ test("an accepted 200-character unbroken reported identity wraps in direct and d
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(server.url + `/runs/${id}`);
     await expect(page.locator(".run-detail h3").first()).toHaveText(`implementation · ${name}`);
+    const sizes: unknown[] = [];
     async function noOverflow() {
       const size = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, headings: [...document.querySelectorAll(".run-detail h3")].map(el => ({ width: el.clientWidth, scroll: el.scrollWidth, wrap: getComputedStyle(el).overflowWrap })) }));
       expect(size.document).toBeLessThanOrEqual(size.viewport);
       expect(size.headings[0].scroll).toBeLessThanOrEqual(size.headings[0].width);
+      sizes.push(size);
     }
     await noOverflow();
     await page.goto(f.boardUrl);
+    await page.getByRole("combobox", { name: "Show status", exact: true }).selectOption("in_progress");
     await page.getByRole("button", { name: f.task.title, exact: true }).click();
     await page.getByRole("button", { name: `implementation · ${name}`, exact: true }).click();
     await expect(page.locator(".run-detail h3").first()).toHaveText(`implementation · ${name}`);
     await noOverflow();
+    mkdirSync("work/poteto/P05", { recursive: true });
+    writeFileSync("work/poteto/P05/long-name-proof.json", JSON.stringify({ synthetic: true, acceptedDisplayName: name, length: agent.displayName.length, directThenEmbedded: sizes }, null, 2));
   } finally { await page.close(); await server.stop(); }
 });
 test("keyboard follows tracking records filters pages messages and stale closure while refresh retains focus and draft", async ({ page }) => {
