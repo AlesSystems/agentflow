@@ -107,10 +107,10 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     for(const runId of fixture.runs){
       const sequence=events.filter(event=>event.body.runId===runId).at(-1)!.body.sequence+1;
       const body={schemaVersion:1,eventId:randomUUID(),runId,sequence,type:"run.succeeded",occurredAt:new Date().toISOString(),payload:{summary:"Synthetic P07 load terminal outside timing"}};
-      const response=await fetch(server.url+`/api/v1/runs/${runId}/events`,{method:"POST",headers,body:JSON.stringify(body)});
+      const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events`,{method:"POST",headers,body:JSON.stringify(body)});
       const ack=await response.json();result.final.push({body,digest:canonicalDigest(body),status:response.status,ack});assert.equal(response.status,201);eventResponse.parse(ack);
     }
-    const api=[];
+    const api: (typeof eventsResponse)["_output"]["data"]["items"] = [];
     for(const runId of fixture.runs){let cursor:string|null=null;do{
       const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events?limit=100`+(cursor?`&cursor=${encodeURIComponent(cursor)}`:""),{headers});assert.equal(response.status,200);
       const page=eventsResponse.parse(await response.json());api.push(...page.data.items);cursor=page.data.nextCursor;
