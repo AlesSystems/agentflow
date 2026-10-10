@@ -37,6 +37,7 @@ export function cliConfig(port?: string) {
   const service = readConfig(env);
   const tokenFile = env.AGENTFLOW_REPORTER_TOKEN_FILE;
   if (!tokenFile || !isAbsolute(tokenFile)) throw new CliError("token_file_required");
+  privateDestination(tokenFile,activeAppRoot());
   const token = readBounded(tokenFile, 64, true);
   if (!/^[0-9a-f]{64}$/.test(token)) throw new CliError("invalid_token_file");
   const outbox = privateDestination(env.AGENTFLOW_OUTBOX_DIR || join(homedir(), "Library", "Application Support", "AgentFlow-outbox"), activeAppRoot());

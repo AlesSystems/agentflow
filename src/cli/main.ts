@@ -1,57 +1,107 @@
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { uuid } from "../contracts/common";
 import { projectCreate } from "../contracts/projects";
 import { taskCreate } from "../contracts/tasks";
-import { agentCreate, agentResponse, runRegister, runResponse } from "../contracts/observations";
+import { agentCreate, agentResponse, eventInput, eventResponse, runRegister, runResponse } from "../contracts/observations";
 import { projectResponse, taskResponse } from "../contracts/responses";
-import { CliError, cliConfig, deadline, readJson } from "./config";
+import { CliError, cliConfig, deadline, readJson, type CliConfig } from "./config";
 import { request } from "./http";
-import { openOutbox } from "./outbox";
+import { openOutbox, type Job, type Outbox } from "./outbox";
 const commands = {
   "project create": { path: "/projects", input: projectCreate, output: projectResponse },
   "task create": { path: "/tasks", input: taskCreate, output: taskResponse },
   "agent register": { path: "/agents", input: agentCreate, output: agentResponse },
   "run register": { path: "/runs", input: runRegister, output: runResponse },
 } as const;
-export async function main(args = process.argv.slice(2)) {
+const registrationResponses = {"/projects":projectResponse,"/tasks":taskResponse,"/agents":agentResponse,"/runs":runResponse};
+const emit = (value: unknown) => process.stdout.write(JSON.stringify(value)+"\n");
+function diagnostic(code: string,runId?: string) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),repair:"Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
+async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
+  if (job.kind === "registration") {
+    const record = job.record;
+    const reply = await request(config,record.path,registrationResponses[record.path] as z.ZodType<{data:{id:string}}>,end,record.body,record.key);
+    if (reply.kind !== "delivered") return reply;
+    if (record.path === "/runs") {
+      const initialized = await outbox.initializeRun(reply.data.data.id,end);
+      if (initialized.kind !== "delivered") return initialized;
+    }
+    await outbox.removeRegistration(record); emit({id:reply.data.data.id,generation:reply.generation}); return reply;
+  }
+  const record = await outbox.next(job.runId);
+  if (!record) return {kind:"delivered" as const};
+  const reply = await request(config,`/runs/${job.runId}/events`,eventResponse,end,record.body);
+  if (reply.kind !== "delivered") return reply;
+  const ack = reply.data.data;
+  if (ack.eventId.toLowerCase() !== String(record.body.eventId).toLowerCase() || ack.runId.toLowerCase() !== String(record.body.runId).toLowerCase() || ack.acceptedSequence !== record.body.sequence) return {kind:"blocked" as const,code:"ack_identity_mismatch"};
+  const validated = await outbox.validateRemote(job.runId,reply.generation,end);
+  if (validated.kind !== "delivered") return validated;
+  await outbox.acknowledge(record,reply.generation); emit({...ack,generation:reply.generation}); return reply;
+}
+export async function main(args = process.argv.slice(2), open = openOutbox) {
   const end = deadline();
-  let outbox: Awaited<ReturnType<typeof openOutbox>> | undefined;
+  let outbox: Outbox | undefined;
   try {
-    if (args.length === 1 && ["--help", "help"].includes(args[0])) { process.stdout.write("agentflow project create | task create | agent register | run register --file <json> --idempotency-key <uuid> [--port <port>]\n"); return 0; }
+    if (args.length === 1 && ["--help","help"].includes(args[0])) {process.stdout.write("agentflow project create | task create | agent register | run register --file <json> --idempotency-key <uuid>\nagentflow report --run <uuid> --type <event-type> --payload <json>\nagentflow flush [--run <uuid>]\nAll commands accept --port <port>.\n");return 0;}
     const command = commands[args.slice(0,2).join(" ") as keyof typeof commands];
-    if (!command) throw new CliError("invalid_command");
+    const action = command ? "register" : args[0];
+    if (!["register","report","flush"].includes(action)) throw new CliError("invalid_command");
+    const allowed = command ? ["--file","--idempotency-key","--port"] : action === "report" ? ["--run","--type","--payload","--port"] : ["--run","--port"];
     const flags: Record<string,string> = {};
-    for (let i = 2; i < args.length; i += 2) {
+    for (let i = command ? 2 : 1; i < args.length; i += 2) {
       const flag = args[i];
-      if (!["--file", "--idempotency-key", "--port"].includes(flag) || flags[flag] !== undefined || !args[i+1] || args[i+1].startsWith("--")) throw new CliError("invalid_arguments");
+      if (!allowed.includes(flag) || flags[flag] !== undefined || !args[i+1] || args[i+1].startsWith("--")) throw new CliError("invalid_arguments");
       flags[flag] = args[i+1];
     }
-    if (!flags["--file"] || !uuid.safeParse(flags["--idempotency-key"]).success) throw new CliError("invalid_arguments");
+    if (flags["--run"] && !uuid.safeParse(flags["--run"]).success) throw new CliError("invalid_arguments");
     const config = cliConfig(flags["--port"]);
-    const body = readJson(flags["--file"]);
-    if (!command.input.safeParse(body).success || Buffer.byteLength(JSON.stringify(body)) > 65536) throw new CliError("invalid_input");
-    outbox = await openOutbox(config, end);
-    const record = await outbox.preserveRegistration(command.path, flags["--idempotency-key"], body);
-    let attempt = 0;
-    while (performance.now() < end) {
-      const reply = await request(config, record.path, command.output as z.ZodType<{ data: { id: string } }>, end, record.body, record.key);
-      if (reply.kind === "blocked") { process.stderr.write(JSON.stringify({ code: reply.code, repair: "Preserve the outbox and resolve the rejected registration." }) + "\n"); return 3; }
-      if (reply.kind === "delivered") {
-        if (record.path === "/runs") {
-          const initialized = await outbox.initializeRun(reply.data.data.id);
-          if (initialized.kind === "blocked") throw new CliError(initialized.code,3);
-          if (initialized.kind === "retryable") continue;
-        }
-        await outbox.removeRegistration(record);
-        process.stdout.write(JSON.stringify({ id: reply.data.data.id, generation: reply.generation }) + "\n"); return 0;
-      }
-      await new Promise(resolve => setTimeout(resolve, Math.min(Math.max(reply.delay, Math.random()*Math.min(30000,100*2**attempt++)), Math.max(0,end-performance.now()))));
+    let body: Record<string,unknown> | undefined;
+    if (command) {
+      if (!flags["--file"] || !uuid.safeParse(flags["--idempotency-key"]).success) throw new CliError("invalid_arguments");
+      body = readJson(flags["--file"]);
+      if (!command.input.safeParse(body).success || Buffer.byteLength(JSON.stringify(body))>65536) throw new CliError("invalid_input");
+    } else if (action === "report") {
+      if (!flags["--run"] || !flags["--payload"] || !flags["--type"]) throw new CliError("invalid_arguments");
+      body = readJson(flags["--payload"]);
+      if (!eventInput.safeParse({schemaVersion:1,eventId:randomUUID(),runId:flags["--run"],sequence:1,type:flags["--type"],occurredAt:new Date().toISOString(),payload:body}).success) throw new CliError("invalid_input");
     }
-    process.stderr.write(JSON.stringify({ code: "queued", repair: "Retry the same file and idempotency key." }) + "\n"); return 2;
+    outbox = await open(config,end);
+    let selected: Job | undefined;
+    if (command) {
+      const record = await outbox.preserveRegistration(command.path,flags["--idempotency-key"],body!);
+      selected = {kind:"registration",id:record.key,record};
+    } else if (action === "report") {
+      const runId = flags["--run"];
+      if (!await outbox.tracked(runId)) {
+        const adopted = await outbox.initializeRun(runId);
+        if (adopted.kind !== "delivered") throw new CliError(adopted.kind === "blocked" ? adopted.code : "producer_state_required",3);
+      }
+      await outbox.enqueue(runId,flags["--type"],body!);
+      selected = {kind:"run",id:`run:${runId.toLowerCase()}`,runId};
+    } else if (flags["--run"]) {
+      if (!await outbox.tracked(flags["--run"])) throw new CliError("producer_state_required",3);
+      selected = {kind:"run",id:`run:${flags["--run"].toLowerCase()}`,runId:flags["--run"]};
+    }
+    if (!outbox.acquireDelivery()) {diagnostic("queued");return 2;}
+    let attempt = 0;
+    while (performance.now()<end) {
+      const jobs = selected ? [selected] : await outbox.jobs();
+      if (!jobs.length) return 0;
+      for (const job of jobs) {
+        const reply = await turn(job,outbox,config,end);
+        if (reply.kind === "blocked") {diagnostic(reply.code,job.kind === "run" ? job.runId : undefined);return 3;}
+        if (reply.kind === "delivered") {
+          if (job.kind === "registration") return 0;
+          if (!await outbox.next(job.runId)) return 0;
+          continue;
+        }
+        await new Promise(resolve=>setTimeout(resolve,Math.min(Math.max(reply.delay,Math.random()*Math.min(30000,100*2**attempt++)),Math.max(0,end-performance.now()))));
+      }
+    }
+    diagnostic("queued");return 2;
   } catch (error) {
-    const known = error instanceof CliError;
-    process.stderr.write(JSON.stringify({ code: known ? error.code : "local_failure", repair: "Preserve the outbox and verify input, permissions and local storage." }) + "\n");
-    return known ? error.exit : 1;
-  } finally { outbox?.close(); }
+    diagnostic(error instanceof CliError ? error.code : "local_failure");
+    return error instanceof CliError ? error.exit : 1;
+  } finally {outbox?.close();}
 }
-if (import.meta.url === new URL(process.argv[1], "file:").href) process.exitCode = await main();
+if (import.meta.url === new URL(process.argv[1],"file:").href) process.exitCode = await main();

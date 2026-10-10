@@ -22,3 +22,16 @@ export function cliFixture(server: Awaited<ReturnType<typeof launch>>) {
     },
   };
 }
+export async function registeredRun(server: Awaited<ReturnType<typeof launch>>) {
+  const { randomUUID } = await import("node:crypto");
+  const fixture = cliFixture(server);
+  async function register(args: string[],body: unknown) {
+    const result = await fixture.cli([...args,"--file",fixture.file(body),"--idempotency-key",randomUUID()]);
+    if (result.code !== 0) throw new Error("fixture registration failed");
+    return JSON.parse(result.stdout).id as string;
+  }
+  const projectId = await register(["project","create"],{name:"Synthetic"});
+  const agentId = await register(["agent","register"],{displayName:"Synthetic",source:"fixture",defaultRole:"implementation"});
+  const runId = await register(["run","register"],{id:randomUUID(),projectId,agentId,purpose:"planning"});
+  return {...fixture,runId,projectId,agentId};
+}
