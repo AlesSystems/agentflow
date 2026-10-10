@@ -17,9 +17,22 @@ export function validatedChange(id: string, data: string, after: string): string
   return BigInt(frame.id) > BigInt(after) ? frame.id : null;
 }
 export class ReplayCursor {
+  private pending: string | null = null;
   constructor(public after: string) {}
-  offer(id: string, data: string) { const next = validatedChange(id, data, this.after); if (next) this.after = next; return next; }
-  discardPending() {}
-  flush(invalidate: () => void) { invalidate(); }
-  rebase(_snapshots: unknown[], _generation: string) {}
+  offer(id: string, data: string) {
+    const next = validatedChange(id, data, this.pending ?? this.after);
+    if (next) this.pending = next;
+    return next;
+  }
+  discardPending() { this.pending = null; }
+  flush(invalidate: () => void) {
+    if (!this.pending) return;
+    invalidate();
+    this.after = this.pending;
+    this.pending = null;
+  }
+  rebase(snapshots: unknown[], generation: string) {
+    this.discardPending();
+    this.after = safeCursor(snapshots, generation);
+  }
 }

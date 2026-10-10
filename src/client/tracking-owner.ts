@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ApiClient, ApiError } from "./api";
 import { settingsResponse } from "../contracts/responses";
 import { resetNotice } from "../contracts/stream";
-import { safeCursor, validatedChange, type Connection } from "./tracking";
+import { safeCursor, ReplayCursor, type Connection } from "./tracking";
 export function useTracking(api: ApiClient, cache: QueryClient, generation: string, paired: number, update: (connection: Connection) => void, pair: () => void) {
   useEffect(() => {
     let disposed = false;
@@ -17,10 +17,11 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
     let lastSuccess: number | null = null;
     let state: Connection["state"] = "connecting";
     let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let after = safeCursor(cache.getQueryCache().getAll().map(q => q.state.data), generation);
+    const replay = new ReplayCursor(safeCursor(cache.getQueryCache().getAll().map(q => q.state.data), generation));
+    let resetCursor = false;
     const current = () => !disposed && api.generation === generation;
     function publish(next: Connection["state"]) { state = next; if (current()) update({ state, lastSuccess }); }
-    function close() { owner++; source?.close(); source = null; if (invalidation) { clearTimeout(invalidation); invalidation = undefined; void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation, refetchType: "none" }); } }
+    function close() { owner++; source?.close(); source = null; replay.discardPending(); if (invalidation) { clearTimeout(invalidation); invalidation = undefined; void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation, refetchType: "none" }); } }
     function schedule() {
       clearTimeout(timer);
       if (!current() || state === "authentication-required") return;
@@ -31,13 +32,14 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
       if (document.visibilityState === "hidden") { schedule(); return; }
       refreshing = true;
       try {
-        await api.read("/settings", settingsResponse);
+        const probe = await api.read("/settings", settingsResponse);
         if (!current()) return;
         // Retained entries become stale before any replacement stream is admitted.
         await cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation, refetchType: "none" });
         await cache.refetchQueries({ predicate: q => q.queryKey[0] === generation, type: "active" }, { throwOnError: true });
         if (!current()) return;
         lastSuccess = Date.now(); failures = 0;
+        if (resetCursor) { replay.rebase([probe, ...cache.getQueryCache().getAll().map(q => q.state.data)], generation); resetCursor = false; }
         if (reconnect) connect(); else publish(state);
       } catch (error) {
         if (!current()) return;
@@ -54,7 +56,7 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
       if (!current()) return;
       close();
       const epoch = owner;
-      const next = new EventSource(`/api/v1/changes/stream?after=${after}&generation=${generation}`);
+      const next = new EventSource(`/api/v1/changes/stream?after=${replay.after}&generation=${generation}`);
       source = next;
       const valid = () => current() && source === next && owner === epoch;
       next.onopen = () => { if (!valid()) return; fallback = false; failures = 0; publish("connected"); schedule(); };
@@ -62,18 +64,19 @@ export function useTracking(api: ApiClient, cache: QueryClient, generation: stri
         if (!valid()) return;
         try {
           const message = event as MessageEvent<string>;
-          const cursor = validatedChange(message.lastEventId, message.data, after);
+          const cursor = replay.offer(message.lastEventId, message.data);
           if (!cursor) return;
           if (!invalidation) invalidation = setTimeout(() => {
             invalidation = undefined;
-            if (valid()) void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation });
+            if (valid()) replay.flush(() => { void cache.invalidateQueries({ predicate: q => q.queryKey[0] === generation }); });
           }, 50);
-          after = cursor;
+
         } catch { recover(); }
       });
       next.addEventListener("reset", event => {
         if (!valid()) return;
         try { resetNotice.parse(JSON.parse((event as MessageEvent<string>).data)); } catch { /* The authenticated probe remains the authority. */ }
+        resetCursor = true;
         recover();
       });
       next.onerror = () => {
