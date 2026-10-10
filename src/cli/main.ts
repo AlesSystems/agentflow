@@ -17,9 +17,10 @@ const commands = {
 const registrationResponses = {"/projects":projectResponse,"/tasks":taskResponse,"/agents":agentResponse,"/runs":runResponse};
 const emit = (value: unknown) => process.stdout.write(JSON.stringify(value)+"\n");
 function diagnostic(code: string,runId?: string,details?: {expectedSequence?:number;currentVersion?:number}) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),...(details?.expectedSequence===undefined?{}:{expectedSequence:details.expectedSequence}),...(details?.currentVersion===undefined?{}:{currentVersion:details.currentVersion}),repair:"Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
-async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
+async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,beforeAttempt?:()=>Promise<void>) {
   if (job.kind === "registration") {
     const record = job.record;
+    await beforeAttempt?.();
     const reply = await request(config,record.path,registrationResponses[record.path] as z.ZodType<{data:{id:string}}>,end,record.body,record.key);
     if (reply.kind !== "delivered") return reply;
     if (record.path === "/runs") {
@@ -30,6 +31,7 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
   }
   const record = await outbox.next(job.runId,end);
   if (!record) return {kind:"delivered" as const,complete:true};
+  await beforeAttempt?.();
   const reply = await request(config,`/runs/${job.runId}/events`,eventResponse,end,record.body);
   if(reply.kind==="blocked"&&reply.code==="sequence_gap"&&reply.expectedSequence===record.body.sequence)return{kind:"retryable" as const,delay:100};
   if (reply.kind !== "delivered") return reply;
@@ -112,9 +114,8 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
       for(let offset=0;offset<jobs.length;offset++){const candidate=(position+offset)%jobs.length;if(ready.some(job=>job.id===jobs[candidate].id)){index=candidate;break;}}
       const job=jobs[index],until=Math.min(end,performance.now()+500);
       position=(index+1)%jobs.length;
-      if(!selected){cursorWriting=true;await outbox.advanceCursor(jobs[position].id,until);cursorWriting=false;}
       attempted.add(job.id);
-      const reply=await turn(job,outbox,config,until);
+      const reply=await turn(job,outbox,config,until,selected?undefined:async()=>{cursorWriting=true;await outbox!.advanceCursor(jobs[position].id,until);cursorWriting=false;});
       if(reply.kind==="blocked"){diagnostic(reply.code,job.kind==="run"?job.runId:job.record.path==="/runs"?String(job.record.body.id):undefined,reply);blocked.add(job.id);blockedExit=3;continue;}
       if(reply.kind==="delivered") {
         if(job.kind==="registration"||"complete"in reply&&reply.complete)done.add(job.id);
