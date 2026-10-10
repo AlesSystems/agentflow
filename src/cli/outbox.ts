@@ -259,9 +259,11 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     const temp = path+".tmp";
     validateFile(path); validateFile(temp);
     if (existsSync(temp)) { filesystem.unlinkSync(temp); filesystem.syncDirectory(parent); }
-    filesystem.createFile(temp,encoded); filesystem.renameSync(temp,path); filesystem.syncDirectory(parent);
+    assertPins();pin(parent);filesystem.createFile(temp,encoded);
+    assertPins();pin(parent);validateFile(temp);filesystem.renameSync(temp,path);
+    assertPins();pin(parent);filesystem.syncDirectory(parent);
   }
-  function remove(path: string) { assertPins(); pin(dirname(path)); validateFile(path); filesystem.unlinkSync(path); filesystem.syncDirectory(dirname(path)); }
+  function remove(path: string) {assertPins();pin(dirname(path));validateFile(path);filesystem.unlinkSync(path);assertPins();pin(dirname(path));filesystem.syncDirectory(dirname(path));}
   function recover() {
     lengths(); reservations();
     if(existsSync(metaPath+".tmp") && (!existsSync(metaPath)||!readMetadata().pendingRegistration))abandonedMetadata(metaPath+".tmp");
