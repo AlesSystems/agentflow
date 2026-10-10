@@ -15,3 +15,9 @@ it("retains measurement failure separately from cleanup failure",async()=>{
   await expect(resourceBoundary(result,async()=>{throw new Error("measure fixture failure");},[["failed cleanup",async()=>{ended=result.endedMs;throw new Error("cleanup fixture failure");}]],()=>{})).rejects.toThrow("measure fixture failure");
   expect(result.status).toBe("unfinalized");expect(result.failure).toBe("measure fixture failure");expect(result.endedMs).toBe(ended);expect(result.cleanup?.failures).toEqual([{action:"failed cleanup",error:"cleanup fixture failure"}]);
 });
+
+it("flush retention keeps unstarted clocks null even on failure",async()=>{
+  const {flushBoundary}=await import("../fixtures/p07-flush-boundary");const receipt={measuredStartedMs:null,measuredEndedMs:null,elapsedMs:null,failure:"",reconciliationStatus:"unfinalized",reconciliation:null};let atCleanup:unknown;
+  await expect(flushBoundary(receipt,async()=>{throw new Error("before timing");},[["inspect",async()=>{atCleanup={...receipt};}]],()=>{})).rejects.toThrow("before timing");
+  expect(atCleanup).toMatchObject({measuredStartedMs:null,measuredEndedMs:null,elapsedMs:null,failure:"before timing"});
+});
