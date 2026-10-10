@@ -1,8 +1,7 @@
 # AgentFlow architecture
 
-Status: accepted v1 design direction. P01–P04 are integrated through PRs #4–#7.
-P05 native replay, joined tracking and browser recovery are implemented and
-verified; final PR integration remains open. Producer CLI hooks and workflow
+Status: accepted v1 design direction. P01–P05 are integrated through PRs #4–#8,
+including native replay, joined tracking and browser recovery. P06 producer CLI hooks are implemented on the candidate branch; workflow
 modules remain planned. The user selected this direction on 2026-10-09. Detailed
 decisions are in [DECISIONS.md](DECISIONS.md).
 
@@ -81,11 +80,21 @@ One custom Next HTTP server process owns a data directory. Before migrations, th
 
 `AGENTFLOW_DATA_DIR` can select an absolute local path. The default is `~/Library/Application Support/AgentFlow` on macOS and `$XDG_DATA_HOME/agentflow` on Linux, falling back to `~/.local/share/agentflow`. The first release targets macOS; Linux support depends on the same clean-install checks. Windows is deferred.
 
-The directory holds `agentflow.sqlite`, its WAL files, the versioned `credentials.json` token set, and eventually the CLI outbox. Directory permissions are user-only and sensitive files use mode `0600`. Managed data, explicit Store candidates and backup destinations are rejected
+The directory holds `agentflow.sqlite`, its WAL files, and the versioned `credentials.json` token set. The producer outbox uses a separate private directory, defaulting to `~/Library/Application Support/AgentFlow-outbox`. Public `/settings` binds its service association before new mutations, with canonical overlap checks and a pinned offline destination. CLI hooks never open the application Store. Immutable JSON files, durable descriptors/watermarks, and stable SQLite OS-held locks preserve identity and FIFO. Quotas measure owned logical regular-file lengths, including metadata, temps, locks, and sidecars, rather than filesystem allocation overhead. See [CLI.md](CLI.md). Directory permissions are user-only and sensitive files use mode `0600`. Managed data, explicit Store candidates and backup destinations are rejected
 inside the canonical active application root before writes. The instance freezes
 that CWD root and Next uses it; case aliases are recognized by directory identity,
 raw symlinks are rejected before dot normalization, and no global repository scan
 or root override is introduced. No data belongs in the public checkout. The application rejects a relative override and documents that network filesystems are unsupported.
+
+P06 global event selection and durable delivery-cursor publication share one
+existing publication owner. Network delivery occurs after release. ACK watermark
+advancement and cleanup have a separate owner and return completion at that
+boundary; later enqueues remain future work. Every acquisition keeps full recovery,
+identity/coverage, path/pin/permission, sidecar, logical-length and outstanding-peak
+validation. No validation cache survives ownership. The cursor is not an execution
+scheduler; the external harness still owns processes. Performance evidence used
+cached P05 application assets with the candidate CLI, followed by a separately
+recorded fresh production build. See [the P06 receipt](implementation/P06.md).
 
 Normal use works without internet after dependencies are installed. External links open only after a user action. No repository scanning, transcript discovery, remote analytics, or provider credential storage is part of the first release.
 

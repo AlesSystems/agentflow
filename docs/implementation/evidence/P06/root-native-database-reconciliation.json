@@ -1,0 +1,66 @@
+{
+  "source": "4bb6dee4c269f493723c6b684eec1e8606a07528",
+  "facts": [
+    {
+      "comparison": 1,
+      "matchedPairedStoredBodiesDigestsACKs": 110,
+      "counts": {
+        "base": {
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 10110
+        },
+        "head": {
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 10110
+        }
+      },
+      "integrity": "ok",
+      "foreignKeys": 0
+    },
+    {
+      "comparison": 2,
+      "matchedPairedStoredBodiesDigestsACKs": 110,
+      "counts": {
+        "base": {
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 10110
+        },
+        "head": {
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 10110
+        }
+      },
+      "integrity": "ok",
+      "foreignKeys": 0
+    },
+    {
+      "comparison": 3,
+      "matchedPairedStoredBodiesDigestsACKs": 110,
+      "counts": {
+        "base": {
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 10110
+        },
+        "head": {
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 10110
+        }
+      },
+      "integrity": "ok",
+      "foreignKeys": 0
+    }
+  ],
+  "qualified": "Read-only post-measurement DB inspection; no additional latency samples or HTTP requests."
+}

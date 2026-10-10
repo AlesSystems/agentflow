@@ -22,7 +22,8 @@
     "openapi:generate": "tsx scripts/openapi.ts",
     "openapi:check": "tsx scripts/openapi.ts --check",
     "test:performance:p02": "tsx tests/performance/p02.ts",
-    "test:performance:p03": "tsx tests/performance/p03.ts"
+    "test:performance:p03": "tsx tests/performance/p03.ts",
+    "agentflow": "tsx src/cli/main.ts"
   },
   "dependencies": {
     "@dnd-kit/react": "0.5.0",

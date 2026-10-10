@@ -1,0 +1,67 @@
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { readFileSync,writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { expect,it } from "vitest";
+import { launch } from "../fixtures/server";
+import { registeredRun } from "../fixtures/p06-cli";
+import { publicProxy } from "../fixtures/p06-proxy";
+import { openOutbox } from "../../src/cli/outbox";
+async function fixture() {
+  const server=await launch(),attempts:string[]=[];
+  const proxy=await publicProxy(server,(req,_body,reply)=>{if(!reply&&req.url?.endsWith("/events"))attempts.push(req.url);return undefined;});
+  const f=await registeredRun({...server,port:proxy.port}),ids=["00000000-0000-4000-8000-000000000001","ffffffff-ffff-4fff-bfff-ffffffffffff"];
+  const config={port:proxy.port,token:server.credentials().reporterToken,outbox:f.env.AGENTFLOW_OUTBOX_DIR,explicitService:undefined};
+  const box=await openOutbox(config,performance.now()+5000);
+  try{for(const id of ids){const response=await fetch(server.url+"/api/v1/runs",{method:"POST",headers:{Authorization:`Bearer ${config.token}`,"Content-Type":"application/json","Idempotency-Key":randomUUID()},body:JSON.stringify({id,projectId:f.projectId,agentId:f.agentId,purpose:"planning"})});expect(response.status).toBe(201);expect((await box.initializeRun(id)).kind).toBe("delivered");await box.enqueue(id,"run.started",{});}}finally{box.close();}
+  return{server,proxy,f,ids,config,attempts};
+}
+async function child(f:Awaited<ReturnType<typeof registeredRun>>,phase:string) {
+  const process=spawn(globalThis.process.execPath,["--import","tsx","tests/fixtures/p06-cursor-cli.ts",phase,"flush"],{env:{...globalThis.process.env,...f.env},stdio:["ignore","pipe","pipe"]});
+  let stdout="",stderr="";process.stdout.on("data",chunk=>stdout+=chunk);process.stderr.on("data",chunk=>stderr+=chunk);
+  return new Promise<{code:number|null;signal:string|null;stdout:string;stderr:string}>(resolve=>process.on("exit",(code,signal)=>resolve({code,signal,stdout,stderr})));
+}
+it.each(["create","sync"])("cursor %s failure returns1 before HTTP and preserves every event",async phase=> {
+  const x=await fixture();
+  try{const original=x.ids.map(id=>readFileSync(join(x.config.outbox,id,"state.json")));expect((await child(x.f,phase)).code).toBe(1);expect(x.attempts).toEqual([]);for(const [i,id]of x.ids.entries())expect(readFileSync(join(x.config.outbox,id,"state.json"))).toEqual(original[i]);expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toHaveLength(2);}finally{await x.proxy.close();await x.server.stop();}
+});
+it("durable cursor SIGKILL defers its job one rotation without losing it",async()=> {
+  const x=await fixture();
+  try{expect((await child(x.f,"kill")).signal).toBe("SIGKILL");expect(x.attempts).toEqual([]);expect(JSON.parse(readFileSync(join(x.config.outbox,"metadata.json"),"utf8")).cursor).toBe(`run:${x.ids[1]}`);expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toEqual([`/api/v1/runs/${x.ids[1]}/events`,`/api/v1/runs/${x.ids[0]}/events`]);}finally{await x.proxy.close();await x.server.stop();}
+});
+it("targeted flush leaves global cursor unchanged and missing/new ring identities resume at the successor",async()=> {
+  const x=await fixture();
+  try {
+    const metadata=join(x.config.outbox,"metadata.json"),value=JSON.parse(readFileSync(metadata,"utf8"));value.cursor="run:eeeeeeee-eeee-4eee-beee-eeeeeeeeeeee";writeFileSync(metadata,JSON.stringify(value));
+    expect((await x.f.cli(["flush","--run",x.ids[0]])).code).toBe(0);expect(JSON.parse(readFileSync(metadata,"utf8")).cursor).toBe(value.cursor);
+    const added="11111111-1111-4111-8111-111111111111";
+    expect((await x.f.cli(["run","register","--file",x.f.file({id:added,projectId:x.f.projectId,agentId:x.f.agentId,purpose:"planning"}),"--idempotency-key",randomUUID()])).code).toBe(0);
+    const box=await openOutbox(x.config,performance.now()+5000);try{await box.enqueue(added,"run.started",{});}finally{box.close();}
+    expect(JSON.parse(readFileSync(metadata,"utf8")).cursor).toBe(value.cursor);
+    expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toEqual([`/api/v1/runs/${x.ids[0]}/events`,`/api/v1/runs/${x.ids[1]}/events`,`/api/v1/runs/${added}/events`]);
+  }finally{await x.proxy.close();await x.server.stop();}
+});
+
+it("keeps the next unattempted cursor when validation consumes its entire bounded turn",async()=> {
+  const x=await fixture();
+  try{const original=readFileSync(join(x.config.outbox,"metadata.json"));expect((await child(x.f,"validation")).code).toBe(2);expect(x.attempts).toEqual([]);expect(readFileSync(join(x.config.outbox,"metadata.json"))).toEqual(original);expect((await x.f.cli(["flush"])).code).toBe(0);expect(x.attempts).toEqual(x.ids.map(id=>`/api/v1/runs/${id}/events`));}finally{await x.proxy.close();await x.server.stop();}
+});
+
+it("gives cursor IO exit1 precedence over an earlier blocked3 and keeps independent records",async()=> {
+  const x=await fixture();let reject=true;
+  const blocker=await publicProxy(x.server,(req,_body,reply)=>{if(!reply&&reject&&req.url===`/api/v1/runs/${x.ids[0]}/events`)return{status:409,body:JSON.stringify({error:{code:"run_terminal",message:"Synthetic rejection"}})};});
+  try {
+    // The established association pins its destination port; use a new owned
+    // destination to execute this separate controlled public HTTP boundary.
+    const f=await registeredRun({...x.server,port:blocker.port}),config={...x.config,port:blocker.port,outbox:f.env.AGENTFLOW_OUTBOX_DIR};
+    const box=await openOutbox(config,performance.now()+5000);try{for(const id of x.ids){expect((await box.initializeRun(id)).kind).toBe("delivered");await box.enqueue(id,"run.started",{});}}finally{box.close();}
+    const result=await child(f,"sync-second");expect(result.code).toBe(1);expect(result.stderr).toContain("run_terminal");expect(result.stdout).toBe("");
+    for(const id of x.ids)expect(JSON.parse(readFileSync(join(config.outbox,id,"state.json"),"utf8")).acknowledgedThrough).toBe(0);
+    reject=false;expect((await f.cli(["flush"])).code).toBe(0);
+  }finally{await blocker.close();await x.proxy.close();await x.server.stop();}
+});
+
+it.each(["unknown","uppercase","overflow","uuid"])("blocks unverifiable retained %s cursor without attempting or mutating work",async kind=> {
+  const x=await fixture();
+  try{const path=join(x.config.outbox,"metadata.json"),value=JSON.parse(readFileSync(path,"utf8"));value.cursor=kind==="unknown"?"PRIVATE-P06-CURSOR":kind==="uppercase"?`run:${x.ids[1].toUpperCase()}`:kind==="overflow"?`registration:9999999999999999:${randomUUID()}`:"run:"+"-".repeat(36);writeFileSync(path,JSON.stringify(value));const original=readFileSync(path),result=await x.f.cli(["flush"]);expect(result.code).toBe(3);expect(result.stderr).toContain("corrupt_metadata");expect(result.stderr).not.toContain("PRIVATE-P06");expect(x.attempts).toEqual([]);expect(readFileSync(path)).toEqual(original);}finally{await x.proxy.close();await x.server.stop();}
+});

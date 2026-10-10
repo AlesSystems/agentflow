@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: four packages passed acceptance, independent review, coordinator verification
+Status: five packages passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. P05 received Astra medium plan approval and is under final verification; P06 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 producer, performance, and full validation checks passed; final independent review and integration remain open. P07 through W04 have not started.
 
 ## Package state
 
@@ -18,8 +18,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
-| P05 | Live tracking | Final review | Tested/measured source `5d633accfab86a43ed8e5ed5c1cf976514529560`; functional `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5` | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json); integration pending |
-| P06 | CLI hooks | Not started | — | — |
+| P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
+| P06 | CLI hooks | Implementing | CLI repair `154a921`; measured runtime `4bb6dee`; branch `codex/v1-p06-cli-hooks` | [Delivery-lock repair](#p06-delivery-lock-repair-checkpoint); final re-review and integration open |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
@@ -202,3 +202,203 @@ Extracted design documentation and qualified visual evidence are complete. Final
 exact-candidate code reviews, PR publication and coordinator integration remain
 open. All P05 checkboxes stay unchecked until verified merge; P06 through W04
 remain unstarted.
+
+## Verified P05 integration
+
+Standards and Spec independently approved exact final candidate
+`aa28e949ba0d7147fec2e481ec37423521dbe570`, including the explicit pre-load
+visibility scope and metadata-only correction. Root verified current PR head,
+base, patch, protections and checks, merged PR #8 with the match-head guard and
+verified candidate ancestry at `787865132d89a9b03f613942f64945887bc13f95`.
+Main had no required checks or protection bypass. All P05 boxes are complete;
+global performance boxes remain open for the combined integration/release gates.
+The owned merged branch was removed and the primary checkout fast-forwarded.
+
+Following gate at integration: plan P06 public-HTTP CLI hooks and durable bounded outbox,
+obtain Astra medium approval, then implement without provider-specific agent
+dependencies. P07 remains a checkpoint with combined-load observer evidence;
+W01 through W04 remain open and no release has been published.
+
+## P06 preservation checkpoint
+
+Historical bounded checkpoint. The current gate is recorded in the acceptance checkpoint below.
+
+Astra medium approved implementation plan SHA256
+`fc209b31a1d587f3fa1d8952503351b0179ffa8eb8acbb7bbdd02473affc63b1`
+before P06 source work. Independent review approved the implemented preservation
+boundary and bounded repairs at exact clean source
+`66800378ef93e617288408c46125a9b77a3c3816`; review SHA256 is
+`99e23bed96794742829f248f143aabf2779d3981f4de67205bf51e43d8d63773`.
+This checkpoint does not complete P06 or authorize a release.
+
+The unchanged source passed 153 focused tests in 12 files in 193.66 seconds,
+typechecking, scoped lint, and diff checks. Root matched 26 source hashes,
+36 proof hashes, and their private archive copies. The independent reviewer
+passed 18 selected repair tests, with 39 unselected tests, plus nine native HTTP
+semantics cases. Original counterexamples now show no proxy traffic, retained
+corrupt temporary files, and prompt FIFO rejection. Registration, concurrent FIFO
+reporting, quota-boundary crashes, acknowledgement ordering, filesystem faults,
+and retained identity use synthetic subprocess, public HTTP, SQLite, and file
+fixtures. Evidence remains private until the package acceptance receipt.
+
+Six valid-content cases exercise actual recovery writes at the logical global
+quota with nonempty mutation samples. Separate sparse-file cases establish only
+preflight accounting and bounded-artifact rejection. Logical file lengths and
+injected failures are distinct from physical disk exhaustion and power loss.
+The tests reuse the P05 production application build while executing current CLI
+source through pinned tsx; no rebuilt P06 or full-project acceptance is claimed.
+
+The delivery gate is recorded below. Producer and PTY walkthroughs, throughput,
+rebuilt production, full regression suites, final cleanup, final Standards and
+Spec review, PR publication, and integration remain open. P06 checkboxes stay
+unchecked. P07 still owns combined-load observer visibility; later packages have
+not started.
+
+## P06 delivery checkpoint
+
+Historical bounded checkpoint. The producer and performance gates described here have since passed; see the acceptance checkpoint below.
+
+Independent review approved the delivery implementation and two bounded repairs
+at `09f75b7caa3202bca82388891424e27e5c6c6968`. Review SHA256 is
+`e0c1d3661f513dfd69c080505b11732bcf5a8320bb4734a2643c1cb7a73de774`.
+The same Astra-approved P06 plan applies. This closes Unit 3; package acceptance
+and integration remain open.
+
+The initial delivery candidate passed 229 tests across 26 files in 326.13s,
+including affected preservation and existing observation, recovery, authentication,
+private-path and administrative CLI cases. Independent review reproduced two
+missing contracts: valid large Retry-After values overflowed into short retries,
+and per-run remote validation exceptions stopped healthy independent delivery.
+Both were pinned with failing real CLI/public HTTP/SQLite tests and repaired.
+The final affected combination passed 72 tests across 14 files in 205.17s;
+typechecking, scoped lint and diff checks passed. These overlapping counts are
+separate checks, not a combined test total or a full-project result.
+
+Independent repair verification passed seven tests across two files and both
+original counterexamples with passing repair expectations. Large decimal retry
+values now allow one attempt within the invocation window and preserve exact
+identity for fresh flush. Actual stopped restore now blocks the mismatched run,
+retains its original record and watermarks, delivers the independent run in the
+same flush, and returns code 3. Global corruption and filesystem errors remain
+fail-closed. The reviewer matched 44 source, 13 proof, 13 private archive and two
+receipt hashes. The cached P05 production application build and current CLI via
+tsx remain the tested configuration; the P06 production rebuild is still open.
+
+Root preserved source and raw proof, then removed exactly 763 completed original
+worker fixture roots after canonical path, UID/device/inode and open-file checks.
+Current repair and reviewer fixtures were retained for their later scoped cleanup.
+No operator data or unrelated files were removed.
+
+Next gate: executable generic producer and actual PTY exit-code evidence, followed
+by reviewed performance helpers and the authorized quiet acceptance runs. Three
+1,000-report flush runs, equivalent public HTTP comparison, rebuilt production,
+full unit/integration/browser checks, OpenAPI verification, documentation, final
+Standards/Spec review and guarded PR merge remain required. P07 combined-load
+observer sampling remains a later gate; P06 throughput cannot supply it.
+
+## P06 acceptance checkpoint
+
+Initial full validation checkpoint. The subsequent final-review repair is recorded below.
+
+The original Astra-approved plan and two separately approved performance amendments
+govern this candidate. The second amendment plan SHA256 is
+`05fe5f6810a18d3d4b445bf588187215912d0dcb617eff40931a9589a985f39a`;
+Astra approval SHA256 is
+`5c50594516490cb210d6b8ae4667cbceafeb862d5513742fb05375790b5253f3`.
+Independent bounded review approved runtime
+`4bb6dee4c269f493723c6b684eec1e8606a07528`, passing 13 selected subprocess tests.
+This approval does not replace final package Standards and Spec reviews.
+The scoped documentation/evidence commit is
+`ba67b2ffd6e691b6ba1fb512c2678560d8c15af8`.
+
+[The P06 receipt](implementation/P06.md) records the public-HTTP CLI, private
+durable outbox, registration dependencies, fair delivery, crash recovery, restore
+limits, and executable external producer. Actual PTY checks prove exits 0/2/1/3.
+The fresh two-tab producer journey retains nine exact implementation/verification
+events and leaves the task in Review with zero completion records. AgentFlow
+continues to observe externally owned execution; no provider-private state or
+automatic human acceptance is introduced.
+
+Three fresh 1,000-observation flush trials passed in 98.344, 102.539, and 101.670
+seconds, including CLI startup. Setup remains separate. Each outbox finishes at
+1,000 allocated/acknowledged observations with zero pending, missing, or duplicate
+events. Three native comparisons retain 4,620 requests and 42 distributions:
+maximum p95 1.852875ms, worst positive regression 6.2067 percent. Root independently
+checked all 3,000 original event identities, payloads, digests, queued byte
+descriptors, stored/stdout ACKs and times, watermarks, database counts, integrity
+and foreign keys. Root recomputed every distribution and separately checked 330
+paired ingestion bodies and 660 stored acknowledgements.
+
+[Synthetic evidence](implementation/evidence/P06/README.md) includes the exact
+original compressed receipts for both failed attempts and the passing attempt.
+The failed partial datasets are not acceptance runs. Typed API pagination checks
+event IDs/counts; full body/digest checks are SQLite/original-queue evidence.
+Performance used cached P05 assets with the current CLI; it does not claim a CLI
+baseline speedup or combined-load observer visibility.
+
+The separate fresh production build is `sDI0xsv04jaYR13VYrGHA`. On the named macOS
+27.0 (26A428) arm64 host with Node v24.15.0/npm 11.12.1, `npm run build`,
+`npm run test:unit` (70 tests/17 files), `npm run test:integration` (383 tests/57
+files, 498.87s), and `npm run test:e2e` (31 actual Chrome tests) all passed.
+Integration/browser commands used `AGENTFLOW_TEST_BROWSER=chrome` and a fresh
+private evidence directory. Unit/CLI tests execute current source through pinned
+tsx; HTTP/browser fixtures use the new production build. Full lint, type checking,
+OpenAPI verification, and diff checks passed. No runtime repair was needed.
+These counts are full current suites; earlier overlapping focused counts are not
+added to them. The named installed host does not supply P07's fresh-checkout
+installation evidence.
+
+Root matched 210 committed/working source, documentation and public-proof hashes,
+394 production asset hashes, 20 private proof hashes and the loaded SQLite addon.
+Owned synthetic fixtures are inventoried and retained for final review; resources
+closed with zero open files. Historical cleanup receipts remain separate. Final
+Standards and Spec reviews of the coordinator's candidate, guarded PR creation and
+merge, and remaining scoped cleanup are open. P06 boxes remain unchecked until
+verified integration. P07 must then receive its own Astra-approved plan, including
+combined-load observer sampling and isolated-install evidence. Later packages and
+the v1 source release remain open.
+
+## P06 delivery-lock repair checkpoint
+
+Final Standards review approved `341ccda1d7c9e188d997b86cc1618ba4f4c34eca`.
+Final Spec review reproduced one P2: delivery acquisition caught native SQLite
+I/O errors as contention and returned queued 2 instead of local 1. The controlled
+fault retained the event unchanged, made no event POST, and recovered with one
+exact event through fresh flush. No actual disk fault or data loss was observed.
+
+Astra medium approved repair plan SHA256
+`5ff958f7375a9b45a2618fb654e5377aa6e3bfdd0612ed5c3c7b842c8ee2d53d`;
+approval SHA256 is
+`df15ff6980d86219712e4bec0c2e50477989d9c20d9dddaf7d8120491234062b`.
+RED `6fc92cb` pinned native IOERR and forged nonnative BUSY failures. Fix `154a921`
+shares the existing nominal native BUSY/LOCKED predicate and propagates every
+other delivery BEGIN error. No successful-send, lock lifetime, cleanup/rollback,
+cursor, ACK, quota, HTTP, deadline, schema, dependency or application input changes.
+Documentation/evidence candidate is `798bade19f39b9682d838227f892813e02b4d416`.
+
+Ten fresh focused delivery/publication tests passed. Native I/O and forged errors
+produce local 1; genuine BUSY/LOCKED and a deterministically held OS lock produce
+queued 2. Original record bytes, digest, sequence, watermarks and lock identity
+remain intact, with zero associated POST before exact fresh recovery.
+One full combined unit/integration execution on fixed source passed **458 tests
+in 75 files**, 469.07s: 70 unit/17 files and 388 integration/58 files. Lint, types,
+OpenAPI and diff checks passed. The relevant actual Chrome P06 producer journey
+passed in 14.2s (15.0s total) using the repaired source CLI and retained production
+build `sDI0xsv04jaYR13VYrGHA`. Other 30 Chrome cases and the production build retain
+their prior completed executions with unchanged application/browser inputs.
+
+Astra explicitly accepts the prior successful-path performance evidence for this
+exception-only repair, conditional on exact final-diff verification and fresh
+controls. Measurements remain attributed to `4bb6dee`; they are not new repaired-
+source measurements or a waived budget. Root verified the executable delta is
+only the private predicate extraction and delivery error propagation, matched
+363 committed/working tracked-file hashes, 30 private proof hashes and all 394
+retained build asset hashes. [The P06 receipt](implementation/P06.md) preserves
+the provenance and original failed/passing raw receipts.
+
+The new validation used an inventoried private temporary parent outside every
+checkout, with 52,253 entries and zero observed open files. Its fixtures remain
+for final review and enumerated cleanup. Earlier unenumerated RED roots are not
+claimed or removed. Source is frozen for independent Spec re-review of the
+original counterexample and Standards delta review at the coordinator's final
+candidate. Guarded PR/merge, cleanup and P07 remain held; P06 stays unchecked.

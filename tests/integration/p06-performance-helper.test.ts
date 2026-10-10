@@ -1,0 +1,24 @@
+import { spawn } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { expect, it } from "vitest";
+it("runs reduced real-CLI flush and public-HTTP base/head smoke without claiming acceptance budgets", async () => {
+  expect(existsSync("tests/performance/p06.ts"), "P06 acceptance helper is missing").toBe(true);
+  const evidence = mkdtempSync(join(realpathSync(tmpdir()), "agentflow-p06-smoke-proof-"));
+  const child = spawn(process.execPath, ["--import", "tsx", "tests/performance/p06.ts", "--smoke"], { env: { ...process.env, AGENTFLOW_P06_EVIDENCE_DIR: evidence }, stdio: ["ignore", "pipe", "pipe"] });
+  let stdout = "", stderr = "";
+  child.stdout.on("data", chunk => stdout += chunk); child.stderr.on("data", chunk => stderr += chunk);
+  const code = await new Promise<number | null>(resolve => child.once("exit", resolve));
+  if (process.env.AGENTFLOW_P06_EVIDENCE_DIR) writeFileSync(join(process.env.AGENTFLOW_P06_EVIDENCE_DIR, `smoke-${evidence.split("-").at(-1)}.json`), JSON.stringify({ evidence, code, stdout, stderr })+"\n", { mode: 0o600 });
+  expect(code, stderr + stdout).toBe(0);
+  const receipt = JSON.parse(readFileSync(join(evidence, "performance.json"), "utf8"));
+  expect(receipt.mode).toBe("smoke");
+  expect(receipt.acceptance).toBe(false);
+  expect(receipt.flush).toHaveLength(1);
+  expect(receipt.flush[0]).toMatchObject({ queued: 4, accepted: 4, missing: 0, duplicate: 0, requestCounts: { accepted: 4, errors: 0 } });
+  expect(receipt.comparisons).toHaveLength(1);
+  expect(receipt.comparisons[0].operations.ingestion.base.count).toBe(5);
+  expect(receipt.comparisons[0].operations.ingestion.head.count).toBe(5);
+  expect(receipt.flush[0].tabs).toBe(2);
+}, 60000);
