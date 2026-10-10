@@ -27,12 +27,13 @@ async function pages(server: Awaited<ReturnType<typeof launch>>, projectId: stri
   } catch(error) { await browser.close(); throw error; }
 }
 async function confirm(page: Page, row: Target) {
-  const result = await page.evaluate(async ({message,runId}) => {
+  const result = await page.evaluate(`(async () => {
+    const {message,runId} = ${JSON.stringify({message:row.event.message!,runId:row.event.body.runId})};
     function inspect() {
       const node=[...document.querySelectorAll(".activity-list .preserve-lines")].find(node => node.textContent===message);
       if(!node || node.closest("details")) return null;
       const li=node.closest("li")!;
-      if(!li.querySelector(`a[href='/runs/${runId}']`)) return null;
+      if(!li.querySelector("a[href='/runs/"+runId+"']")) return null;
       const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
       const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
       if(document.visibilityState!=="visible"||rect.top<0||rect.bottom>innerHeight||rect.left<0||rect.right>innerWidth||rect.width<=0||rect.height<=0||style.visibility!=="visible"||style.display==="none"||Number(style.opacity)===0||document.elementFromPoint(x,y)?.closest("li")!==li)return null;
@@ -42,7 +43,7 @@ async function confirm(page: Page, row: Target) {
     await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
     const second=inspect();if(!second||second.receivedAt!==first.receivedAt)return null;
     return second;
-  },{message:row.event.message!,runId:row.event.body.runId});
+  })()`);
   if(result) { row.confirmedMs=performance.now();row.observedReceipt=result.receivedAt; return result; }
   return null;
 }
@@ -68,7 +69,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     for(const [tab,page]of tabs.pages.entries()) observers.push((async()=>{
       while(observing){
         for(const row of observations.filter(row=>row.tab===tab&&row.dispatchMs!==null&&row.confirmedMs===null)) {
-          try { await confirm(page,row); } catch(error) {row.errors.push((error as Error).message);}
+          try { await confirm(page,row); } catch(error) {row.errors.push((error as Error).message); row.confirmedMs=-1;}
         }
         await wait(10);
       }
