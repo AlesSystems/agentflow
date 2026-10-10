@@ -598,7 +598,6 @@ export function TaskDetail({
               </a>
             </p>
           )}
-          <Attempts filters={`taskId=${task.id}`} inline />
           <section className="comments">
             <h3>
               Comments{" "}
@@ -729,6 +728,7 @@ export function TaskDetail({
           </section>
         </>
       )}
+      <Attempts filters={`taskId=${task?.id ?? id}`} inline />
     </>
   );
 }

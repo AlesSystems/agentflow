@@ -200,7 +200,7 @@ test("latest stale attempt closure reason and frozen retry survive an actual res
     await expect(page.getByRole("heading", { name: "Pair again to keep editing" })).toBeVisible({ timeout: 20000 });
     await page.getByLabel("Pairing token", { exact: true }).fill(server.credentials().pairingToken);
     await page.getByRole("button", { name: "Pair this browser", exact: true }).click();
-    await expect(page.getByLabel("Reason", { exact: true })).toHaveValue("Reason and exact close identity survive restore");
+    await expect(page.getByRole("textbox", { name: "Reason", exact: true })).toHaveValue("Reason and exact close identity survive restore", { timeout: 15000 });
     await expect(page.getByRole("button", { name: "Retry exact closure", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Retry exact closure", exact: true }).click();
     await expect(page.getByText("Tracking record closed. No process signal was sent.", { exact: true })).toBeVisible();
