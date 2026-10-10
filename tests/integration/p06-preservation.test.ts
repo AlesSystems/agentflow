@@ -68,3 +68,25 @@ it.each(["metadata-json","metadata-schema","record-json","record-schema","associ
     expect(result.code).toBe(3);expect(result.stdout+result.stderr).not.toContain("PRIVATE-P06");expect(snapshot(root)).toEqual(before);
   }finally{await server.stop();}
 });
+
+it.each(["metadata","state"])("preserves corrupt complete %s replacement temps instead of silently deleting them",async kind=> {
+  const server=await launch(),f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR,path=kind==="metadata"?join(root,"metadata.json.tmp"):join(root,f.runId,"state.json.tmp");
+  try{writeFileSync(path,JSON.stringify({PRIVATE_P06_UNRELATED:"unverifiable"}),{mode:0o600});const before=snapshot(root),result=await f.cli(["report","--run",f.runId,"--type","run.started","--payload",f.file({})]);expect(result.code).toBe(3);expect(result.stdout+result.stderr).not.toContain("PRIVATE_P06");expect(snapshot(root)).toEqual(before);}finally{await server.stop();}
+});
+
+it.each(["metadata","state"])("preserves corrupt UTF-8 inside a complete %s replacement temp",async kind=> {
+  const server=await launch(),f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR,base=kind==="metadata"?join(root,"metadata.json"):join(root,f.runId,"state.json"),path=base+".tmp";
+  try{const value=JSON.parse(readFileSync(base,"utf8")),bytes=Buffer.from(JSON.stringify({...value,unexpected:"PRIVATE-P06-INVALID"}));bytes[bytes.indexOf(Buffer.from("PRIVATE"))]=255;writeFileSync(path,bytes,{mode:0o600});const before=snapshot(root),result=await f.cli(["report","--run",f.runId,"--type","run.started","--payload",f.file({})]);expect(result.code).toBe(3);expect(snapshot(root)).toEqual(before);}finally{await server.stop();}
+});
+
+it.each(["digest","filename","reservation","body","temp"])("preserves a corrupt registration %s descriptor or temp without guessing a replacement",async kind=> {
+  const {syncDirectory}=await import("../../src/server/filesystem");const {canonicalDigest}=await import("../../src/domain/request-digest");
+  const server=await launch(),f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR,key=randomUUID(),body={name:"PRIVATE-P06-ORIGINAL"};
+  try {
+    const outbox=await openOutbox({port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},performance.now()+5000,{createFile(path,value){if(path.endsWith(`registration-${key}.json.tmp`)){writeFileSync(path,Buffer.from(String(value)).subarray(0,50),{mode:0o600});throw new Error("fixture partial journal");}createFile(path,value);},renameSync,unlinkSync,syncDirectory});
+    try{await expect(outbox.preserveRegistration("/projects",key,body)).rejects.toThrow("fixture partial journal");}finally{outbox.close();}
+    const metaPath=join(root,"metadata.json"),meta=JSON.parse(readFileSync(metaPath,"utf8"));expect(meta.pendingRegistration.record.digest).toBe(canonicalDigest(body));
+    if(kind==="temp")writeFileSync(join(root,`registration-${key}.json.tmp`),"PRIVATE-P06-WRONG-TEMP");else{if(kind==="digest")meta.pendingRegistration.record.digest="0".repeat(64);if(kind==="filename")meta.pendingRegistration.filename=`registration-${randomUUID()}.json`;if(kind==="reservation")meta.pendingRegistration.remainingPeak++;if(kind==="body")meta.pendingRegistration.record.body.name="PRIVATE-P06-CHANGED";writeFileSync(metaPath,JSON.stringify(meta));}
+    const before=snapshot(root),result=await f.cli(["flush"]);expect(result.code).toBe(3);expect(result.stdout+result.stderr).not.toContain("PRIVATE-P06");expect(snapshot(root)).toEqual(before);
+  }finally{await server.stop();}
+});

@@ -82,7 +82,7 @@ it.each(["descriptor","partial-record","record-temp","record","partial-state","s
     const filler=join(root,"metadata.json.tmp"),fd=openSync(filler,"wx",0o600);try{ftruncateSync(fd,100*1024*1024-logicalBytes(root)-reserved);}finally{closeSync(fd);}
     expect(logicalBytes(root)+reserved).toBe(100*1024*1024);
     const samples:number[]=[];const sample=()=>samples.push(logicalBytes(root));
-    await expect(openOutbox({port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},performance.now()+5000,{createFile(path,value){createFile(path,value);sample();},renameSync(from,to){renameSync(from,to);sample();},unlinkSync(path){if(path===filler)throw new Error("fixture stops before unrelated abandoned-temp cleanup");unlinkSync(path);sample();},syncDirectory(path){syncDirectory(path);sample();}})).rejects.toThrow("fixture stops before unrelated abandoned-temp cleanup");
+    await expect(openOutbox({port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},performance.now()+5000,{createFile(path,value){createFile(path,value);sample();},renameSync(from,to){renameSync(from,to);sample();},unlinkSync(path){if(path===filler)throw new Error("fixture stops before unrelated abandoned-temp cleanup");unlinkSync(path);sample();},syncDirectory(path){syncDirectory(path);sample();}})).rejects.toThrow("invalid_file");
     expect(samples.every(bytes=>bytes<=100*1024*1024)).toBe(true);
     expect(JSON.parse(readFileSync(statePath,"utf8")).allocatedThrough).toBe(1);
   }finally{await server.stop();}
