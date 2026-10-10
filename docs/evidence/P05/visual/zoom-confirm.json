@@ -1,0 +1,15 @@
+{
+  "batch": 2,
+  "before": {
+    "width": 1440,
+    "dpr": 1
+  },
+  "after": {
+    "width": 720,
+    "dpr": 2,
+    "cssZoom": "1",
+    "scrollWidth": 720,
+    "fonts": "loaded"
+  },
+  "mechanism": "CDP capture of actual native viewport; Playwright fullPage at browser zoom cropped incorrectly"
+}

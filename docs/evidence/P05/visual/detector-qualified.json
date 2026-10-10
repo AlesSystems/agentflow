@@ -1,0 +1,57 @@
+{
+  "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135",
+  "passCount": 1,
+  "rawSha256": "8ca0fedc125b78b9e5af04f5fb3061edc5e878a83ca4e30433af76ac3f7d6dd9",
+  "primaryFindings": 0,
+  "advisories": [
+    {
+      "antipattern": "design-system-font-size",
+      "name": "Font size outside DESIGN.md",
+      "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+      "severity": "advisory",
+      "category": "quality",
+      "file": "src/app/globals.css",
+      "line": 142,
+      "snippet": "font-size: 17px is off the DESIGN.md type ramp",
+      "advisory": true,
+      "ignoreValue": "17px"
+    },
+    {
+      "antipattern": "design-system-font-size",
+      "name": "Font size outside DESIGN.md",
+      "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+      "severity": "advisory",
+      "category": "quality",
+      "file": "src/app/globals.css",
+      "line": 188,
+      "snippet": "font-size: 22px is off the DESIGN.md type ramp",
+      "advisory": true,
+      "ignoreValue": "22px"
+    },
+    {
+      "antipattern": "design-system-font-size",
+      "name": "Font size outside DESIGN.md",
+      "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+      "severity": "advisory",
+      "category": "quality",
+      "file": "src/app/globals.css",
+      "line": 393,
+      "snippet": "font-size: 22px is off the DESIGN.md type ramp",
+      "advisory": true,
+      "ignoreValue": "22px"
+    },
+    {
+      "antipattern": "design-system-font-size",
+      "name": "Font size outside DESIGN.md",
+      "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+      "severity": "advisory",
+      "category": "quality",
+      "file": "src/app/globals.css",
+      "line": 505,
+      "snippet": "font-size: 18px is off the DESIGN.md type ramp",
+      "advisory": true,
+      "ignoreValue": "18px"
+    }
+  ],
+  "qualification": "Public file paths normalized to repository-relative form. This is the single historical final detector pass; no later pass or automatic drift repair is claimed."
+}

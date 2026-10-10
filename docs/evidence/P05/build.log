@@ -1,0 +1,79 @@
+
+> agentflow@0.0.0 build
+> NEXT_TELEMETRY_DISABLED=1 next build
+
+▲ Next.js 16.4.0 (Turbopack)
+✓ Running next.config.ts took 10ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 298ms
+  Running TypeScript ...
+  Finished TypeScript in 671ms ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/2) ...
+✓ Generating static pages using 11 workers (2/2) in 53ms
+Turbopack build encountered 1 warning:
+./src/server/filesystem.ts:166:21
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m164 |[0m   [36mif[0m (missing.length && !stat.isDirectory())
+  [90m165 |[0m     [36mthrow[0m [36mnew[0m [33mError[0m([32m"INVALID_DIRECTORY"[0m);
+[33m[1m>[0m [90m166 |[0m   [36mconst[0m canonical = join(canonicalPath(existing), ...missing);
+  [90m    |[0m                     [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m167 |[0m   [36mconst[0m difference = relative(root.path, canonical);
+  [90m168 |[0m   [36mif[0m (
+  [90m169 |[0m     !difference ||
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: path.join(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import traces:
+  #1 [App Route]:
+    ./src/server/filesystem.ts
+    ./src/server/auth.ts
+    ./src/app/api/v1/session/route.ts
+
+  #2 [Server Component]:
+    ./src/server/filesystem.ts
+    ./src/server/auth.ts
+    ./src/server/security.ts
+    ./src/server/runtime.ts
+    ./src/app/pair/page.tsx
+
+  #3 [App Route]:
+    ./src/server/filesystem.ts
+    ./src/server/filesystem.ts
+    ./src/server/auth.ts
+    ./src/server/security.ts
+    ./src/server/application-api.ts
+    ./src/app/api/v1/[...resource]/route.ts
+
+
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /activity
+├ ƒ /agents
+├ ƒ /agents/[agentId]
+├ ƒ /api/v1/[...resource]
+├ ƒ /api/v1/foundation
+├ ƒ /api/v1/health
+├ ƒ /api/v1/session
+├ ƒ /pair
+├ ƒ /projects
+├ ƒ /projects/[projectId]
+├ ƒ /projects/[projectId]/tasks/[taskId]
+├ ƒ /runs/[runId]
+└ ƒ /settings
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 and P02 are integrated through PRs #4 and #5; P03 is integrated through PR #6; P04 has a tested and independently reviewed runtime candidate awaiting final documentation approval and integration. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 and P02 are integrated through PRs #4 and #5; P03 is integrated through PR #6; P04 is integrated through PR #7; P05 verification is underway. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -86,12 +86,12 @@ Run the focused browser suite plus lint, type checking, and build. Attach board,
 
 Depends on P02. Proposed files include agent/run schemas, run state rules, event ingestion, migrations, HTTP handlers, and integration fixtures.
 
-- [ ] Before public run registration, add explicit immutable unique registration order in a reviewed additive migration, preserve migration 0001's checksum and existing rowid order in backfill, allocate durable non-reusing values transactionally, and move both latest queries to it. Prove tied timestamps, reversed UUID order, later failure/current-revision gates, restart, backup/restore, VACUUM and table-rebuild preservation. Include this mandatory prerequisite in P04 Astra plan approval; see [BACKEND.md](docs/BACKEND.md).
-- [ ] Implement agent registration and per-attempt runs, including active-run uniqueness and task version checks.
-- [ ] Implement the event envelope, strict sequence policy, exact-duplicate recovery, and terminal-state protection.
-- [ ] Commit events, run/task projections, receipts, and change records together.
-- [ ] Implement heartbeat freshness and the browser-only close-stale-record action.
-- [ ] Update OpenAPI and add a deterministic producer fixture that emits real HTTP requests.
+- [x] Before public run registration, add explicit immutable unique registration order in a reviewed additive migration, preserve migration 0001's checksum and existing rowid order in backfill, allocate durable non-reusing values transactionally, and move both latest queries to it. Prove tied timestamps, reversed UUID order, later failure/current-revision gates, restart, backup/restore, VACUUM and table-rebuild preservation. Include this mandatory prerequisite in P04 Astra plan approval; see [BACKEND.md](docs/BACKEND.md).
+- [x] Implement agent registration and per-attempt runs, including active-run uniqueness and task version checks.
+- [x] Implement the event envelope, strict sequence policy, exact-duplicate recovery, and terminal-state protection.
+- [x] Commit events, run/task projections, receipts, and change records together.
+- [x] Implement heartbeat freshness and the browser-only close-stale-record action.
+- [x] Update OpenAPI and add a deterministic producer fixture that emits real HTTP requests.
 
 Pass when implementation success moves a task only to Review and does not claim task acceptance. Replay duplicates, conflicting IDs, missing/reordered sequences, unknown references, and terminal regressions. Kill the server before commit and after commit but before the response; retry and inspect actual persisted state. Check two concurrent attempts for the same task yield one accepted owner.
 
@@ -276,4 +276,4 @@ Unit tests cover transitions and validation. Integration tests cover the actual 
 
 For each PR, record the head SHA, test commands/results, scenario logs, screenshots where UI changes, source of synthetic data, and known limitations. Store runtime evidence outside the tracked data directory and upload only synthetic, redacted artifacts. Keep provider credentials, real repository paths, prompts, and private task text out of public PRs.
 
-Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The P01 receipt records foundation verification; later package gates have not run.
+Completion of this plan requires P01–P07, W01–W02, W03a–W03c, and W04 gates to pass. The delivery ledger records executed package gates; unchecked items remain open.

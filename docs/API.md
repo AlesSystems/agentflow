@@ -1,9 +1,8 @@
 # Local API contract
 
-Status: P01–P03 are integrated. P04 observation routes are implemented and verified;
-final documentation/evidence review and integration remain the coordinator gate.
-[Generated OpenAPI](openapi.json) describes implemented operations only. P05
-Activity/SSE routes remain planned. W01–W03c add the
+Status: P01–P04 are integrated. P05 tracking, Activity and native SSE operations
+are implemented; final package verification and integration remain open.
+[Generated OpenAPI](openapi.json) describes implemented operations only. W01–W03c add the
 [Phase 3 contracts](V1_WORKFLOWS.md).
 
 ## Conventions
@@ -99,7 +98,7 @@ The completion command verifies the task-state conditions in [BACKEND.md](BACKEN
 | `GET /runs/{id}/events` | Paginate by sequence ascending |
 | `POST /runs/{id}/close` | Browser-only close of stale active tracking; reason and `expectedVersion` |
 | `GET /activity` (P05) | Planned paginated user-facing history, optional project/task/agent filters |
-| `GET /changes/stream` (P05) | Planned authenticated SSE invalidations with replay |
+| `GET /changes/stream` (P05 transport slice) | Browser-session SSE invalidations with replay; finite HEAD |
 
 Run creation requires `id`, `projectId`, `agentId`, `purpose`, and, except for planning, `taskId`. `model` is optional display metadata. A task-linked request also includes `expectedTaskVersion`. The server captures the current work revision, incrementing it first for implementation attempts. Reusing an existing run ID with a different request returns `409 run_conflict`. An identical new P04 registration with a different idempotency key returns the stored original registration result with `200`, without incrementing any revision. Legacy runs from migration 0001 have no original registration identity. Every registration POST using an existing legacy ID returns `409 run_conflict`, even if the body looks identical; it creates no receipt or identity and changes no order, version, revision, or projection. Legacy reads, permitted events and stale closure continue normally. Authentication and credential-role checks still apply to all retries.
 
@@ -201,10 +200,45 @@ data: {"entityType":"task","entityId":"50000000-0000-4000-8000-000000000001","ki
 
 A blank line terminates each SSE message. Messages use `Content-Type: text/event-stream`, `Cache-Control: no-store`, and no response compression or buffering. Connection abort clears polling resources.
 
-If the generation differs or the cursor is out of range, send `event: reset` with a JSON reason and close. The browser closes its old EventSource, obtains a new snapshot, and reconnects. A malformed cursor receives `400` before streaming. Phase 2 retains all history. W03b adds generation reset on explicit retention;
+If the generation differs or the cursor is out of range, send `event: reset` with a JSON reason and close. The browser closes its old EventSource, obtains a new snapshot, and reconnects. Cursors are canonical decimal strings from `0` through `9223372036854775807`. Both supplied `after` and `Last-Event-ID` are validated, even when the latter overrides the former. Missing, duplicate, unknown, noncanonical or unsupported-range inputs receive `400` before streaming. A supported cursor ahead of the committed maximum resets and closes. Stream authority requires a browser session; reporter and pairing bearers cannot subscribe. HEAD is finite and bodyless. The installation admits 20 streams; excess requests receive finite `429` with `Retry-After: 1`. Polling uses 500ms short reads; keepalives use 15s. The 1MiB encoded queue/native-buffer ceiling and independent five-second stalled-drain deadline disconnect slow readers for durable replay. Independent 500ms session revalidation continues while blocked. Revocation discards unsent data; previously socket-buffered bytes cannot be recalled. Phase 2 retains all history. W03b adds generation reset on explicit retention;
 old cursors require a fresh snapshot and protected event/receipt ledgers remain.
 
 Snapshots and changes must not leave a gap when writes occur between the initial query and subscription. The browser deduplicates by cursor and ignores already applied changes within the same generation. It refetches affected queries instead of trying to replay task business rules.
+
+## P05 tracking snapshots
+
+These additive reads preserve the original task, run and command response shapes.
+They use the same authenticated snapshot envelope, bounded pagination and strict
+registry/OpenAPI schemas. Paths are relative to `/api/v1`.
+
+| Method and path | Behavior |
+| --- | --- |
+| `GET /tracking/agents` | Agent identities with `freshRunning`, `queuedNoReport` and `staleActive` counts; original agent filters |
+| `GET /tracking/runs` | Joined attempts with agent/source, project/task labels, latest message and evidence; original run filters |
+| `GET /tracking/runs/{id}` | One joined attempt with stored lifecycle and receipt freshness |
+| `GET /tracking/tasks` | Original task filters and fields plus nullable `latestAttempt` |
+| `GET /tracking/projects/{id}/board` | Original board filters and column pages plus nullable `latestAttempt` on each task |
+| `GET /activity` | Stored reports and human tracking closures; optional `projectId`, `agentId`, `taskId`, `limit` and `cursor` |
+
+Tracking summaries are joined or batched at the bounded snapshot boundary rather
+than fetched separately for every card. `latestAttempt: null` means no stored
+attempt was found. A missing model remains null and is displayed as “Not reported”.
+Reporting freshness describes receipt age, never process liveness. Activity
+excludes heartbeats in its server query; `/runs/{id}/events` retains them in raw
+sequence history. Activity items distinguish `report` from `tracking_closed`,
+with separate occurrence/receipt times and the stored closure reason. Pagination
+retains resolved legacy identities and generation/filter-bound cursors.
+
+Each browser workspace owns one EventSource and one refresh timer. Incoming
+frames become replay-safe only after their invalidation is scheduled; replacing
+a source discards pending frames while retaining the earlier safe cursor. Reset
+recovery invalidates retained entries, refreshes active snapshots and rebases from
+their minimum safe cursor before reconnecting. A five-second fallback grows to a
+30-second cap after failures. Connected, visible workspaces still refresh every
+15 seconds so silence and local-day changes update freshness and Overview without
+a new event. Focus/visibility return refreshes immediately. Hidden refresh pauses
+until return. Generation/auth recovery retains mounted drafts and frozen command
+identities; explicit selection of another attempt starts a separate closure editor.
 
 ## CLI integration contract
 
@@ -284,4 +318,23 @@ All resource reads and writes return snapshot metadata. Completed command receip
 remain historical after newer versions or restore. Clients compare the current
 response generation header and refetch authoritative state; an old receipt never
 advances a future subscription cursor. P04 adds explicit observation routes;
-Activity and SSE remain P05.
+Activity and browser live tracking remain P05; native SSE is implemented in the first transport slice.
+
+### P05 tracking reads
+
+Additive bounded reads preserve every original task/command/receipt shape.
+`GET /tracking/projects/{id}/board` and `/tracking/tasks` accept the original
+board/task filters and return tasks with nullable `latestAttempt`. Its stored
+run, freshness, agent/source, project/task names and latest non-heartbeat message
+are joined/batched at the snapshot boundary. No registered attempt means null.
+`GET /tracking/agents` pages identities with fresh-running, queued-no-report and
+stale-active counts. `/tracking/runs` accepts run filters; `/tracking/runs/{id}`
+returns the same joined attempt summary. These labels describe received reports.
+
+`GET /activity` accepts limit/cursor and optional projectId/agentId/taskId.
+Stable descending receipt-time/identity pagination binds generation and filters,
+resolving UUID aliases to actual stored foreign keys. The joined feed contains
+stored producer reports except heartbeat noise, plus separately typed human
+tracking closure facts with reason and no producer event/occurred time. Raw
+`/runs/{id}/events` remains ascending sequence and retains every heartbeat.
+All endpoints share registered read authentication, strict schemas and OpenAPI.

@@ -21,10 +21,13 @@ import { settingsResponse } from "../contracts/responses";
 import { freezeCommand } from "./commands";
 import { Modal } from "../components/ui/dialog";
 import PairForm from "../app/pair/form";
+import { useTracking } from "./tracking-owner";
+import type { Connection } from "./tracking";
 const Context = createContext<{
   api: ApiClient;
   generation: string;
   pair: () => void;
+  connection: Connection;
 } | null>(null);
 export function BrowserCache({ children }: { children: React.ReactNode }) {
   const [cache] = useState(
@@ -58,6 +61,8 @@ export function Workspace({
   const cache = useQueryClient();
   const [generation, setGeneration] = useState(initial);
   const [pairing, setPairing] = useState(false);
+  const [paired, setPaired] = useState(0);
+  const [connection, setConnection] = useState<Connection>({ state: "connecting", lastSuccess: null });
   const pair = useCallback(() => setPairing(true), []);
   const [api] = useState(
     () =>
@@ -67,8 +72,9 @@ export function Workspace({
         setGeneration(next);
       }),
   );
+  useTracking(api, cache, generation, paired, setConnection, pair);
   return (
-    <Context.Provider value={{ api, generation, pair }}>
+    <Context.Provider value={{ api, generation, pair, connection }}>
       <HydrationBoundary state={hydration}>
         <TimezoneInit />
         <Modal
@@ -80,6 +86,7 @@ export function Workspace({
           <PairForm
             onPaired={() => {
               setPairing(false);
+              setPaired(value => value + 1);
               void cache.invalidateQueries();
             }}
           />
@@ -98,7 +105,7 @@ export function useRead<S extends z.ZodType>(
   const query = useQuery({
     queryKey: [generation, queryPath(path)],
     queryFn: () => api.read(queryPath(path), schema),
-    refetchInterval: interval,
+    refetchInterval: interval ? false : undefined,
   });
   useEffect(() => {
     if (query.error instanceof ApiError && query.error.status === 401) pair();

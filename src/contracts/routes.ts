@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { streamQuery, changeNotice } from "./stream";
 import { pageQuery, uuid } from "./common";
 import { projectCreate, projectPatch, projectQuery } from "./projects";
 import {
@@ -28,6 +29,7 @@ import {
   overviewResponse,
 } from "./responses";
 import * as observations from "./observations";
+import * as tracking from "./tracking";
 export const emptyQuery = z.strictObject({});
 const commentsQuery = z.strictObject(pageQuery);
 type EndpointBase = {
@@ -44,19 +46,21 @@ type EndpointBase = {
 export type EndpointAction =
   | { kind: "command"; command: ApplicationCommand }
   | { kind: "query"; query: ApplicationQuery };
-export type Endpoint = EndpointBase & {
+type ResourceEndpoint = EndpointBase & {
   kind: "command" | "query";
   parseRequest: (
     original: unknown,
     id: string,
   ) => { success: true; action: EndpointAction } | { success: false };
 };
+export type StreamEndpoint = EndpointBase & { kind: "stream" };
+export type Endpoint = ResourceEndpoint | StreamEndpoint;
 function defineCommand<S extends z.ZodType>(
   definition: EndpointBase & {
     input: S;
     command: (input: z.output<S>, id: string) => ApplicationCommand;
   },
-): Endpoint {
+): ResourceEndpoint {
   const { command, ...base } = definition;
   return {
     ...base,
@@ -77,7 +81,7 @@ function defineQuery<S extends z.ZodType>(
     input: S;
     query: (input: z.output<S>, id: string) => ApplicationQuery;
   },
-): Endpoint {
+): ResourceEndpoint {
   const { query, ...base } = definition;
   return {
     ...base,
@@ -94,6 +98,13 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  { id: "changeStream", method: "GET", path: "/changes/stream", access: "human", input: streamQuery, response: changeNotice, status: 200, kind: "stream", description: "Browser-cookie invalidations; Last-Event-ID overrides a valid after. Canonical signed SQLite cursor range. Finite HEAD. 20 streams; 1 MiB buffer cap and 5 second stalled-drain close." },
+  defineQuery({ id: "trackingAgents", method: "GET", path: "/tracking/agents", access: "read", input: observations.agentQuery, response: tracking.trackingAgentsResponse, status: 200, query: (input) => ({ kind: "tracking.agents", input }) }),
+  defineQuery({ id: "trackingRuns", method: "GET", path: "/tracking/runs", access: "read", input: observations.runQuery, response: tracking.trackingRunsResponse, status: 200, query: (input) => ({ kind: "tracking.runs", input }) }),
+  defineQuery({ id: "trackingRun", method: "GET", path: "/tracking/runs/{id}", access: "read", input: emptyQuery, response: tracking.trackingRunResponse, status: 200, query: (_, id) => ({ kind: "tracking.run", id }) }),
+  defineQuery({ id: "trackingTasks", method: "GET", path: "/tracking/tasks", access: "read", input: taskQuery, response: tracking.trackingTasksResponse, status: 200, query: (input) => ({ kind: "tracking.tasks", input }) }),
+  defineQuery({ id: "trackingBoard", method: "GET", path: "/tracking/projects/{id}/board", access: "read", input: boardQuery, response: tracking.trackingBoardResponse, status: 200, query: (input, id) => ({ kind: "tracking.board", input, id }) }),
+  defineQuery({ id: "activity", method: "GET", path: "/activity", access: "read", input: tracking.activityQuery, response: tracking.activityResponse, status: 200, query: (input) => ({ kind: "activity", input }) }),
   defineQuery({
     id: "listAgents",
     method: "GET",

@@ -1,0 +1,67 @@
+{
+  "synthetic": true,
+  "reviewedFunctionalSource": "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5",
+  "assets": [
+    {
+      "file": "agents-desktop.png",
+      "sha256": "b6ff84551ff5bd940de28ec0e2c71237aa0778bb5bc9e42772a06c7c1e03514d",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "activity-desktop.png",
+      "sha256": "0a0ced8cfc839c549c0006f9a42d8a8308364a1fb87f2fe3ede9257d2628d54a",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "task-attempt-evidence.png",
+      "sha256": "7628691b530aa9a9f5af084b3091a4d8cb435616a52be017428e1cf466940d0c",
+      "captureSource": "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5"
+    },
+    {
+      "file": "attempt-desktop.png",
+      "sha256": "6deeae60bd523c7a1eff0a87df0454bec10757a83d346e29c63f2608f1d4f723",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "agents-narrow.png",
+      "sha256": "c0a3399a71d0a313e730cb527210df85470b6a3e335e7431d4c7a017190a03bf",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "activity-narrow.png",
+      "sha256": "3a4452e0470809aff972943fbfb0ffcd50c73358630eec436437f2241032dc1b",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "attempt-narrow.png",
+      "sha256": "7874d228c2bef2bca2cf5299ed27e0caad11c00b3d0177f511754c691445df8f",
+      "captureSource": "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5"
+    },
+    {
+      "file": "stale-report-healthy-browser.png",
+      "sha256": "1cd2cd57c0254e5882e6db69103ce02d5e6bf5d5084d06e312132603a01a0a24",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "disconnected-browser-last-known-fresh-report.png",
+      "sha256": "e92b14665f4cc6f77c944e31e512672913677940d15698f3c409d537aa902279",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "activity-native-200.png",
+      "sha256": "03e0f2cba0483209844d4976a709216d7b8cecfb5acc636fb08b46ae172fec7d",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    },
+    {
+      "file": "reconnect.webm",
+      "sha256": "4e500ef6ea3eb7383c072954f55a58b791d0da237956d0325002cd3680000753",
+      "captureSource": "d2390760bab1a70292dbb078a1f3ccd8229f6135"
+    }
+  ],
+  "ownInspectionBatches": 2,
+  "detectorPasses": 1,
+  "scope": "Original static captures apply only to unchanged regions. Reviewer-requested task/long-name replacements belong to the repaired source. Original inspection metadata predates replacements and the corrected native zoom capture.",
+  "staleCapture": "Aged synthetic record; separate production silence test owns the real elapsed-time proof.",
+  "recording": "Actual 6.6-second reconnect recording; finish review sampled frames at 1, 3 and 5 seconds, without a full-play claim.",
+  "acceptance": "Browser fixtures exercise human-only commands; no actual human attestation or whole-P05 approval is claimed."
+}

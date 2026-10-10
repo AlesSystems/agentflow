@@ -1,5 +1,6 @@
 import { pageData } from "../../../server/page-data";
-import { boardResponse, projectResponse } from "../../../contracts/responses";
+import { trackingBoardResponse as boardResponse } from "../../../contracts/tracking";
+import { projectResponse } from "../../../contracts/responses";
 import { boardQuery } from "../../../contracts/tasks";
 import { Workspace } from "../../../client/provider";
 import { Shell, NeedsPairing } from "../../../components/shell";
@@ -22,8 +23,8 @@ export default async function Page({
   }
   search.sort();
   const data = await pageData(
-    `/projects/${projectId}/board?${search}`,
-    { kind: "board", id: projectId, input: filters },
+    `/tracking/projects/${projectId}/board?${search}`,
+    { kind: "tracking.board", id: projectId, input: filters },
     boardResponse,
     [
       {

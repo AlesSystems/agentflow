@@ -1,0 +1,16 @@
+
+> agentflow@0.0.0 test:unit
+> vitest run tests/unit
+
+
+ RUN  v5.0.3 [REVIEW_WORKTREE]
+
+
+ Test Files  16 passed (16)
+      Tests  69 passed (69)
+   Start at  03:40:04
+   Duration  1.38s (import 64%, tests 18%, transform 15%, worker 3%)
+
+    Isolate  16 workers spawned · ~42ms startup each (spawn + environment, per file)
+             at least ~624ms faster with isolate: false — reuses workers across files instead of one per file
+

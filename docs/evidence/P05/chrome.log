@@ -1,0 +1,42 @@
+
+> agentflow@0.0.0 test:e2e
+> playwright test
+
+
+Running 30 tests using 1 worker
+
+(node:28296) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/p03-accessibility.spec.ts:19:1 › board, task, settings and narrow layouts retain accessible controls (1.9s)
+{"proof":"native Chrome profile 200% zoom","before":{"width":1440,"dpr":1},"after":{"width":720,"dpr":2,"cssZoom":"1"}}
+  ✓   2 tests/e2e/p03-accessibility.spec.ts:120:1 › actual Chrome profile zoom at 200 percent reflows the board (1.4s)
+  ✓   3 tests/e2e/p03-journey.spec.ts:3:1 › synthetic manual acceptance journey persists across a production restart (2.3s)
+  ✓   4 tests/e2e/p03-journey.spec.ts:115:1 › keyboard alone creates, edits, accepts, comments and reopens a synthetic task (1.5s)
+  ✓   5 tests/e2e/p03-recovery.spec.ts:4:1 › independently paired browsers expose conflict and retain a draft through re-pairing (1.6s)
+  ✓   6 tests/e2e/p03-recovery.spec.ts:75:1 › lost command responses retry the same identity without overwriting a newer task (1.0s)
+  ✓   7 tests/e2e/p03-recovery.spec.ts:127:1 › dirty close stays in place, archived history is read-only, and filters reset pages (1.3s)
+  ✓   8 tests/e2e/p03-recovery.spec.ts:180:1 › pointer drag moves only across lanes and Completed opens acceptance (2.6s)
+  ✓   9 tests/e2e/p03-recovery.spec.ts:244:1 › lane, comments and both task-history continuations load beyond fifty records (7.0s)
+  ✓  10 tests/e2e/p03-recovery.spec.ts:336:1 › a generation reset discards a historical body but preserves the mounted edit (1.1s)
+  ✓  11 tests/e2e/p03-recovery.spec.ts:404:1 › service errors keep drafts and missing private records offer recovery (1.1s)
+  ✓  12 tests/e2e/p03-recovery.spec.ts:454:1 › UTC browser initialization records version two once and settings conflicts retain input (952ms)
+  ✓  13 tests/e2e/p03-recovery.spec.ts:507:1 › project metadata editing, archive confirmation and unarchive use persistent commands (1.2s)
+  ✓  14 tests/e2e/p03-recovery.spec.ts:566:1 › acceptance cannot discard an editable draft and saving fields keeps its evidence note (1.1s)
+  ✓  15 tests/e2e/p03-recovery.spec.ts:630:1 › cancelling acceptance preserves an unrelated comment draft and its dirty-close protection (1.1s)
+  ✓  16 tests/e2e/p03-recovery.spec.ts:670:1 › addressable task reload and Back preserve validated board filters (936ms)
+  ✓  17 tests/e2e/p03-recovery.spec.ts:703:1 › generation reset clears accumulated comment pages while retaining a comment draft (1.1s)
+  ✓  18 tests/e2e/p03-recovery.spec.ts:798:1 › Overview authoritative refresh clears obsolete loaded attention pages (1.8s)
+  ✓  19 tests/e2e/p03-recovery.spec.ts:856:1 › narrow direct task entry and reload focus the heading without stealing later editor focus (1.1s)
+  ✓  20 tests/e2e/p05-finish.spec.ts:20:1 › an accepted 200-character unbroken reported identity wraps in direct and detached detail at 375px (985ms)
+  ✓  21 tests/e2e/p05-finish.spec.ts:51:1 › keyboard follows tracking records filters pages messages and stale closure while refresh retains focus and draft (3.0s)
+  ✓  22 tests/e2e/p05-tracking.spec.ts:25:1 › two production tabs converge and silence alone becomes stale while the browser stays connected (1.1m)
+  ✓  23 tests/e2e/p05-tracking.spec.ts:70:1 › stored activity, direct attempt routes and raw history expose reports and preserve closure reason (1.1s)
+  ✓  24 tests/e2e/p05-tracking.spec.ts:100:1 › stopped backup restore repairs auth in-app without losing mounted drafts or exact retry identities (4.4s)
+  ✓  25 tests/e2e/p05-tracking.spec.ts:145:1 › local-day metrics roll over on the healthy visible tick and focus refreshes immediately (16.5s)
+  ✓  26 tests/e2e/p05-tracking.spec.ts:170:1 › latest stale attempt closure reason and frozen retry survive an actual restored generation (5.0s)
+  ✓  27 tests/e2e/p05-tracking.spec.ts:212:1 › explicit attempt selection resets closure state without carrying a restored frozen request to another run (5.1s)
+  ✓  28 tests/e2e/pairing.spec.ts:6:1 › pairs with the keyboard and reads SQLite while external network is denied (2.4s)
+  ✓  29 tests/e2e/pairing.spec.ts:85:1 › a paired browser on a second localhost port cannot read pages, RSC or prefetch (809ms)
+  ✓  30 tests/e2e/pairing.spec.ts:143:1 › disconnect clears errors and permits only one delayed request until it finishes (846ms)
+
+  30 passed (2.3m)

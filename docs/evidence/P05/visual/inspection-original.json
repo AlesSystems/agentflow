@@ -1,0 +1,121 @@
+{
+  "batch": 1,
+  "sourceScope": "P05 tracking surfaces",
+  "synthetic": true,
+  "staleCapture": "aged synthetic record; actual silence is separately proven by production e2e",
+  "checks": [
+    {
+      "name": "agents-desktop",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "activity-desktop",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "task-attempt-evidence",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "attempt-desktop",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "agents-narrow",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 375,
+        "scrollWidth": 375,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "activity-narrow",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 375,
+        "scrollWidth": 375,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "attempt-narrow",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 375,
+        "scrollWidth": 375,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "stale-report-healthy-browser",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "disconnected-browser-last-known-fresh-report",
+      "layout": {
+        "fonts": "loaded",
+        "font": "system-ui, -apple-system, \"system-ui\", \"Segoe UI\", sans-serif",
+        "width": 1440,
+        "scrollWidth": 1440,
+        "cssZoom": "1"
+      },
+      "axeViolations": []
+    },
+    {
+      "name": "activity-native-200",
+      "before": {
+        "width": 1440,
+        "dpr": 1
+      },
+      "after": {
+        "width": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "scrollWidth": 720,
+        "fonts": "loaded"
+      }
+    }
+  ]
+}

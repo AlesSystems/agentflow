@@ -11,10 +11,11 @@ import { PointerActivationConstraints, Feedback } from "@dnd-kit/dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace, useRead, QueryFeedback } from "../../client/provider";
 import {
-  boardResponse,
   projectResponse,
-  tasksResponse,
 } from "../../contracts/responses";
+import { trackingBoardResponse as boardResponse, trackingTasksResponse as tasksResponse, trackedTask } from "../../contracts/tracking";
+import { ReportingLabel } from "../tracking";
+import type { z } from "zod";
 import { taskCreate, type Task } from "../../contracts/tasks";
 import type { DraftFields } from "../../client/drafts";
 import {
@@ -22,6 +23,7 @@ import {
   moveIntent,
   type FrozenCommand,
 } from "../../client/commands";
+import { queryPath } from "../../client/queries";
 import { ApiError } from "../../client/api";
 import { Modal } from "../ui/dialog";
 import { StatusMenu, statuses, statusLabel } from "../ui/menu";
@@ -70,7 +72,7 @@ export function Board({
   normalized.sort();
   const suffix = normalized.toString() ? "&" + normalized.toString() : "";
   const board = useRead(
-    `/projects/${projectId}/board?limit=50${suffix}`,
+    `/tracking/projects/${projectId}/board?limit=50${suffix}`,
     boardResponse,
   );
   const project = useRead(`/projects/${projectId}`, projectResponse);
@@ -346,7 +348,7 @@ export function Board({
         <div className="board">
           {board.data?.data.columns.map((column) => (
             <Lane
-              key={`${column.status}${suffix}${board.data?.snapshotCursor}`}
+              key={`${column.status}${suffix}`}
               column={column}
               active={lane === column.status}
               projectId={projectId}
@@ -463,19 +465,25 @@ function Lane({
     id: column.status,
     disabled: archived,
   });
-  const { api } = useWorkspace();
+  const { api, generation } = useWorkspace();
+  const cache = useQueryClient();
+  const snapshotKey = [generation, queryPath(`/tracking/projects/${projectId}/board?limit=50${filters}`)];
   const [items, setItems] = useState(column.items),
     [cursor, setCursor] = useState(column.nextCursor),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [base, setBase] = useState(column);
+  if (base !== column) { setBase(column); setItems(column.items); setCursor(column.nextCursor); setError(""); }
   async function more() {
+    const captured = cache.getQueryState(snapshotKey)?.dataUpdatedAt;
     setBusy(true);
     setError("");
     try {
       const response = await api.read(
-        `/tasks?projectId=${projectId}&status=${column.status}&limit=50${filters}&cursor=${encodeURIComponent(cursor!)}`,
+        `/tracking/tasks?projectId=${projectId}&status=${column.status}&limit=50${filters}&cursor=${encodeURIComponent(cursor!)}`,
         tasksResponse,
       );
+      if (api.generation !== generation || captured !== cache.getQueryState(snapshotKey)?.dataUpdatedAt) return;
       setItems((old) =>
         [...old, ...response.data.items].filter(
           (p, i, a) => a.findIndex((x) => x.id === p.id) === i,
@@ -534,7 +542,7 @@ function Card({
   onOpen,
   onMove,
 }: {
-  task: Task;
+  task: z.infer<typeof trackedTask>;
   archived: boolean;
   onOpen: (task: Task) => void;
   onMove: (task: Task, status: Task["status"]) => void;
@@ -565,6 +573,7 @@ function Card({
         <span className={`priority ${task.priority}`}>{task.priority}</span>
         {task.targetRole && <span>{task.targetRole}</span>}
       </div>
+      <p className="metadata">{task.latestAttempt ? <><ReportingLabel run={task.latestAttempt} /><br />{task.latestAttempt.agentName} · {task.latestAttempt.model ?? "Model not reported"}</> : "No registered attempts"}</p>
       {task.assignedAgentId && (
         <p className="metadata break-word">Assigned {task.assignedAgentId}</p>
       )}

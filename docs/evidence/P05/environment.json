@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-10T00:40:50.164Z",
+  "host": "[private hostname omitted]",
+  "platform": "darwin",
+  "osRelease": "27.0.0",
+  "macOS": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+  "arch": "arm64",
+  "node": "v24.15.0",
+  "npm": "11.12.1",
+  "source": "5d633accfab86a43ed8e5ed5c1cf976514529560",
+  "functionalSource": "279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5",
+  "files": {
+    "package-lock.json": "f87f27acb470eb86cbcbdd4ded750df327a46def7d2f52a91956c4f59f0b06fc",
+    "migrations/0000_foundation.sql": "be9ac32137776ddb7fe9017042fd58faa7410ef1addb36222d17cf725a364f54",
+    "migrations/0001_application.sql": "6a11176b457b764a31232a39a1a37b48996748632a22a6133fff3383912e5a3f",
+    "migrations/0002_registration_order.sql": "6c64b1822e49c727adcf231611b820ef3711a8d712abab5229281ae3117723c6",
+    "migrations/0003_run_identity.sql": "50c5ab8a405a543f7bf30d4448435fdaa5f9b7ea0bb3d3979117fd11181350d3",
+    "migrations/0004_observations.sql": "39d038a476f92433d88486d612dd12aea0d20a253b76337eca6a944d65d4a192",
+    "migrations/0005_uuid_lookup.sql": "82e6f245929b38e3b206f5ed75d0eb85ffbd1d2e9a38bf99b60d60a54dbf0037"
+  }
+}

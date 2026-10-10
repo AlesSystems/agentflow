@@ -119,6 +119,8 @@ test("lost command responses retry the same identity without overwriting a newer
     expect(requests[0]).toEqual(requests[2]);
     expect(requests[1].key).not.toBe(requests[0].key);
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -169,6 +171,8 @@ test("dirty close stays in place, archived history is read-only, and filters res
       page.getByRole("button", { name: f.task.title, exact: true }),
     ).toBeVisible();
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -231,6 +235,8 @@ test("pointer drag moves only across lanes and Completed opens acceptance", asyn
     ).toBeVisible();
     await expect(page.locator(".task-context")).toContainText("Review");
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -321,6 +327,8 @@ test("lane, comments and both task-history continuations load beyond fifty recor
       page.locator('.lane[aria-label="Backlog"] .task-card'),
     ).toHaveCount(55);
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -339,6 +347,7 @@ test("a generation reset discards a historical body but preserves the mounted ed
     let changed = false;
     const generation = crypto.randomUUID();
     await page.route("**/api/v1/**", async (route) => {
+      if (new URL(route.request().url()).pathname === "/api/v1/changes/stream") { await route.abort(); return; }
       if (
         route.request().url().endsWith(`/tasks/${f.task.id}`) &&
         route.request().method() === "PATCH" &&
@@ -386,6 +395,8 @@ test("a generation reset discards a historical body but preserves the mounted ed
       page.getByRole("status").filter({ hasText: "Changes saved." }),
     ).toBeVisible();
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -434,6 +445,8 @@ test("service errors keep drafts and missing private records offer recovery", as
       page.getByRole("button", { name: "Back to work board" }),
     ).toBeVisible();
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -544,6 +557,8 @@ test("project metadata editing, archive confirmation and unarchive use persisten
       page.getByRole("button", { name: f.task.title, exact: true }),
     ).toBeVisible();
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -606,6 +621,8 @@ test("acceptance cannot discard an editable draft and saving fields keeps its ev
       "UNSAVED MUST SURVIVE",
     );
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -644,6 +661,8 @@ test("cancelling acceptance preserves an unrelated comment draft and its dirty-c
       "COMMENT MUST SURVIVE CANCEL",
     );
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -675,6 +694,8 @@ test("addressable task reload and Back preserve validated board filters", async 
     );
     expect(new URL(page.url()).searchParams.get("priority")).toBe("normal");
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -709,6 +730,7 @@ test("generation reset clears accumulated comment pages while retaining a commen
     let reset = false;
     const generation = crypto.randomUUID();
     await page.route("**/api/v1/**", async (route) => {
+      if (new URL(route.request().url()).pathname === "/api/v1/changes/stream") { await route.abort(); return; }
       const response = await route.fetch();
       const body = await response.json();
       if (
@@ -767,6 +789,8 @@ test("generation reset clears accumulated comment pages while retaining a commen
       "COMMENT DRAFT SURVIVES GENERATION",
     );
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -823,6 +847,8 @@ test("Overview authoritative refresh clears obsolete loaded attention pages", as
       page.getByRole("button", { name: "Load more attention items" }),
     ).toHaveCount(0);
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });
@@ -874,6 +900,8 @@ test("narrow direct task entry and reload focus the heading without stealing lat
     );
     expect(new URL(page.url()).searchParams.get("priority")).toBe("normal");
   } finally {
+    await page.unrouteAll({ behavior: "wait" });
+    await page.close();
     await server.stop();
   }
 });

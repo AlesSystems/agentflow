@@ -48,6 +48,7 @@ import {
   decideClose,
   observationFreshness,
 } from "../domain/runs";
+import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
   | { kind: "agent.create"; input: z.infer<typeof agentCreate> }
   | { kind: "agent.patch"; id: string; input: z.infer<typeof agentPatch> }
@@ -63,6 +64,12 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | { kind: "tracking.agents"; input: z.infer<typeof agentQuery> }
+  | { kind: "tracking.runs"; input: z.infer<typeof runQuery> }
+  | { kind: "tracking.run"; id: string }
+  | { kind: "tracking.tasks"; input: z.infer<typeof taskQuery> }
+  | { kind: "tracking.board"; id: string; input: z.infer<typeof boardQuery> }
+  | { kind: "activity"; input: z.infer<typeof activityQuery> }
   | { kind: "agents"; input: z.infer<typeof agentQuery> }
   | { kind: "agent"; id: string }
   | { kind: "runs"; input: z.infer<typeof runQuery> }
@@ -941,10 +948,66 @@ export class ApplicationData {
       },
     };
   }
+  private joinedRuns(where = "1", params: unknown[] = []) {
+    return this.db.prepare(`SELECT r.*,a.display_name AS agent_name,a.source AS agent_source,p.name AS project_name,t.title AS task_title,
+      (SELECT body FROM run_events e WHERE e.run_id=r.id AND e.type<>'run.heartbeat' ORDER BY sequence DESC LIMIT 1) AS report_body
+      FROM runs r JOIN agents a ON a.id=r.agent_id JOIN projects p ON p.id=r.project_id LEFT JOIN tasks t ON t.id=r.task_id WHERE ${where}`).all(...params) as Row[];
+  }
+  private summary(row: Row, now: number) {
+    const value = serialize(row);
+    const { registrationOrder, reportBody, agentName, agentSource, projectName, taskTitle, ...record } = value;
+    void registrationOrder;
+    const report = reportBody ? JSON.parse(reportBody as string) : null;
+    return { ...this.runView(run.parse(record), now), agentName, agentSource, projectName, taskTitle,
+      message: report?.payload.message ?? report?.payload.summary ?? report?.payload.reason ?? null,
+      evidenceUrl: report?.payload.evidenceUrl ?? null };
+  }
+  private trackingTasks(page: { items: Row[]; total: number; nextCursor: string | null }, now: number) {
+    const ids = page.items.map(t => t.id);
+    const rows = ids.length ? this.joinedRuns(`r.task_id IN (${ids.map(() => "?").join(",")}) AND r.registration_order=(SELECT max(latest.registration_order) FROM runs latest WHERE latest.task_id=r.task_id)`, ids) : [];
+    const latest = new Map(rows.map(row => [row.task_id, this.summary(row, now)]));
+    return { ...page, items: page.items.map(value => ({ ...value, latestAttempt: latest.get(value.id) ?? null })) };
+  }
+  private activity(input: z.infer<typeof activityQuery>) {
+    const { limit, cursor, ...filters } = input;
+    const clauses: string[] = [], params: unknown[] = [];
+    for (const [key, table, column] of [["projectId", "projects", "project_id"], ["agentId", "agents", "agent_id"], ["taskId", "tasks", "task_id"]] as const) {
+      if (filters[key]) {
+        const id = this.find(table, filters[key]!)?.id ?? filters[key];
+        Object.assign(filters, { [key]: id }); clauses.push(`${column}=?`); params.push(id);
+      }
+    }
+    const source = `(SELECT 'event:'||e.event_id AS id,'report' AS kind,r.id AS run_id,r.project_id,r.agent_id,r.task_id,a.display_name AS agent_name,a.source AS agent_source,p.name AS project_name,t.title AS task_title,r.purpose,r.model,e.received_at AS created_at,e.occurred_at,e.body AS event_body,NULL AS reason
+      FROM run_events e JOIN runs r ON r.id=e.run_id JOIN agents a ON a.id=r.agent_id JOIN projects p ON p.id=r.project_id LEFT JOIN tasks t ON t.id=r.task_id WHERE e.type<>'run.heartbeat'
+      UNION ALL SELECT 'closure:'||c.id,'tracking_closed',r.id,r.project_id,r.agent_id,r.task_id,a.display_name,a.source,p.name,t.title,r.purpose,r.model,c.created_at,NULL,NULL,c.reason
+      FROM run_closures c JOIN runs r ON r.id=c.run_id JOIN agents a ON a.id=r.agent_id JOIN projects p ON p.id=r.project_id LEFT JOIN tasks t ON t.id=r.task_id)`;
+    const page = this.page(source, clauses.join(" AND ") || "1", params, "activity", filters, limit, cursor);
+    return { ...page, items: page.items.map(({ createdAt, eventBody, ...value }) => ({ ...value, receivedAt: createdAt, event: eventBody ? JSON.parse(eventBody as string) : null })) };
+  }
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "run") data = this.runView(this.run(query.id), now);
+      if (query.kind === "tracking.agents") {
+        data = this.page(`(SELECT a.*,
+          (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state='running' AND r.last_received_at>=${now - 60000}) AS fresh_running,
+          (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state='queued' AND r.last_sequence=0) AS queued_no_report,
+          (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state IN ('queued','running') AND r.last_received_at<${now - 60000}) AS stale_active FROM agents a)`, "1", [], "tracking.agents", {}, query.input.limit, query.input.cursor);
+      } else if (query.kind === "activity") data = this.activity(query.input);
+      else if (query.kind === "tracking.run") {
+        const value = this.run(query.id);
+        data = this.summary(this.joinedRuns("r.id=?", [value.id])[0], now);
+      } else if (query.kind === "tracking.tasks") data = this.trackingTasks(this.taskList(query.input), now);
+      else if (query.kind === "tracking.board") {
+        const value = this.one("projects", query.id);
+        data = { columns: ["backlog", "in_progress", "review", "completed"].map(status => ({ status,
+          ...this.trackingTasks(this.taskList({ ...query.input, projectId: value.id as string, status: status as z.infer<typeof task>["status"] }), now) })) };
+      } else if (query.kind === "tracking.runs") {
+        const original = this.snapshot({ kind: "runs", input: query.input }, now).body.data as { items: Row[]; total: number; nextCursor: string | null };
+        const ids = original.items.map(value => value.id);
+        const rows = ids.length ? this.joinedRuns(`r.id IN (${ids.map(() => "?").join(",")})`, ids) : [];
+        const summaries = new Map(rows.map(row => [row.id, this.summary(row, now)]));
+        data = { ...original, items: original.items.map(value => summaries.get(value.id)) };
+      } else if (query.kind === "run") data = this.runView(this.run(query.id), now);
       else if (query.kind === "agent")
         data = this.agentView(this.one("agents", query.id), now);
       else if (query.kind === "agents") {

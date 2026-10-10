@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-09T21:19:59.556566+00:00",
+  "generatedAt": "2026-10-10T00:20:24.854284+00:00",
   "title": "Design System: AgentFlow",
   "extensions": {
     "colorMeta": {
@@ -147,7 +147,7 @@
       "name": "Workspace navigation",
       "kind": "nav",
       "description": "Compact local workspace links.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><a href=\"#overview\">Overview</a><a href=\"#projects\">Projects</a><a href=\"#settings\">Settings</a></nav>",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><a href=\"#overview\">Overview</a><a href=\"#projects\">Projects</a><a href=\"#agents\">Agents</a><a href=\"#activity\">Activity</a><a href=\"#settings\">Settings</a></nav>",
       "css": ".ds-nav{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);background:#edf0f5;padding:28px 16px;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--divider,#cbd2dc)}.ds-nav a{color:var(--ink,#202939);text-decoration:none;padding:12px;border-radius:10px}.ds-nav a:hover{background:var(--paper,#fff)}.ds-nav a:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}"
     },
     {
@@ -164,7 +164,7 @@
       "refersTo": "task-card",
       "description": "Title-first stored task record.",
       "html": "<article class=\"ds-card\"><button class=\"ds-title\">Inspect the stored evidence</button><p class=\"ds-meta\">normal \u00b7 verifier</p></article>",
-      "css": ".ds-card{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);background:var(--paper,#fff);border:1px solid var(--ink,#202939);border-radius:12px;padding:16px;box-shadow:0 2px 0 var(--divider,#cbd2dc)}.ds-title{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:block;text-align:left;border:0;border-radius:0;padding:0;min-height:0;background:none;font-size:16px;line-height:21px;font-weight:700;width:100%;overflow-wrap:anywhere;cursor:pointer}.ds-title:hover{color:var(--action,#2457d6)}.ds-title:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}.ds-meta{display:flex;gap:8px;margin:12px 0;font-size:12px;color:var(--muted,#526071)}"
+      "css": ".ds-card{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);background:var(--paper,#fff);border:1px solid var(--ink,#202939);border-radius:12px;padding:16px;box-shadow:0 2px 0 var(--divider,#cbd2dc)}.ds-title{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:block;text-align:left;border:0;border-radius:0;padding:0;min-height:0;background:none;font-size:16px;line-height:21px;font-weight:700;width:100%;overflow-wrap:anywhere;cursor:pointer}.ds-title:hover{color:var(--action,#2457d6)}.ds-title:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px;}.ds-meta{display:flex;gap:8px;margin:12px 0;font-size:12px;color:var(--muted,#526071);overflow-wrap:anywhere}"
     },
     {
       "name": "Human acceptance stamp",
@@ -173,11 +173,26 @@
       "description": "Authoritative acceptance label, not a run outcome.",
       "html": "<span class=\"ds-stamp\">Human accepted</span>",
       "css": ".ds-stamp{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:inline-flex;border:1px solid var(--ink,#202939);border-radius:6px;padding:4px 8px;background:var(--completed,#ddf1df);font-size:12px;font-weight:650;margin:10px 0}"
+    },
+    {
+      "name": "Reported freshness label",
+      "kind": "chip",
+      "description": "Written reported state and freshness; never process liveness.",
+      "html": "<span class=\"ds-report ds-stale\">running \u00b7 Stale report \u00b7 execution uncertain</span>",
+      "css": ".ds-report{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);display:inline-block;border:1px solid var(--ink,#202939);border-radius:6px;padding:4px 8px;background:var(--backlog,#e8edf4)}.ds-stale{background:var(--review,#ffe7a3)}",
+      "refersTo": "report-label"
+    },
+    {
+      "name": "Long reported message",
+      "kind": "custom",
+      "description": "Native disclosure preserves full stored text after a preview.",
+      "html": "<details class=\"ds-report-message\"><summary>Stored progress preview\u2026 <span>Read full message</span></summary><p>Full stored message remains available here.</p></details>",
+      "css": ".ds-report-message{font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink,#202939);overflow-wrap:anywhere;margin:12px 0}.ds-report-message summary{cursor:pointer;font-weight:650;padding:10px 0}.ds-report-message summary span{color:var(--action,#2457d6);text-decoration:underline}.ds-report-message summary:focus-visible{outline:3px solid var(--action,#2457d6);outline-offset:3px}.ds-report-message p{white-space:pre-wrap;margin:8px 0 16px;max-width:75ch}"
     }
   ],
   "narrative": {
     "northStar": "The friendly work board",
-    "overview": "Original paper cards, bold upright titles, colored lane capsules and small acceptance stamps carry the selected slightly cartoonish character; evidence and recovery copy stay plain. P03 implements a manual local workspace, while reporting and graphs remain planned.",
+    "overview": "Original paper cards, bold upright titles, colored lane capsules and small acceptance stamps carry the selected slightly cartoonish character; evidence and recovery copy stay plain. The candidate implements the manual workspace and P05 reported tracking; graphs remain planned. P05 integration and package acceptance are separate gates.",
     "keyCharacteristics": [
       "Title-first paper records",
       "One blue action accent",

@@ -17,6 +17,7 @@ export async function launch(
     dir?: string;
     port?: number;
     plain?: boolean;
+    stdin?: boolean;
     cwd?: string;
     entry?: string;
     extraEnv?: Record<string, string>;
@@ -53,12 +54,12 @@ export async function launch(
         AGENTFLOW_DATA_DIR: dir,
         PORT: String(port),
       },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: [options.stdin ? "pipe" : "ignore", "pipe", "pipe"],
     },
   );
   let logs = "";
-  child.stdout.on("data", (chunk) => (logs += chunk));
-  child.stderr.on("data", (chunk) => (logs += chunk));
+  child.stdout!.on("data", (chunk) => (logs += chunk));
+  child.stderr!.on("data", (chunk) => (logs += chunk));
   const url = `http://127.0.0.1:${port}`;
   const start = Date.now();
   while (Date.now() - start < 30000) {

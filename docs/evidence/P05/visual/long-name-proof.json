@@ -1,0 +1,39 @@
+{
+  "synthetic": true,
+  "acceptedDisplayName": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "length": 200,
+  "directThenEmbedded": [
+    {
+      "viewport": 375,
+      "document": 375,
+      "headings": [
+        {
+          "width": 343,
+          "scroll": 343,
+          "wrap": "anywhere"
+        },
+        {
+          "width": 343,
+          "scroll": 343,
+          "wrap": "anywhere"
+        }
+      ]
+    },
+    {
+      "viewport": 375,
+      "document": 375,
+      "headings": [
+        {
+          "width": 343,
+          "scroll": 343,
+          "wrap": "anywhere"
+        },
+        {
+          "width": 343,
+          "scroll": 343,
+          "wrap": "anywhere"
+        }
+      ]
+    }
+  ]
+}

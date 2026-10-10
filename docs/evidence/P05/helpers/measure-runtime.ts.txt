@@ -1,0 +1,13 @@
+import { startRuntime } from "../../../src/server/launcher";
+import { readConfig } from "../../../src/server/config";
+import { createInterface } from "node:readline";
+if (!global.gc) throw new Error("CONTROLLED_GC_REQUIRED");
+const running = await startRuntime(readConfig(process.env, "production"), { beforeStoreClose: async () => {
+  console.log("SHUTDOWN " + JSON.stringify({ streams: running.streams.diagnostics(), runtime: running.diagnostics(), beforeStoreClose: true }));
+} });
+createInterface({ input: process.stdin }).on("line", async line => {
+  const input = JSON.parse(line) as { id: number };
+  for (let i = 0; i < 3; i++) { global.gc!(); await new Promise(resolve => setTimeout(resolve, 25)); }
+  console.log("MEASURE " + JSON.stringify({ id: input.id, memory: process.memoryUsage(), streams: running.streams.diagnostics(), runtime: running.diagnostics(), clock: { wallMs: Date.now(), monotonicMs: performance.now() }, collection: "three explicit GC calls each followed by25ms, in runtime process" }));
+});
+process.once("SIGTERM", () => void running.shutdown().then(() => process.exit(0)));

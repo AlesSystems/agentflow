@@ -18,6 +18,7 @@ export async function applicationApi(request: Request) {
     if (!validResourceId(matched.id))
       throw new HttpError(422, "validation_failed");
     const { endpoint, id, path } = matched;
+    if (endpoint.kind === "stream") throw new HttpError(503, "unavailable");
     let original: unknown;
     if (endpoint.kind === "command") {
       if (url.searchParams.size) throw new HttpError(400, "query_invalid");

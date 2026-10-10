@@ -1,0 +1,101 @@
+{
+  "synthetic": true,
+  "mode": "read-only SQLite; query_only=ON",
+  "source": "5d633accfab86a43ed8e5ed5c1cf976514529560",
+  "counts": {
+    "tasks": 1000,
+    "runs": 10,
+    "run_events": 17750,
+    "changes": 36542,
+    "run_registrations": 10,
+    "receipts": 1022
+  },
+  "integrity": "ok",
+  "foreignKeyErrors": [],
+  "runs": [
+    {
+      "id": "d2924f86-83f1-47b7-b84e-ed525267815b",
+      "lastSequence": 2369,
+      "version": 2370,
+      "registrationOrder": 1,
+      "state": "running"
+    },
+    {
+      "id": "a535ba9b-5e59-4b3e-a0b3-9ae40d0cb035",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 2,
+      "state": "running"
+    },
+    {
+      "id": "c6cd0264-f1fc-468f-8bb9-f4b3e074199b",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 3,
+      "state": "running"
+    },
+    {
+      "id": "2f0a3f05-eee4-49de-b949-ffa9d4c28694",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 4,
+      "state": "running"
+    },
+    {
+      "id": "8568a980-c207-45f1-a629-e601663cac03",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 5,
+      "state": "running"
+    },
+    {
+      "id": "3584e741-a2a4-42a9-b956-63708bcb572d",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 6,
+      "state": "running"
+    },
+    {
+      "id": "b3d90ee1-f550-49c9-97f3-cb7317f6d5b4",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 7,
+      "state": "running"
+    },
+    {
+      "id": "9319a135-4e22-4aae-81e0-aee993312ea4",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 8,
+      "state": "running"
+    },
+    {
+      "id": "b2c2b929-4379-4e2e-91f8-b25793d0ef75",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 9,
+      "state": "running"
+    },
+    {
+      "id": "904c2b52-f458-4bdc-87d4-9b6cc660e683",
+      "lastSequence": 1709,
+      "version": 1710,
+      "registrationOrder": 10,
+      "state": "running"
+    }
+  ],
+  "allocator": 10,
+  "eventColumns": [
+    "event_id",
+    "run_id",
+    "sequence",
+    "type",
+    "digest",
+    "body",
+    "acknowledgement",
+    "occurred_at",
+    "received_at"
+  ],
+  "acceptedReportLedgerMatches": 7090,
+  "receiptNormalization": "Stored integer epoch milliseconds converted exactly to serialized UTC millisecond timestamp"
+}

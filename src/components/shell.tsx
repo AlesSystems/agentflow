@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectionStatus } from "./connection";
 import SignOut from "../app/sign-out";
 export function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -10,12 +11,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <span className="local-label">Local workspace</span>
         <Link href="/">Overview</Link>
         <Link href="/projects">Projects</Link>
+        <Link href="/agents">Agents</Link>
+        <Link href="/activity">Activity</Link>
         <Link href="/settings">Settings</Link>
         <div className="rail-bottom">
           <SignOut />
         </div>
       </nav>
       <main id="main-content" className="workspace-main">
+        <ConnectionStatus />
         {children}
       </main>
     </div>

@@ -227,7 +227,25 @@ P04 adds migration 0004 without editing reviewed 0000–0003 bytes. `run_registr
 
 Owned Store command transactions keep registration order, task revision capture, active ownership, events, permitted task transitions, durable changes and acknowledgements atomic. Resource receipts stay scoped by principal/method/path/key. Event identity is separate from resource receipts and does not require an Idempotency-Key. Identity replay follows authentication and validation and precedes current state guards. Only implementation start/success changes task status, always for the current registered work revision. Other purposes and stale closure never change task column or work revision. Heartbeats are actual stored ordered observations and never evidence of process liveness.
 
-Read snapshots capture freshness and cursor/generation together. Agent list reporting uses a bounded correlated indexed existence query rather than one query per identity. Latest task detail stays compatible with P03. Registration order remains internal and restore non-reuse remains limited to retained history. Activity/SSE, CLI outbox and workflow surfaces are later packages.
+Read snapshots capture freshness and cursor/generation together. Agent list reporting uses a bounded correlated indexed existence query rather than one query per identity. Latest task detail stays compatible with P03. Registration order remains internal and restore non-reuse remains limited to retained history. P05 adds tracking snapshots and native replay; CLI outbox and workflow surfaces remain later packages.
 
 
 P04 review repair adds migration 0005 with nonunique NOCASE lookup indexes for UUID identities. New client identities/input references normalize at the request boundary, while response schemas and historical acknowledgements preserve stored casing. A lookup reads at most two indexed matches and rejects actual casing collisions explicitly. Legacy ID/order bytes remain unchanged; successful projections use their actual stored FK identity. The original parsed JSON digest still distinguishes supplied casing. Migration 0004 and earlier reviewed bytes are preserved.
+
+### P05 committed change batches
+
+The first transport slice adds owned `Store.changeBatch(after)`: a validated,
+lossless decimal cursor and one short consistent read transaction for generation,
+minimum/maximum and at most 100 ascending committed change notices. Cursor SQL
+uses TEXT outputs and an INTEGER cast of the validated input; it never converts
+through JavaScript Number. The read transaction ends before socket delivery,
+polling or drain waits. Changes carry entity type, identity and kind only.
+
+P05 adds bounded joined tracking DTOs while retaining the original task/run and
+receipt contracts. Visible task pages batch their latest attempts and identity
+labels; agent counts remain indexed SQL projections. Activity reads stored
+non-heartbeat events and operator closure facts with a stable receipt/identity
+boundary, total and generation/filter-bound cursor in one snapshot transaction.
+Raw event history retains all ordered heartbeats. Neither summaries, Activity nor
+the browser's connection state infer external process liveness. Human stale-record
+closure still records an operator fact without a producer event or execution signal.

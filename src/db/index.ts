@@ -1,3 +1,6 @@
+import { changeCursor } from "../contracts/common";
+import type { z } from "zod";
+import { changeFrame } from "../contracts/stream";
 import { validateMigrationSql } from "./migration-sql";
 import {
   ApplicationData,
@@ -77,6 +80,20 @@ export class Store {
   }
   snapshot(query: ApplicationQuery, now = Date.now()) {
     return new ApplicationData(this.db, this.dataDir).snapshot(query, now);
+  }
+  changeBatch(after: string) {
+    changeCursor.parse(after);
+    return this.db.transaction(() => {
+      const { generation } = this.metadata();
+      const bounds = this.db.prepare(
+        "SELECT CAST(coalesce(min(cursor),0) AS TEXT) AS minimum, CAST(coalesce(max(cursor),0) AS TEXT) AS maximum FROM changes",
+      ).get() as { minimum: string; maximum: string };
+      const changes = this.db.prepare(
+        "SELECT CAST(cursor AS TEXT) AS id, entity_type AS entityType, entity_id AS entityId, kind FROM changes WHERE cursor > CAST(? AS INTEGER) ORDER BY cursor ASC LIMIT 100",
+      ).all(after) as { id: string; entityType: string; entityId: string; kind: string }[];
+      const frames: z.infer<typeof changeFrame>[] = changes.map(({ id, ...data }) => changeFrame.parse({ id, data }));
+      return { generation, ...bounds, changes: frames };
+    })();
   }
   pragmas() {
     return Object.fromEntries(

@@ -181,3 +181,13 @@ The approved Stage 2 plan preserves original new-registration identity independe
 Human closure ends stale tracking only and records an immutable reason. It cannot stop the external process or fabricate producer events. Freshness uses one captured server receipt clock and strictly greater than 60 seconds; producer time is metadata. Older restore renews generation and preserves only retained facts and high-water, not discarded acknowledgements. These are bounded completions of ADR-002/004/005/007/010, not process-control authority.
 
 Independent P04 review reproduced accepted uppercase UUIDs becoming unreachable because routes canonicalized casing while storage did not. Normalize UUID input identities/references without transforming response validation or historical acknowledgements. Indexed case-insensitive resolution preserves actual legacy IDs and foreign keys; actual casing collisions reject explicitly. Additive 0005 adds nonunique lookup indexes and leaves every prior migration and identity/order byte unchanged. Original JSON casing remains digest identity, so a differently cased body is a changed retry body even when its resolved resource is the same.
+
+### P05 native stream feasibility
+
+The approved P05 transport slice keeps one typed endpoint registry while the
+native launcher owns text/event-stream writes and lease lifetime. Production TCP
+proof establishes incremental uncompressed frames, bounded write/drain pressure,
+finite stalled termination, independent blocked-session validation and cleanup
+before Store closure. Framework fallback is unavailable, preserving a single
+safe delivery path. No dependency, migration, observer or acceptance authority
+changes. [Evidence and remaining gates](implementation/P05-transport.md).
