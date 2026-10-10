@@ -6,6 +6,7 @@ import { chromium, expect, type Page } from "@playwright/test";
 import Database from "better-sqlite3";
 import { launch, pair } from "./server";
 import { seedPerformance } from "./p06-performance";
+import { eventsResponse,eventResponse } from "../../src/contracts/observations";
 import { canonicalDigest } from "../../src/domain/request-digest";
 import { plan, targets, acknowledge, cadence, reconcile, distribution, type Target } from "./p07-protocol";
 async function untilDue(due:number){while(performance.now()<due)await wait(due-performance.now());}
@@ -37,7 +38,7 @@ export async function confirm(page: Page, row: Target) {
       const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
       const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
       if(document.visibilityState!=="visible"||rect.top<0||rect.bottom>innerHeight||rect.left<0||rect.right>innerWidth||rect.width<=0||rect.height<=0||style.visibility!=="visible"||style.display==="none"||Number(style.opacity)===0||document.elementFromPoint(x,y)?.closest("li")!==li)return null;
-      return {receivedAt:li.querySelector("time")?.getAttribute("datetime")??null,rect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},viewport:{width:innerWidth,height:innerHeight},visibility:document.visibilityState};
+      return {receivedAt:li.querySelector("time")?.getAttribute("datetime")??null,style:{display:style.display,visibility:style.visibility,opacity:style.opacity},hitTest:true,rect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},viewport:{width:innerWidth,height:innerHeight},visibility:document.visibilityState};
     }
     const first=inspect();if(!first)return null;
     await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
@@ -52,7 +53,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
   const counts=acceptance?{tasks:1000,events:10000,producers:10}:{tasks:12,events:20,producers:2};
   const fixture=await seedPerformance(dir,counts,Date.now()-3600000);
   const events=plan(fixture.runs,index,!acceptance),observations=targets(events);
-  const result={index,acceptance,counts,fixture,events,observations,requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as unknown[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null};
+  const result={index,acceptance,counts,fixture,events,observations,setup:[] as unknown[],final:[] as unknown[],requests:[] as {eventId:string;body:unknown;digest:string;dueMs:number;dispatchMs:number;responseMs:number|null;status:number|null;ack:unknown;error:string|null}[],phases:[] as unknown[],browser: null as string|null,seedLatestReceipt:null as string|null,reconciliation:null as unknown,failure:null as string|null,finishedMs:null as number|null};
   const save=()=>writeFileSync(proof,JSON.stringify(result,null,2)+"\n",{mode:0o600});
   save();let server:Awaited<ReturnType<typeof launch>>|undefined,tabs:Awaited<ReturnType<typeof pages>>|undefined;
   let observing=true;const observers:Promise<void>[]=[];
@@ -62,8 +63,9 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     server=await launch({dir});
     const headers={Authorization:"Bearer "+server.credentials().reporterToken,"Content-Type":"application/json"};
     for(const runId of fixture.runs) {
-      const response: Response=await fetch(server.url+`/api/v1/runs/${runId}/events`,{method:"POST",headers,body:JSON.stringify({schemaVersion:1,eventId:randomUUID(),runId,sequence:1,type:"run.started",occurredAt:new Date().toISOString(),payload:{}})});
-      assert.equal(response.status,201);await response.json();
+      const body={schemaVersion:1,eventId:randomUUID(),runId,sequence:1,type:"run.started",occurredAt:new Date().toISOString(),payload:{}};
+      const response: Response=await fetch(server.url+`/api/v1/runs/${runId}/events`,{method:"POST",headers,body:JSON.stringify(body)});
+      const ack=await response.json();result.setup.push({body,digest:canonicalDigest(body),status:response.status,ack});assert.equal(response.status,201);eventResponse.parse(ack);
     }
     tabs=await pages(server,fixture.projectId);result.browser=tabs.browser.version();
     await Promise.all(tabs.pages.map((page,tab)=>confirm(page,observations.find(row=>row.tab===tab)!)));
@@ -102,12 +104,24 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     const drain=performance.now();while(observations.some(row=>row.confirmedMs===null)&&performance.now()-drain<10000)await wait(25);
     observing=false;await Promise.all(observers);
     const summaries=[];for(const phase of ["sustained","burst"])for(const tab of [0,1])summaries.push({phase,tab,...reconcile(observations.filter(row=>row.tab===tab&&row.event.phase===phase),acceptance)});
+    for(const runId of fixture.runs){
+      const sequence=events.filter(event=>event.body.runId===runId).at(-1)!.body.sequence+1;
+      const body={schemaVersion:1,eventId:randomUUID(),runId,sequence,type:"run.succeeded",occurredAt:new Date().toISOString(),payload:{summary:"Synthetic P07 load terminal outside timing"}};
+      const response=await fetch(server.url+`/api/v1/runs/${runId}/events`,{method:"POST",headers,body:JSON.stringify(body)});
+      const ack=await response.json();result.final.push({body,digest:canonicalDigest(body),status:response.status,ack});assert.equal(response.status,201);eventResponse.parse(ack);
+    }
+    const api=[];
+    for(const runId of fixture.runs){let cursor:string|null=null;do{
+      const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events?limit=100`+(cursor?`&cursor=${encodeURIComponent(cursor)}`:""),{headers});assert.equal(response.status,200);
+      const page=eventsResponse.parse(await response.json());api.push(...page.data.items);cursor=page.data.nextCursor;
+    }while(cursor);}
+    assert.equal(api.length,events.length+counts.producers*2);
     const persisted=new Database(join(dir,"agentflow.sqlite"),{readonly:true});
     try {
       const actual=persisted.prepare("SELECT event_id,body,digest FROM run_events").all() as {event_id:string;body:string;digest:string}[];
-      for(const request of result.requests){const row=actual.find(row=>row.event_id===request.eventId);assert(row,"PERSISTED_EVENT_MISSING");assert.equal(row.digest,request.digest);const {receivedAt,...input}=JSON.parse(row.body);assert.equal(canonicalDigest(input),request.digest);const ack=(request.ack as {data:{receivedAt:string}}).data;assert.equal(receivedAt,ack.receivedAt);}
+      for(const request of result.requests){const row=actual.find(row=>row.event_id===request.eventId);assert(row,"PERSISTED_EVENT_MISSING");assert.equal(row.digest,request.digest);const {receivedAt,...input}=JSON.parse(row.body);assert.equal(canonicalDigest(input),request.digest);const ack=(request.ack as {data:{receivedAt:string}}).data;assert.equal(receivedAt,ack.receivedAt);const publicEvent=api.find(event=>event.eventId===request.eventId);assert(publicEvent,"PUBLIC_EVENT_MISSING");const {receivedAt:apiReceipt,...apiInput}=publicEvent;assert.equal(apiReceipt,receivedAt);assert.equal(canonicalDigest(apiInput),request.digest);}
       assert.equal(persisted.pragma("integrity_check",{simple:true}),"ok");assert.deepEqual(persisted.pragma("foreign_key_check"),[]);
-      result.reconciliation={status:"finalized",expected:events.length,stored:result.requests.length,summaries,burstPrecision:"four samples per full scenario/tab; nearest-rank p95 is maximum"};
+      result.reconciliation={status:"finalized",expected:events.length,storedTimed:result.requests.length,apiCount:api.length,setupCount:result.setup.length,finalCount:result.final.length,summaries,burstPrecision:"four samples per full scenario/tab; nearest-rank p95 is maximum"};
     }finally{persisted.close();}
   }catch(error){result.failure=(error as Error).message;throw error;}
   finally{result.finishedMs=performance.now();save();observing=false;await Promise.allSettled(observers);await tabs?.browser.close();await server?.stop();save();}
