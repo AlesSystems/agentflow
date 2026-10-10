@@ -27,12 +27,12 @@ async function pages(server: Awaited<ReturnType<typeof launch>>, projectId: stri
   } catch(error) { await browser.close(); throw error; }
 }
 async function confirm(page: Page, row: Target) {
-  const result = await page.evaluate(`(async () => {
+  const result = await page.evaluate<{receivedAt:string|null}|null>(`(async () => {
     const {message,runId} = ${JSON.stringify({message:row.event.message!,runId:row.event.body.runId})};
     function inspect() {
       const node=[...document.querySelectorAll(".activity-list .preserve-lines")].find(node => node.textContent===message);
       if(!node || node.closest("details")) return null;
-      const li=node.closest("li")!;
+      const li=node.closest("li"); if(!li)return null;
       if(!li.querySelector("a[href='/runs/"+runId+"']")) return null;
       const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
       const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
@@ -66,6 +66,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       assert.equal(response.status,201);await response.json();
     }
     tabs=await pages(server,fixture.projectId);result.browser=tabs.browser.version();
+    await Promise.all(tabs.pages.map((page,tab)=>confirm(page,observations.find(row=>row.tab===tab)!)));
     for(const [tab,page]of tabs.pages.entries()) observers.push((async()=>{
       while(observing){
         for(const row of observations.filter(row=>row.tab===tab&&row.dispatchMs!==null&&row.confirmedMs===null)) {
