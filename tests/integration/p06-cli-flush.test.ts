@@ -16,8 +16,8 @@ it("replays an exact committed event after every acknowledgement is lost",async(
     const before=new Database(join(server.dir,"agentflow.sqlite"),{readonly:true});
     let rows:unknown,run:unknown;
     try{rows=before.prepare("SELECT * FROM run_events").all();run=before.prepare("SELECT version,last_sequence,state FROM runs WHERE id=?").get(f.runId);}finally{before.close();}
-    drop=false;
-    const result=await f.cli(["flush","--run",f.runId]);expect(result.code).toBe(0);expect(JSON.parse(result.stdout)).toMatchObject((committed as {data:object}).data);
+    const originalAck=(committed as {data:object}).data;drop=false;
+    const result=await f.cli(["flush","--run",f.runId]);expect(result.code).toBe(0);expect(JSON.parse(result.stdout)).toMatchObject(originalAck);
     const after=new Database(join(server.dir,"agentflow.sqlite"),{readonly:true});
     try{expect(after.prepare("SELECT * FROM run_events").all()).toEqual(rows);expect(after.prepare("SELECT version,last_sequence,state FROM runs WHERE id=?").get(f.runId)).toEqual(run);}finally{after.close();}
     expect(JSON.parse(original.toString()).body.eventId).toBe(JSON.parse(result.stdout).eventId);
