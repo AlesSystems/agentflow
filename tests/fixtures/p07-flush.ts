@@ -10,7 +10,7 @@ import {canonicalDigest} from "../../src/domain/request-digest";
 import type {launch} from "./server";
 export type Queued={body:Record<string,unknown>;digest:string;bytes:number;fileSha256:string;filename:string;originalBytesBase64:string};
 export type Attempt={requestBytesBase64:string;responseBytesBase64:string|null;status:number|null;generation:string|null};
-export type FlushFacts={expected:{tasks:number;events:number;producers:number;queued:number;runs:string[]};queued:Queued[];attempts:Attempt[];stdout:string[];generation:string|null;database:null|{rows:null|{event_id:string;run_id:string;sequence:number;digest:string;body:string;acknowledgement:string;received_at:number;occurred_at:number}[];counts:Record<string,number|null>|null;integrity:unknown;foreignKeys:unknown;error?:ReturnType<typeof failureFact>;closeError?:ReturnType<typeof failureFact>};pages:{status:number;raw:string|null;generation:string|null;runId?:string;cursor?:string|null;error?:ReturnType<typeof failureFact>|null;parsed?:ReturnType<typeof eventsResponse.parse>|null}[];files:{path:string;bytesBase64:string}[]};
+export type FlushFacts={expected:{tasks:number;events:number;producers:number;queued:number;runs:string[]};queued:Queued[];attempts:Attempt[];stdout:string[];generation:string|null;database:null|{rows:null|{event_id:string;run_id:string;sequence:number;digest:string;body:string;acknowledgement:string;received_at:number;occurred_at:number}[];counts:Record<string,number|null>|null;integrity:unknown;foreignKeys:unknown;error?:ReturnType<typeof failureFact>;closeError?:ReturnType<typeof failureFact>};pages:{status:number;raw:string|null;generation:string|null;runId?:string;cursor?:string|null;encoding?:string;error?:ReturnType<typeof failureFact>|null;parsed?:ReturnType<typeof eventsResponse.parse>|null}[];files:{path:string;bytesBase64:string}[]};
 const hash=(bytes:Buffer)=>createHash("sha256").update(bytes).digest("hex");
 export async function collectFlush(facts:FlushFacts,dir:string,outbox:string,server:Awaited<ReturnType<typeof launch>>) {
   facts.database={rows:null,counts:null,integrity:null,foreignKeys:null};const database=facts.database;
@@ -26,9 +26,8 @@ export async function collectFlush(facts:FlushFacts,dir:string,outbox:string,ser
   for(const file of readdirSync(outbox,{recursive:true}).map(String)){const path=join(outbox,file);if(statSync(path).isFile())facts.files.push({path:relative(outbox,path),bytesBase64:readFileSync(path).toString("base64")});}
   for(const runId of facts.expected.runs){let cursor:string|null=null;do{
     const response:Response=await fetch(server.url+`/api/v1/runs/${runId}/events?limit=100`+(cursor?`&cursor=${encodeURIComponent(cursor)}`:""),{headers:{Authorization:"Bearer "+server.credentials().reporterToken}});
-    const page:FlushFacts["pages"][number]={runId,cursor,status:response.status,raw:null,generation:response.headers.get("agentflow-generation"),error:null,parsed:null};facts.pages.push(page);
-    try{page.raw=await response.text();}catch(error){page.error=failureFact(error);throw error;}assert.equal(response.status,200,"API_STATUS");
-    page.parsed=eventsResponse.parse(JSON.parse(page.raw));cursor=page.parsed.data.nextCursor;
+    const page:FlushFacts["pages"][number]={runId,cursor,status:response.status,raw:null,generation:response.headers.get("agentflow-generation"),encoding:"captured UTF8response text; not wire/compressed bytes",error:null,parsed:null};facts.pages.push(page);
+    try{page.raw=await response.text();assert.equal(response.status,200,"API_STATUS");page.parsed=eventsResponse.parse(JSON.parse(page.raw));cursor=page.parsed.data.nextCursor;}catch(error){page.error=failureFact(error);throw error;}
   }while(cursor);}
 }
 export function validateFlush(facts:FlushFacts) {
