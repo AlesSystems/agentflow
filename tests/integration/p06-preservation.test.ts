@@ -90,3 +90,14 @@ it.each(["digest","filename","reservation","body","temp"])("preserves a corrupt 
     const before=snapshot(root),result=await f.cli(["flush"]);expect(result.code).toBe(3);expect(result.stdout+result.stderr).not.toContain("PRIVATE-P06");expect(snapshot(root)).toEqual(before);
   }finally{await server.stop();}
 });
+
+it.each(["after-create","after-rename"])("rechecks the run directory before the next publication mutation %s",async point=> {
+  const {syncDirectory}=await import("../../src/server/filesystem");
+  const server=await launch(),f=await registeredRun(server),root=f.env.AGENTFLOW_OUTBOX_DIR,directory=join(root,f.runId),saved=join(f.dir,"displaced-run");
+  let changed=false,unsafeSync=false;
+  function replace(){changed=true;renameSync(directory,saved);mkdirSync(directory,{mode:0o700});createFile(join(directory,"state.json.tmp"),"PRIVATE-P06-UNRELATED-TEMP");}
+  try {
+    const outbox=await openOutbox({port:server.port,token:server.credentials().reporterToken,outbox:root,explicitService:undefined},performance.now()+5000,{createFile(path,value){createFile(path,value);if(point==="after-create"&&!changed&&path.endsWith("state.json.tmp"))replace();},renameSync(from,to){renameSync(from,to);if(point==="after-rename"&&!changed&&String(to).endsWith("state.json"))replace();},unlinkSync,syncDirectory(path){if(changed&&path===directory)unsafeSync=true;syncDirectory(path);}});
+    try{await expect(outbox.enqueue(f.runId,"run.started",{})).rejects.toThrow("path_changed");expect(readFileSync(join(directory,"state.json.tmp"),"utf8")).toBe("PRIVATE-P06-UNRELATED-TEMP");expect(unsafeSync).toBe(false);}finally{outbox.close();}
+  }finally{await server.stop();}
+});
