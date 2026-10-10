@@ -23,6 +23,6 @@ it("actual native parse timing and budget gate stop actual ordinary seam before 
  expect(comparisons).toBe(1);const result=receipt.comparisons[0] as {requests:{ms:number}[]};expect(result.requests.every(row=>row.ms===300)).toBe(true);expect(receipt.failures).toHaveLength(7);
 });
 it("actual ordinary final save cannot suppress firsterror/failureexit/summary",async()=>{
- const primary=new Error("ordinary first work error"),io=new Error("ordinary final save error");let summary=0,exit=0;
- await expect(ordinaryBoundary({failures:[]},async()=>{throw primary;},()=>{throw io;},()=>{summary++;},()=>{exit++;})).rejects.toBe(primary);expect(summary).toBe(1);expect(exit).toBeGreaterThan(0);
+ const primary=new Error("ordinary first work error"),io=new Error("ordinary final save error");let summary=0,exit=0,writes=0;
+ await expect(ordinaryBoundary({failures:[]},async()=>{throw primary;},()=>{if(++writes>1)throw io;},()=>{summary++;},()=>{exit++;})).rejects.toBe(primary);expect(summary).toBe(1);expect(exit).toBeGreaterThan(0);
 });

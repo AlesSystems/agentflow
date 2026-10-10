@@ -70,7 +70,7 @@ async function flushRun(index: number) {
   const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as Queued[], queueFilesRaw: [] as {filename:string;bytesBase64:string}[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as Attempt[], reconciliationRaw: null as FlushFacts|null, reconciliation: null as unknown, failure: "" };
   receipt.flush.push(result);
   await flushBoundary(result,async()=>{
-    save();
+    writeReceipt();
     server = await launch({ dir });
     const token = join(inputs,"reporter-token"); writeFileSync(token, server.credentials().reporterToken, { mode: 0o600 });
     const pendingRequests=new WeakMap<object,Attempt>();
@@ -116,7 +116,7 @@ async function flushRun(index: number) {
     result.queuedRecords.sort((a,b)=>String(a.body.runId).localeCompare(String(b.body.runId))||Number(a.body.sequence)-Number(b.body.sequence));
     result.queued = result.queuedRecords.length; assert.equal(result.queued,counts.queued);
     result.totalQueuedBytes = result.queuedRecords.reduce((sum,r)=>sum+r.bytes,0);
-    result.setupMs = performance.now()-setupStart; save();
+    result.setupMs = performance.now()-setupStart; writeReceipt();
     const measured = performance.now(); result.measuredStartedMs=measured;
     for (;;) {
       const invocation = await cli(["flush"],env); result.flushInvocations.push(invocation);
@@ -126,12 +126,12 @@ async function flushRun(index: number) {
     }
     result.measuredEndedMs=performance.now(); result.elapsedMs = result.measuredEndedMs-measured;
     const facts:FlushFacts={expected:{...counts,runs:fixture.runs},queued:result.queuedRecords,attempts:result.requests,stdout:result.flushInvocations.map(invocation=>invocation.stdout),generation:null,database:null,pages:[],files:[]};
-    result.reconciliationRaw=facts;save();
+    result.reconciliationRaw=facts;writeReceipt();
     await collectFlush(facts,dir,outboxDir,server);
     result.reconciliation=validateFlush(facts);
     result.accepted=counts.queued;result.missing=0;result.duplicate=0;result.reconciliationStatus="finalized";
     if (acceptance) assert(result.elapsedMs<120000,"1,000-event flush exceeds 120 seconds");
-  },[["outbox",async()=>{outbox?.close();}],["browser",async()=>{await browser?.close();}],["proxy",async()=>{await proxy?.close();}],["server",async()=>{await server?.stop();}]],save);
+  },[["outbox",async()=>{outbox?.close();}],["browser",async()=>{await browser?.close();}],["proxy",async()=>{await proxy?.close();}],["server",async()=>{await server?.stop();}]],writeReceipt);
 }
 
 
@@ -154,7 +154,7 @@ await ordinaryBoundary(receipt,async safeSave=>{
     load:async index=>{console.log(JSON.stringify({stage:"load",index,acceptance}));const result=await loadScenario(root,index,acceptance);(receipt as unknown as Record<string,unknown[]>).loads??=[];(receipt as unknown as Record<string,unknown[]>).loads.push(result);save();},
     resource:async()=>{(receipt as unknown as Record<string,unknown>).resources=await resourceProof(root,acceptance);save();},flush:flushRun,
     prepareNative:async()=>{const seedDir=join(root,"comparison-seed");return {seedDir,seed:await seedPerformance(seedDir,counts)};},
-    compare:async(index,input)=>{await nativeCompare({index,baseSource,...input,root,counts,acceptance,receipt,save});}
+    compare:async(index,input)=>{await nativeCompare({index,baseSource,...input,root,counts,acceptance,receipt,save:writeReceipt});}
   });
   assert.equal(receipt.failures.length,0,"performance budget failures remain open");
 },writeReceipt,()=>console.log(JSON.stringify({mode:receipt.mode,acceptance,flushRuns:receipt.flush.length,comparisons:receipt.comparisons.length,failures:receipt.failures})),()=>{process.exitCode=1;}).catch(()=>{process.exitCode=1;});
