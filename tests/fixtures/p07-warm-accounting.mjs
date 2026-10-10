@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
 import http from 'node:http';
 import {createRequire,syncBuiltinESMExports} from 'node:module';
 import {randomUUID,createHash} from 'node:crypto';
@@ -16,9 +17,9 @@ const facts={allowed:1,used:1,timeline:[],cleanupErrors:[],primaryPresent:false,
 const note=(phase,data={})=>facts.timeline.push({phase,at:performance.now(),...data});
 const errorFacts=e=>({name:e?.name??null,code:e?.code??null,message:e?.message??String(e),stack:e?.stack??null});
 const original={readdir:fs.readdirSync,lstat:fs.lstatSync,request:http.request,exec:Database.prototype.exec};
-let publisher,returned,first,fired=false;
+let publisher,returned,first,reader,fired=false;
 const snapshot=()=>{const files=[];function walk(p){for(const n of original.readdir.call(fs,p)){const q=join(p,n),s=original.lstat.call(fs,q);if(s.isDirectory())walk(q);else{const b=fs.readFileSync(q);files.push({path:q,uid:s.uid,dev:s.dev,inode:s.ino,mode:s.mode&511,nlink:s.nlink,size:s.size,sha256:createHash('sha256').update(b).digest('hex'),base64:b.length<200000?b.toString('base64'):null});}}}walk(outbox);return files;};
-createFile(join(root,'attempt.json'),JSON.stringify({allowed:1,used:1,source:'534140b1d0030650a2cbe7f146345a9a0dec4f61'}));
+createFile(join(root,'attempt.json'),JSON.stringify({allowed:1,used:1,source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()}));
 try {
  const runId=randomUUID(),eventId=randomUUID(),generation=randomUUID(),runDir=join(outbox,runId),pub=join(outbox,'publication.sqlite');
  const body=eventInput.parse({schemaVersion:1,eventId,runId,sequence:1,type:'run.started',occurredAt:new Date().toISOString(),payload:{}});
@@ -40,9 +41,9 @@ try {
  for(const n of ['publication.sqlite','delivery.sqlite']){const b=fs.readFileSync(join(outbox,n));if(b.subarray(0,16).toString()!=='SQLite format 3\0'||b.readUInt32BE(60)!==0)throw new Error('invalid native header');}
  facts.totalBytes=facts.before.reduce((s,f)=>s+f.size,0);if(scenario==='race'&&facts.totalBytes>=65536)throw new Error('fixture exceeds bootstrap bound');
  const finish=()=>{if(scenario==='race'){fs.renameSync(join(runDir,'state.json.tmp'),join(runDir,'state.json'));note('publisher-real-rename');syncDirectory(runDir);note('publisher-fsync');}Reflect.apply(original.exec,publisher,['COMMIT']);note('publisher-COMMIT');fired=true;};
- fs.readdirSync=function(...args){const value=Reflect.apply(original.readdir,this,args);if(String(args[0])===runDir&&!fired){note('reader-real-snapshot',{entries:value});finish();note('reader-return-stale-snapshot');}return value;};
+ fs.readdirSync=function(...args){const value=Reflect.apply(original.readdir,this,args);if(String(args[0])===runDir&&fired)note('reader-accounting',{nativeOwned:reader?.inTransaction??false});if(String(args[0])===runDir&&!fired){note('reader-real-snapshot',{entries:value});finish();note('reader-return-stale-snapshot');}return value;};
  fs.lstatSync=function(...args){if(String(args[0])===join(runDir,'state.json.tmp')){note('reader-lstat-temporary');try{return Reflect.apply(original.lstat,this,args);}catch(e){note('reader-real-lstat-error',{code:e.code});throw e;}}return Reflect.apply(original.lstat,this,args);};
- Database.prototype.exec=function(...args){if(this!==publisher&&this.name===pub&&args[0]==='BEGIN EXCLUSIVE'){note('reader-BEGIN-attempt');if(!fired)finish();}return Reflect.apply(original.exec,this,args);};
+ Database.prototype.exec=function(...args){if(this!==publisher&&this.name===pub&&args[0]==='BEGIN EXCLUSIVE'){note('reader-BEGIN-attempt');if(!fired)finish();const value=Reflect.apply(original.exec,this,args);reader=this;note('reader-BEGIN-owned',{nativeOwned:this.inTransaction});return value;}return Reflect.apply(original.exec,this,args);};
  http.request=function(...args){const o=args[0];if(o?.hostname==='127.0.0.1'&&Number(o.port)===49153&&o.path==='/api/v1/settings'){note('offline-settings');const e=new Error('controlled offline settings');e.code='ECONNREFUSED';throw e;}throw new Error('unexpected HTTP target');};
  syncBuiltinESMExports();facts.started=performance.now();note('actual-openOutbox-start');
  try{returned=await openOutbox({port:49153,token:'a'.repeat(64),outbox,explicitService:undefined},performance.now()+5000);facts.outcome='returned';}catch(e){first=e;facts.primaryPresent=true;facts.primary=errorFacts(e);facts.outcome='threw';}finally{facts.ended=performance.now();note('actual-openOutbox-end');}
@@ -68,4 +69,8 @@ finally {
  assert.equal(after.sha256,before.sha256);
  assert.equal(facts.inputs.record.digest,canonicalDigest(facts.inputs.body));}
  assert.equal(facts.cleanupErrors.length,0);assert.equal(facts.hooksRestored,true);
+ assert(facts.timeline.some(x=>x.phase==='reader-BEGIN-owned'&&x.nativeOwned));
+ assert(facts.timeline.filter(x=>x.phase==='reader-accounting').every(x=>x.nativeOwned));
+ if(scenario==='reservation'){assert.equal(facts.totalBytes,100*1024*1024-1);assert(facts.inputs.pending.pending.remainingPeak>1);}
+ if(scenario==='quota')assert.equal(facts.totalBytes,100*1024*1024+1);
 }
