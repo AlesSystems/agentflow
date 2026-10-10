@@ -70,7 +70,7 @@ async function flushRun(index: number) {
   let proxy: Awaited<ReturnType<typeof publicProxy>> | undefined;
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
   let outbox: Awaited<ReturnType<typeof openOutbox>> | undefined;
-  const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: 0, missing: counts.queued, duplicate: 0, totalQueuedBytes: 0, queuedRecords: [] as { body: Record<string,unknown>; digest: string; bytes: number; fileSha256: string }[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: 0, requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as { eventId: string; sequence: number; digest: string; bytes: number; status: number }[], reconciliation: {} as unknown, failure: "" };
+  const result = { index, fixture, dataset: counts, tabs: 0, setupMs: 0, queued: 0, accepted: null as number|null, missing: null as number|null, duplicate: null as number|null, totalQueuedBytes: 0, queuedRecords: [] as { body: Record<string,unknown>; digest: string; bytes: number; fileSha256: string }[], queueInvocations: [] as Awaited<ReturnType<typeof cli>>[], flushInvocations: [] as Awaited<ReturnType<typeof cli>>[], elapsedMs: null as number|null, measuredStartedMs: null as number|null, measuredEndedMs: null as number|null, reconciliationStatus: "unfinalized", requestCounts: { accepted: 0, limited429: 0, errors: 0, attempts: 0 }, requests: [] as { eventId: string; sequence: number; digest: string; bytes: number; status: number }[], reconciliation: null as unknown, failure: "" };
   receipt.flush.push(result); save();
   try {
     server = await launch({ dir });
@@ -121,14 +121,14 @@ async function flushRun(index: number) {
     result.queued = result.queuedRecords.length; assert.equal(result.queued,counts.queued);
     result.totalQueuedBytes = result.queuedRecords.reduce((sum,r)=>sum+r.bytes,0);
     result.setupMs = performance.now()-setupStart; save();
-    const measured = performance.now();
+    const measured = performance.now(); result.measuredStartedMs=measured;
     for (;;) {
       const invocation = await cli(["flush"],env); result.flushInvocations.push(invocation);
       assert([0,2].includes(invocation.code!),"flush blocked or local failure");
       if (invocation.code === 0) break;
       if (performance.now()-measured >= 120000) break;
     }
-    result.elapsedMs = performance.now()-measured;
+    result.measuredEndedMs=performance.now(); result.elapsedMs = result.measuredEndedMs-measured;
     const db = new Database(join(dir,"agentflow.sqlite"), { readonly: true });
     try {
       const actual = db.prepare("SELECT event_id,run_id,sequence,digest,body FROM run_events WHERE run_id IN ("+fixture.runs.map(()=>"?").join(",")+") ORDER BY run_id,sequence").all(...fixture.runs) as {event_id:string;run_id:string;sequence:number;digest:string;body:string}[];
@@ -154,11 +154,15 @@ async function flushRun(index: number) {
       assert.deepEqual((api as {eventId:string}[]).map(e=>e.eventId).sort(),[...ids].sort());
       result.reconciliation = { tasks: (db.prepare("SELECT count(*) n FROM tasks").get() as {n:number}).n, agents: (db.prepare("SELECT count(*) n FROM agents").get() as {n:number}).n, runs: (db.prepare("SELECT count(*) n FROM runs").get() as {n:number}).n, events: (db.prepare("SELECT count(*) n FROM run_events").get() as {n:number}).n, apiCount: api.length, immutableIdsSha256: hash(JSON.stringify([...ids].sort())) };
       assert.equal((result.reconciliation as {events:number}).events,counts.events+counts.queued);
+      result.reconciliationStatus="finalized";
     } finally { db.close(); }
     assert.equal(result.missing,0); assert.equal(result.duplicate,0); assert.equal(result.accepted,counts.queued);
     assert.equal(result.requestCounts.errors,0);
     if (acceptance) assert(result.elapsedMs<120000,"1,000-event flush exceeds 120 seconds");
-  } catch (error) { result.failure = error instanceof Error ? error.message : "unknown"; throw error; }
+  } catch (error) {
+    if(result.measuredStartedMs!==null&&result.measuredEndedMs===null){result.measuredEndedMs=performance.now();result.elapsedMs=result.measuredEndedMs-result.measuredStartedMs;}
+    result.failure = error instanceof Error ? error.message : "unknown"; throw error;
+  }
   finally { outbox?.close(); await browser?.close(); await proxy?.close(); await server?.stop(); save(); }
 }
 
