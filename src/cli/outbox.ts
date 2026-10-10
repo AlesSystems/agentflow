@@ -203,7 +203,25 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         for(let width=1;width<=3&&width<=bytes.length;width++) {
           const tail=bytes.subarray(bytes.length-width),lead=tail[0],required=lead>=0xc2&&lead<=0xdf?2:lead>=0xe0&&lead<=0xef?3:lead>=0xf0&&lead<=0xf4?4:0;
           if(!required||width>=required||!tail.subarray(1).every(byte=>byte>=0x80&&byte<=0xbf)||width>1&&(lead===0xe0&&tail[1]<0xa0||lead===0xed&&tail[1]>0x9f||lead===0xf0&&tail[1]<0x90||lead===0xf4&&tail[1]>0x8f))continue;
-          try{new TextDecoder("utf-8",{fatal:true}).decode(bytes.subarray(0,bytes.length-width));return;}catch{}
+          try {
+            const decoded=new TextDecoder("utf-8",{fatal:true}).decode(bytes.subarray(0,bytes.length-width));
+            // A split scalar can only continue ordinary JSON string content.
+            // Native parsing rejects an earlier invalid token; lexical context
+            // excludes completed values and unfinished escapes at the EOF.
+            let incomplete=false;
+            try{JSON.parse(decoded);}catch(parseError){
+              const at=parseError instanceof SyntaxError?/at position ([0-9]+)/.exec(parseError.message):null;
+              incomplete=parseError instanceof SyntaxError&&(parseError.message==="Unexpected end of JSON input"||parseError.message.startsWith("Unterminated string")||Boolean(at&&Number(at[1])===decoded.length));
+            }
+            let string=false,escape=false,unicode=0,valid=true;
+            for(const char of decoded) {
+              if(!string){if(char==='"')string=true;continue;}
+              if(unicode){if(!/[0-9a-fA-F]/.test(char)){valid=false;break;}unicode--;continue;}
+              if(escape){escape=false;if(char==="u")unicode=4;else if(!'"\\/bfnrt'.includes(char)){valid=false;break;}continue;}
+              if(char==='"')string=false;else if(char==="\\")escape=true;else if(char.charCodeAt(0)<32){valid=false;break;}
+            }
+            if(incomplete&&valid&&string&&!escape&&!unicode)return;
+          }catch{}
         }
       }
       if(error instanceof SyntaxError && (error.message==="Unexpected end of JSON input" || error.message.startsWith("Unterminated string") || position&&Number(position[1])===bytes.toString("utf8").length))return;
