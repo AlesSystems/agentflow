@@ -49,3 +49,78 @@ it("refuses a newly introduced sidecar for an already-open sender without callin
     expect(snapshot(f.root)).toEqual(before);
   } finally {outbox.close();}
 });
+
+it("refuses an unsafe second-family sidecar before creating a missing first-family lock",async()=> {
+  const {unlinkSync}=await import("node:fs");
+  const f=await fixture();unlinkSync(join(f.root,"publication.sqlite"));
+  const sidecar=join(f.root,"delivery.sqlite-journal");writeFileSync(sidecar,"",{mode:0o600});chmodSync(sidecar,0o644);
+  const before=snapshot(f.root);
+  await expect(openOutbox(f.config,performance.now()+5000)).rejects.toThrow("UNSAFE_PERMISSIONS");
+  expect(snapshot(f.root)).toEqual(before);
+});
+
+it("preserves an oversized existing bootstrap lock before opening SQLite",async()=> {
+  const f=await fixture();
+  writeFileSync(join(f.root,"delivery.sqlite"),Buffer.alloc(65537));
+  const before=snapshot(f.root);
+  await expect(openOutbox(f.config,performance.now()+5000)).rejects.toThrow("bootstrap_oversize");
+  expect(snapshot(f.root)).toEqual(before);
+});
+
+it("stops a bootstrap-size failure before creating the second lock or admitting metadata",async()=> {
+  const {unlinkSync,renameSync,existsSync}=await import("node:fs");
+  const {createFile,syncDirectory}=await import("../../src/server/filesystem");
+  const f=await fixture();
+  unlinkSync(join(f.root,"publication.sqlite"));unlinkSync(join(f.root,"delivery.sqlite"));
+  const originalMetadata=readFileSync(join(f.root,"metadata.json"));
+  await expect(openOutbox(f.config,performance.now()+5000,{createFile(path){createFile(path,Buffer.alloc(65537));},renameSync,unlinkSync,syncDirectory})).rejects.toThrow("bootstrap_oversize");
+  expect(lstatSync(join(f.root,"publication.sqlite")).size).toBe(65537);
+  expect(existsSync(join(f.root,"delivery.sqlite"))).toBe(false);
+  expect(readFileSync(join(f.root,"metadata.json"))).toEqual(originalMetadata);
+  expect(readdirSync(f.root).sort()).toEqual(["metadata.json","publication.sqlite"]);
+});
+
+it("initializes both empty stable locks once and repeated exclusive transactions create no sidecars or content changes",async()=> {
+  const f=await fixture();
+  const outbox=await openOutbox(f.config,performance.now()+5000);
+  const locksBefore=snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"));
+  try {
+    expect(locksBefore.map(file=>file.size)).toEqual([4096,4096]);
+    expect(outbox.acquireDelivery()).toBe(true);
+    expect(readdirSync(f.root).sort()).toEqual(["delivery.sqlite","metadata.json","publication.sqlite"]);
+    await outbox.cursor();await outbox.cursor();
+    expect(snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"))).toEqual(locksBefore);
+  } finally {outbox.close();}
+  const reopened=await openOutbox(f.config,performance.now()+5000);
+  try {expect(reopened.acquireDelivery()).toBe(true);expect(snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"))).toEqual(locksBefore);}finally{reopened.close();}
+});
+
+it.each(["created","first-initialized"])("recovers partial bootstrap after real SIGKILL at %s without replacing a stable inode",async phase=> {
+  const {unlinkSync}=await import("node:fs");
+  const f=await fixture();
+  if(phase==="created"){unlinkSync(join(f.root,"publication.sqlite"));unlinkSync(join(f.root,"delivery.sqlite"));}
+  const originalMetadata=readFileSync(join(f.root,"metadata.json"));
+  const child=spawn(process.execPath,["--import","tsx","tests/fixtures/p06-lock-bootstrap.ts",phase,"project","create","--file",f.file,"--idempotency-key","40000000-0000-4000-8000-000000000002"],{env:{...process.env,PORT:String(f.port),AGENTFLOW_OUTBOX_DIR:f.root,AGENTFLOW_REPORTER_TOKEN_FILE:f.token},stdio:"ignore"});
+  const signal=await new Promise(resolve=>child.on("exit",(_code,signal)=>resolve(signal)));
+  expect(signal).toBe("SIGKILL");
+  expect(readFileSync(join(f.root,"metadata.json"))).toEqual(originalMetadata);
+  expect(readdirSync(f.root).filter(name=>name.startsWith("registration-")).length).toBe(0);
+  const publication=lstatSync(join(f.root,"publication.sqlite"));
+  const outbox=await openOutbox(f.config,performance.now()+5000);
+  try {expect(lstatSync(join(f.root,"publication.sqlite")).ino).toBe(publication.ino);expect(outbox.acquireDelivery()).toBe(true);expect(readdirSync(f.root).sort()).toEqual(["delivery.sqlite","metadata.json","publication.sqlite"]);}finally{outbox.close();}
+});
+
+it("concurrent first CLI invocations use the same stable bootstrap inodes and preserve only durably admitted work",async()=> {
+  const {unlinkSync,existsSync}=await import("node:fs");
+  const f=await fixture();unlinkSync(join(f.root,"publication.sqlite"));unlinkSync(join(f.root,"delivery.sqlite"));
+  const results=await Promise.all(["40000000-0000-4000-8000-000000000002","40000000-0000-4000-8000-000000000003"].map(async key=> {
+    const child=spawn(process.execPath,["--import","tsx","src/cli/main.ts","project","create","--file",f.file,"--idempotency-key",key],{env:{...process.env,PORT:String(f.port),AGENTFLOW_OUTBOX_DIR:f.root,AGENTFLOW_REPORTER_TOKEN_FILE:f.token},stdio:["ignore","pipe","pipe"]});
+    let stdout="",stderr="";child.stdout.on("data",chunk=>stdout+=chunk);child.stderr.on("data",chunk=>stderr+=chunk);
+    const code=await new Promise(resolve=>child.on("exit",resolve));return{key,code,stdout,stderr};
+  }));
+  expect(results.some(result=>result.code===2)).toBe(true);
+  for(const result of results){expect([1,2]).toContain(result.code);expect(result.stdout).toBe("");if(result.code===2)expect(existsSync(join(f.root,`registration-${result.key}.json`))).toBe(true);else expect(result.stderr).not.toContain('"queued"');}
+  const before=snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"));
+  const reopened=await openOutbox(f.config,performance.now()+5000);
+  try{expect(snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"))).toEqual(before);expect(reopened.acquireDelivery()).toBe(true);}finally{reopened.close();}
+});

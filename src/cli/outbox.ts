@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { uuid } from "../contracts/common";
 import { eventInput, runResponse, agentCreate, runRegister, type EventInput } from "../contracts/observations";
 import { canonicalDigest } from "../domain/request-digest";
-import { activeAppRoot, createFile, privateDestination, secureDirectory, syncDirectory, validateFile } from "../server/filesystem";
+import { activeAppRoot, createFile, privateDestination, secureDirectory, syncDirectory, syncFile, validateFile } from "../server/filesystem";
 import { projectCreate } from "../contracts/projects";
 import { taskCreate } from "../contracts/tasks";
 import { settingsResponse } from "../contracts/responses";
@@ -84,21 +84,57 @@ export async function openOutbox(config: CliConfig, end: number, operations = io
     }
     return {global,run};
   }
+  const bootstrapPins = new Map<string,{dev:number;ino:number;size:number}>();
+  function inspectLockArtifacts() {
+    pin(root);
+    let bytes = 0;
+    for (const name of readdirSync(root)) {
+      if (!/^(publication|delivery)\.sqlite/.test(name)) continue;
+      const path = join(root,name);
+      validateFile(path);
+      const stat = lstatSync(path);
+      if ((stat.mode & 0o777) !== 0o600) throw new CliError("unsafe_outbox_permissions");
+      if (!lockPaths.includes(path)) throw new CliError("unexpected_lock_sidecar");
+      const original = bootstrapPins.get(path);
+      if (original && (stat.dev !== original.dev || stat.ino !== original.ino || stat.size !== original.size)) throw new CliError("lock_changed");
+      bootstrapPins.set(path,stat);
+      bytes += stat.size;
+    }
+    if (bytes > BOOTSTRAP) throw new CliError("bootstrap_oversize");
+  }
   const locks: Database.Database[] = [];
   try {
-    if (!lockPaths.every(existsSync) && lengths().global + BOOTSTRAP > GLOBAL_LIMIT) throw new CliError("bootstrap_full");
+    inspectLockArtifacts();
+    const bootstrapLengths = lengths();
+    const allowance = lockPaths.every(path=>existsSync(path) && lstatSync(path).size > 0) ? 0 : BOOTSTRAP;
+    if (bootstrapLengths.global + reservations().global + allowance > GLOBAL_LIMIT) throw new CliError("bootstrap_full");
     for (const path of lockPaths) {
-      pin(root); validateFile(path);
-      if (!existsSync(path)) { try { operations.createFile(path); operations.syncDirectory(root); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; } }
-      validateFile(path);
-      const lock = new Database(path); locks.push(lock); lock.pragma("busy_timeout = 0");
+      inspectLockArtifacts();
+      if (!existsSync(path)) {
+        try { operations.createFile(path); operations.syncDirectory(root); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+      }
+      inspectLockArtifacts();
     }
-    const bootstrapBytes = readdirSync(root).filter(name=>/^(publication|delivery)\.sqlite(?:-journal|-wal|-shm)?$/.test(name)).reduce((sum,name)=>sum+lstatSync(join(root,name)).size,0);
-    if (bootstrapBytes > BOOTSTRAP) throw new CliError("bootstrap_oversize");
+    for (const path of lockPaths) {
+      inspectLockArtifacts();
+      const before = lstatSync(path);
+      const lock = new Database(path); locks.push(lock); lock.pragma("busy_timeout = 0");
+      const opened = lstatSync(path);
+      if (opened.dev !== before.dev || opened.ino !== before.ino || opened.size !== before.size) throw new CliError("lock_changed");
+      if (before.size === 0) {
+        lock.pragma("user_version = 0");
+        const initialized = lstatSync(path);
+        if (initialized.dev !== before.dev || initialized.ino !== before.ino || initialized.size !== 4096) throw new CliError("lock_changed");
+        syncFile(path); operations.syncDirectory(root);
+        bootstrapPins.set(path,initialized);
+      }
+      inspectLockArtifacts();
+    }
   } catch (error) { for (const lock of locks) lock.close(); throw error; }
   const lockPins = lockPaths.map(path=>lstatSync(path));
   function assertPins() {
-    pin(root);
+    inspectLockArtifacts();
     for (const [i,path] of lockPaths.entries()) {
       validateFile(path); const current = lstatSync(path);
       if (current.dev !== lockPins[i].dev || current.ino !== lockPins[i].ino) throw new CliError("lock_changed");
