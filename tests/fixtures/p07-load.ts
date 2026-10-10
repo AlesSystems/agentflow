@@ -172,7 +172,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
       assert.deepEqual(storedInput,input,"STORED_INPUT");assert.equal(row.digest,report.digest,"STORED_DIGEST");assert.equal(canonicalDigest(storedInput),report.digest,"STORED_BODY_DIGEST");
       assert.equal(row.run_id,input.runId,"STORED_RUN");assert.equal(row.sequence,input.sequence,"STORED_SEQUENCE");assert.equal(row.occurred_at,Date.parse(input.occurredAt),"STORED_OCCURRED_TIME");assert.equal(row.received_at,Date.parse(receivedAt),"STORED_RECEIVED_TIME");
       const originalAck=eventResponse.parse(report.ack),storedAck=eventResponse.parse(JSON.parse(row.acknowledgement));assert.equal(originalAck.generation,database.generation,"ORIGINAL_ACK_GENERATION");assert.equal(storedAck.generation,database.generation,"STORED_ACK_GENERATION");
-      assert.deepEqual(originalAck.data,{eventId:input.eventId,runId:input.runId,acceptedSequence:input.sequence,receivedAt},"ORIGINAL_ACK_BODY");assert.deepEqual(storedAck.data,originalAck.data,"STORED_ACK_BODY");
+      assert.deepEqual(originalAck.data,{eventId:input.eventId,runId:input.runId,acceptedSequence:input.sequence,receivedAt},"ORIGINAL_ACK_BODY");assert.deepEqual(storedAck,originalAck,"STORED_ACK_ENVELOPE");
       const publicEvent=api.find(event=>event.eventId===input.eventId);assert(publicEvent,"PUBLIC_EVENT_MISSING");assert.deepEqual(publicEvent,stored,"PUBLIC_BODY_RECEIPT");
     }
     assert.equal(database.integrity,"ok","DATABASE_INTEGRITY");assert.deepEqual(database.foreignKeys,[],"DATABASE_FOREIGN_KEYS");
@@ -200,6 +200,7 @@ export async function resourceProof(root:string,acceptance:boolean){
   let ordinal=0;
   async function diagnose(){const id=++ordinal;server!.child.stdin!.write(JSON.stringify({id})+"\n");const start=performance.now();for(;;){const line=server!.logs().split("\n").find(line=>line.startsWith("MEASURE ")&&JSON.parse(line.slice(8)).id===id);if(line)return JSON.parse(line.slice(8));assert(performance.now()-start<10000,"METRICS_TIMEOUT");await wait(25);}}
   await resourceBoundary(result,async()=>{
+    save();
     server=await launch({dir,entry:"tests/fixtures/p07-runtime.ts",nodeArgs:["--expose-gc"],stdin:true});
     tabs=await pages(server,fixture.projectId);await wait(1000);
     result.countsBefore=counts();result.before=await diagnose();
