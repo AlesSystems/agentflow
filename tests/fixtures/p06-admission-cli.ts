@@ -4,9 +4,12 @@ import { openOutbox } from "../../src/cli/outbox";
 const [phase,trace,...args] = process.argv.slice(2);
 process.exitCode = await main(args, async (config,end) => {
   const box = await openOutbox(config,end);
+  let turns=0;
   return { ...box, async advanceCursor(id:string,until?:number) {
+    turns++;
+    if(phase==="second-wait"&&turns===1)return box.advanceCursor(id,until);
     const entered=performance.now();
-    const expired=phase==="wait"?entered-1:entered+1;
+    const expired=phase!=="accounting"?entered-1:entered+1;
     const clock=performance.now.bind(performance);
     if(phase==="accounting")performance.now=()=>new Error().stack?.includes("lengths")?entered+2:entered;
     try { return await box.advanceCursor(id,expired); }
