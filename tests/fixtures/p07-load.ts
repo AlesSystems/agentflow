@@ -149,7 +149,7 @@ export async function loadScenario(root: string,index: number,acceptance: boolea
     try{
       database.generation=(persisted.prepare("SELECT generation FROM instance_metadata").get() as {generation:string}|undefined)?.generation??null;
       database.rows=persisted.prepare(`SELECT event_id,run_id,sequence,digest,body,acknowledgement,received_at,occurred_at FROM run_events WHERE run_id IN (${fixture.runs.map(()=>"?").join(",")}) ORDER BY run_id,sequence`).all(...fixture.runs) as StoredEvent[];
-      database.counts={};for(const table of ["projects","tasks","agents","runs","run_events","changes"])database.counts[table]=(persisted.prepare(`SELECT count(*) n FROM ${table}`).get() as {n:number}|undefined)?.n??null;
+      const tables=["projects","tasks","agents","runs","run_events","changes"];database.counts=Object.fromEntries(tables.map(table=>[table,null]));for(const table of tables)database.counts[table]=(persisted.prepare(`SELECT count(*) n FROM ${table}`).get() as {n:number}|undefined)?.n??null;
       database.integrity=persisted.pragma("integrity_check",{simple:true});database.foreignKeys=persisted.pragma("foreign_key_check");
     }catch(error){database.error=failureFact(error);capture(error);throw primary;}
     finally{try{persisted.close();}catch(error){capture(error);retention().cleanupFailures.push({action:"close post-timing database",error:failureFact(error)});}}
