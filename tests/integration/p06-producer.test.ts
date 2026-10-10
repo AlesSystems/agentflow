@@ -44,7 +44,7 @@ it("observes implementation Review and a fresh verification attempt across downt
     producer.advance();
     const queued = await next("queued");
     expect(queued.transcript.at(-1)).toMatchObject({ operation: "offline progress", code: 2 });
-    const runDir = join(producer.env.AGENTFLOW_OUTBOX_DIR, "runs", registered.implementationId!);
+    const runDir = join(producer.env.AGENTFLOW_OUTBOX_DIR, registered.implementationId!);
     const entry = readdirSync(runDir).find(name => /^4-.*\.json$/.test(name));
     expect(entry).toBeDefined();
     const immutable = JSON.parse(readFileSync(join(runDir, entry!), "utf8"));
@@ -70,7 +70,7 @@ it("observes implementation Review and a fresh verification attempt across downt
       expect(db.prepare("SELECT COUNT(*) n FROM run_events").get()).toEqual({ n: 9 });
       expect(db.prepare("SELECT COUNT(*) n FROM completions").get()).toEqual({ n: 0 });
       expect(db.prepare("SELECT purpose,state,last_sequence FROM runs ORDER BY registration_order").all()).toEqual([{ purpose: "implementation", state: "succeeded", last_sequence: 6 }, { purpose: "verification", state: "succeeded", last_sequence: 3 }]);
-      expect(db.prepare("SELECT event_id,sequence,request_digest FROM run_events WHERE run_id=? AND sequence=4").get(registered.implementationId)).toMatchObject({ event_id: immutable.body.eventId, sequence: immutable.body.sequence, request_digest: immutable.digest });
+      expect(db.prepare("SELECT event_id,sequence,digest FROM run_events WHERE run_id=? AND sequence=4").get(registered.implementationId)).toMatchObject({ event_id: immutable.body.eventId, sequence: immutable.body.sequence, digest: immutable.digest });
       const expectedCodes = done.transcript.map(command => command.code);
       expect(expectedCodes).toEqual([0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0]);
       for (const command of done.transcript) {
@@ -82,3 +82,23 @@ it("observes implementation Review and a fresh verification attempt across downt
     } finally { db.close(); }
   } finally { await producer.close(); await server.stop(); }
 }, 45000);
+
+
+it("runs the standalone online producer without a controller or a downtime claim", async () => {
+  const { launch } = await import("../fixtures/server");
+  const { journey } = await import("../fixtures/p06-producer");
+  const server = await launch();
+  const producer = journey(server, false);
+  try {
+    const checkpoints = [];
+    for (const stage of ["registered", "running", "implementation-review", "verification-running", "done"]) {
+      const value = await producer.next(); expect(value.stage).toBe(stage); checkpoints.push(value);
+    }
+    expect(await producer.exit, producer.errors()).toBe(0);
+    const done = checkpoints.at(-1)!;
+    expect(done).toMatchObject({ taskStatus: "review", taskVersion: 5 });
+    expect(done.transcript).toHaveLength(14);
+    expect(done.transcript.every(record => record.code === 0)).toBe(true);
+    expect(done.transcript.some(record => record.operation.includes("offline"))).toBe(false);
+  } finally { await producer.close(); await server.stop(); }
+});

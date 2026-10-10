@@ -1,16 +1,17 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join, basename } from "node:path";
 import { stop } from "./server";
 import { cliFixture } from "./p06-cli";
 import type { launch } from "./server";
 export type Checkpoint = { stage: string; projectId?: string; taskId?: string; implementationId?: string; verificationId?: string; taskVersion?: number; taskStatus?: string; transcript: { operation: string; code: number; stdout: string; stderr: string; elapsedMs: number }[] };
-export function journey(server: Awaited<ReturnType<typeof launch>>) {
+export function journey(server: Awaited<ReturnType<typeof launch>>, controlled = true) {
   const fixture = cliFixture(server);
   const scratch = join(fixture.dir, "producer");
   mkdirSync(scratch, { mode: 0o700 });
-  const child = spawn(process.execPath, ["--import", "tsx", "scripts/p06-producer.ts"], { env: { ...process.env, ...fixture.env, AGENTFLOW_PRODUCER_DIR: scratch }, stdio: ["pipe", "pipe", "pipe"] });
+  if (process.env.AGENTFLOW_P06_EVIDENCE_DIR) writeFileSync(join(process.env.AGENTFLOW_P06_EVIDENCE_DIR, `owned-${basename(fixture.dir)}.json`), JSON.stringify({ paths: [server.dir, fixture.dir], synthetic: true })+"\n", { mode: 0o600 });
+  const child = spawn(process.execPath, ["--import", "tsx", "scripts/p06-producer.ts", ...(controlled ? ["--controlled"] : [])], { env: { ...process.env, FORCE_COLOR: undefined, ...fixture.env, AGENTFLOW_PRODUCER_DIR: scratch }, stdio: ["pipe", "pipe", "pipe"] });
   const lines = createInterface({ input: child.stdout });
   const buffered: Checkpoint[] = [];
   let waiting: { resolve: (value: Checkpoint) => void; reject: (error: Error) => void } | undefined;
