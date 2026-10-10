@@ -34,3 +34,23 @@ it("durably preserves the original observation offline then a fresh CLI flushes 
     expect(readdirSync(directory)).toEqual(["state.json"]);
   } finally {await server.stop();}
 });
+
+it("flushes concurrent durable heartbeat subprocesses in per-run FIFO through real production HTTP",async()=> {
+  const {registeredRun}=await import("../fixtures/p06-cli");
+  let server=await launch();const f=await registeredRun(server),directory=join(f.env.AGENTFLOW_OUTBOX_DIR,f.runId);
+  try {
+    await server.stop();
+    expect((await f.cli(["report","--run",f.runId,"--type","run.started","--payload",f.file({})])).code).toBe(2);
+    const payload=f.file({});
+    const results=await Promise.all(Array.from({length:6},()=>f.cli(["report","--run",f.runId,"--type","run.heartbeat","--payload",payload])));
+    expect(results.every(result=>result.code===2)).toBe(true);
+    const originals=readdirSync(directory).filter(name=>/^\d+-/.test(name)).map(name=>JSON.parse(readFileSync(join(directory,name),"utf8"))).sort((a,b)=>a.body.sequence-b.body.sequence);
+    expect(originals.map(record=>record.body.sequence)).toEqual([1,2,3,4,5,6,7]);
+    server=await launch({dir:server.dir,port:server.port});
+    const flushed=await f.cli(["flush","--run",f.runId]);expect(flushed.code).toBe(0);
+    expect(flushed.stdout.trim().split("\n").map(line=>JSON.parse(line).acceptedSequence)).toEqual([1,2,3,4,5,6,7]);
+    const db=new Database(join(server.dir,"agentflow.sqlite"),{readonly:true});
+    try{expect(db.prepare("SELECT event_id,sequence FROM run_events ORDER BY sequence").all()).toEqual(originals.map(record=>({event_id:record.body.eventId,sequence:record.body.sequence})));expect(db.prepare("SELECT version,last_sequence,state FROM runs WHERE id=?").get(f.runId)).toEqual({version:8,last_sequence:7,state:"running"});}finally{db.close();}
+    expect((await f.cli(["flush","--run",f.runId])).code).toBe(0);
+  }finally{await server.stop();}
+});
