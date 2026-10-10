@@ -60,3 +60,8 @@ it("gives cursor IO exit1 precedence over an earlier blocked3 and keeps independ
     reject=false;expect((await f.cli(["flush"])).code).toBe(0);
   }finally{await blocker.close();await x.proxy.close();await x.server.stop();}
 });
+
+it.each(["unknown","uppercase","overflow","uuid"])("blocks unverifiable retained %s cursor without attempting or mutating work",async kind=> {
+  const x=await fixture();
+  try{const path=join(x.config.outbox,"metadata.json"),value=JSON.parse(readFileSync(path,"utf8"));value.cursor=kind==="unknown"?"PRIVATE-P06-CURSOR":kind==="uppercase"?`run:${x.ids[1].toUpperCase()}`:kind==="overflow"?`registration:9999999999999999:${randomUUID()}`:"run:"+"-".repeat(36);writeFileSync(path,JSON.stringify(value));const original=readFileSync(path),result=await x.f.cli(["flush"]);expect(result.code).toBe(3);expect(result.stderr).toContain("corrupt_metadata");expect(result.stderr).not.toContain("PRIVATE-P06");expect(x.attempts).toEqual([]);expect(readFileSync(path)).toEqual(original);}finally{await x.proxy.close();await x.server.stop();}
+});
