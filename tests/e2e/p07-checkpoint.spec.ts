@@ -101,3 +101,25 @@ test("joined offline CLI observations and synthetic browser acceptance reopen hi
     if (process.env.AGENTFLOW_P07_EVIDENCE_DIR) writeFileSync(join(process.env.AGENTFLOW_P07_EVIDENCE_DIR, "browser.json"), JSON.stringify({ evidence, tabs: 2, claim: "journey observation only, no sustained/burst visibility claim", owned: [server.dir, producer.dir] }, null, 2) + "\n", { mode: 0o600 });
   } finally { await producer.close(); await other.close(); await page.close(); await server.stop(); }
 });
+
+test("actual CLI failure and real silence remain observed uncertainty in two independent contexts",async({page,browser})=>{
+  test.setTimeout(110000);
+  const server=await launch(),other=await browser.newContext(),second=await other.newPage();
+  const { registeredRun }=await import("../fixtures/p06-cli");const {randomUUID}=await import("node:crypto");
+  const f=await registeredRun(server),transcript:unknown[]=[];
+  async function cli(args:string[]){const result=await f.cli(args);transcript.push({args,result});expect(result.code).toBe(0);return JSON.parse(result.stdout);}
+  try{
+    for(const tab of [page,second]){await tab.context().route("**/*",route=>new URL(route.request().url()).origin===server.url?route.continue():route.abort());await pairPage(tab,server);}
+    await cli(["report","--run",f.runId,"--type","run.started","--payload",f.file({})]);
+    await cli(["report","--run",f.runId,"--type","run.failed","--payload",f.file({message:"Synthetic P07 failure observation"})]);
+    for(const tab of [page,second]){await tab.goto(server.url+`/runs/${f.runId}`);await expect(tab.getByText("failed · Terminal record",{exact:true})).toBeVisible();await expect(tab.getByText("Synthetic P07 failure observation",{exact:true}).first()).toBeVisible();}
+    const silent=randomUUID();await cli(["run","register","--file",f.file({id:silent,projectId:f.projectId,agentId:f.agentId,purpose:"planning"}),"--idempotency-key",randomUUID()]);
+    const ack=await cli(["report","--run",silent,"--type","run.started","--payload",f.file({})]);
+    const received=Date.parse(ack.receivedAt);
+    for(const tab of [page,second]){await tab.goto(server.url+`/runs/${silent}`);await expect(tab.getByText("running · Fresh report",{exact:true})).toBeVisible();await expect(tab.getByText("Connected updates",{exact:true})).toBeVisible();}
+    await Promise.all([page,second].map(tab=>expect(tab.getByText("running · Stale report · execution uncertain",{exact:true})).toBeVisible({timeout:75000})));
+    expect(Date.now()-received).toBeGreaterThan(60000);expect(Date.now()-received).toBeLessThan(75000);
+    for(const tab of [page,second])await expect(tab.getByText("Connected updates",{exact:true})).toBeVisible();
+    if(process.env.AGENTFLOW_P07_EVIDENCE_DIR)writeFileSync(join(process.env.AGENTFLOW_P07_EVIDENCE_DIR,"cli-failure-silence.json"),JSON.stringify({synthetic:true,dir:server.dir,outbox:f.dir,transcript,receivedAt:ack.receivedAt,silenceObservedAt:new Date().toISOString(),contexts:2},null,2),{mode:0o600});
+  }finally{await other.close();await server.stop();}
+});
