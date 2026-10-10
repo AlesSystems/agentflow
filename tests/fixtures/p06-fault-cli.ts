@@ -5,6 +5,8 @@ import { openOutbox } from "../../src/cli/outbox";
 const [failure,...args]=process.argv.slice(2);
 let last="",injected=false;
 function stage(path: string,contents: string) {
+  if(path.endsWith("metadata.json.tmp"))return JSON.parse(contents).pendingRegistration?"registration-descriptor":"registration-clear";
+  if(/registration-[a-f0-9-]{36}\.json\.tmp$/.test(path))return "registration";
   if(path.endsWith("state.json.tmp")){const state=JSON.parse(contents);return state.pending?"descriptor":state.acknowledgedThrough===1?"ack":state.allocatedThrough===1?"clear":"init";}
   if(/\/[1-9][0-9]*-[a-f0-9-]{36}\.json\.tmp$/.test(path))return "record";
   return "other";
