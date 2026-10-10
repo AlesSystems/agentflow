@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: four packages passed acceptance, independent review, coordinator verification
+Status: five packages passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. P05 received Astra medium plan approval and is under final verification; P06 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 planning is underway; P07 through W04 have not started.
 
 ## Package state
 
@@ -18,8 +18,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P02 | Task contracts | Integrated | Candidate `6cdf65da4a6ef73ff28b267492b2a993a6729a47`; merge `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`, PR #5 | [Receipt](implementation/P02.md) |
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
-| P05 | Live tracking | Final review | Tested/measured source `5d633accfab86a43ed8e5ed5c1cf976514529560`; functional `279ef6313a7d7cbbd9e0b55ba9323d7a7ca6cdf5` | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json); integration pending |
-| P06 | CLI hooks | Not started | — | — |
+| P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
+| P06 | CLI hooks | Planning | Baseline `787865132d89a9b03f613942f64945887bc13f95`; branch `codex/v1-p06-cli-hooks` | Astra plan approval pending |
 | P07 | Phase 2 checkpoint | Not started | — | — |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
@@ -202,3 +202,19 @@ Extracted design documentation and qualified visual evidence are complete. Final
 exact-candidate code reviews, PR publication and coordinator integration remain
 open. All P05 checkboxes stay unchecked until verified merge; P06 through W04
 remain unstarted.
+
+## Verified P05 integration
+
+Standards and Spec independently approved exact final candidate
+`aa28e949ba0d7147fec2e481ec37423521dbe570`, including the explicit pre-load
+visibility scope and metadata-only correction. Root verified current PR head,
+base, patch, protections and checks, merged PR #8 with the match-head guard and
+verified candidate ancestry at `787865132d89a9b03f613942f64945887bc13f95`.
+Main had no required checks or protection bypass. All P05 boxes are complete;
+global performance boxes remain open for the combined integration/release gates.
+The owned merged branch was removed and the primary checkout fast-forwarded.
+
+Next executable gate: plan P06 public-HTTP CLI hooks and durable bounded outbox,
+obtain Astra medium approval, then implement without provider-specific agent
+dependencies. P07 remains a checkpoint with combined-load observer evidence;
+W01 through W04 remain open and no release has been published.

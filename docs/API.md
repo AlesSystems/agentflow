@@ -1,7 +1,6 @@
 # Local API contract
 
-Status: P01–P04 are integrated. P05 tracking, Activity and native SSE operations
-are implemented; final package verification and integration remain open.
+Status: P01–P05 are integrated, including tracking, Activity and native SSE operations.
 [Generated OpenAPI](openapi.json) describes implemented operations only. W01–W03c add the
 [Phase 3 contracts](V1_WORKFLOWS.md).
 

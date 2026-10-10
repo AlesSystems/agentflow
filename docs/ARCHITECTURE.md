@@ -1,8 +1,7 @@
 # AgentFlow architecture
 
-Status: accepted v1 design direction. P01–P04 are integrated through PRs #4–#7.
-P05 native replay, joined tracking and browser recovery are implemented and
-verified; final PR integration remains open. Producer CLI hooks and workflow
+Status: accepted v1 design direction. P01–P05 are integrated through PRs #4–#8,
+including native replay, joined tracking and browser recovery. Producer CLI hooks and workflow
 modules remain planned. The user selected this direction on 2026-10-09. Detailed
 decisions are in [DECISIONS.md](DECISIONS.md).
 

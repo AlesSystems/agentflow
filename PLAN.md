@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01 and P02 are integrated through PRs #4 and #5; P03 is integrated through PR #6; P04 is integrated through PR #7; P05 verification is underway. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P05 are integrated through PRs #4–#8; P06 planning is underway. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -101,11 +101,11 @@ Run domain and HTTP/SQLite integration tests. Capture producer requests, respons
 
 Depends on P03 and P04. Proposed files include the SSE route, snapshot queries, client subscription, Agents/Activity views, and browser integration tests.
 
-- [ ] Implement authenticated replay from durable changes without retaining database read transactions.
-- [ ] Add generation/reset handling, connection limits, slow-consumer disconnect, and abort cleanup.
-- [ ] Show agent/run history, reported freshness, failure attention, and task-linked events.
-- [ ] Add visible connection state, polling fallback, and full snapshot recovery.
-- [ ] Verify that no displayed agent status claims unobserved process liveness.
+- [x] Implement authenticated replay from durable changes without retaining database read transactions.
+- [x] Add generation/reset handling, connection limits, slow-consumer disconnect, and abort cleanup.
+- [x] Show agent/run history, reported freshness, failure attention, and task-linked events.
+- [x] Add visible connection state, polling fallback, and full snapshot recovery.
+- [x] Verify that no displayed agent status claims unobserved process liveness.
 
 Pass when two tabs converge after a report and neither misses a write between snapshot and subscription. Disconnect, restart, restore, reconnect, duplicate delivery, expired session, and a slow consumer must follow the documented behavior. Retrying a pre-restore receipt must expose the current generation and trigger a snapshot refresh. Verify fallback polling stops when subscriptions recover and resources release when tabs close. The connected-state 15-second freshness refresh remains active while visible. Prove that silence alone marks a run stale within 75 seconds and updates Overview without another write or navigation. Test a local-day rollover and a lost command response whose retry arrives after a newer task version has loaded.
 
@@ -134,6 +134,10 @@ Depends on P05 and P06. Proposed files include release walkthroughs, load scenar
 - [ ] Check unauthenticated reads/SSE, cross-origin mutation, spoofed Host, oversized payloads, invalid links, and non-loopback access.
 - [ ] Verify migration failure recovery, backup restoration, generation reset, permissions, and the documented outbox recovery limits.
 - [ ] Run the load scenario below and inspect resource cleanup.
+  Capture observer visibility during the combined load scenario with sampling
+  identities, counts and missingness defined in the Astra-approved P07 plan.
+  P05's connected visibility samples precede its load phases and do not supply
+  under-load visibility evidence.
 - [ ] Run the execution policy's isolated-install walkthrough, keyboard journey, production build, full relevant tests, lint, and type checking.
 - [ ] Verify the approved MIT license and notices, set package license metadata, and record the tested macOS configuration and exact dependency versions.
 - [ ] Obtain independent review at the checkpoint commit, including browser journey evidence, and integrate it. Continue to W01; P07 does not publish a release.
