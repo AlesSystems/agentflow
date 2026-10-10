@@ -43,7 +43,7 @@ export function Attempts({ filters, inline = false }: { filters: string; inline?
   return <section className="attempts"><h2>Reported attempts <span className="count">{page.query.data?.data.total ?? ""}</span></h2>
     <QueryFeedback error={page.query.error} loading={page.query.isPending} retry={() => void page.query.refetch()} />
     <ul className="tracking-list">{page.items.map(run => <li key={run.id}><h3>{inline ? <button className="attempt-title" onClick={() => setSelected(selected === run.id ? null : run.id)} aria-expanded={selected === run.id}>{run.purpose} · {run.agentName}</button> : <Link href={`/runs/${run.id}`}>{run.purpose} · {run.agentName}</Link>}</h3><ReportingLabel run={run} /><p className="metadata">Model {run.model ?? "Not reported"} · Received <time dateTime={run.lastReceivedAt}>{new Date(run.lastReceivedAt).toLocaleString()}</time></p>{run.message && <LongText text={run.message} />}{run.taskId && !inline && <Link href={`/projects/${run.projectId}/tasks/${run.taskId}`}>{run.taskTitle ?? "Open task"}</Link>}</li>)}</ul>
-    {page.query.data && !page.items.length && <p>No attempts are registered for these filters.</p>}<Pagination page={page} label="attempts" />{inline && selected && <RunDetail id={selected} embedded />}</section>;
+    {page.query.data && !page.items.length && <p>No attempts are registered for these filters.</p>}<Pagination page={page} label="attempts" />{inline && selected && <RunDetail key={selected} id={selected} embedded />}</section>;
 }
 export function RunDetail({ id, embedded = false }: { id: string; embedded?: boolean }) {
   const query = useRead(`/tracking/runs/${id}`, trackingRunResponse);
