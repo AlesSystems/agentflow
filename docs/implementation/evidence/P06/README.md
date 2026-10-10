@@ -42,6 +42,12 @@ build or a relative CLI baseline. Two browser tabs are present, but combined-loa
 observer visibility is P07 work. Fresh production verification is recorded
 separately in [the P06 receipt](../../P06.md).
 
+After verified PR #9 integration, 162 explicitly inventoried temporary roots were
+preserved in verified private archives and removed. Original receipts remain
+unchanged. [The cleanup summary](cleanup-summary.json) records archive/member/file
+counts and verification hashes; it does not publish synthetic credential archives
+or claim ownership of unenumerated historical directories.
+
 Fresh production-build Chrome captures retain their original filenames:
 [first tab](producer-review-tab1.png), [second tab](producer-review-tab2.png).
 Both were visually inspected and contain synthetic journey state, no credentials

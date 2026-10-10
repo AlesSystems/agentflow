@@ -1,0 +1,12 @@
+{
+  "candidate": "e568f6fe84cc3c62ebb26dbb22092673d23f07ce",
+  "merge": "36f6d1bc4699c706e3f57a17cfcc85a1576c648b",
+  "removedExplicitlyInventoriedRoots": 162,
+  "skips": 0,
+  "completePrivateArchives": 163,
+  "independentlyVerifiedMembers": 55277,
+  "independentlyVerifiedRegularFiles": 52822,
+  "receiptSHA256": "593aaa5d3bcb9b77e949f516524de3d02acff28872112f2d0831cd7fe0c137b5",
+  "rootVerificationSHA256": "9836fe27265b875152c5431a1aa1ef0df34c998700894e34357f4142fe276920",
+  "qualification": "Synthetic fixtures only. Failed and accepted datasets plus cached P05 assets preserved privately. FIFO metadata archived without opening; initial partial archive separately retained. Raw/public proofs and active runtime assets unchanged. Unenumerated historical directories and operator files untouched."
+}
