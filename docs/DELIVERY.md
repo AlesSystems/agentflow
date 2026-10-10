@@ -246,9 +246,48 @@ injected failures are distinct from physical disk exhaustion and power loss.
 The tests reuse the P05 production application build while executing current CLI
 source through pinned tsx; no rebuilt P06 or full-project acceptance is claimed.
 
-Next gate: implement the approved durable fair delivery ring, bounded retry turns,
-safe recovery diagnostics, lost acknowledgements, legacy identity, and restored
-prefix handling. Producer and PTY walkthroughs, throughput, rebuilt production,
-full regression suites, cleanup, final Standards and Spec review, PR publication,
-and integration remain open. P06 checkboxes stay unchecked. P07 still owns
-combined-load observer visibility; later packages have not started.
+The delivery gate is recorded below. Producer and PTY walkthroughs, throughput,
+rebuilt production, full regression suites, final cleanup, final Standards and
+Spec review, PR publication, and integration remain open. P06 checkboxes stay
+unchecked. P07 still owns combined-load observer visibility; later packages have
+not started.
+
+## P06 delivery checkpoint
+
+Independent review approved the delivery implementation and two bounded repairs
+at `09f75b7caa3202bca82388891424e27e5c6c6968`. Review SHA256 is
+`e0c1d3661f513dfd69c080505b11732bcf5a8320bb4734a2643c1cb7a73de774`.
+The same Astra-approved P06 plan applies. This closes Unit 3; package acceptance
+and integration remain open.
+
+The initial delivery candidate passed 229 tests across 26 files in 326.13s,
+including affected preservation and existing observation, recovery, authentication,
+private-path and administrative CLI cases. Independent review reproduced two
+missing contracts: valid large Retry-After values overflowed into short retries,
+and per-run remote validation exceptions stopped healthy independent delivery.
+Both were pinned with failing real CLI/public HTTP/SQLite tests and repaired.
+The final affected combination passed 72 tests across 14 files in 205.17s;
+typechecking, scoped lint and diff checks passed. These overlapping counts are
+separate checks, not a combined test total or a full-project result.
+
+Independent repair verification passed seven tests across two files and both
+original counterexamples with passing repair expectations. Large decimal retry
+values now allow one attempt within the invocation window and preserve exact
+identity for fresh flush. Actual stopped restore now blocks the mismatched run,
+retains its original record and watermarks, delivers the independent run in the
+same flush, and returns code 3. Global corruption and filesystem errors remain
+fail-closed. The reviewer matched 44 source, 13 proof, 13 private archive and two
+receipt hashes. The cached P05 production application build and current CLI via
+tsx remain the tested configuration; the P06 production rebuild is still open.
+
+Root preserved source and raw proof, then removed exactly 763 completed original
+worker fixture roots after canonical path, UID/device/inode and open-file checks.
+Current repair and reviewer fixtures were retained for their later scoped cleanup.
+No operator data or unrelated files were removed.
+
+Next gate: executable generic producer and actual PTY exit-code evidence, followed
+by reviewed performance helpers and the authorized quiet acceptance runs. Three
+1,000-report flush runs, equivalent public HTTP comparison, rebuilt production,
+full unit/integration/browser checks, OpenAPI verification, documentation, final
+Standards/Spec review and guarded PR merge remain required. P07 combined-load
+observer sampling remains a later gate; P06 throughput cannot supply it.

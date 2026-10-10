@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P05 are integrated through PRs #4–#8; P06 implementation is underway with its preservation boundary reviewed. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P05 are integrated through PRs #4–#8; P06 implementation is underway with its preservation and delivery boundaries reviewed. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
