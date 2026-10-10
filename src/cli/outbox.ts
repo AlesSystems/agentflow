@@ -394,21 +394,21 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     async initializeRun(id: string,until = end) {
       const reply = await request(config,`/runs/${id}`,runResponse,until);
       if (reply.kind !== "delivered") return reply;
-      await locked(()=> {
+      const blocked=await locked(()=> {
         const runId = reply.data.data.id;
-        if (runId.toLowerCase() !== id.toLowerCase()) throw new CliError("run_identity_mismatch",3);
+        if (runId.toLowerCase() !== id.toLowerCase()) return "run_identity_mismatch" as const;
         const path = join(root,id.toLowerCase(),"state.json");
         if (existsSync(path)) {
           const old = state(id);
-          if (reply.data.data.lastSequence < old.acknowledgedThrough || reply.data.data.lastSequence > old.allocatedThrough) throw new CliError("remote_prefix_mismatch",3);
+          if (reply.data.data.lastSequence < old.acknowledgedThrough || reply.data.data.lastSequence > old.allocatedThrough) return "remote_prefix_mismatch" as const;
           return;
         }
-        if (reply.data.data.lastSequence !== 0) throw new CliError("producer_state_required",3);
+        if (reply.data.data.lastSequence !== 0) return "producer_state_required" as const;
         const value: State = {formatVersion:1,runId,allocatedThrough:0,acknowledgedThrough:0,generation:reply.generation};
         admit(encodedBytes(value),id.toLowerCase()); secureDirectory(join(root,id.toLowerCase())); pin(join(root,id.toLowerCase())); filesystem.syncDirectory(root);
         atomic(`${id.toLowerCase()}/state.json`,value);
       },until);
-      return reply;
+      return blocked?{kind:"blocked" as const,code:blocked}:reply;
     },
     async tracked(id: string) {return locked(()=>existsSync(join(root,id.toLowerCase(),"state.json")));},
     async enqueue(id: string,type: string,payload: Record<string,unknown>) {
