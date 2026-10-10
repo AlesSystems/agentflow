@@ -36,9 +36,11 @@ it("real queue flush joins bytes ACK API persistence and rejects connected lefto
   },[["injected first cleanup",async()=>{
     expect(existsSync(path)).toBe(true);const disk=JSON.parse(readFileSync(path,"utf8"));expect(disk.failure).toContain("PENDING_ARTIFACTS");expect(disk.connected.queued).toHaveLength(4);expect(disk.connected.attempts).toHaveLength(5);expect(disk.connected.database.rows).toHaveLength(4);expect(disk.connected.pages).toHaveLength(2);expect(disk.invocations).toHaveLength(5);expect(disk.reconciliationStatus).toBe("unfinalized");expect(disk.reconciliation).toBeNull();expect(disk.measuredEndedMs).toBe(end);inspected=true;throw new Error("fixture first cleanup failure");
   }],["box",async()=>box.close()],["proxy",async()=>{await proxy.close();proxyClosed=true;}],["server",async()=>{await server.stop();serverClosed=true;}]],save);
+  try{
   await expect(operation).rejects.toThrow("PENDING_ARTIFACTS");await operation.catch(error=>expect(error).toBe(primary));
   expect(inspected).toBe(true);expect(proxyClosed).toBe(true);expect(serverClosed).toBe(true);expect(receipt.measuredEndedMs).toBe(end);
   const disk=JSON.parse(readFileSync(path,"utf8"));expect(disk.cleanup.failures).toEqual([{action:"injected first cleanup",error:"fixture first cleanup failure"}]);expect(disk.failure).toContain("PENDING_ARTIFACTS");expect(disk.connected.files.some((file:{path:string})=>file.path.endsWith("state.json.tmp"))).toBe(true);
   expect(readFileSync(join(f.env.AGENTFLOW_OUTBOX_DIR,fixture.runs[0],"state.json.tmp"),"utf8")).toBe("{}");
   if(process.env.AGENTFLOW_P07_EVIDENCE_DIR)writeFileSync(join(process.env.AGENTFLOW_P07_EVIDENCE_DIR,"failure-control-location.json"),JSON.stringify({path,dir,outbox:f.env.AGENTFLOW_OUTBOX_DIR}),{mode:0o600});
+  }finally{box.close();await proxy.close();await server.stop();}
 },30000);
