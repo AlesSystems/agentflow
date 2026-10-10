@@ -135,3 +135,24 @@ it("an already-open follower reconciles an actual owner SIGKILL before another r
     expect(samples.length).toBeGreaterThan(0);expect(samples.every(sample=>sample.global<=100*1024*1024 && sample.run<=RUN_BYTES)).toBe(true);
   }finally{await server.stop();}
 });
+
+it("serializes racing independent CLI admissions at the global ceiling without dropping either producer's retained prefix",async()=> {
+  const {spawn}=await import("node:child_process");const {readdirSync}=await import("node:fs");const {globalQuotaFixture}=await import("../fixtures/p06-quota");
+  const server=await launch(),f=await globalQuotaFixture(server);await server.stop();
+  const samples:{global:number;run:number}[]=[];
+  const results=await Promise.all(f.ids.slice(0,2).map(async id=> {
+    const child=spawn(process.execPath,["--import","tsx","tests/fixtures/p06-quota-crash.ts","none","report","--run",id,"--type","run.progress","--payload",f.file({message:"\0".repeat(4000)})],{env:{...process.env,...f.env},stdio:["ignore","pipe","pipe","ipc"]});
+    let stdout="",stderr="";child.stdout!.on("data",chunk=>stdout+=chunk);child.stderr!.on("data",chunk=>stderr+=chunk);child.on("message",(message:unknown)=>{const item=message as {kind:string;global:number;run:number};if(item.kind==="sample")samples.push(item);});
+    const code=await new Promise(resolve=>child.on("exit",resolve));return{id,code,stdout,stderr};
+  }));
+  expect(results.map(result=>result.code).sort(),JSON.stringify({results,samples:samples.slice(-5),states:f.ids.slice(0,2).map(id=>JSON.parse(readFileSync(join(f.root,id,"state.json"),"utf8")))})).toEqual([1,2]);
+  expect(results.every(result=>result.stdout==="")).toBe(true);
+  expect(samples.length).toBeGreaterThan(0);expect(samples.every(sample=>sample.global<=100*1024*1024&&sample.run<=RUN_BYTES)).toBe(true);
+  const allocations=results.map((result,index)=> {
+    const state=JSON.parse(readFileSync(join(f.root,result.id,"state.json"),"utf8"));
+    expect(state.acknowledgedThrough).toBe(0);expect(state.pending).toBeUndefined();
+    expect(readdirSync(join(f.root,result.id)).filter(name=>/^\d+-/.test(name)).length).toBe(state.allocatedThrough);
+    return state.allocatedThrough-f.sequences[index];
+  });
+  expect(allocations.sort()).toEqual([0,1]);expect(logicalBytes(f.root)).toBeLessThanOrEqual(100*1024*1024);
+});

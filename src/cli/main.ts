@@ -41,6 +41,7 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number) {
 export async function main(args = process.argv.slice(2), open = openOutbox) {
   const end = deadline();
   let outbox: Outbox | undefined;
+  let preserved=false;
   try {
     if (args.length === 1 && ["--help","help"].includes(args[0])) {process.stdout.write("agentflow project create | task create | agent register | run register --file <json> --idempotency-key <uuid>\nagentflow report --run <uuid> --type <event-type> --payload <json>\nagentflow flush [--run <uuid>]\nAll commands accept --port <port>.\n");return 0;}
     const command = commands[args.slice(0,2).join(" ") as keyof typeof commands];
@@ -69,6 +70,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
     let selected: Job | undefined;
     if (command) {
       const record = await outbox.preserveRegistration(command.path,flags["--idempotency-key"],body!);
+      preserved=true;
       selected = {kind:"registration",id:record.key,record};
     } else if (action === "report") {
       const runId = flags["--run"];
@@ -77,6 +79,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
         if (adopted.kind !== "delivered") throw new CliError(adopted.kind === "blocked" ? adopted.code : "producer_state_required",3);
       }
       await outbox.enqueue(runId,flags["--type"],body!);
+      preserved=true;
       selected = {kind:"run",id:`run:${runId.toLowerCase()}`,runId};
     } else if (flags["--run"]) {
       if (!await outbox.tracked(flags["--run"])) throw new CliError("producer_state_required",3);
@@ -100,6 +103,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
     }
     diagnostic("queued");return 2;
   } catch (error) {
+    if(preserved && error instanceof CliError && ["accounting_deadline","publication_busy"].includes(error.code)){diagnostic("queued");return 2;}
     diagnostic(error instanceof CliError ? error.code : "local_failure");
     return error instanceof CliError ? error.exit : 1;
   } finally {outbox?.close();}
