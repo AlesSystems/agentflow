@@ -115,7 +115,7 @@ export async function main(args = process.argv.slice(2), open = openOutbox) {
       if(!selected){cursorWriting=true;await outbox.advanceCursor(jobs[position].id,until);cursorWriting=false;}
       attempted.add(job.id);
       const reply=await turn(job,outbox,config,until);
-      if(reply.kind==="blocked"){diagnostic(reply.code,job.kind==="run"?job.runId:undefined,reply);blocked.add(job.id);blockedExit=3;continue;}
+      if(reply.kind==="blocked"){diagnostic(reply.code,job.kind==="run"?job.runId:job.record.path==="/runs"?String(job.record.body.id):undefined,reply);blocked.add(job.id);blockedExit=3;continue;}
       if(reply.kind==="delivered") {
         if(job.kind==="registration"||"complete"in reply&&reply.complete)done.add(job.id);
         retries.delete(job.id);
