@@ -102,3 +102,21 @@ it("runs the standalone online producer without a controller or a downtime claim
     expect(done.transcript.some(record => record.operation.includes("offline"))).toBe(false);
   } finally { await producer.close(); await server.stop(); }
 });
+
+it("rejects scratch inside service data before creating producer input files", async () => {
+  const { launch } = await import("../fixtures/server");
+  const { cliFixture } = await import("../fixtures/p06-cli");
+  const { readdirSync } = await import("node:fs");
+  const server = await launch();
+  const f = cliFixture(server);
+  try {
+    const child = spawn(process.execPath, ["--import", "tsx", "scripts/p06-producer.ts"], { env: { ...process.env, ...f.env, AGENTFLOW_PRODUCER_DIR: server.dir }, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "", stderr = "";
+    child.stdout.on("data", chunk => stdout += chunk); child.stderr.on("data", chunk => stderr += chunk);
+    const code = await new Promise<number | null>(resolve => child.once("exit", resolve));
+    expect(code).toBe(1);
+    expect(stdout).toBe("");
+    expect(JSON.parse(stderr).code).toBe("producer_failed");
+    expect(readdirSync(server.dir).some(name => name.startsWith("input-"))).toBe(false);
+  } finally { await server.stop(); }
+});
