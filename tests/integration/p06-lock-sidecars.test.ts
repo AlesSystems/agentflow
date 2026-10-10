@@ -118,9 +118,18 @@ it("concurrent first CLI invocations use the same stable bootstrap inodes and pr
     let stdout="",stderr="";child.stdout.on("data",chunk=>stdout+=chunk);child.stderr.on("data",chunk=>stderr+=chunk);
     const code=await new Promise(resolve=>child.on("exit",resolve));return{key,code,stdout,stderr};
   }));
-  expect(results.some(result=>result.code===2)).toBe(true);
+  expect(results.some(result=>result.code===2),JSON.stringify({results,files:snapshot(f.root).map(file=>({name:file.name,ino:file.ino,size:file.size,mode:file.mode}))})).toBe(true);
   for(const result of results){expect([1,2]).toContain(result.code);expect(result.stdout).toBe("");if(result.code===2)expect(existsSync(join(f.root,`registration-${result.key}.json`))).toBe(true);else expect(result.stderr).not.toContain('"queued"');}
   const before=snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"));
   const reopened=await openOutbox(f.config,performance.now()+5000);
   try{expect(snapshot(f.root).filter(file=>file.name.endsWith(".sqlite"))).toEqual(before);expect(reopened.acquireDelivery()).toBe(true);}finally{reopened.close();}
+});
+
+it("adopts a peer's completed delivery-header bootstrap only under publication ownership without reinitializing it",async()=> {
+  const Database=(await import("better-sqlite3")).default;
+  const {createFile,syncDirectory,syncFile}=await import("../../src/server/filesystem");
+  const {renameSync,unlinkSync}=await import("node:fs");
+  const f=await fixture();let peer=false;const delivery=join(f.root,"delivery.sqlite");let completed: ReturnType<typeof snapshot>[number]|undefined;
+  const outbox=await openOutbox(f.config,performance.now()+5000,{createFile,renameSync,unlinkSync,syncDirectory,syncFile(path){syncFile(path);if(!peer&&path===join(f.root,"publication.sqlite")){peer=true;const publication=new Database(path),other=new Database(delivery);try{publication.exec("BEGIN EXCLUSIVE");other.pragma("user_version=0");syncFile(delivery);syncDirectory(f.root);completed=snapshot(f.root).find(file=>file.name==="delivery.sqlite");publication.exec("ROLLBACK");}finally{other.close();publication.close();}}}});
+  try{expect(peer).toBe(true);expect(snapshot(f.root).find(file=>file.name==="delivery.sqlite")).toEqual(completed);expect(outbox.acquireDelivery()).toBe(true);}finally{outbox.close();}
 });
