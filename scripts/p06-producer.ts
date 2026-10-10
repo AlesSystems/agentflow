@@ -2,13 +2,13 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { lstatSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { createInterface } from "node:readline";
 import { z } from "zod";
 import { cliConfig } from "../src/cli/config";
 import { request } from "../src/cli/http";
 import { uuid } from "../src/contracts/common";
-import { taskDetailResponse } from "../src/contracts/responses";
+import { taskDetailResponse, settingsResponse } from "../src/contracts/responses";
 import { acknowledgement } from "../src/contracts/observations";
 import { activeAppRoot, inspectManaged, privateDestination } from "../src/server/filesystem";
 
@@ -25,6 +25,11 @@ if (args.length === 1 && args[0] === "--help") {
     if (args.length && !controlled) throw new Error("invalid_arguments");
     const config = cliConfig();
     const scratch = privateDestination(process.env.AGENTFLOW_PRODUCER_DIR ?? "", activeAppRoot());
+    const settings = await request(config, "/settings", settingsResponse, performance.now() + 5000);
+    if (settings.kind !== "delivered") throw new Error("service_destination_required");
+    const service = privateDestination(settings.data.data.dataLocation, activeAppRoot());
+    const within = (a: string, b: string) => { const path = relative(a,b); return !path || path !== ".." && !path.startsWith(".."+sep); };
+    if ([service, config.outbox].some(path => within(path,scratch) || within(scratch,path))) throw new Error("producer_directory_overlap");
     const stat = lstatSync(scratch);
     inspectManaged(stat, true);
     if (!stat.isDirectory() || (stat.mode & 0o777) !== 0o700) throw new Error("private_producer_directory_required");
