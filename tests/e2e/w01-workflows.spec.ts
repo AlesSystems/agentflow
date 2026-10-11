@@ -1124,6 +1124,15 @@ test("desktop graph pointer edits stay disabled while keyboard zoom and evidence
     );
     const viewport = page.locator(".react-flow__viewport");
     const zoom = page.getByRole("button", { name: "Zoom In", exact: true });
+    await page.getByRole("button", { name: "Zoom Out", exact: true }).click();
+    await expect
+      .poll(() =>
+        viewport.evaluate((element) => {
+          const scale = element.style.transform.match(/scale\(([^)]+)\)/)?.[1];
+          return scale ? Number(scale) : Infinity;
+        }),
+      )
+      .toBeLessThan(2 / 1.2);
     await page.evaluate(() => {
       const facts: unknown[] = [];
       Object.assign(window, { w01ZoomFacts: facts });
@@ -1161,6 +1170,28 @@ test("desktop graph pointer edits stay disabled while keyboard zoom and evidence
         }),
       ).observe(button, { attributes: true });
     });
+    console.log(
+      JSON.stringify(
+        await page.evaluate(() => ({
+          proof: "native keyboard page focus before",
+          hasFocus: document.hasFocus(),
+          visibility: document.visibilityState,
+        })),
+      ),
+    );
+    await page.bringToFront();
+    await expect
+      .poll(() => page.evaluate(() => document.hasFocus()))
+      .toBe(true);
+    console.log(
+      JSON.stringify(
+        await page.evaluate(() => ({
+          proof: "native keyboard page focus after",
+          hasFocus: document.hasFocus(),
+          visibility: document.visibilityState,
+        })),
+      ),
+    );
     await expect(zoom).toBeEnabled();
     await zoom.focus();
     await expect(zoom).toBeFocused();
@@ -1170,6 +1201,16 @@ test("desktop graph pointer edits stay disabled while keyboard zoom and evidence
       .poll(() => zoom.evaluate((button) => button.matches(":active")))
       .toBe(true);
     await page.keyboard.up("Space");
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (
+              window as unknown as { w01ZoomFacts: { type: string }[] }
+            ).w01ZoomFacts.filter((f) => f.type === "click").length,
+        ),
+      )
+      .toBe(1);
     console.log(
       JSON.stringify(
         await page.evaluate(() => ({
