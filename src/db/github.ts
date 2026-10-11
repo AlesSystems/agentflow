@@ -31,7 +31,7 @@ export class GithubData {
   return this.db.transaction(()=>{
    const replay=this.replay(context);if(replay)return replay;
    const current=this.connection();if(current.version!==input.expectedVersion)throw new Conflict("version_conflict",current.version);
-   this.db.prepare("UPDATE github_connection SET enabled=?,repositories=?,version=version+1,last_error=NULL,retry_not_before=NULL WHERE singleton=1").run(Number(input.enabled),JSON.stringify(input.repositories));
+   this.db.prepare("UPDATE github_connection SET enabled=?,repositories=?,version=version+1,last_error=NULL WHERE singleton=1").run(Number(input.enabled),JSON.stringify(input.repositories));
    this.change(context.now);const reply={status:200,body:this.body(this.publicConnection())};this.receipt(context,reply);return reply;
   }).immediate();
  }
