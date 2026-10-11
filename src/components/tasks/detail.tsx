@@ -451,7 +451,7 @@ export function TaskDetail({
                     onClick={() => {
                       if (confirm("Discard unsaved task changes?")) {
                         setDraft(null);
-                        setCommand(null);
+                        if (command?.kind === "edit") setCommand(null);
                       }
                     }}
                   >
