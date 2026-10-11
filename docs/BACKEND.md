@@ -266,3 +266,16 @@ projections and durable changes commit together. Raw task and workflow event IDs
 cannot collide. Node history is append-only; a latest-observation snapshot selects
 at most one observation per node and never inherits missing skill metadata.
 Workflow heartbeat, linked-attempt freshness and browser connection are independent.
+
+The graph and complete list consume this immutable evidence through the existing
+shared live owner. A generation reset clears discarded revision/attempt/node
+evidence rather than rebinding it; local task/run return context retains validated
+IDs and restores focus. Bounded node history remains distinct from the complete
+at-most-100-node snapshot. Plan-only task links expose Unknown observations.
+
+[W01 verification](implementation/W01.md) records actual HTTP/SQLite recovery,
+typed CLI durability and finite measured evidence. Namespace barrier-order and
+injected-sync-failure controls prove ordering/failure/retry behavior; they are not
+physical power-loss or remote-adoption process-crash guarantees. The mixed-kind
+100 MiB boundary fixture is logical quota evidence, not a successful 100 MiB
+producer lifecycle. No new persistence, transport or external scheduler is added.

@@ -416,3 +416,16 @@ Successful task creation replies keep no-store and append `Prefer` to Vary for
 both representations. Only compact replies acknowledge
 `Preference-Applied: return=minimal`. The current generation response header retains
 its existing meaning, including a historical body replay after restore.
+
+### W01 delivery evidence
+
+Reporter credentials can read the workflow metadata/adoption API; browser pages,
+SSE and human stale closure retain their paired-session requirements. Historical
+node observation links remain bound to their original task/attempt. The read-only
+surface also exposes known task links before any workflow attempt, with explicit
+Unknown evidence and no fabricated run identity.
+
+The [W01 implementation receipt](implementation/W01.md) and
+[synthetic acceptance summary](evidence/W01/acceptance.json) record the exact
+measured source, original ACK/database joins, suite composition and remaining
+integration gate. They introduce no additional route or execution authority.

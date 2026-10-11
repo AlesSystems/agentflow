@@ -1,0 +1,1202 @@
+{
+  "package": "W01",
+  "state": "Ready for final integration review; not merged",
+  "synthetic": true,
+  "acceptance": true,
+  "measuredHead": "7eb85f3ab9ccb93405e283541e86501fa5f19260",
+  "baseline": "dd26c4b00867e7680c3baf0cf2be39b60502aecf",
+  "approvedPlanSha256": "5fdd5c10711239bb144422ca4a1a5e532b8af73fc5c4b94276b853925d27b950",
+  "measurement": {
+    "invocations": 1,
+    "actualExit": 0,
+    "startedAt": "2026-10-11T06:50:53.827Z",
+    "finishedAt": "2026-10-11T06:59:46.034Z",
+    "rawPrivateOriginalSha256": "71a0e222617f3451e9df7aabb6cac5a3059b11d2cf897ca1b3ea01e352bf3e36",
+    "rawPrivateOriginalBytes": 224449104,
+    "independentAuditSha256": "001a5624174eb7b8f559925592b371865ebc81872ce55c4a90dd301227a61772",
+    "preparedSha256": "7368b71a6705163352e2d88d6b2bcd0b2ed04fa3c2d63b0d968822812aecc5b1",
+    "definition": {
+      "ownedDeadlines": {
+        "httpMs": 10000,
+        "healthMs": 1000,
+        "startupMs": 30000,
+        "serviceTerminateMs": 3000,
+        "serviceKillMs": 3000,
+        "proxyCloseMs": 5000,
+        "browserCloseMs": 5000,
+        "cliKillMs": 20000,
+        "cliPipeMs": 1000
+      },
+      "nativeHTTP": {
+        "operations": [
+          "ingestion",
+          "tasks",
+          "detail",
+          "board",
+          "overview",
+          "tracking",
+          "events",
+          "taskCreationDefaultFullHTTP"
+        ],
+        "repetitions": 3,
+        "sources": 2,
+        "warmups": 10,
+        "measuredPerOperationSourceRun": 100,
+        "absoluteP95Ms": 250,
+        "relativeP95RegressionPercent": 20
+      },
+      "legacyCLI": {
+        "operations": [
+          "taskCreatePreference",
+          "legacyOnlineReport",
+          "legacyDurableQueue",
+          "legacyFlushSingle"
+        ],
+        "repetitions": 3,
+        "sources": 2,
+        "warmups": 10,
+        "measuredPerOperationSourceRun": 100,
+        "relativeP95RegressionPercent": 20,
+        "processKillBoundMs": 20000,
+        "nativeDeliveryDeadlineMs": 5000,
+        "timing": "Controller spawn\u2192exit includes startup, native filesystem work, HTTP requests and retries/backoff. Native HTTP250ms budget is not applied to process wall time. Queue uses native delivery lease and expected exit2; online/one-event flush require exit0."
+      },
+      "workflowHTTP": {
+        "operations": [
+          "revision",
+          "attemptMetadata",
+          "snapshot",
+          "attempts",
+          "nodeHistory",
+          "workflowIngestion"
+        ],
+        "repetitions": 3,
+        "nodes": 100,
+        "edges": 200,
+        "warmups": 10,
+        "measuredPerOperationRun": 100,
+        "absoluteP95Ms": 250
+      },
+      "visibility": {
+        "scenarios": 3,
+        "reportsPerScenario": 10,
+        "contexts": 2,
+        "expectedObservations": 60,
+        "views": {
+          "graph": 30,
+          "list": 30
+        },
+        "warmups": 0,
+        "absoluteP95Ms": 2000,
+        "captureBoundMs": 5000,
+        "controllerBoundMs": 6000,
+        "timing": "Single controller CLI dispatch\u2192two-frame exact identity, visible and hit-tested completion. Includes real CLI startup. No server/browser clock subtraction. All observations, missing/wrong/duplicate/hidden/unconfirmed/late counts retained."
+      },
+      "taskRegistrationJoins": {
+        "defaultHTTP": 660,
+        "realCLI": 660,
+        "total": 1320,
+        "qualification": "Includes measured and10warmup creations. Real CLI captures original durable registration bytes and decoded full-or-minimal response, joined to persisted generated task identity and known bindings."
+      },
+      "originalEventACKJoins": {
+        "native": 660,
+        "legacyCLI": 1320,
+        "workflowHTTP": 330,
+        "visibility": 30,
+        "total": 2340,
+        "qualification": "Includes measured and10 warmup events; fixture seed events excluded. Full decoded original response text joins immutable SQLite ACK/body/digest/identity; not compressed wire bytes."
+      },
+      "nativeFixture": {
+        "tasks": 1000,
+        "historicalEvents": 10000
+      }
+    },
+    "counts": {
+      "nativeACK": 660,
+      "existingHTTP": 5280,
+      "realCLI": 2640,
+      "legacyACK": 1320,
+      "legacySpool": 1320,
+      "queueOriginals": 660,
+      "leaseHeldPendingCaptures": 660,
+      "defaultTaskJoins": 660,
+      "cliTaskJoins": 660,
+      "registrationOriginals": 660,
+      "workflowACK": 330,
+      "workflowHTTP": 1980,
+      "visibleACK": 30,
+      "visibleSetupACK": 303
+    },
+    "originalSampleACKjoins": 2340,
+    "taskCreationJoins": 1320,
+    "actualSQLiteDatabases": 18,
+    "visibility": {
+      "expected": 60,
+      "captured": 60,
+      "missing": 0,
+      "unconfirmed": 0,
+      "duplicate": 0,
+      "wrong": 0,
+      "hidden": 0,
+      "late": 0,
+      "valid": true
+    },
+    "distributions": [
+      {
+        "phase": 1,
+        "operation": "ingestion",
+        "p95ChangePercent": 6.196536486316817,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.16079099999979,
+            "p95Ms": 2.093249999999898,
+            "maxMs": 4.389875000000302
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.1907909999999902,
+            "p95Ms": 2.222958999999719,
+            "maxMs": 4.386709000000337
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "tasks",
+        "p95ChangePercent": 10.430858936964382,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.1314580000002934,
+            "p95Ms": 1.672125000000051,
+            "maxMs": 2.807749999999942
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.115291999999954,
+            "p95Ms": 1.846541999999772,
+            "maxMs": 3.423041999999896
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "detail",
+        "p95ChangePercent": 6.253498102539767,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 0.744083000000046,
+            "p95Ms": 1.2846250000002328,
+            "maxMs": 1.6024579999998423
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 0.7385420000000522,
+            "p95Ms": 1.364958999999999,
+            "maxMs": 3.048041999999896
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "board",
+        "p95ChangePercent": 2.1916627169692005,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.1640000000002146,
+            "p95Ms": 1.7490830000001552,
+            "maxMs": 2.972917000000052
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.2219159999999647,
+            "p95Ms": 1.787417000000005,
+            "maxMs": 2.6075840000003154
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "overview",
+        "p95ChangePercent": -0.04906002265494536,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.4881249999998545,
+            "p95Ms": 2.207499999999982,
+            "maxMs": 2.94333400000005
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.523290999999972,
+            "p95Ms": 2.206416999999874,
+            "maxMs": 6.080832999999984
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "tracking",
+        "p95ChangePercent": -2.3238121585121507,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.1705830000000788,
+            "p95Ms": 1.8073750000003201,
+            "maxMs": 2.2873749999998836
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.1830829999998969,
+            "p95Ms": 1.7653750000004038,
+            "maxMs": 3.2927920000001905
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "events",
+        "p95ChangePercent": 8.289817232369945,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 0.7762499999998909,
+            "p95Ms": 1.3404999999997926,
+            "maxMs": 2.603125000000091
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 0.7853749999999309,
+            "p95Ms": 1.4516249999996944,
+            "maxMs": 2.353041999999732
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "ingestion",
+        "p95ChangePercent": 5.123950089879048,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.2024160000146367,
+            "p95Ms": 1.59870800000499,
+            "maxMs": 4.286667000007583
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.2432079999998678,
+            "p95Ms": 1.680625000008149,
+            "maxMs": 3.996374999987893
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "tasks",
+        "p95ChangePercent": 0.9584614517239576,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.1625000000058208,
+            "p95Ms": 1.469334000023082,
+            "maxMs": 3.2538749999948777
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.1988750000018626,
+            "p95Ms": 1.4834170000103768,
+            "maxMs": 1.6305829999910202
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "detail",
+        "p95ChangePercent": 6.578295577390469,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 0.7735830000019632,
+            "p95Ms": 1.1002089999965392,
+            "maxMs": 2.3384580000129063
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 0.8403330000001006,
+            "p95Ms": 1.1725839999853633,
+            "maxMs": 4.10695799998939
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "board",
+        "p95ChangePercent": -1.4692340338433807,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.2351250000065193,
+            "p95Ms": 1.7157920000026934,
+            "maxMs": 2.480416000005789
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.2825830000219867,
+            "p95Ms": 1.6905829999886919,
+            "maxMs": 2.455541000002995
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "overview",
+        "p95ChangePercent": 4.172223281412468,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.5295829999959096,
+            "p95Ms": 1.9683749999967404,
+            "maxMs": 2.2979169999889564
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.5530830000061542,
+            "p95Ms": 2.050500000012107,
+            "maxMs": 2.769083999999566
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "tracking",
+        "p95ChangePercent": 1.4456676021307846,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.2085000000079162,
+            "p95Ms": 1.6831669999810401,
+            "maxMs": 2.8304169999901205
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.2757090000086464,
+            "p95Ms": 1.7074999999895226,
+            "maxMs": 2.228709000017261
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "events",
+        "p95ChangePercent": 3.9163107619260673,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 0.8360420000099111,
+            "p95Ms": 1.2873339999932796,
+            "maxMs": 2.0930830000143033
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 0.8479170000064187,
+            "p95Ms": 1.3377499999769498,
+            "maxMs": 3.0836249999993015
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "ingestion",
+        "p95ChangePercent": 3.7662031322204026,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.0980420000269078,
+            "p95Ms": 1.4924580000224523,
+            "maxMs": 3.8310419999761507
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.1045000000158325,
+            "p95Ms": 1.5486669999663718,
+            "maxMs": 3.366666999994777
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "tasks",
+        "p95ChangePercent": 9.755291410892507,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.0542920000152662,
+            "p95Ms": 1.3040000000037253,
+            "maxMs": 2.238374999957159
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.087375000002794,
+            "p95Ms": 1.4312090000021271,
+            "maxMs": 1.6726659999694675
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "detail",
+        "p95ChangePercent": 7.089021136814466,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 0.6898329999530688,
+            "p95Ms": 0.9280830000061542,
+            "maxMs": 1.1677909999853
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 0.6830830000108108,
+            "p95Ms": 0.9938750000437722,
+            "maxMs": 1.5706250000512227
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "board",
+        "p95ChangePercent": 0.6262287565212743,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.1586670000106096,
+            "p95Ms": 1.444041000038851,
+            "maxMs": 2.1627080000471324
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.1636249999864958,
+            "p95Ms": 1.4530840000370517,
+            "maxMs": 1.8299159999587573
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "overview",
+        "p95ChangePercent": -1.4254703339792951,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.459999999962747,
+            "p95Ms": 1.727500000037253,
+            "maxMs": 3.6220420000026934
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.4551659999997355,
+            "p95Ms": 1.7028750000172295,
+            "maxMs": 3.0546249999897555
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "tracking",
+        "p95ChangePercent": -8.097311532167605,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.1373330000205897,
+            "p95Ms": 1.5828340000007302,
+            "maxMs": 2.386916999996174
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.1214160000090487,
+            "p95Ms": 1.4546669999836013,
+            "maxMs": 2.751083999988623
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "events",
+        "p95ChangePercent": -4.254909124654416,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 0.7300419999519363,
+            "p95Ms": 1.1623749999562278,
+            "maxMs": 2.351208999985829
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 0.7337079999851994,
+            "p95Ms": 1.1129170000203885,
+            "maxMs": 2.0750000000116415
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "taskCreationDefaultFullHTTP",
+        "p95ChangePercent": 14.42597305500366,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.683707999996841,
+            "p95Ms": 1.9100409999991825,
+            "maxMs": 3.549417000001995
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.7342920000010054,
+            "p95Ms": 2.185582999998587,
+            "maxMs": 6.4007500000006985
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "taskCreatePreference",
+        "p95ChangePercent": 2.2501695327963533,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 145.3247080000001,
+            "p95Ms": 152.3348330000008,
+            "maxMs": 155.9758750000001
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 149.81408399999782,
+            "p95Ms": 155.76262500000303,
+            "maxMs": 181.34533300000476
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "legacyOnlineReport",
+        "p95ChangePercent": 2.7355913360054496,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 156.94716699999117,
+            "p95Ms": 162.16479199999594,
+            "maxMs": 164.25012499999866
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 160.97475000000122,
+            "p95Ms": 166.60095799999908,
+            "maxMs": 229.7647500000021
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "legacyDurableQueue",
+        "p95ChangePercent": 2.8506239633290464,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 139.88383299999987,
+            "p95Ms": 144.31633400000283,
+            "maxMs": 149.53887499999837
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 143.13483399999677,
+            "p95Ms": 148.4302500000049,
+            "maxMs": 151.76795900000434
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "legacyFlushSingle",
+        "p95ChangePercent": 3.5392363785315517,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 132.38695899999584,
+            "p95Ms": 138.6092499999977,
+            "maxMs": 185.18554199999198
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 136.55562500000087,
+            "p95Ms": 143.51495900000737,
+            "maxMs": 148.29616599998553
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "taskCreationDefaultFullHTTP",
+        "p95ChangePercent": 4.687802699468979,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.6895409999997355,
+            "p95Ms": 1.9305420000164304,
+            "maxMs": 4.572875000012573
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.6979999999748543,
+            "p95Ms": 2.021042000007583,
+            "maxMs": 4.208291000017198
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "taskCreatePreference",
+        "p95ChangePercent": 3.22161145579718,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 146.98641599999974,
+            "p95Ms": 153.13637500000186,
+            "maxMs": 159.1213749999879
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 151.13008299999638,
+            "p95Ms": 158.06983399999444,
+            "maxMs": 168.22345799999312
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "legacyOnlineReport",
+        "p95ChangePercent": 3.386895734130846,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 158.030374999973,
+            "p95Ms": 165.24470899999142,
+            "maxMs": 190.71891699999105
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 163.1910420000204,
+            "p95Ms": 170.84137499998906,
+            "maxMs": 272.03745800000615
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "legacyDurableQueue",
+        "p95ChangePercent": 2.3235315415416125,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 141.5185000000056,
+            "p95Ms": 147.26858400000492,
+            "maxMs": 156.02491700000246
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 144.5660420000204,
+            "p95Ms": 150.69041600002674,
+            "maxMs": 174.85929200000828
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "legacyFlushSingle",
+        "p95ChangePercent": 3.044567071685722,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 133.4364999999816,
+            "p95Ms": 142.75566600001184,
+            "maxMs": 147.07062499999302
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 138.60612499999115,
+            "p95Ms": 147.10195800001384,
+            "maxMs": 148.58775000000605
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "taskCreationDefaultFullHTTP",
+        "p95ChangePercent": 5.062814193527387,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 1.6725000000442378,
+            "p95Ms": 1.9241669999901205,
+            "maxMs": 3.813207999977749
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 1.7011250000214204,
+            "p95Ms": 2.0215839999727905,
+            "maxMs": 4.005958000023384
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "taskCreatePreference",
+        "p95ChangePercent": 2.0214658750432823,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 147.3636670000269,
+            "p95Ms": 154.86291599995457,
+            "maxMs": 162.87887499999488
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 151.8238329999731,
+            "p95Ms": 157.9934169999906,
+            "maxMs": 163.1213749999879
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "legacyOnlineReport",
+        "p95ChangePercent": 5.119307198741607,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 158.5692080000299,
+            "p95Ms": 164.267833000049,
+            "maxMs": 178.41779199999291
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 162.4273749999702,
+            "p95Ms": 172.67720800003735,
+            "maxMs": 208.77316699997755
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "legacyDurableQueue",
+        "p95ChangePercent": 3.853662968201421,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 140.51879200001713,
+            "p95Ms": 145.8482499999809,
+            "maxMs": 150.91837500000838
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 145.3579580000369,
+            "p95Ms": 151.46875,
+            "maxMs": 182.68362500000512
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "legacyFlushSingle",
+        "p95ChangePercent": 1.7030528369365472,
+        "statistics": {
+          "base": {
+            "count": 100,
+            "p50Ms": 134.64374999998836,
+            "p95Ms": 140.2261250000447,
+            "maxMs": 175.28100000001723
+          },
+          "head": {
+            "count": 100,
+            "p50Ms": 138.39883399999235,
+            "p95Ms": 142.61424999998417,
+            "maxMs": 150.31241700000828
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "revision",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.6918749999895226,
+            "p95Ms": 0.9177919999929145,
+            "maxMs": 2.1067909999983385
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "attemptMetadata",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.46862500000861473,
+            "p95Ms": 0.7845000000088476,
+            "maxMs": 2.1409589999821037
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "snapshot",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 1.3697500000125729,
+            "p95Ms": 1.6660419999971054,
+            "maxMs": 1.8234579999989364
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "attempts",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.7567500000004657,
+            "p95Ms": 1.0556660000002012,
+            "maxMs": 2.685541999991983
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "nodeHistory",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.8628750000207219,
+            "p95Ms": 1.0913750000181608,
+            "maxMs": 2.194958999985829
+          }
+        }
+      },
+      {
+        "phase": 1,
+        "operation": "workflowIngestion",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 1.08512500001234,
+            "p95Ms": 1.3855420000036247,
+            "maxMs": 2.2496249999967404
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "revision",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.6750830000382848,
+            "p95Ms": 0.8858330000075512,
+            "maxMs": 2.0353749999776483
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "attemptMetadata",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.45145799999590963,
+            "p95Ms": 0.8734999999869615,
+            "maxMs": 1.6617499999701977
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "snapshot",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 1.3495830000028946,
+            "p95Ms": 1.6262080000014976,
+            "maxMs": 1.8288750000065193
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "attempts",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.712874999968335,
+            "p95Ms": 0.9369999999762513,
+            "maxMs": 2.203583000053186
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "nodeHistory",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.8343749999767169,
+            "p95Ms": 1.0218750000349246,
+            "maxMs": 2.3915829999605194
+          }
+        }
+      },
+      {
+        "phase": 2,
+        "operation": "workflowIngestion",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 1.0270840000011958,
+            "p95Ms": 1.3937080000177957,
+            "maxMs": 2.183582999976352
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "revision",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.6780830000061542,
+            "p95Ms": 0.8947499999776483,
+            "maxMs": 2.207916999992449
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "attemptMetadata",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.4423750000423752,
+            "p95Ms": 0.7083749999874271,
+            "maxMs": 1.7062089999672025
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "snapshot",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 1.3491249999497086,
+            "p95Ms": 1.5795419999631122,
+            "maxMs": 1.9689590000198223
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "attempts",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.7350829999777488,
+            "p95Ms": 1.2861250000423752,
+            "maxMs": 2.341582999972161
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "nodeHistory",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 0.8280420000082813,
+            "p95Ms": 1.0279999999911524,
+            "maxMs": 2.267374999995809
+          }
+        }
+      },
+      {
+        "phase": 3,
+        "operation": "workflowIngestion",
+        "p95ChangePercent": null,
+        "statistics": {
+          "head": {
+            "count": 100,
+            "p50Ms": 1.0329170000040904,
+            "p95Ms": 1.2733749999897555,
+            "maxMs": 2.291458999970928
+          }
+        }
+      },
+      {
+        "view": "graph",
+        "statistics": {
+          "count": 30,
+          "p50Ms": 591.498499999987,
+          "p95Ms": 750.0020420000073,
+          "maxMs": 752.5672080000222
+        }
+      },
+      {
+        "view": "list",
+        "statistics": {
+          "count": 30,
+          "p50Ms": 465.00379099999554,
+          "p95Ms": 632.7228330000071,
+          "maxMs": 749.478167000052
+        }
+      },
+      {
+        "view": "overall",
+        "statistics": {
+          "count": 60,
+          "p50Ms": 500.0774579999852,
+          "p95Ms": 749.1251249999914,
+          "maxMs": 752.5672080000222
+        }
+      }
+    ]
+  },
+  "sourceIdentities": {
+    "base": {
+      "head": "dd26c4b00867e7680c3baf0cf2be39b60502aecf",
+      "appInputSha256": "a8c18677f394c7dcc6b30a8f231a02333e1c87ee74fab5edaed399057ae9e5e9",
+      "nodeExecutableSha256": "3200fbd9f7fd4410426dd541e10d1ab829d3472f270d743c7fabd1696c03fe32",
+      "sqliteAddonSha256": "98e0e8acd01c632fe5615243e1296af0372826f8783b18fc31c506f73c47459c",
+      "buildId": "oGK5ITTpjNtMDN2ruY88n",
+      "appInputCount": 87,
+      "compiledFileCount": 392,
+      "measurementHelperCount": 6
+    },
+    "head": {
+      "head": "7eb85f3ab9ccb93405e283541e86501fa5f19260",
+      "appInputSha256": "3fe8492ba1f78f6e3535d2d0e687411ec31fd68d65a585126c07779983b8ad87",
+      "nodeExecutableSha256": "3200fbd9f7fd4410426dd541e10d1ab829d3472f270d743c7fabd1696c03fe32",
+      "sqliteAddonSha256": "98e0e8acd01c632fe5615243e1296af0372826f8783b18fc31c506f73c47459c",
+      "buildId": "KjLl1x2VtKInoE55IpapD",
+      "appInputCount": 95,
+      "compiledFileCount": 411,
+      "measurementHelperCount": 14
+    }
+  },
+  "installation": {
+    "freshCheckoutBeforeInstall": true,
+    "preexistingNodeModules": false,
+    "preexistingBuildOutput": false,
+    "installedPackages": 486,
+    "lockEntries": 654,
+    "optionalMissingEntries": 168,
+    "unknownInstalledNoticeEntries": 33,
+    "newDependencyNotices": 20,
+    "lockSha256": "fd351b712ae957b944b016b5ff528a177c5f2d6f7dd2477fea76fd0cc06c47c8",
+    "versions": {
+      "node": "24.15.0",
+      "npm": "11.12.1",
+      "reactFlow": "12.12.0",
+      "macOS": "27.0",
+      "macOSBuild": "26A428",
+      "architecture": "arm64",
+      "cpu": "Apple M4 Pro",
+      "memoryBytes": 25769803776,
+      "logicalCpu": 12,
+      "chrome": "154.0.8037.99"
+    },
+    "audit": {
+      "production": 0,
+      "development": 9,
+      "moderate": 4,
+      "high": 5,
+      "sameRecordsAsP07": true
+    }
+  },
+  "verification": {
+    "unit": {
+      "source": "f0aab8d4d8afeed70e5ffa56dac0f0cb89888079",
+      "passed": 173,
+      "files": 36,
+      "exit": 0
+    },
+    "integration": {
+      "source": "f0aab8d4d8afeed70e5ffa56dac0f0cb89888079",
+      "originalExit": 1,
+      "originalPassed": 443,
+      "originalFailed": 14,
+      "originalFullyPassingFiles": 71,
+      "correctedInvocationFiles": 8,
+      "correctedInvocationPassed": 16,
+      "correctedInvocationExit": 0,
+      "uniqueContracts": 457,
+      "uniqueFiles": 79,
+      "qualification": "All fourteen original errors were missing configured evidence destinations. Only eight affected files reran after creating them; two already passing producer cases are not counted twice. Explicit prepared P07 upgrade and baseline smoke prerequisites were supplied."
+    },
+    "chrome": {
+      "originalSource": "99070037051ccd267d35fa91fafa17274592780a",
+      "originalExit": 1,
+      "originalPassed": 54,
+      "originalFailed": 3,
+      "repairSource": "7eb85f3ab9ccb93405e283541e86501fa5f19260",
+      "affectedPassed": 3,
+      "affectedExit": 0,
+      "uniqueContracts": 57,
+      "qualification": "Two Projects target-size checks passed after the scoped 44px breadcrumb repair. Native zoom tests verify foreground readiness, observable headroom, actual Space click, transform, enabled focus and tab order. No product keyboard patch or proven cause for the historical no-click failure."
+    },
+    "static": {
+      "applicationSource": "7eb85f3ab9ccb93405e283541e86501fa5f19260",
+      "lintExit": 0,
+      "typesExit": 0,
+      "openAPIExit": 0,
+      "productionBuildExit": 0,
+      "buildId": "KjLl1x2VtKInoE55IpapD"
+    }
+  },
+  "screenshots": {
+    "workflow-desktop.png": "369edbfc9795ebc5a2a3ec7cf98055a2219e825559e1291f6cc2d985d89c8c79",
+    "workflow-narrow.png": "41c04d866fce6c18da2d11e34f49e681214d10ceb6b54c8ad1547fde11990280",
+    "board-desktop.png": "be66e73db1df5581412ae8af5c222deedd8ae0b6ff84ff9bd6f0f7b9fa5faf9c",
+    "board-narrow.png": "5222812c8bc4d5ccbbf543a155a4d317d8f550c52b9c08b41eaf58947fac4728"
+  },
+  "limitations": [
+    "Finite named-host W01 evidence; no W04 sustained/burst or complete-v1 claim.",
+    "Fresh checkout with exact current lock; reused owned Node and npm cache; no pristine OS or Linux installation claim.",
+    "Decoded original HTTP response text and durable spool bytes were joined to immutable SQLite rows; not compressed wire-byte or physical power-loss proof.",
+    "The 660 lease-held pending captures are historical before-delivery snapshots, not pending work after final flush. The 303 visibility setup ACKs are distinct from 2340 sampled ACK joins.",
+    "Unit/integration invocations have stable sole-writer source attribution but no invocation-specific before/after hash receipts. Chrome and measurement inputs have exact source/build receipts.",
+    "Original failed commands and corrected invocation/control results remain retained; the composed gates are not fresh all-pass full commands at the measured source.",
+    "Historical mc7 build output was overwritten before byte retention; its receipts/logs/error contexts remain, not original compiled bytes. Current 803 compiled base/head files were independently frozen and checked unchanged.",
+    "Current inventory retains 33 unknown installed notice entries from the baseline and 168 optional platform entries; notices are not a legal completeness opinion. Audit is a registry snapshot, not security completeness.",
+    "Cleanup flags/timestamps and an empty command-path census are scoped evidence, not universal process ownership. Screenshots and human-role fixtures are synthetic, not human attestations.",
+    "Final exact documentation/evidence review, Root verification, guarded PR/merge and archive-before-cleanup remain open. No release tag or W02 work."
+  ]
+}

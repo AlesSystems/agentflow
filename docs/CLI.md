@@ -228,3 +228,10 @@ The real P07-to-current blocked-task upgrade regression requires the separately
 prepared P07 checkout selected by `AGENTFLOW_W01_BASE_SOURCE`; package verification
 supplies it explicitly. An unconfigured ordinary test invocation skips that single
 historical-source prerequisite rather than claiming an upgrade was exercised.
+
+The [W01 receipt](implementation/W01.md) records the configured real upgrade,
+valid bounded full-reply fallback control, original typed spool/ACK/database joins
+and one quiet performance invocation. CLI timings include real process startup
+and native work through EXIT, with complete output drain awaited afterward. They
+use their documented delivery/kill bounds and relative comparison, not the HTTP
+query's 250 ms absolute budget. Graph controls never execute these commands.
