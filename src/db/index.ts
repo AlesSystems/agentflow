@@ -1,3 +1,5 @@
+import { GithubData, type GithubIntent } from "./github";
+import type { GithubRepositoriesInput, GithubRefreshInput, GithubQuery, GithubOutcome } from "../contracts/github";
 import { changeCursor } from "../contracts/common";
 import type { z } from "zod";
 import { changeFrame } from "../contracts/stream";
@@ -40,6 +42,7 @@ export const migrations: Migration[] = [
   "0005_uuid_lookup",
   "0006_workflows",
   "0007_task_evidence",
+  "0008_github",
 ].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),
@@ -77,6 +80,11 @@ export class Store {
       throw error;
     }
   }
+  githubRepositories(input:GithubRepositoriesInput,context:CommandContext){return new GithubData(this.db).repositories(input,context);}
+  githubSnapshot(input:GithubQuery,now=Date.now(),credential:"configured"|"unavailable"|"repair"="unavailable",busy=false){return new GithubData(this.db).snapshot(input,now,credential,busy);}
+  githubAdmit(input:GithubRefreshInput,context:CommandContext,busy:boolean){return new GithubData(this.db).admit(input,context,busy);}
+  githubFinalize(intent:GithubIntent,outcome:GithubOutcome,now:number){return new GithubData(this.db).finalize(intent,outcome,now);}
+  githubRecover(){new GithubData(this.db).recover();}
   command(command: ApplicationCommand, context: CommandContext) {
     return new ApplicationData(this.db, this.dataDir).command(command, context);
   }
