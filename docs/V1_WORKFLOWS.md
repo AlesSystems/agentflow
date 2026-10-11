@@ -4,9 +4,10 @@ Status: active Phase 3 contract. W01 and W02 are integrated through PRs #11–#1
 with source-qualified verification, review, integration and cleanup recorded in
 [the W01 receipt](implementation/W01.md) and [the W02 receipt](implementation/W02.md).
 W03a implementation and qualified verification are accepted with one scoped
-relative-budget exception; final package review/integration/archive remain open.
+relative-budget exception. Whole-package review, PR #13 integration, private
+archival, and guarded cleanup are complete.
 [Its receipt](implementation/W03a.md) preserves original failures and qualifications.
-W03b–W04 remain unstarted.
+W03b is in planning, pending exact-plan Astra medium approval. W03c and W04 remain unstarted.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.

@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01 and W02 integrated; W03a repaired-source verification accepted, with final package review/integration still open.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01, W02, and W03a integrated; W03b is in planning.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -128,5 +128,6 @@ was deleted. These controls are observations and cannot modify GitHub.
 The [W03a receipt](docs/implementation/W03a.md) records deterministic fixture
 verification, the rate-gate repair and two source-specific measured failures with
 separate scoped exceptions, plus a retained launcher setup failure. Live GitHub
-credential verification is unexecuted. Final
-package review and integration remain open; this is not a complete-v1 release.
+credential verification is unexecuted. Whole-package review, PR #13 integration, private archival, and guarded cleanup
+are complete. W03b awaits its plan gate; W03c and W04 remain unstarted. This is
+not a complete-v1 release.
