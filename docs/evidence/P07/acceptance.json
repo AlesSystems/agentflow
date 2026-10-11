@@ -1,6 +1,6 @@
 {
   "synthetic": true,
-  "disposition": "P07 validation checkpoint; final review and integration pending",
+  "disposition": "P07 integrated through PR #10; W01\u2013W04 remain required for v1",
   "executionSource": "2b27403a797dcb3c7a640b14a0b104ac611d154a",
   "verification": {
     "unit": {
@@ -1136,6 +1136,24 @@
     },
     "dependencies": "New full-history local clone with no .next; disclosed symlink reuse of pinned existing dependencies, no installation/build claim",
     "carryForward": "Application/CLI/migration/package/integration/browser and measurement-stage inputs byte-identical to recorded executions. Integration396/Chrome34 remain attributed to2b; application performance534 and repaired CLI2b are not rerun or relabeled. Qualification fixture/unit provenance legitimately changes.",
-    "reviewState": "Both original final reviewers must rereview exact repaired candidate before integration; P07 remains open"
+    "reviewState": "Both original independent reviewers approved exact candidate b680468; integrated through PR #10"
+  },
+  "integration": {
+    "PR": "https://github.com/AlesSystems/agentflow/pull/10",
+    "reviewedHead": "b680468166d7716008d433ba6c8d6a12ee4a9838",
+    "merge": "dd26c4b00867e7680c3baf0cf2be39b60502aecf",
+    "mergedAt": "2026-10-11T00:39:39Z",
+    "treeEqualsReviewed": true,
+    "StandardsSHA256": "55f0f806d35a10691a3b9bf871a5d64c884cde0400d500eeaeeacb69992d35f8",
+    "SpecSHA256": "f75cdeedfab7b98a4eb9e6753a691d9cdf28cce928ea9a5c1ec2bc3f631665eb"
+  },
+  "cleanup": {
+    "exactRootsPreservedAndRemoved": 14,
+    "verifiedArchiveMembers": 167153,
+    "regularFiles": 156966,
+    "symlinkMetadata": 123,
+    "FIFOMetadata": 6,
+    "RootReadbackSHA256": "fbe7bbf9733ab28b80136316cb35227e953c4a84ad2da2c4e03a0121b3ac30da",
+    "qualification": "Private byte/basic-metadata archives; no xattr/ACL/sparse-layout preservation or all-unavailable-historical-files claim; original failed partials preserved; operator/global caches/managed checkouts retained"
   }
 }
