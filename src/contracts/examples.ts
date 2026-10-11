@@ -249,3 +249,20 @@ Object.assign(responseExamples, {
   trackingBoard: snapshot({ columns: ["backlog", "in_progress", "review", "completed"].map(status => ({ status, items: status === "backlog" ? [{ ...task, latestAttempt: null }] : [], total: status === "backlog" ? 1 : 0, nextCursor: null })) }),
   activity: snapshot(list({ id: "event:" + eventId, kind: "report", runId, projectId, agentId, taskId, agentName: observedAgent.displayName, agentSource: observedAgent.source, projectName: project.name, taskTitle: task.title, purpose: observedRun.purpose, model: null, receivedAt: time, occurredAt: time, event: { ...event, receivedAt: time }, reason: null })),
 });
+const workflowId = "10000000-0000-4000-8000-000000000011";
+const revisionId = "10000000-0000-4000-8000-000000000012";
+const nodeId = "10000000-0000-4000-8000-000000000013";
+const workflowExample = { id: workflowId, projectId, name: "Synthetic workflow", version: 1, createdAt: time };
+const revisionExample = { id: revisionId, workflowId, revision: 1, nodes: [{ id: nodeId, label: "Implementation", taskId }], edges: [], createdAt: time };
+Object.assign(requestExamples, {
+ createWorkflow: { id: workflowId, projectId, name: workflowExample.name }, listWorkflows: { projectId }, getWorkflow: {}, createWorkflowRevision: { id: revisionId, expectedWorkflowVersion: 1, nodes: revisionExample.nodes, edges: [] }, listWorkflowRevisions: {}, getWorkflowRevision: {},
+});
+Object.assign(responseExamples, { createWorkflow: snapshot(workflowExample), listWorkflows: snapshot(list(workflowExample)), getWorkflow: snapshot(workflowExample), createWorkflowRevision: snapshot({id:revisionId,workflowId,revision:1,createdAt:time}), listWorkflowRevisions: snapshot(list(revisionExample)), getWorkflowRevision: snapshot(revisionExample) });
+const workflowRunId = "10000000-0000-4000-8000-000000000014";
+const workflowRunExample = { id: workflowRunId, projectId, workflowId, planRevisionId: revisionId, state: "queued", version: 1, lastSequence: 0, lastReceivedAt: time, createdAt: time, startedAt: null, endedAt: null, freshness: { stale: false, reporting: "no_report_received" } };
+const workflowEventExample = { schemaVersion: 1, eventId: factId, workflowRunId, sequence: 1, occurredAt: time, type: "workflow.started", payload: {} };
+const workflowNodeExample = { ...workflowEventExample, sequence: 2, type: "workflow.node.reported", payload: { nodeId, state: "running", runId }, receivedAt: time };
+Object.assign(requestExamples, { registerWorkflowRun: { id: workflowRunId, workflowId, planRevisionId: revisionId }, listWorkflowRuns: { workflowId }, getWorkflowRun: {}, getWorkflowRunSnapshot: {}, ingestWorkflowEvent: workflowEventExample, listWorkflowEvents: {}, listWorkflowNodeObservations: {}, closeWorkflowRun: { expectedVersion: 1, reason: "Synthetic stale closure" } });
+Object.assign(responseExamples, { registerWorkflowRun: snapshot(workflowRunExample), listWorkflowRuns: snapshot(list(workflowRunExample)), getWorkflowRun: snapshot(workflowRunExample), getWorkflowRunSnapshot: snapshot({ ...workflowRunExample, closure: null, nodes: [{ nodeId, label: "Implementation", taskId, observation: null, linkedAttempt: null }] }), ingestWorkflowEvent: snapshot({ eventId: factId, workflowRunId, acceptedSequence: 1, receivedAt: time }), listWorkflowEvents: snapshot(list({ ...workflowEventExample, receivedAt: time })), listWorkflowNodeObservations: snapshot(list(workflowNodeExample)), closeWorkflowRun: snapshot({ ...workflowRunExample, state: "interrupted", version: 2, endedAt: time, freshness: { stale: false, reporting: "terminal" } }) });
+
+export const taskRegistrationExample = snapshot({kind:"task",id:taskId,projectId,parentTaskId:null,assignedAgentId:null,version:1,workRevision:1});

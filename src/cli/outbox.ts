@@ -4,7 +4,8 @@ import { dirname, join, relative, sep } from "node:path";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { uuid } from "../contracts/common";
-import { eventInput, runResponse, agentCreate, runRegister, type EventInput } from "../contracts/observations";
+import { eventInput, runResponse, agentCreate, runRegister } from "../contracts/observations";
+import * as workflows from "../contracts/workflows";
 import { canonicalDigest } from "../domain/request-digest";
 import { activeAppRoot, createFile, privateDestination, secureDirectory, syncDirectory, syncFile, validateFile } from "../server/filesystem";
 import { projectCreate } from "../contracts/projects";
@@ -16,12 +17,14 @@ const GLOBAL_LIMIT = 100 * 1024 * 1024, RUN_LIMIT = 10 * 1024 * 1024, BOOTSTRAP 
 const nativeContention = (error: unknown) => error instanceof Database.SqliteError && ["SQLITE_BUSY","SQLITE_LOCKED"].includes(error.code);
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const watermark = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
-const registration = z.strictObject({ formatVersion: z.literal(1), path: z.enum(["/projects", "/tasks", "/agents", "/runs"]), key: uuid, body: z.record(z.string(), z.unknown()), digest, order: watermark });
-const cursorIdentity=z.string().regex(/^(?:run:|registration:[0-9]{16}:)[a-f0-9-]{36}$/).refine(value=>uuid.safeParse(value.split(":").at(-1)).success&&(!value.startsWith("registration:")||Number.isSafeInteger(Number(value.split(":")[1]))));
+const registrationPath = z.string().refine(path => ["/projects","/tasks","/agents","/runs","/workflows","/workflow-runs"].includes(path) || /^\/workflows\/[a-f0-9-]{36}\/revisions$/.test(path) && uuid.safeParse(path.split("/")[2]).success);
+const registration = z.strictObject({ formatVersion: z.literal(1), path: registrationPath, key: uuid, body: z.record(z.string(), z.unknown()), digest, order: watermark });
+const cursorIdentity=z.string().regex(/^(?:run:|workflow-run:|registration:[0-9]{16}:)[a-f0-9-]{36}$/).refine(value=>uuid.safeParse(value.split(":").at(-1)).success&&(!value.startsWith("registration:")||Number.isSafeInteger(Number(value.split(":")[1]))));
 const metadata = z.strictObject({ formatVersion: z.literal(1), port: z.number().int().min(1024).max(65535), serviceDataDir: z.string(), generation: uuid, cursor: cursorIdentity.nullable(), nextOrder: watermark.default(0), pendingRegistration: z.strictObject({record:registration,filename:z.string(),remainingPeak:watermark}).optional() });
-const storedEvent = z.strictObject({ formatVersion: z.literal(1), body: z.record(z.string(),z.unknown()), digest });
+const producerKind = z.enum(["run", "workflow-run"]);
+const storedEvent = z.strictObject({ formatVersion: z.literal(1), producerKind: producerKind.optional(), body: z.record(z.string(),z.unknown()), digest });
 const pending = z.strictObject({ record: storedEvent, filename: z.string(), remainingPeak: watermark });
-const stateSchema = z.strictObject({ formatVersion: z.literal(1), runId: uuid, allocatedThrough: watermark, acknowledgedThrough: watermark, generation: uuid, pending: pending.optional() });
+const stateSchema = z.strictObject({ formatVersion: z.literal(1), producerKind: producerKind.optional(), runId: uuid, allocatedThrough: watermark, acknowledgedThrough: watermark, generation: uuid, pending: pending.optional() });
 class AdmissionExpiry extends CliError {}
 export class CursorAdmissionTimeout extends CliError {
   constructor(error: CliError) { super(error.code); this.cause = error; }
@@ -29,8 +32,23 @@ export class CursorAdmissionTimeout extends CliError {
 export type Registration = z.infer<typeof registration>;
 export type EventRecord = z.infer<typeof storedEvent>;
 type State = z.infer<typeof stateSchema>;
-export type Job = { id: string; kind: "registration"; record: Registration } | { id: string; kind: "run"; runId: string };
+export type Job = { id: string; kind: "registration"; record: Registration } | { id: string; kind: "run" | "workflow-run"; runId: string };
 const registrationInputs = {"/projects":projectCreate,"/tasks":taskCreate,"/agents":agentCreate,"/runs":runRegister};
+export type ProducerRef = { kind: "run" | "workflow-run"; id: string };
+export type ProducerInput = string | ProducerRef;
+function producer(value: ProducerInput): ProducerRef {
+  const raw = typeof value === "string" ? { kind: value.startsWith("workflow-runs/") ? "workflow-run" as const : "run" as const, id: value.startsWith("workflow-runs/") ? value.slice(14) : value } : value;
+  if (!producerKind.safeParse(raw.kind).success || !uuid.safeParse(raw.id).success) throw new CliError("invalid_producer",3);
+  return { kind: raw.kind, id: raw.id.toLowerCase() };
+}
+const producerKey = (value: ProducerInput) => { const ref=producer(value); return ref.kind === "workflow-run" ? "workflow-runs/"+ref.id : ref.id; };
+const registrationProducer = (record: Pick<Registration,"path"|"body">): ProducerRef | undefined => record.path === "/runs" ? {kind:"run",id:String(record.body.id).toLowerCase()} : record.path === "/workflow-runs" ? {kind:"workflow-run",id:String(record.body.id).toLowerCase()} : undefined;
+export function registrationInput(path: string): z.ZodType | undefined {
+  if (path === "/workflows") return workflows.workflowCreate;
+  if (path === "/workflow-runs") return workflows.workflowRunRegister;
+  if (/^\/workflows\/[a-f0-9-]{36}\/revisions$/.test(path) && uuid.safeParse(path.split("/")[2]).success) return workflows.planRevisionCreate;
+  return registrationInputs[path as keyof typeof registrationInputs];
+}
 const encodedBytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value));
 const overlaps = (a: string, b: string) => { const r = relative(a,b); return !r || (r !== ".." && !r.startsWith(".." + sep)); };
 const io = { createFile, renameSync, unlinkSync, syncDirectory, syncFile };
@@ -52,7 +70,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     if (existsSync(metaPath)) {
       association = readMetadata();
       if (association.port !== config.port || config.explicitService && config.explicitService !== association.serviceDataDir) throw new CliError("destination_mismatch");
-    } else if(readdirSync(root).some(name=>name.startsWith("registration-") || uuid.safeParse(name).success)) {
+    } else if(readdirSync(root).some(name=>name.startsWith("registration-") || name === "workflow-runs" || uuid.safeParse(name).success)) {
       throw new CliError("destination_association_required",3);
     }
   }
@@ -77,28 +95,48 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
   }
   pin(root);
   const lockPaths = [join(root,"publication.sqlite"),join(root,"delivery.sqlite")];
-  function lengths(directory = root, runId?: string): {global:number;run:number} {
+  function producerDirectories() {
+    pin(root);
+    const leaves: {key:string;directory:string}[]=[];
+    for (const name of readdirSync(root)) {
+      const path=join(root,name),stat=lstatSync(path);
+      if (!stat.isDirectory()) continue;
+      if (name === "workflow-runs") {
+        pin(path);
+        for (const id of readdirSync(path)) {
+          if (!uuid.safeParse(id).success || id !== id.toLowerCase() || !lstatSync(join(path,id)).isDirectory()) throw new CliError("unexpected_outbox_entry",3);
+          pin(join(path,id)); leaves.push({key:"workflow-runs/"+id,directory:join(path,id)});
+        }
+      } else {
+        if (!uuid.safeParse(name).success || name !== name.toLowerCase()) throw new CliError("unexpected_outbox_entry",3);
+        pin(path); leaves.push({key:name,directory:path});
+      }
+    }
+    return leaves;
+  }
+  function lengths(directory = root, requested?: ProducerInput): {global:number;run:number} {
     pin(directory);
+    const owner = requested === undefined ? undefined : producerKey(requested);
     let global = 0, run = 0;
     for (const name of readdirSync(directory)) {
       if (performance.now() >= budget) throw new AdmissionExpiry("accounting_deadline");
-      const path = join(directory,name), stat = lstatSync(path);
+      const path=join(directory,name),stat=lstatSync(path);
       if (stat.isDirectory()) {
-        if (directory !== root || !uuid.safeParse(name).success || name !== name.toLowerCase()) throw new CliError("unexpected_outbox_entry");
-        const child = lengths(path,runId); global += child.global; run += name === runId ? child.global : 0;
+        const location=relative(root,path).split(sep).join("/");
+        if (!(directory === root && (name === "workflow-runs" || uuid.safeParse(name).success && name===name.toLowerCase()) || directory===join(root,"workflow-runs") && uuid.safeParse(name).success && name===name.toLowerCase())) throw new CliError("unexpected_outbox_entry",3);
+        const child=lengths(path);global+=child.global;if(location===owner)run+=child.global;
+        if(location==="workflow-runs" && owner?.startsWith("workflow-runs/") && existsSync(join(root,owner))) run+=lengths(join(root,owner)).global;
       } else {
-        validateFile(path);
-        if ((stat.mode & 0o777) !== 0o600) throw new CliError("unsafe_outbox_permissions");
-        if (directory === root ? !/^(metadata\.json(?:\.tmp)?|registration-[a-f0-9-]{36}\.json(?:\.tmp)?|(?:publication|delivery)\.sqlite(?:-journal|-wal|-shm)?)$/.test(name) : !/^(state\.json(?:\.tmp)?|[1-9][0-9]*-[a-f0-9-]{36}\.json(?:\.tmp)?)$/.test(name)) throw new CliError("unexpected_outbox_entry");
-        if (directory === root && name.startsWith("registration-")) {
-          const finalName = name.replace(/\.tmp$/,""), finalPath = join(root,finalName);
-          const descriptor = existsSync(metaPath) ? readMetadata().pendingRegistration : undefined;
-          const record = name.endsWith(".tmp") && descriptor?.filename === finalName ? descriptor.record : name.endsWith(".tmp") && existsSync(finalPath) ? readRegistration(finalPath,finalName) : readRegistration(path,finalName);
-          validateRegistration(record,finalName);
-          if (name.endsWith(".tmp")) validateTemporary(path,record,100000);
-          if (record.path === "/runs" && String(record.body.id).toLowerCase() === runId) run += stat.size;
+        validateFile(path);if((stat.mode&0o777)!==0o600)throw new CliError("unsafe_outbox_permissions");
+        if(directory===join(root,"workflow-runs"))throw new CliError("unexpected_outbox_entry",3);
+        if (directory===root ? !/^(metadata\.json(?:\.tmp)?|registration-[a-f0-9-]{36}\.json(?:\.tmp)?|(?:publication|delivery)\.sqlite(?:-journal|-wal|-shm)?)$/.test(name) : !/^(state\.json(?:\.tmp)?|[1-9][0-9]*-[a-f0-9-]{36}\.json(?:\.tmp)?)$/.test(name)) throw new CliError("unexpected_outbox_entry",3);
+        if(directory===root && name.startsWith("registration-")) {
+          const finalName=name.replace(/\.tmp$/,""),finalPath=join(root,finalName),descriptor=existsSync(metaPath)?readMetadata().pendingRegistration:undefined;
+          const record=name.endsWith(".tmp")&&descriptor?.filename===finalName?descriptor.record:name.endsWith(".tmp")&&existsSync(finalPath)?readRegistration(finalPath,finalName):readRegistration(path,finalName);
+          validateRegistration(record,finalName);if(name.endsWith(".tmp"))validateTemporary(path,record,100000);
+          const ref=registrationProducer(record);if(ref&&producerKey(ref)===owner)run+=stat.size;
         }
-        global += stat.size;
+        global+=stat.size;
       }
     }
     return {global,run};
@@ -177,18 +215,21 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       if (current.dev !== lockPins[i].dev || current.ino !== lockPins[i].ino) throw new CliError("lock_changed");
     }
   }
-  function state(id: string): State {
-    const value=parseRetained(stateSchema,join(root,id.toLowerCase(),"state.json"),200000,"corrupt_state");
-    if(value.runId.toLowerCase()!==id.toLowerCase() || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_state",3);
+  function state(id: ProducerInput): State {
+    const ref=producer(id);
+    if(ref.kind === "workflow-run")pin(join(root,"workflow-runs"));
+    const value=parseRetained(stateSchema,join(root,producerKey(ref),"state.json"),200000,"corrupt_state");
+    if(value.runId.toLowerCase()!==ref.id || (value.producerKind ?? "run")!==ref.kind || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_state",3);
     return value;
   }
-  function validateRecord(record: EventRecord, id: string, sequence: number) {
-    const parsed = eventInput.safeParse(record.body);
-    if (!parsed.success || canonicalDigest(record.body) !== record.digest || parsed.data.runId !== id.toLowerCase() || parsed.data.sequence !== sequence || encodedBytes(record.body) > 65536) throw new CliError("corrupt_record",3);
+  function validateRecord(record: EventRecord, id: ProducerInput, sequence: number) {
+    const ref=producer(id);
+    const parsed = ref.kind === "run" ? eventInput.safeParse(record.body) : workflows.workflowEventInput.safeParse(record.body);
+    if (!parsed.success || canonicalDigest(record.body) !== record.digest || (record.producerKind ?? "run")!==ref.kind || ("runId" in parsed.data ? parsed.data.runId : parsed.data.workflowRunId) !== ref.id || parsed.data.sequence !== sequence || encodedBytes(record.body) > 65536) throw new CliError("corrupt_record",3);
     return parsed.data;
   }
   function validateRegistration(record: Registration,filename: string) {
-    if (filename !== `registration-${record.key.toLowerCase()}.json` || !registrationInputs[record.path].safeParse(record.body).success || canonicalDigest(record.body) !== record.digest) throw new CliError("corrupt_registration",3);
+    if (filename !== `registration-${record.key.toLowerCase()}.json` || !registrationInput(record.path)?.safeParse(record.body).success || encodedBytes(record.body)>65536 || canonicalDigest(record.body) !== record.digest) throw new CliError("corrupt_registration",3);
   }
   function readRegistration(path: string,filename: string): Registration {
     const record=parseRetained(registration,path,100000,"corrupt_registration");validateRegistration(record,filename);return record;
@@ -243,14 +284,15 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       if(value.pendingRegistration){const p=value.pendingRegistration,clean={...value};delete clean.pendingRegistration;validateRegistration(p.record,p.filename);if(p.record.order+1!==value.nextOrder||p.remainingPeak!==encodedBytes(p.record)+encodedBytes(clean))throw new CliError("corrupt_temporary",3);}
     });
   }
-  function abandonedState(path: string,id: string,reference?: State) {
-    const bytes=readBoundedBytes(path,200000),prefix=JSON.stringify({formatVersion:1,runId:reference?.runId||id}).slice(0,-1);
+  function abandonedState(path: string,id: ProducerInput,reference?: State) {
+    const ref=producer(id);
+    const bytes=readBoundedBytes(path,200000),prefix=JSON.stringify({formatVersion:1,...(ref.kind === "workflow-run" ? {producerKind:ref.kind} : {}),runId:reference?.runId||ref.id}).slice(0,-1);
     const lower=Buffer.from(bytes.toString("utf8").toLowerCase()),header=Buffer.from(prefix.toLowerCase());
     if(!header.subarray(0,lower.length).equals(lower)&&!lower.subarray(0,header.length).equals(header))throw new CliError("corrupt_temporary",3);
     const exactPrefix=bytes.subarray(0,Math.min(bytes.length,Buffer.byteLength(prefix))).toString("utf8");
     abandoned(path,stateSchema,exactPrefix,value=> {
       const allocated=reference?.allocatedThrough||0,acknowledged=reference?.acknowledgedThrough||0;
-      if(value.runId.toLowerCase()!==id.toLowerCase() || value.allocatedThrough<allocated || value.allocatedThrough>allocated+1 || value.acknowledgedThrough<acknowledged || value.acknowledgedThrough>acknowledged+1 || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_temporary",3);
+      if(value.runId.toLowerCase()!==ref.id || (value.producerKind??"run")!==ref.kind || value.allocatedThrough<allocated || value.allocatedThrough>allocated+1 || value.acknowledgedThrough<acknowledged || value.acknowledgedThrough>acknowledged+1 || value.acknowledgedThrough>value.allocatedThrough)throw new CliError("corrupt_temporary",3);
       if(value.pending){const p=value.pending,clean={...value};delete clean.pending;validateRecord(p.record,id,value.allocatedThrough);if(p.filename!==`${value.allocatedThrough}-${String(p.record.body.eventId).toLowerCase()}.json`||p.remainingPeak!==encodedBytes(p.record)+encodedBytes(clean))throw new CliError("corrupt_temporary",3);}
     });
   }
@@ -263,7 +305,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
     }
     return bytes-temporary;
   }
-  function reservations(runId?: string) {
+  function reservations(runId?: ProducerInput) {
     let global=0,run=0;
     if (existsSync(metaPath)) {
       const meta=readMetadata(),p=meta.pendingRegistration;
@@ -274,11 +316,11 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         const journal=remaining(join(root,p.filename),p.record,100000);
         const replacement=existsSync(metaPath+".tmp")?Math.max(0,encodedBytes(clean)-validateTemporary(metaPath+".tmp",clean)):encodedBytes(clean);
         global+=journal+replacement;
-        if (p.record.path === "/runs" && String(p.record.body.id).toLowerCase()===runId)run+=journal;
+        const ref=registrationProducer(p.record);if(ref && runId && producerKey(ref)===producerKey(runId))run+=journal;
       }
     }
-    for (const name of readdirSync(root)) {
-      if (!lstatSync(join(root,name)).isDirectory() || !existsSync(join(root,name,"state.json")))continue;
+    for (const {key:name} of producerDirectories()) {
+      if (!existsSync(join(root,name,"state.json")))continue;
       const value=state(name),p=value.pending;
       if (!p)continue;
       validateRecord(p.record,name,value.allocatedThrough);
@@ -287,30 +329,30 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       const record=remaining(join(root,name,p.filename),p.record,100000);
       const temp=join(root,name,"state.json.tmp");
       const replacement=existsSync(temp)?Math.max(0,encodedBytes(clean)-validateTemporary(temp,clean)):encodedBytes(clean);
-      global+=record+replacement;if(name===runId)run+=record+replacement;
+      global+=record+replacement;if(runId && name===producerKey(runId))run+=record+replacement;
     }
     return {global,run};
   }
-  function admit(additional: number,runId?: string,runAdditional=additional) {
+  function admit(additional: number,runId?: ProducerInput,runAdditional=additional) {
     assertPins();const actual=lengths(root,runId),reserved=reservations(runId);
     if(actual.global+reserved.global+additional>GLOBAL_LIMIT || runId && actual.run+reserved.run+runAdditional>RUN_LIMIT)throw new CliError("outbox_full");
   }
   function atomic(name: string,value: unknown, recovering = false) {
-    assertPins(); const path = join(root,name), parent = dirname(path); pin(parent);
+    assertPins(); const path = join(root,name), parent = dirname(path); if(name.startsWith("workflow-runs/"))pin(join(root,"workflow-runs")); pin(parent);
     const encoded = JSON.stringify(value);
-    if (!recovering) admit(Buffer.byteLength(encoded), name.includes("/") ? name.split("/")[0] : name.startsWith("registration-") && typeof value === "object" && value !== null && "path" in value && value.path === "/runs" ? String((value as Registration).body.id).toLowerCase() : undefined);
+    if (!recovering) admit(Buffer.byteLength(encoded), name.includes("/") ? name.slice(0,name.lastIndexOf("/")) : name.startsWith("registration-") && typeof value === "object" && value !== null && "path" in value ? registrationProducer(value as Registration) : undefined);
     const temp = path+".tmp";
     validateFile(path); validateFile(temp);
     if (existsSync(temp)) { filesystem.unlinkSync(temp); filesystem.syncDirectory(parent); }
-    assertPins();pin(parent);filesystem.createFile(temp,encoded);
-    assertPins();pin(parent);validateFile(temp);filesystem.renameSync(temp,path);
-    assertPins();pin(parent);filesystem.syncDirectory(parent);
+    assertPins();if(name.startsWith("workflow-runs/"))pin(join(root,"workflow-runs"));pin(parent);filesystem.createFile(temp,encoded);
+    assertPins();if(name.startsWith("workflow-runs/"))pin(join(root,"workflow-runs"));pin(parent);validateFile(temp);filesystem.renameSync(temp,path);
+    assertPins();if(name.startsWith("workflow-runs/"))pin(join(root,"workflow-runs"));pin(parent);filesystem.syncDirectory(parent);
   }
-  function remove(path: string) {assertPins();pin(dirname(path));validateFile(path);filesystem.unlinkSync(path);assertPins();pin(dirname(path));filesystem.syncDirectory(dirname(path));}
+  function remove(path: string) {assertPins();if(path.startsWith(join(root,"workflow-runs")+sep))pin(join(root,"workflow-runs"));pin(dirname(path));validateFile(path);filesystem.unlinkSync(path);assertPins();if(path.startsWith(join(root,"workflow-runs")+sep))pin(join(root,"workflow-runs"));pin(dirname(path));filesystem.syncDirectory(dirname(path));}
   function recover() {
     lengths(); reservations();
     if(existsSync(metaPath+".tmp") && (!existsSync(metaPath)||!readMetadata().pendingRegistration))abandonedMetadata(metaPath+".tmp");
-    for(const name of readdirSync(root))if(lstatSync(join(root,name)).isDirectory()&&existsSync(join(root,name,"state.json.tmp"))){const path=join(root,name,"state.json");if(!existsSync(path)||!state(name).pending)abandonedState(path+".tmp",name,existsSync(path)?state(name):undefined);}
+    for(const {key:name} of producerDirectories())if(existsSync(join(root,name,"state.json.tmp"))){const path=join(root,name,"state.json");if(!existsSync(path)||!state(name).pending)abandonedState(path+".tmp",name,existsSync(path)?state(name):undefined);}
     if (existsSync(metaPath)) {
       const meta=readMetadata(),p=meta.pendingRegistration;
       if(p){
@@ -319,11 +361,10 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       }
     }
     for (const name of readdirSync(root)) {
-      const directory = join(root,name);
-      if (!lstatSync(directory).isDirectory()) {
-        if (name.endsWith(".tmp")) remove(directory);
-        continue;
-      }
+      if(!lstatSync(join(root,name)).isDirectory()&&name.endsWith(".tmp"))remove(join(root,name));
+      if(name.startsWith("registration-")&&name.endsWith(".json")){const record=readRegistration(join(root,name),name);if(record.path === "/workflow-runs")initializeRegisteredWorkflow(record);}
+    }
+    for (const {key:name,directory} of producerDirectories()) {
       pin(directory);
       const statePath = join(directory,"state.json");
       if (!existsSync(statePath)) {
@@ -375,12 +416,21 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       throw new AdmissionExpiry("publication_busy");
     }finally{budget=previous;}
   }
-  function selectRecord(id: string) {
+  function selectRecord(id: ProducerInput) {
     const value = state(id);
     if (value.acknowledgedThrough === value.allocatedThrough) return undefined;
-    const file = readdirSync(join(root,id.toLowerCase())).find(name=>name.startsWith(`${value.acknowledgedThrough+1}-`));
+    const file = readdirSync(join(root,producerKey(id))).find(name=>name.startsWith(`${value.acknowledgedThrough+1}-`));
     if (!file) throw new CliError("missing_sequence",3);
-    return parseRetained(storedEvent,join(root,id.toLowerCase(),file),100000,"corrupt_record");
+    return parseRetained(storedEvent,join(root,producerKey(id),file),100000,"corrupt_record");
+  }
+  function initializeRegisteredWorkflow(record: Registration) {
+    validateRegistration(record,`registration-${record.key.toLowerCase()}.json`);
+    const ref=registrationProducer(record)!;
+    const key=producerKey(ref),path=join(root,key,"state.json");
+    if(existsSync(path)){state(ref);return;}
+    if(existsSync(join(root,key))&&readdirSync(join(root,key)).some(name=>name!=="state.json.tmp"))throw new CliError("producer_state_required",3);
+    const value: State={formatVersion:1,producerKind:"workflow-run",runId:ref.id,allocatedThrough:0,acknowledgedThrough:0,generation:readMetadata().generation};
+    admit(encodedBytes(value),ref);pin(join(root,"workflow-runs"));pin(join(root,key));filesystem.syncDirectory(join(root,"workflow-runs"));filesystem.syncDirectory(root);atomic(key+"/state.json",value);
   }
   const outbox = {
     async preserveRegistration(path: Registration["path"],key: string,body: Record<string,unknown>) {
@@ -390,57 +440,63 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
           const old = readRegistration(file,name);
           if (canonicalDigest(old.body) !== old.digest) throw new CliError("corrupt_registration",3);
           if (old.path !== path || old.digest !== bodyDigest) throw new CliError("registration_conflict",3);
+          if(path === "/workflow-runs") initializeRegisteredWorkflow(old);
           return old;
         }
         const meta = readMetadata();
         if (meta.nextOrder === Number.MAX_SAFE_INTEGER) throw new CliError("order_exhausted");
         const record: Registration = {formatVersion:1,path,key,body,digest:bodyDigest,order:meta.nextOrder};
+        validateRegistration(registration.parse(record),name);
         const clean={...meta,nextOrder:meta.nextOrder+1};
         const descriptor={...clean,pendingRegistration:{record,filename:name,remainingPeak:encodedBytes(record)+encodedBytes(clean)}};
         const peak=Math.max(encodedBytes(descriptor),encodedBytes(descriptor)-lstatSync(metaPath).size+encodedBytes(record)+encodedBytes(clean));
-        admit(peak,path === "/runs"?String(body.id).toLowerCase():undefined,encodedBytes(record));
-        atomic("metadata.json",descriptor,true);atomic(name,record,true);atomic("metadata.json",clean,true);return record;
+        admit(peak,registrationProducer({path,body}),encodedBytes(record));
+        atomic("metadata.json",descriptor,true);atomic(name,record,true);atomic("metadata.json",clean,true);
+        if(path === "/workflow-runs") initializeRegisteredWorkflow(record);
+        return record;
       });
     },
-    async initializeRun(id: string,until = end) {
-      const reply = await request(config,`/runs/${id}`,runResponse,until);
+    async initializeRun(id: ProducerInput,until = end) {
+      const ref=producer(id);
+      const reply = ref.kind === "run" ? await request(config,`/runs/${ref.id}`,runResponse,until) : await request(config,`/workflow-runs/${ref.id}`,workflows.workflowRunResponse,until);
       if (reply.kind !== "delivered") return reply;
       const blocked=await locked(()=> {
         const runId = reply.data.data.id;
-        if (runId.toLowerCase() !== id.toLowerCase()) return "run_identity_mismatch" as const;
-        const path = join(root,id.toLowerCase(),"state.json");
+        if (runId.toLowerCase() !== ref.id) return "run_identity_mismatch" as const;
+        const path = join(root,producerKey(id),"state.json");
         if (existsSync(path)) {
           const old = state(id);
           if (reply.data.data.lastSequence < old.acknowledgedThrough || reply.data.data.lastSequence > old.allocatedThrough) return "remote_prefix_mismatch" as const;
           return;
         }
         if (reply.data.data.lastSequence !== 0) return "producer_state_required" as const;
-        const value: State = {formatVersion:1,runId,allocatedThrough:0,acknowledgedThrough:0,generation:reply.generation};
-        admit(encodedBytes(value),id.toLowerCase()); secureDirectory(join(root,id.toLowerCase())); pin(join(root,id.toLowerCase())); filesystem.syncDirectory(root);
-        atomic(`${id.toLowerCase()}/state.json`,value);
+        const value: State = {formatVersion:1,...(ref.kind === "workflow-run" ? {producerKind:ref.kind} : {}),runId,allocatedThrough:0,acknowledgedThrough:0,generation:reply.generation};
+        admit(encodedBytes(value),ref); if(ref.kind === "workflow-run")pin(join(root,"workflow-runs")); secureDirectory(join(root,producerKey(id))); pin(join(root,producerKey(id))); if(ref.kind === "workflow-run")filesystem.syncDirectory(join(root,"workflow-runs")); filesystem.syncDirectory(root);
+        atomic(`${producerKey(id)}/state.json`,value);
       },until);
       return blocked?{kind:"blocked" as const,code:blocked}:reply;
     },
-    async tracked(id: string) {return locked(()=>existsSync(join(root,id.toLowerCase(),"state.json")));},
-    async enqueue(id: string,type: string,payload: Record<string,unknown>) {
+    async tracked(id: ProducerInput) {return locked(()=>existsSync(join(root,producerKey(id),"state.json")));},
+    async enqueue(id: ProducerInput,type: string,payload: Record<string,unknown>) {
       return locked(()=> {
         const previous = state(id);
         if (previous.allocatedThrough === Number.MAX_SAFE_INTEGER) throw new CliError("sequence_exhausted");
-        const body = {schemaVersion:1,eventId:randomUUID(),runId:id,sequence:previous.allocatedThrough+1,type,occurredAt:new Date().toISOString(),payload};
-        if (!eventInput.safeParse(body).success || encodedBytes(body)>65536) throw new CliError("invalid_input");
-        const record: EventRecord = {formatVersion:1,body,digest:canonicalDigest(body)};
+        const ref=producer(id);
+        const body = {schemaVersion:1,eventId:randomUUID(),...(ref.kind === "run" ? {runId:previous.runId} : {workflowRunId:ref.id}),sequence:previous.allocatedThrough+1,type,occurredAt:new Date().toISOString(),payload};
+        if (!(ref.kind === "run" ? eventInput : workflows.workflowEventInput).safeParse(body).success || encodedBytes(body)>65536) throw new CliError("invalid_input");
+        const record: EventRecord = {formatVersion:1,...(ref.kind === "workflow-run" ? {producerKind:ref.kind} : {}),body,digest:canonicalDigest(body)};
         const clean: State = {...previous,allocatedThrough:body.sequence};
         const filename = `${body.sequence}-${body.eventId}.json`;
         const descriptor: State = {...clean,pending:{record,filename,remainingPeak:encodedBytes(record)+encodedBytes(clean)}};
-        admit(Math.max(encodedBytes(descriptor),encodedBytes(descriptor)-lstatSync(join(root,id.toLowerCase(),"state.json")).size+encodedBytes(record)+encodedBytes(clean)),id.toLowerCase());
-        atomic(`${id.toLowerCase()}/state.json`,descriptor,true);
-        atomic(`${id.toLowerCase()}/${filename}`,record,true);
-        atomic(`${id.toLowerCase()}/state.json`,clean,true);
+        admit(Math.max(encodedBytes(descriptor),encodedBytes(descriptor)-lstatSync(join(root,producerKey(id),"state.json")).size+encodedBytes(record)+encodedBytes(clean)),ref);
+        atomic(`${producerKey(id)}/state.json`,descriptor,true);
+        atomic(`${producerKey(id)}/${filename}`,record,true);
+        atomic(`${producerKey(id)}/state.json`,clean,true);
         return record;
       });
     },
-    async next(id: string,until=end) {return locked(()=>selectRecord(id),until);},
-    async selectForTurn(id: string,cursor: string,until=end) {
+    async next(id: ProducerInput,until=end) {return locked(()=>selectRecord(id),until);},
+    async selectForTurn(id: ProducerInput,cursor: string,until=end) {
       try { return await locked(()=> {
         const record=selectRecord(id);
         if(record)atomic("metadata.json",{...readMetadata(),cursor});
@@ -449,30 +505,29 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
       catch(error) {if(error instanceof AdmissionExpiry)throw new CursorAdmissionTimeout(error);throw error;}
     },
     async acknowledge(record: EventRecord,generation: string,until=end) {return locked(()=> {
-      const event = record.body as unknown as EventInput, value = state(event.runId);
+      const ref: ProducerRef = {kind:record.producerKind??"run",id:String(record.body.runId??record.body.workflowRunId)};
+      const event=validateRecord(record,ref,Number(record.body.sequence)), value=state(ref);
       if (value.acknowledgedThrough+1 !== event.sequence) throw new CliError("ack_sequence_mismatch",3);
-      atomic(`${event.runId.toLowerCase()}/state.json`,{...value,acknowledgedThrough:event.sequence,generation});
-      remove(join(root,event.runId.toLowerCase(),`${event.sequence}-${event.eventId.toLowerCase()}.json`));
+      atomic(`${producerKey(ref)}/state.json`,{...value,acknowledgedThrough:event.sequence,generation});
+      remove(join(root,producerKey(ref),`${event.sequence}-${event.eventId.toLowerCase()}.json`));
       return {complete:event.sequence===value.allocatedThrough};
     },until);},
-    async validateRemote(id: string,generation: string,until: number) {
+    async validateRemote(id: ProducerInput,generation: string,until: number) {
       const local = await locked(()=>state(id),until);
       if (local.generation === generation) return {kind:"delivered" as const};
       const current = await outbox.initializeRun(id,until);
-      if (current.kind === "delivered") await locked(()=>atomic(`${id.toLowerCase()}/state.json`,{...state(id),generation:current.generation}),until);
+      if (current.kind === "delivered") await locked(()=>atomic(`${producerKey(id)}/state.json`,{...state(id),generation:current.generation}),until);
       return current;
     },
     async jobs() {return locked(()=> {
       const jobs: Job[] = [];
-      for (const name of readdirSync(root)) {
-        if (name.startsWith("registration-") && name.endsWith(".json")) {
-          const record = readRegistration(join(root,name),name);
-          if (record.digest !== canonicalDigest(record.body)) throw new CliError("corrupt_registration",3);
-          jobs.push({id:`registration:${String(record.order).padStart(16,"0")}:${record.key.toLowerCase()}`,kind:"registration",record});
-        } else if (lstatSync(join(root,name)).isDirectory() && existsSync(join(root,name,"state.json"))) {
-          const value = state(name);
-          if (value.acknowledgedThrough < value.allocatedThrough) jobs.push({id:`run:${name}`,kind:"run",runId:value.runId});
-        }
+      for (const name of readdirSync(root)) if(name.startsWith("registration-")&&name.endsWith(".json")) {
+        const record=readRegistration(join(root,name),name);
+        jobs.push({id:`registration:${String(record.order).padStart(16,"0")}:${record.key.toLowerCase()}`,kind:"registration",record});
+      }
+      for (const {key} of producerDirectories()) if(existsSync(join(root,key,"state.json"))) {
+        const ref=producer(key),value=state(ref);
+        if(value.acknowledgedThrough<value.allocatedThrough)jobs.push({id:`${ref.kind}:${ref.id}`,kind:ref.kind,runId:value.runId});
       }
       return jobs.sort((a,b)=>a.id.localeCompare(b.id));
     });},

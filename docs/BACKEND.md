@@ -249,3 +249,33 @@ boundary, total and generation/filter-bound cursor in one snapshot transaction.
 Raw event history retains all ordered heartbeats. Neither summaries, Activity nor
 the browser's connection state infer external process liveness. Human stale-record
 closure still records an operator fact without a producer event or execution signal.
+
+### Immutable workflow publication
+
+Migration 0006 adds workflow metadata, immutable validated JSON revisions and
+original registration identities. Publication uses the existing immediate command
+transaction, receipt and durable change feed. A revision captures its original
+nodes and edges; later publication cannot mutate its labels or task links.
+Revision identity retries resolve before mutable archive/version checks.
+
+Workflow attempts allocate a separate non-reusing registration order inside the
+immediate transaction. Native allocator and binding triggers preserve order,
+workflow/project/revision identity and history through restart, VACUUM and restore.
+Active uniqueness is a partial SQLite index. Workflow events, node observations,
+projections and durable changes commit together. Raw task and workflow event IDs
+cannot collide. Node history is append-only; a latest-observation snapshot selects
+at most one observation per node and never inherits missing skill metadata.
+Workflow heartbeat, linked-attempt freshness and browser connection are independent.
+
+The graph and complete list consume this immutable evidence through the existing
+shared live owner. A generation reset clears discarded revision/attempt/node
+evidence rather than rebinding it; local task/run return context retains validated
+IDs and restores focus. Bounded node history remains distinct from the complete
+at-most-100-node snapshot. Plan-only task links expose Unknown observations.
+
+[W01 verification](implementation/W01.md) records actual HTTP/SQLite recovery,
+typed CLI durability and finite measured evidence. Namespace barrier-order and
+injected-sync-failure controls prove ordering/failure/retry behavior; they are not
+physical power-loss or remote-adoption process-crash guarantees. The mixed-kind
+100 MiB boundary fixture is logical quota evidence, not a successful 100 MiB
+producer lifecycle. No new persistence, transport or external scheduler is added.

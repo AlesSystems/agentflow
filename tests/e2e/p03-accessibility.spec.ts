@@ -24,6 +24,8 @@ test("board, task, settings and narrow layouts retain accessible controls", asyn
     const f = await fixture(page, server);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(f.boardUrl);
+    const projectsTarget = await page.locator(".project-back").boundingBox();
+    expect(projectsTarget?.height).toBeGreaterThanOrEqual(44);
     await axe(page);
     const contrast = await page.evaluate(() => {
       function rgb(value: string) {

@@ -1,3 +1,5 @@
+import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
+import type { SnapshotBody } from "../db/application";
 import { z } from "zod";
 import { streamQuery, changeNotice } from "./stream";
 import { pageQuery, uuid } from "./common";
@@ -28,6 +30,7 @@ import {
   settingsResponse,
   overviewResponse,
 } from "./responses";
+import * as workflows from "./workflows";
 import * as observations from "./observations";
 import * as tracking from "./tracking";
 export const emptyQuery = z.strictObject({});
@@ -41,6 +44,7 @@ type EndpointBase = {
   response: z.ZodType;
   status: number;
   eventIdentity?: boolean;
+  taskCreationReply?: { response: z.ZodType; project: (body: SnapshotBody) => SnapshotBody };
   description?: string;
 };
 export type EndpointAction =
@@ -51,6 +55,7 @@ type ResourceEndpoint = EndpointBase & {
   parseRequest: (
     original: unknown,
     id: string,
+    params?: Record<string, string>,
   ) => { success: true; action: EndpointAction } | { success: false };
 };
 export type StreamEndpoint = EndpointBase & { kind: "stream" };
@@ -79,25 +84,39 @@ function defineCommand<S extends z.ZodType>(
 function defineQuery<S extends z.ZodType>(
   definition: EndpointBase & {
     input: S;
-    query: (input: z.output<S>, id: string) => ApplicationQuery;
+    query: (input: z.output<S>, id: string, params: Record<string, string>) => ApplicationQuery;
   },
 ): ResourceEndpoint {
   const { query, ...base } = definition;
   return {
     ...base,
     kind: "query",
-    parseRequest: (original, id) => {
+    parseRequest: (original, id, params = {}) => {
       const parsed = definition.input.safeParse(original);
       return parsed.success
         ? {
             success: true,
-            action: { kind: "query", query: query(parsed.data, id) },
+            action: { kind: "query", query: query(parsed.data, id, params) },
           }
         : { success: false };
     },
   };
 }
 export const endpoints: Endpoint[] = [
+  defineQuery({ id: "getWorkflowRunSnapshot", method: "GET", path: "/workflow-runs/{id}/snapshot", access: "read", input: emptyQuery, response: workflows.workflowRunDetailResponse, status: 200, query: (_, id) => ({ kind: "workflow.run", id }) }),
+  defineCommand({ id: "registerWorkflowRun", method: "POST", path: "/workflow-runs", access: "report", input: workflows.workflowRunRegister, response: workflows.workflowRunResponse, status: 201, command: input => ({ kind: "workflow.run.register", input }) }),
+  defineQuery({ id: "listWorkflowRuns", method: "GET", path: "/workflow-runs", access: "read", input: workflows.workflowRunQuery, response: workflows.workflowRunsResponse, status: 200, query: input => ({ kind: "workflow.runs", input }) }),
+  defineQuery({ id: "getWorkflowRun", method: "GET", path: "/workflow-runs/{id}", access: "read", input: emptyQuery, response: workflows.workflowRunResponse, status: 200, query: (_, id) => ({ kind: "workflow.run.summary", id }) }),
+  defineCommand({ id: "ingestWorkflowEvent", method: "POST", path: "/workflow-runs/{id}/events", access: "report", input: workflows.workflowEventInput, response: workflows.workflowEventResponse, status: 201, eventIdentity: true, command: (input, id) => ({ kind: "workflow.run.event", id, input }) }),
+  defineQuery({ id: "listWorkflowEvents", method: "GET", path: "/workflow-runs/{id}/events", access: "read", input: workflows.workflowHistoryQuery, response: workflows.workflowEventsResponse, status: 200, query: (input, id) => ({ kind: "workflow.events", id, input }) }),
+  defineQuery({ id: "listWorkflowNodeObservations", method: "GET", path: "/workflow-runs/{id}/nodes/{nodeId}/observations", access: "read", input: workflows.workflowHistoryQuery, response: workflows.workflowNodeHistoryResponse, status: 200, query: (input, id, params) => ({ kind: "workflow.nodes", id, nodeId: params.nodeId, input }) }),
+  defineCommand({ id: "closeWorkflowRun", method: "POST", path: "/workflow-runs/{id}/close", access: "human", input: workflows.workflowClose, response: workflows.workflowRunResponse, status: 200, command: (input, id) => ({ kind: "workflow.run.close", id, input }) }),
+  defineCommand({ id: "createWorkflow", method: "POST", path: "/workflows", access: "report", input: workflows.workflowCreate, response: workflows.workflowResponse, status: 201, command: input => ({ kind: "workflow.create", input }) }),
+  defineQuery({ id: "listWorkflows", method: "GET", path: "/workflows", access: "read", input: workflows.workflowQuery, response: workflows.workflowsResponse, status: 200, query: input => ({ kind: "workflows", input }) }),
+  defineQuery({ id: "getWorkflow", method: "GET", path: "/workflows/{id}", access: "read", input: emptyQuery, response: workflows.workflowResponse, status: 200, query: (_, id) => ({ kind: "workflow", id }) }),
+  defineCommand({ id: "createWorkflowRevision", method: "POST", path: "/workflows/{id}/revisions", access: "report", input: workflows.planRevisionCreate, response: workflows.revisionAcknowledgementResponse, status: 201, command: (input, id) => ({ kind: "workflow.revision", id, input }) }),
+  defineQuery({ id: "listWorkflowRevisions", method: "GET", path: "/workflows/{id}/revisions", access: "read", input: workflows.workflowHistoryQuery, response: workflows.revisionsResponse, status: 200, query: (input, id) => ({ kind: "workflow.revisions", id, input }) }),
+  defineQuery({ id: "getWorkflowRevision", method: "GET", path: "/workflows/{id}/revisions/{revisionId}", access: "read", input: emptyQuery, response: workflows.revisionResponse, status: 200, query: (_, id, params) => ({ kind: "workflow.revision", id, revisionId: params.revisionId }) }),
   { id: "changeStream", method: "GET", path: "/changes/stream", access: "human", input: streamQuery, response: changeNotice, status: 200, kind: "stream", description: "Browser-cookie invalidations; Last-Event-ID overrides a valid after. Canonical signed SQLite cursor range. Finite HEAD. 20 streams; 1 MiB buffer cap and 5 second stalled-drain close." },
   defineQuery({ id: "trackingAgents", method: "GET", path: "/tracking/agents", access: "read", input: observations.agentQuery, response: tracking.trackingAgentsResponse, status: 200, query: (input) => ({ kind: "tracking.agents", input }) }),
   defineQuery({ id: "trackingRuns", method: "GET", path: "/tracking/runs", access: "read", input: observations.runQuery, response: tracking.trackingRunsResponse, status: 200, query: (input) => ({ kind: "tracking.runs", input }) }),
@@ -272,6 +291,7 @@ export const endpoints: Endpoint[] = [
   }),
   defineCommand({
     id: "createTask",
+    taskCreationReply: { response: taskRegistrationResponse, project: projectTaskRegistration },
     method: "POST",
     path: "/tasks",
     access: "report",
@@ -374,17 +394,12 @@ export const endpoints: Endpoint[] = [
 export function matchEndpoint(method: string, pathname: string) {
   for (const endpoint of endpoints) {
     if (endpoint.method !== (method === "HEAD" ? "GET" : method)) continue;
-    const match = new RegExp(
-      "^/api/v1" + endpoint.path.replace("{id}", "([^/]+)") + "/?$",
-    ).exec(pathname);
+    const names: string[] = [];
+    const pattern = endpoint.path.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (_, name: string) => { names.push(name); return "([^/]+)"; });
+    const match = new RegExp("^/api/v1" + pattern + "/?$").exec(pathname);
     if (match) {
-      const id = match[1];
-      return {
-        endpoint,
-        id: id?.toLowerCase(),
-        path:
-          "/api/v1" + endpoint.path.replace("{id}", id?.toLowerCase() ?? ""),
-      };
+      const params = Object.fromEntries(names.map((name, i) => [name, match[i + 1].toLowerCase()]));
+      return { endpoint, id: params.id, params, path: "/api/v1" + endpoint.path.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (_, name: string) => params[name]) };
     }
   }
   return null;

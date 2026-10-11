@@ -38,6 +38,7 @@ export const migrations: Migration[] = [
   "0003_run_identity",
   "0004_observations",
   "0005_uuid_lookup",
+  "0006_workflows",
 ].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),

@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P06 are integrated through PRs #4–#9. P07 validation has passed; exact-candidate independent review and integration remain before W01. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07 are integrated through PRs #4–#10. W01 implementation and qualified verification are ready for final integration review; [its receipt](docs/implementation/W01.md) records the measured executable and remaining gate. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -129,18 +129,18 @@ Run the CLI through subprocess integration tests and an interactive terminal wal
 
 Depends on P05 and P06. Proposed files include release walkthroughs, load scenarios, backup/recovery documentation, and focused fixes supported by failing evidence.
 
-- [ ] On a fresh data directory, create a project/task/agent, register an implementation run, report start/progress/success, inspect Review, record acceptance, and reopen.
-- [ ] Repeat with failure, staleness, duplicate reporting, downtime, and reconnect. Verify both browser tabs and persistent history.
-- [ ] Check unauthenticated reads/SSE, cross-origin mutation, spoofed Host, oversized payloads, invalid links, and non-loopback access.
-- [ ] Verify migration failure recovery, backup restoration, generation reset, permissions, and the documented outbox recovery limits.
-- [ ] Run the load scenario below and inspect resource cleanup.
+- [x] On a fresh data directory, create a project/task/agent, register an implementation run, report start/progress/success, inspect Review, record acceptance, and reopen.
+- [x] Repeat with failure, staleness, duplicate reporting, downtime, and reconnect. Verify both browser tabs and persistent history.
+- [x] Check unauthenticated reads/SSE, cross-origin mutation, spoofed Host, oversized payloads, invalid links, and non-loopback access.
+- [x] Verify migration failure recovery, backup restoration, generation reset, permissions, and the documented outbox recovery limits.
+- [x] Run the load scenario below and inspect resource cleanup.
   Capture observer visibility during the combined load scenario with sampling
   identities, counts and missingness defined in the Astra-approved P07 plan.
   P05's connected visibility samples precede its load phases and do not supply
   under-load visibility evidence.
-- [ ] Run the execution policy's isolated-install walkthrough, keyboard journey, production build, full relevant tests, lint, and type checking.
-- [ ] Verify the approved MIT license and notices, set package license metadata, and record the tested macOS configuration and exact dependency versions.
-- [ ] Obtain independent review at the checkpoint commit, including browser journey evidence, and integrate it. Continue to W01; P07 does not publish a release.
+- [x] Run the execution policy's isolated-install walkthrough, keyboard journey, production build, full relevant tests, lint, and type checking.
+- [x] Verify the approved MIT license and notices, set package license metadata, and record the tested macOS configuration and exact dependency versions.
+- [x] Obtain independent review at the checkpoint commit, including browser journey evidence, and integrate it. Continue to W01; P07 does not publish a release.
 
 ## Phase 3 work packages
 
@@ -149,6 +149,12 @@ choices. Update backend/API/OpenAPI documentation with each implementation so
 planned and executable contracts stay aligned. All scopes below are required.
 
 ### W01. Observe a reported workflow
+
+Implementation/evidence work is complete in the
+[task checklist](docs/superpowers/plans/2026-10-11-w01-workflows.md), including one
+independently audited quiet measurement at `7eb85f3`. These package completion
+boxes stay open for final exact-candidate review and verified integration. W01
+has not merged; W02 has not started.
 
 Depends on P07. Proposed files: `src/workflows/`, `src/db/schema/workflows.ts`,
 `src/app/api/v1/workflows/`, `src/app/projects/[projectId]/workflows/`,
@@ -262,15 +268,15 @@ in release limitations without misrepresenting fixture coverage as a live test.
 
 ## Performance acceptance targets
 
-These are proposed budgets, not measured results. Adjust only through a recorded decision with measurements and user impact.
+These budgets passed at the P07 Phase 2 checkpoint on its source-qualified named-host fixtures. W04 must repeat them on integrated v1; that gate remains open. Adjust only through a recorded decision with measurements and user impact.
 
 Use a named machine, production build, 1,000 tasks, 10,000 stored run events, 10 producers on distinct tasks, and two browser tabs. Run 20 new events/second for five minutes, then a 100-event/second burst for ten seconds. Respect configured rate limits and record any expected `429` responses separately from accepted events. Producers emit valid ordered lifecycles.
 
-- [ ] Accepted-event HTTP latency is below 250 ms at p95 under sustained load.
-- [ ] Report-to-visible latency is below two seconds at p95 while connected.
-- [ ] Board snapshot latency is below 250 ms at p95 for the stated fixture and bounded page size.
-- [ ] A disconnected producer flushes 1,000 queued reports without loss or duplication within two minutes on loopback.
-- [ ] After 100 connect/disconnect cycles, open-stream count returns to baseline and heap use returns within 20% after the same controlled collection procedure.
+- [x] Accepted-event HTTP latency is below 250 ms at p95 under sustained load.
+- [x] Report-to-visible latency is below two seconds at p95 while connected.
+- [x] Board snapshot latency is below 250 ms at p95 for the stated fixture and bounded page size.
+- [x] A disconnected producer flushes 1,000 queued reports without loss or duplication within two minutes on loopback.
+- [x] After 100 connect/disconnect cycles, open-stream count returns to baseline and heap use returns within 20% after the same controlled collection procedure.
 
 Collect at least three interleaved base/head runs for changed operations and retain raw samples. A greater than 20% p95 regression requires explanation and approval even if an absolute budget passes. Where base lacks a feature, report that fact and use its absolute budget; do not invent a relative speedup. The load targets do not promise support for arbitrary transcript volume.
 

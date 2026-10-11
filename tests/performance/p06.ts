@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir, release } from "node:os";
-import { join, relative, isAbsolute } from "node:path";
+import { join, relative, isAbsolute, dirname } from "node:path";
 import { chromium, expect } from "@playwright/test";
 import Database from "better-sqlite3";
 import { z } from "zod";
@@ -213,20 +213,44 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
   }
 }
 try {
-  const baseSource=join(root,"p05-source");mkdirSync(baseSource,{mode:0o700});
-  const archive=execFileSync("git",["archive",baselineSha],{maxBuffer:20*1024*1024});
-  execFileSync("tar",["-xf","-","-C",baseSource],{input:archive});
-  assert.equal(hash(readFileSync("package-lock.json")),hash(readFileSync(join(baseSource,"package-lock.json"))),"baseline/head dependency lock must match");
-  symlinkSync(join(process.cwd(),"node_modules"),join(baseSource,"node_modules"));
-  const baseBuildDir = process.env.AGENTFLOW_P06_BASE_BUILD_DIR ?? join(process.cwd(),".next");
-  assert(isAbsolute(baseBuildDir),"baseline build directory must be absolute");
-  const baseBuildId = readFileSync(join(baseBuildDir,"BUILD_ID"),"utf8").trim();
-  if (acceptance) assert.equal(baseBuildId,"hL87_8rkkJoB-OPCgH1dH","Select retained P05 cached assets for acceptance");
-  cpSync(baseBuildDir,join(baseSource,".next"),{recursive:true});
-  receipt.provenance={baselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:process.env.AGENTFLOW_P06_BASE_BUILD_DIR ? "explicit retained P05 assets" : "current assets copied before later head rebuild",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p06.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts"].map(path=>[path,hash(readFileSync(path))])),comparison:"Equivalent native public HTTP operations on copied identical synthetic dataset. P05 has no CLI. Cached assets copied before later head rebuild; native HTTP uses each label's source."};
+  const prepared = !acceptance ? process.env.AGENTFLOW_P06_SMOKE_BASE_SOURCE : undefined;
+  const baseSource = prepared ? realpathSync(prepared) : join(root,"p05-source");
+  const selectedBaselineSha = prepared ? execFileSync("git",["rev-parse","HEAD"],{cwd:baseSource,encoding:"utf8"}).trim() : baselineSha;
+  const archive=execFileSync("git",["archive",selectedBaselineSha],{maxBuffer:20*1024*1024});
+  if(!prepared){mkdirSync(baseSource,{mode:0o700});execFileSync("tar",["-xf","-","-C",baseSource],{input:archive});}
+  let baseBuildDir: string;
+  if(acceptance) {
+    assert.equal(hash(readFileSync("package-lock.json")),hash(readFileSync(join(baseSource,"package-lock.json"))),"baseline/head dependency lock must match");
+    symlinkSync(join(process.cwd(),"node_modules"),join(baseSource,"node_modules"));
+    baseBuildDir = process.env.AGENTFLOW_P06_BASE_BUILD_DIR ?? join(process.cwd(),".next");
+    assert(isAbsolute(baseBuildDir),"baseline build directory must be absolute");
+    assert.equal(readFileSync(join(baseBuildDir,"BUILD_ID"),"utf8").trim(),"hL87_8rkkJoB-OPCgH1dH","Select retained P05 cached assets for acceptance");
+    cpSync(baseBuildDir,join(baseSource,".next"),{recursive:true});
+  } else {
+    if(!prepared) {
+      const npm=join(dirname(process.execPath),"../lib/node_modules/npm/bin/npm-cli.js");
+      const install=execFileSync(process.execPath,[npm,"ci","--cache",join(root,"npm-cache")],{cwd:baseSource,maxBuffer:20*1024*1024});writeFileSync(join(root,"baseline-install.log"),install,{mode:0o600});
+      const build=execFileSync(process.execPath,[npm,"run","build"],{cwd:baseSource,maxBuffer:20*1024*1024});writeFileSync(join(root,"baseline-build.log"),build,{mode:0o600});
+    }
+    assert(!lstatSync(join(baseSource,"node_modules")).isSymbolicLink(),"smoke baseline needs its own dependencies");
+    const baselinePackage=JSON.parse(readFileSync(join(baseSource,"package.json"),"utf8"));
+    for(const name of ["next","react","react-dom","better-sqlite3","tsx","zod"])assert.equal(JSON.parse(readFileSync(join(baseSource,"node_modules",name,"package.json"),"utf8")).version,baselinePackage.dependencies[name],"source-correct baseline dependency required");
+    baseBuildDir=join(baseSource,".next");
+  }
+  const baseBuildId=readFileSync(join(baseBuildDir,"BUILD_ID"),"utf8").trim();
+  receipt.provenance={baselineSha:selectedBaselineSha,headSha:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSha256:hash(execFileSync("git",["diff","HEAD"])),baseArchiveSha256:hash(archive),lockSha256:hash(readFileSync("package-lock.json")),baselineLockSha256:hash(readFileSync(join(baseSource,"package-lock.json"))),sqliteAddonSha256:hash(readFileSync(sqliteAddon)),baselineCachedBuildId:baseBuildId,headCachedBuildId:readFileSync(".next/BUILD_ID","utf8").trim(),baselineCachedAssets:acceptance ? process.env.AGENTFLOW_P06_BASE_BUILD_DIR ? "explicit retained P05 assets" : "current assets copied before later head rebuild" : "baseline own source-correct production build",cachedBuildHashes:fileHashes(join(baseSource,".next")),helperHashes:Object.fromEntries(["tests/performance/p06.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts","src/cli/main.ts","src/cli/outbox.ts","src/cli/http.ts","src/cli/config.ts",...(!acceptance?["tests/fixtures/p06-baseline-seed.ts"]:[])].map(path=>[path,hash(readFileSync(path))])),comparison:acceptance ? "Equivalent native public HTTP operations on copied identical synthetic dataset. P05 has no CLI. Cached assets copied before later head rebuild; native HTTP uses each label's source." : "Non-acceptance helper controls: native baseline schema seeded first, copied to each label; current head upgrades normally. Baseline owns its exact dependency lock and production build."};
   save();
   for(let index=1;index<=counts.repetitions;index++)await flushRun(index);
-  const seedDir=join(root,"comparison-seed");const seed=await seedPerformance(seedDir,counts);
+  const seedDir=join(root,"comparison-seed");
+  let seed: Awaited<ReturnType<typeof seedPerformance>>;
+  if(acceptance)seed=await seedPerformance(seedDir,counts);
+  else {
+    const fixture=join(baseSource,"tests/fixtures/p06-performance.ts");
+    if(!existsSync(fixture)){mkdirSync(dirname(fixture),{recursive:true,mode:0o700});cpSync(join(process.cwd(),"tests/fixtures/p06-performance.ts"),fixture);}
+    const output=join(root,"baseline-seed.json");
+    execFileSync(process.execPath,["--import","tsx",join(process.cwd(),"tests/fixtures/p06-baseline-seed.ts"),fixture,seedDir,JSON.stringify(counts),output],{cwd:baseSource,maxBuffer:1024*1024});
+    seed=JSON.parse(readFileSync(output,"utf8"));
+  }
   for(let index=1;index<=counts.repetitions;index++)await compare(index,baseSource,seed,seedDir);
   assert.equal(receipt.failures.length,0,"performance budget failures remain open");
 } catch(error) {

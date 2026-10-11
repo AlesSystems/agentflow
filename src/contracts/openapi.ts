@@ -1,3 +1,5 @@
+import { taskRegistrationExample } from "./examples";
+import { taskRegistrationResponse } from "./task-registration";
 import { foundationSchemas } from "./foundation";
 import { z } from "zod";
 import { endpoints } from "./routes";
@@ -43,9 +45,11 @@ function responses(
   response: z.ZodType,
   example: unknown,
   authenticated = true,
+  taskMinimal?: unknown,
 ) {
   const headers = authenticated
     ? {
+        ...(taskMinimal ? { Vary: { schema: {type:"string"}, example:"Prefer", description:"Full and minimal task creation representations vary on Prefer; existing Vary values remain." }, "Preference-Applied": { schema: {type:"string",const:"return=minimal"}, description:"Present only for the compact task creation representation." } } : {}),
         "AgentFlow-Generation": {
           description: "Current database generation, including exact retries.",
           schema: { type: "string", format: "uuid" },
@@ -56,7 +60,7 @@ function responses(
     [status]: {
       description: "Committed result",
       headers,
-      content: { "application/json": { schema: schema(response), example } },
+      content: { "application/json": { schema: schema(response), ...(taskMinimal ? { examples: { full: {value:example}, minimal: {value:taskMinimal} } } : {example}) } },
     },
     ...Object.fromEntries(
       [400, 401, 403, 404, 408, 409, 413, 415, 422, 429, 503].map((code) => [
@@ -119,16 +123,18 @@ export function openapiDocument() {
     }
     endpoint.input.parse(requestExamples[endpoint.id]);
     endpoint.response.parse(responseExamples[endpoint.id]);
+    endpoint.taskCreationReply?.response.parse(taskRegistrationExample);
     const path = "/api/v1" + endpoint.path;
     const input = schema(endpoint.input, "input") as {
       properties?: Record<string, unknown>;
       required?: string[];
     };
     const parameters: unknown[] = [];
-    if (endpoint.path.includes("{id}"))
+    if(endpoint.taskCreationReply)parameters.push({in:"header",name:"Prefer",required:false,schema:{type:"string"},example:"return=minimal",description:"Task create only. Single return=minimal preference accepts case-insensitive name and surrounding/equal-sign spaces or tabs; the value minimal is case-sensitive. Unsupported, malformed, duplicate or conflicting forms return the full receipt. Compact data is a pure view of the original receipt, with original status/cursor/body generation and current generation header."});
+    for (const match of endpoint.path.matchAll(/\{([A-Za-z][A-Za-z0-9]*)\}/g))
       parameters.push({
         in: "path",
-        name: "id",
+        name: match[1],
         required: true,
         schema: schema(uuid),
       });
@@ -169,10 +175,12 @@ export function openapiDocument() {
       responses: {
         ...responses(
           endpoint.status,
-          endpoint.response,
+          endpoint.taskCreationReply ? z.union([endpoint.response,endpoint.taskCreationReply.response]) : endpoint.response,
           responseExamples[endpoint.id],
+          true,
+          endpoint.taskCreationReply ? taskRegistrationExample : undefined,
         ),
-        ...(["registerRun", "ingestEvent"].includes(endpoint.id)
+        ...(["registerRun", "ingestEvent", "createWorkflow", "createWorkflowRevision", "registerWorkflowRun", "ingestWorkflowEvent"].includes(endpoint.id)
           ? {
               200: {
                 description:
@@ -334,6 +342,7 @@ export function openapiDocument() {
         reporterBearer: { type: "http", scheme: "bearer" },
       },
       schemas: {
+        TaskRegistrationResponse: schema(taskRegistrationResponse),
         TaskDetailV1: schema(taskDetailV1),
         TaskDetailQueryV1: schema(taskDetailQueryV1, "input"),
       },

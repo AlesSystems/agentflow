@@ -1,4 +1,5 @@
 import "server-only";
+import { taskCreationPreference } from "../contracts/task-registration";
 import { uuid } from "../contracts/common";
 import { canonicalDigest } from "../domain/request-digest";
 import { matchEndpoint, validResourceId } from "../contracts/routes";
@@ -15,7 +16,7 @@ export async function applicationApi(request: Request) {
       (value) => (generation = value),
     );
     if (!matched) throw new HttpError(404, "resource_not_found");
-    if (!validResourceId(matched.id))
+    if (!Object.values(matched.params).every(validResourceId))
       throw new HttpError(422, "validation_failed");
     const { endpoint, id, path } = matched;
     if (endpoint.kind === "stream") throw new HttpError(503, "unavailable");
@@ -49,7 +50,7 @@ export async function applicationApi(request: Request) {
       original.schemaVersion !== 1
     )
       throw new HttpError(422, "unsupported_schema_version");
-    const parsed = endpoint.parseRequest(original, id ?? "");
+    const parsed = endpoint.parseRequest(original, id ?? "", matched.params);
     if (!parsed.success)
       throw new HttpError(
         endpoint.kind === "command" ? 422 : 400,
@@ -62,6 +63,7 @@ export async function applicationApi(request: Request) {
       parsed.action.command.input.runId !== id
     )
       throw new HttpError(422, "validation_failed");
+    if (parsed.action.kind === "command" && parsed.action.command.kind === "workflow.run.event" && parsed.action.command.input.workflowRunId !== id) throw new HttpError(422, "validation_failed");
     const reply =
       parsed.action.kind === "command"
         ? state.owned.store.command(parsed.action.command, {
@@ -73,9 +75,14 @@ export async function applicationApi(request: Request) {
             now: Date.now(),
           })
         : state.owned.store.snapshot(parsed.action.query, Date.now());
-    return json(reply.body, reply.status, {
+    const taskReply = endpoint.taskCreationReply;
+    const minimal = taskReply && taskCreationPreference(request.headers.get("Prefer"));
+    const response = json(minimal ? taskReply.project(reply.body) : reply.body, reply.status, {
       "AgentFlow-Generation": generation!,
+      ...(minimal ? { "Preference-Applied": "return=minimal" } : {}),
     });
+    if (taskReply) response.headers.append("Vary", "Prefer");
+    return response;
   } catch (error) {
     return failure(error, generation);
   }

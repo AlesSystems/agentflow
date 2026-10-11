@@ -348,3 +348,84 @@ stored producer reports except heartbeat noise, plus separately typed human
 tracking closure facts with reason and no producer event/occurred time. Raw
 `/runs/{id}/events` remains ascending sequence and retains every heartbeat.
 All endpoints share registered read authentication, strict schemas and OpenAPI.
+
+### Reported workflow plans (W01)
+
+Reporters may publish `POST /workflows` with an explicit UUID, project UUID and
+name. `GET /workflows?projectId=UUID` returns a bounded snapshot page and
+`GET /workflows/{id}` reads its metadata. Workflow creation resolves an identical
+resource identity before current project checks; changed identities conflict.
+
+`POST /workflows/{id}/revisions` accepts an explicit revision UUID,
+`expectedWorkflowVersion`, nodes and edges. Plans are immutable DAGs bounded to
+100 nodes and 200 edges. Nodes have stable UUIDs, labels and optional same-project
+task UUIDs; its bounded publication ACK contains id, workflowId, revision and
+createdAt. Read the full plan through its revision route. Edges have source/target UUIDs and optional nonnegative ordering.
+Duplicate nodes/pairs, missing endpoints, self edges, cycles and cross-project
+links are rejected atomically. Publishing advances workflow version and revision.
+`GET /workflows/{id}/revisions` pages history; the named nested route
+`GET /workflows/{id}/revisions/{revisionId}` requires the revision's original
+workflow. All captured UUIDs and receipt paths are canonicalized. Existing strict
+schemas, authentication, 64 KiB request cap and generation snapshots apply.
+
+`POST /workflow-runs` registers an explicit attempt UUID, workflow UUID and exact
+`planRevisionId`. One queued/running attempt per workflow is permitted. Run
+registration identity replays its original snapshot. `GET /workflow-runs` requires
+workflowId and optionally the bound planRevisionId; history uses durable workflow
+registration order, independent of task-attempt order. `GET /workflow-runs/{id}` returns bounded run metadata and freshness for producer
+adoption. `GET /workflow-runs/{id}/snapshot` returns the selected run, every plan node's latest observation (null if missing),
+a separately fresh linked task attempt and optional human closure evidence.
+
+`POST /workflow-runs/{id}/events` accepts schemaVersion 1, eventId, workflowRunId,
+sequence beginning at 1, occurredAt, type and strict payload. Start transitions
+queued to running; node reports and heartbeat require running. Succeeded, failed
+and cancelled are terminal; queued cancellation is allowed. Exact identities
+resolve their original ACK before mutable state checks. Event IDs are shared with
+task reports; cross-kind reuse conflicts. Gaps, changed identities and reused
+sequences write nothing. Node reports can reference only the bound revision's
+nodes. Optional linked runId must belong to that node's same-project task.
+Optional reportedSkill is inert bounded name/source/version text.
+
+`GET /workflow-runs/{id}/events` and
+`GET /workflow-runs/{id}/nodes/{nodeId}/observations` page append-only evidence
+with generation-bound cursors and at most 100 records. A workflow outcome never
+changes task acceptance or linked run lifecycle. Human-only
+`POST /workflow-runs/{id}/close` requires expectedVersion and reason, applies only
+to active silence over 60 seconds and records interrupted without refreshing the
+last report time or controlling any external process. Project archive rejects
+active workflow attempts as well as task attempts.
+
+### Bounded task-create reply preference
+
+`POST /tasks` optionally accepts the single preference `Prefer: return=minimal`.
+The preference name is case-insensitive; its value `minimal` is case-sensitive.
+Surrounding spaces/tabs and spaces/tabs around `=` are accepted. Unsupported,
+malformed, duplicate or conflicting forms return the existing full task receipt.
+Other endpoints retain their existing representations.
+
+The compact envelope preserves the original committed status, snapshotCursor and
+body generation. Its strict data contains `kind: "task"`, canonical task/project
+UUIDs, nullable parentTaskId/assignedAgentId and original version/workRevision 1.
+It is a deterministic projection of the stored full creation result; its JSON is
+not byte-equal to the stored full receipt. Preference is absent from the mutation
+key/digest, and projection performs no current task read or new write. Exact POST
+retry retains original creation evidence after edits, archive, restart or a restore
+that retains the receipt. Normal task GET continues to return current detail.
+
+Successful task creation replies keep no-store and append `Prefer` to Vary for
+both representations. Only compact replies acknowledge
+`Preference-Applied: return=minimal`. The current generation response header retains
+its existing meaning, including a historical body replay after restore.
+
+### W01 delivery evidence
+
+Reporter credentials can read the workflow metadata/adoption API; browser pages,
+SSE and human stale closure retain their paired-session requirements. Historical
+node observation links remain bound to their original task/attempt. The read-only
+surface also exposes known task links before any workflow attempt, with explicit
+Unknown evidence and no fabricated run identity.
+
+The [W01 implementation receipt](implementation/W01.md) and
+[synthetic acceptance summary](evidence/W01/acceptance.json) record the exact
+measured source, original ACK/database joins, suite composition and remaining
+integration gate. They introduce no additional route or execution authority.

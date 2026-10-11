@@ -35,3 +35,8 @@ without a recognized top-level notice file. Those unknowns remain explicit.
 Metadata and file enumeration are not a legal completeness opinion. The checkout
 contains no public asset folder or bundled font/image files; CSS uses system fonts.
 Existing dependency files and the shadcn notice above remain retained.
+
+W01 adds @xyflow/react 12.12.0 and @xyflow/system under the MIT License.
+Their distributed LICENSE files and dependency notices are retained in the
+installed packages and included in the package notice inventory. React Flow
+is copyright (c) 2019-2025 webkid GmbH.

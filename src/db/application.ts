@@ -1,3 +1,5 @@
+import * as workflows from "../contracts/workflows";
+import { validateWorkflowPlan, decideWorkflowEvent, workflowFreshness } from "../domain/workflows";
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import { statSync } from "node:fs";
@@ -41,7 +43,7 @@ import {
   type Run,
 } from "../contracts/observations";
 import { run } from "../contracts/tasks";
-import { nextRegistrationOrder } from "./registration-order";
+import { nextRegistrationOrder, nextWorkflowRegistrationOrder } from "./registration-order";
 import {
   decideRegistration,
   decideEvent,
@@ -50,6 +52,11 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | { kind: "workflow.run.register"; input: z.infer<typeof workflows.workflowRunRegister> }
+  | { kind: "workflow.run.event"; id: string; input: workflows.WorkflowEventInput }
+  | { kind: "workflow.run.close"; id: string; input: z.infer<typeof workflows.workflowClose> }
+  | { kind: "workflow.create"; input: z.infer<typeof workflows.workflowCreate> }
+  | { kind: "workflow.revision"; id: string; input: z.infer<typeof workflows.planRevisionCreate> }
   | { kind: "agent.create"; input: z.infer<typeof agentCreate> }
   | { kind: "agent.patch"; id: string; input: z.infer<typeof agentPatch> }
   | { kind: "run.register"; input: z.infer<typeof runRegister> }
@@ -64,6 +71,15 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | { kind: "workflow.runs"; input: z.infer<typeof workflows.workflowRunQuery> }
+  | { kind: "workflow.run"; id: string }
+  | { kind: "workflow.run.summary"; id: string }
+  | { kind: "workflow.events"; id: string; input: z.infer<typeof workflows.workflowHistoryQuery> }
+  | { kind: "workflow.nodes"; id: string; nodeId: string; input: z.infer<typeof workflows.workflowHistoryQuery> }
+  | { kind: "workflows"; input: z.infer<typeof workflows.workflowQuery> }
+  | { kind: "workflow"; id: string }
+  | { kind: "workflow.revisions"; id: string; input: z.infer<typeof workflows.workflowHistoryQuery> }
+  | { kind: "workflow.revision"; id: string; revisionId: string }
   | { kind: "tracking.agents"; input: z.infer<typeof agentQuery> }
   | { kind: "tracking.runs"; input: z.infer<typeof runQuery> }
   | { kind: "tracking.run"; id: string }
@@ -109,7 +125,7 @@ function serialize(row: Row): Row {
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       camel(key),
-      key === "tags"
+      ["tags", "nodes", "edges"].includes(key)
         ? JSON.parse(value as string)
         : key.endsWith("_at") && value !== null
           ? new Date(value as number).toISOString()
@@ -121,7 +137,7 @@ function persisted(record: Row): Row {
   return Object.fromEntries(
     Object.entries(record).map(([key, value]) => [
       snake(key),
-      key === "tags"
+      ["tags", "nodes", "edges"].includes(key)
         ? JSON.stringify(value)
         : key.endsWith("At") && value !== null
           ? Date.parse(value as string)
@@ -249,11 +265,13 @@ export class ApplicationData {
             "task.reopen",
             "settings.patch",
             "run.close",
+            "workflow.run.close",
           ].includes(command.kind) &&
           principal !== "operator"
         )
           throw new Conflict("human_required");
         if (command.kind === "run.event") return this.event(command, context);
+        if (command.kind === "workflow.run.event") return this.workflowEvent(command, context);
         const receipt = this.db
           .prepare(
             "SELECT digest,status,body FROM receipts WHERE principal=? AND method=? AND path=? AND key=?",
@@ -272,7 +290,77 @@ export class ApplicationData {
         const time = new Date(now).toISOString();
         let data: unknown;
         let status = 200;
-        if (command.kind === "agent.create") {
+        if (command.kind === "workflow.run.register") {
+          const requested = command.input;
+          const existing = this.find("workflow_runs", requested.id);
+          if (existing) {
+            const identity = this.db.prepare("SELECT digest,body FROM workflow_run_registrations WHERE run_id=?").get(existing.id) as { digest: string; body: string };
+            if (identity.digest !== digest) throw new Conflict("run_conflict");
+            const body = JSON.parse(identity.body) as SnapshotBody;
+            this.receipt(context, 200, body);
+            return { status: 200, body };
+          }
+          const workflow = workflows.workflow.parse(this.one("workflows", requested.workflowId));
+          this.activeProject(workflow.projectId);
+          const revision = this.workflowRevision(requested.planRevisionId);
+          if (revision.workflowId !== workflow.id) throw new Conflict("workflow_revision_mismatch");
+          if (this.db.prepare("SELECT 1 FROM workflow_runs WHERE workflow_id=? AND state IN ('queued','running')").get(workflow.id)) throw new Conflict("active_run");
+          const registrationOrder = nextWorkflowRegistrationOrder(this.db);
+          const value: workflows.WorkflowRunFacts = { id: requested.id, workflowId: workflow.id, planRevisionId: revision.id, projectId: workflow.projectId, state: "queued", version: 1, lastSequence: 0, lastReceivedAt: time, createdAt: time, startedAt: null, endedAt: null };
+          this.insert("workflow_runs", { ...value, registrationOrder });
+          this.change("workflowRun", value.id, value.projectId, "registered", now);
+          data = { ...value, freshness: workflowFreshness(value, now) };
+          this.db.prepare("INSERT INTO workflow_run_registrations VALUES(?,?,?)").run(value.id, digest, JSON.stringify(this.body(data)));
+          status = 201;
+        } else if (command.kind === "workflow.run.close") {
+          const value = this.workflowRun(command.id);
+          if (value.version !== command.input.expectedVersion) throw new Conflict("version_conflict", value.version);
+          if (value.state !== "queued" && value.state !== "running") throw new Conflict("run_terminal");
+          if (!workflowFreshness(value, now).stale) throw new Conflict("run_not_stale");
+          const next = { ...value, state: "interrupted" as const, version: value.version + 1, endedAt: time };
+          this.update("workflow_runs", next);
+          this.insert("workflow_closures", { id: randomUUID(), workflowRunId: value.id, reason: command.input.reason, actor: "operator", createdAt: time });
+          this.change("workflowRun", value.id, value.projectId, "closed", now);
+          data = { ...next, freshness: workflowFreshness(next, now) };
+        } else if (command.kind === "workflow.create") {
+          const existing = this.find("workflows", command.input.id);
+          if (existing) {
+            const identity = this.db.prepare("SELECT digest,body FROM workflow_identities WHERE workflow_id=?").get(existing.id) as { digest: string; body: string };
+            if (identity.digest !== digest) throw new Conflict("workflow_conflict");
+            const body = JSON.parse(identity.body) as SnapshotBody;
+            this.receipt(context, 200, body);
+            return { status: 200, body };
+          }
+          const projectValue = this.activeProject(command.input.projectId);
+          data = { ...command.input, projectId: projectValue.id, version: 1, createdAt: time };
+          this.insert("workflows", data as Row);
+          this.change("workflow", command.input.id, projectValue.id, "created", now);
+          status = 201;
+          this.db.prepare("INSERT INTO workflow_identities VALUES(?,?,?)").run(command.input.id, digest, JSON.stringify(this.body(data)));
+        } else if (command.kind === "workflow.revision") {
+          const existing = this.find("workflow_revisions", command.input.id);
+          if (existing) {
+            if (existing.workflow_id !== command.id || existing.digest !== digest) throw new Conflict("workflow_revision_conflict");
+            const body = JSON.parse(existing.body as string) as SnapshotBody;
+            this.receipt(context, 200, body);
+            return { status: 200, body };
+          }
+          const value = workflows.workflow.parse(this.one("workflows", command.id));
+          this.activeProject(value.projectId);
+          if (value.version !== command.input.expectedWorkflowVersion) throw new Conflict("version_conflict", value.version);
+          validateWorkflowPlan({ nodes: command.input.nodes, edges: command.input.edges });
+          for (const node of command.input.nodes) if (node.taskId) {
+            const linked = task.parse(this.one("tasks", node.taskId));
+            if (linked.projectId !== value.projectId) throw new Conflict("task_project_mismatch");
+          }
+          const last = this.db.prepare("SELECT coalesce(max(revision),0) AS revision FROM workflow_revisions WHERE workflow_id=?").get(value.id) as { revision: number };
+          const revision = { id: command.input.id, workflowId: value.id, revision: last.revision + 1, nodes: command.input.nodes, edges: command.input.edges, createdAt: time };
+          data = { id: revision.id, workflowId: revision.workflowId, revision: revision.revision, createdAt: revision.createdAt };
+          this.update("workflows", { ...value, version: value.version + 1 });
+          this.change("workflow", value.id, value.projectId, "revision_published", now);
+          this.insert("workflow_revisions", { ...revision, digest, body: JSON.stringify(this.body(data)) });
+          status = 201;
+        } else if (command.kind === "agent.create") {
           const id = command.input.id?.toLowerCase() ?? randomUUID();
           if (this.find("agents", id)) throw new Conflict("agent_conflict");
           const value = { ...command.input, id, version: 1, createdAt: time };
@@ -402,11 +490,7 @@ export class ApplicationData {
             throw new Conflict("version_conflict", value.version);
           if (
             command.input.archived &&
-            this.db
-              .prepare(
-                "SELECT 1 FROM runs WHERE project_id=? AND state IN ('queued','running') LIMIT 1",
-              )
-              .get(value.id)
+            (this.db.prepare("SELECT 1 FROM runs WHERE project_id=? AND state IN ('queued','running') LIMIT 1").get(value.id) || this.db.prepare("SELECT 1 FROM workflow_runs WHERE project_id=? AND state IN ('queued','running') LIMIT 1").get(value.id))
           )
             throw new Conflict("active_run");
           data = {
@@ -670,6 +754,7 @@ export class ApplicationData {
         body: JSON.parse(existing.acknowledgement) as SnapshotBody,
       };
     }
+    if (this.find("workflow_events", input.eventId, "event_id")) throw new Conflict("idempotency_conflict");
     const value = this.run(id);
     const taskValue = value.taskId
       ? task.parse(this.one("tasks", value.taskId))
@@ -714,6 +799,61 @@ export class ApplicationData {
         Date.parse(input.occurredAt),
         context.now,
       );
+    return { status: 201, body };
+  }
+  private workflowRevision(id: string) {
+    const { digest, body, ...value } = this.one("workflow_revisions", id);
+    void digest; void body;
+    return workflows.planRevision.parse(value);
+  }
+  private workflowRun(id: string) {
+    const { registrationOrder, ...value } = this.one("workflow_runs", id);
+    void registrationOrder;
+    return workflows.workflowRun.parse(value);
+  }
+  private workflowRunDetail(id: string, now: number) {
+    const value = this.workflowRun(id);
+    const revision = this.workflowRevision(value.planRevisionId);
+    const rows = this.db.prepare("SELECT body,node_id FROM workflow_node_observations AS n WHERE workflow_run_id=? AND sequence=(SELECT max(sequence) FROM workflow_node_observations WHERE workflow_run_id=n.workflow_run_id AND node_id=n.node_id)").all(value.id) as { body: string; node_id: string }[];
+    const latest = new Map<string, z.infer<typeof workflows.nodeObservation>>();
+    for (const row of rows) if (!latest.has(row.node_id)) latest.set(row.node_id, workflows.nodeObservation.parse(JSON.parse(row.body)));
+    const closure = this.db.prepare("SELECT reason,actor,created_at FROM workflow_closures WHERE workflow_run_id=?").get(value.id) as Row | undefined;
+    return { ...value, freshness: workflowFreshness(value, now), closure: closure ? serialize(closure) : null, nodes: revision.nodes.map(node => {
+      const observation = latest.get(node.id) ?? null;
+      const linked = observation?.payload.runId;
+      return { nodeId: node.id, label: node.label, taskId: node.taskId ?? null, observation, linkedAttempt: linked ? this.runView(this.run(linked), now) : null };
+    }) };
+  }
+  private workflowEvent(command: Extract<ApplicationCommand, { kind: "workflow.run.event" }>, context: CommandContext): CommittedReply {
+    const input = command.input;
+    if (input.workflowRunId !== command.id.toLowerCase()) throw new Conflict("validation_failed");
+    const existing = this.find("workflow_events", input.eventId, "event_id");
+    if (existing) {
+      if (existing.digest !== context.digest) throw new Conflict("idempotency_conflict");
+      return { status: 200, body: JSON.parse(existing.acknowledgement as string) as SnapshotBody };
+    }
+    if (this.find("run_events", input.eventId, "event_id")) throw new Conflict("idempotency_conflict");
+    const value = this.workflowRun(command.id);
+    const next = decideWorkflowEvent(value, input, context.now);
+    let linkedRunId: string | null = null;
+    if (input.type === "workflow.node.reported") {
+      const revision = this.workflowRevision(value.planRevisionId);
+      const node = revision.nodes.find(n => n.id === input.payload.nodeId);
+      if (!node) throw new Conflict("workflow_node_unknown");
+      if (input.payload.runId) {
+        const linked = this.run(input.payload.runId);
+        linkedRunId = linked.id;
+        if (!node.taskId || linked.taskId?.toLowerCase() !== node.taskId.toLowerCase() || linked.projectId.toLowerCase() !== value.projectId.toLowerCase()) throw new Conflict("workflow_run_link_mismatch");
+      }
+    }
+    this.update("workflow_runs", next);
+    this.change("workflowRun", value.id, value.projectId, input.type, context.now);
+    this.change("workflowEvent", input.eventId, value.projectId, "accepted", context.now);
+    const receivedAt = new Date(context.now).toISOString();
+    const body = this.body({ eventId: input.eventId, workflowRunId: value.id, acceptedSequence: input.sequence, receivedAt });
+    const record = JSON.stringify({ ...input, receivedAt });
+    this.db.prepare("INSERT INTO workflow_events VALUES(?,?,?,?,?,?,?,?,?)").run(input.eventId, value.id, input.sequence, input.type, context.digest, record, JSON.stringify(body), Date.parse(input.occurredAt), context.now);
+    if (input.type === "workflow.node.reported") this.insert("workflow_node_observations", { id: input.eventId, workflowRunId: value.id, nodeId: input.payload.nodeId, runId: linkedRunId, sequence: input.sequence, createdAt: receivedAt, body: record });
     return { status: 201, body };
   }
   private settings() {
@@ -987,7 +1127,37 @@ export class ApplicationData {
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "tracking.agents") {
+      if (query.kind === "workflow.run.summary") { const value=this.workflowRun(query.id);data={...value,freshness:workflowFreshness(value,now)}; }
+      else if (query.kind === "workflow.run") data = this.workflowRunDetail(query.id, now);
+      else if (query.kind === "workflow.runs") {
+        this.one("workflows", query.input.workflowId);
+        if (query.input.planRevisionId && this.workflowRevision(query.input.planRevisionId).workflowId !== query.input.workflowId) throw new Conflict("workflow_revision_mismatch");
+        const where = "workflow_id=?" + (query.input.planRevisionId ? " AND plan_revision_id=?" : "");
+        const params = [query.input.workflowId, ...(query.input.planRevisionId ? [query.input.planRevisionId] : [])];
+        const page = this.page("workflow_runs", where, params, query.kind, { workflowId: query.input.workflowId, planRevisionId: query.input.planRevisionId }, query.input.limit, query.input.cursor, "registration_order");
+        data = { ...page, items: page.items.map(({ registrationOrder, ...row }) => { void registrationOrder; const run = workflows.workflowRun.parse(row); return { ...run, freshness: workflowFreshness(run, now) }; }) };
+      } else if (query.kind === "workflow.events" || query.kind === "workflow.nodes") {
+        const run = this.workflowRun(query.id);
+        if (query.kind === "workflow.nodes" && !this.workflowRevision(run.planRevisionId).nodes.some(n => n.id === query.nodeId)) throw new Conflict("resource_not_found");
+        const table = query.kind === "workflow.events" ? "(SELECT event_id AS id,* FROM workflow_events)" : "workflow_node_observations";
+        const where = "workflow_run_id=?" + (query.kind === "workflow.nodes" ? " AND node_id=?" : "");
+        const page = this.page(table, where, [query.id, ...(query.kind === "workflow.nodes" ? [query.nodeId] : [])], query.kind, { workflowRunId: query.id, ...(query.kind === "workflow.nodes" ? { nodeId: query.nodeId } : {}) }, query.input.limit, query.input.cursor, "sequence");
+        data = { ...page, items: page.items.map(row => JSON.parse(row.body as string)) };
+      } else if (query.kind === "workflow") data = workflows.workflow.parse(this.one("workflows", query.id));
+      else if (query.kind === "workflows") {
+        const projectId=this.one("projects", query.input.projectId).id;
+        data = this.page("workflows", "project_id=?", [projectId], query.kind, { projectId: query.input.projectId }, query.input.limit, query.input.cursor);
+      } else if (query.kind === "workflow.revision") {
+        const value = this.one("workflow_revisions", query.revisionId);
+        if (value.workflowId !== query.id) throw new Conflict("resource_not_found");
+        const { digest, body, ...revision } = value;
+        void digest; void body;
+        data = workflows.planRevision.parse(revision);
+      } else if (query.kind === "workflow.revisions") {
+        this.one("workflows", query.id);
+        const page = this.page("workflow_revisions", "workflow_id=?", [query.id], query.kind, { workflowId: query.id }, query.input.limit, query.input.cursor, "revision");
+        data = { ...page, items: page.items.map(({ digest, body, ...revision }) => { void digest; void body; return workflows.planRevision.parse(revision); }) };
+      } else if (query.kind === "tracking.agents") {
         data = this.page(`(SELECT a.*,
           (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state='running' AND r.last_received_at>=${now - 60000}) AS fresh_running,
           (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state='queued' AND r.last_sequence=0) AS queued_no_report,

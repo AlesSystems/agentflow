@@ -12,3 +12,9 @@ export function nextRegistrationOrder(db: Database.Database): number {
     throw new Error("REGISTRATION_ORDER_EXHAUSTED");
   return row.lastValue + 1;
 }
+export function nextWorkflowRegistrationOrder(db: Database.Database): number {
+  if (!db.inTransaction) throw new Error("REGISTRATION_ORDER_TRANSACTION_REQUIRED");
+  const row = db.prepare("SELECT last_value AS lastValue FROM workflow_order_allocator WHERE singleton=1").get() as { lastValue: number } | undefined;
+  if (!row || row.lastValue >= Number.MAX_SAFE_INTEGER) throw new Error("REGISTRATION_ORDER_EXHAUSTED");
+  return row.lastValue + 1;
+}

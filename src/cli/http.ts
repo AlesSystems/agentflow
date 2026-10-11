@@ -3,9 +3,9 @@ import { z } from "zod";
 import { uuid } from "../contracts/common";
 import { CliError, type CliConfig } from "./config";
 export type Reply<T> = { kind: "delivered"; data: T; generation: string } | { kind: "retryable"; delay: number } | { kind: "blocked"; code: string; expectedSequence?: number; currentVersion?: number };
-const safeCodes = new Set(["sequence_gap", "sequence_conflict", "idempotency_conflict", "run_terminal", "run_conflict", "authentication_required", "resource_not_found", "version_conflict", "active_run", "task_project_mismatch", "run_transition_invalid", "human_required", "invalid_input", "task_completed", "project_archived"]);
+const safeCodes = new Set(["workflow_conflict","workflow_revision_conflict","workflow_revision_mismatch","workflow_plan_invalid","workflow_node_duplicate","workflow_endpoint_missing","workflow_self_edge","workflow_edge_duplicate","workflow_cycle","workflow_node_unknown","workflow_run_link_mismatch","run_not_stale","sequence_gap", "sequence_conflict", "idempotency_conflict", "run_terminal", "run_conflict", "authentication_required", "resource_not_found", "version_conflict", "active_run", "task_project_mismatch", "run_transition_invalid", "human_required", "invalid_input", "task_completed", "project_archived"]);
 export function backoff(attempt:number,minimum:number,random=Math.random()) {return Math.max(minimum,random*Math.min(30000,100*2**Math.min(attempt-1,20)));}
-export async function request<T>(config: CliConfig, path: string, schema: z.ZodType<T>, end: number, body?: Record<string, unknown>, key?: string): Promise<Reply<T>> {
+export async function request<T>(config: CliConfig, path: string, schema: z.ZodType<T>, end: number, body?: Record<string, unknown>, key?: string, preference?: "return=minimal"): Promise<Reply<T>> {
   if (performance.now() >= end) return { kind: "retryable", delay: 0 };
   const agent = new Agent({ proxyEnv: {} as NodeJS.ProcessEnv });
   let active: ReturnType<typeof httpRequest> | undefined;
@@ -14,7 +14,7 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
   try {
     const response = await new Promise<{ status: number; headers: Record<string,string | string[] | undefined>; bytes: Buffer; oversized?: boolean }>((resolve,reject) => {
       const payload = body ? JSON.stringify(body) : undefined;
-      active = httpRequest({ hostname: "127.0.0.1", port: config.port, path: `/api/v1${path}`, method: body ? "POST" : "GET", agent, headers: { Host: `127.0.0.1:${config.port}`, Authorization: `Bearer ${config.token}`, ...(body ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload!) } : {}), ...(key ? { "Idempotency-Key": key } : {}) } }, incoming => {
+      active = httpRequest({ hostname: "127.0.0.1", port: config.port, path: `/api/v1${path}`, method: body ? "POST" : "GET", agent, headers: { Host: `127.0.0.1:${config.port}`, Authorization: `Bearer ${config.token}`, ...(body ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload!) } : {}), ...(key ? { "Idempotency-Key": key } : {}), ...(preference ? { Prefer: preference } : {}) } }, incoming => {
         responseStarted=true;
         const status = incoming.statusCode ?? 0;
         if (status === 429 || status === 503 || status >= 300 && status < 400) {
@@ -52,6 +52,12 @@ export async function request<T>(config: CliConfig, path: string, schema: z.ZodT
     const generation = response.headers["agentflow-generation"];
     const parsed = schema.safeParse(raw);
     if (!uuid.safeParse(generation).success || !parsed.success) return { kind: "blocked", code: "invalid_response" };
+    if (preference && typeof parsed.data === "object" && parsed.data !== null && "data" in parsed.data) {
+      const data=parsed.data.data;
+      const compact=typeof data === "object" && data !== null && "kind" in data;
+      const applied=response.headers["preference-applied"];
+      if (compact ? applied !== "return=minimal" : applied !== undefined) return {kind:"blocked",code:"invalid_response"};
+    }
     return { kind: "delivered", data: parsed.data, generation: generation as string };
   } catch (error) {
     if (error instanceof CliError) throw error;
