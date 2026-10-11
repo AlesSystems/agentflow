@@ -73,6 +73,7 @@ export type ApplicationCommand =
 export type ApplicationQuery =
   | { kind: "workflow.runs"; input: z.infer<typeof workflows.workflowRunQuery> }
   | { kind: "workflow.run"; id: string }
+  | { kind: "workflow.run.summary"; id: string }
   | { kind: "workflow.events"; id: string; input: z.infer<typeof workflows.workflowHistoryQuery> }
   | { kind: "workflow.nodes"; id: string; nodeId: string; input: z.infer<typeof workflows.workflowHistoryQuery> }
   | { kind: "workflows"; input: z.infer<typeof workflows.workflowQuery> }
@@ -353,10 +354,11 @@ export class ApplicationData {
             if (linked.projectId !== value.projectId) throw new Conflict("task_project_mismatch");
           }
           const last = this.db.prepare("SELECT coalesce(max(revision),0) AS revision FROM workflow_revisions WHERE workflow_id=?").get(value.id) as { revision: number };
-          data = { id: command.input.id, workflowId: value.id, revision: last.revision + 1, nodes: command.input.nodes, edges: command.input.edges, createdAt: time };
+          const revision = { id: command.input.id, workflowId: value.id, revision: last.revision + 1, nodes: command.input.nodes, edges: command.input.edges, createdAt: time };
+          data = { id: revision.id, workflowId: revision.workflowId, revision: revision.revision, createdAt: revision.createdAt };
           this.update("workflows", { ...value, version: value.version + 1 });
           this.change("workflow", value.id, value.projectId, "revision_published", now);
-          this.insert("workflow_revisions", { ...(data as Row), digest, body: JSON.stringify(this.body(data)) });
+          this.insert("workflow_revisions", { ...revision, digest, body: JSON.stringify(this.body(data)) });
           status = 201;
         } else if (command.kind === "agent.create") {
           const id = command.input.id?.toLowerCase() ?? randomUUID();
@@ -833,13 +835,15 @@ export class ApplicationData {
     if (this.find("run_events", input.eventId, "event_id")) throw new Conflict("idempotency_conflict");
     const value = this.workflowRun(command.id);
     const next = decideWorkflowEvent(value, input, context.now);
+    let linkedRunId: string | null = null;
     if (input.type === "workflow.node.reported") {
       const revision = this.workflowRevision(value.planRevisionId);
       const node = revision.nodes.find(n => n.id === input.payload.nodeId);
       if (!node) throw new Conflict("workflow_node_unknown");
       if (input.payload.runId) {
         const linked = this.run(input.payload.runId);
-        if (!node.taskId || linked.taskId !== node.taskId || linked.projectId !== value.projectId) throw new Conflict("workflow_run_link_mismatch");
+        linkedRunId = linked.id;
+        if (!node.taskId || linked.taskId?.toLowerCase() !== node.taskId.toLowerCase() || linked.projectId.toLowerCase() !== value.projectId.toLowerCase()) throw new Conflict("workflow_run_link_mismatch");
       }
     }
     this.update("workflow_runs", next);
@@ -849,7 +853,7 @@ export class ApplicationData {
     const body = this.body({ eventId: input.eventId, workflowRunId: value.id, acceptedSequence: input.sequence, receivedAt });
     const record = JSON.stringify({ ...input, receivedAt });
     this.db.prepare("INSERT INTO workflow_events VALUES(?,?,?,?,?,?,?,?,?)").run(input.eventId, value.id, input.sequence, input.type, context.digest, record, JSON.stringify(body), Date.parse(input.occurredAt), context.now);
-    if (input.type === "workflow.node.reported") this.insert("workflow_node_observations", { id: input.eventId, workflowRunId: value.id, nodeId: input.payload.nodeId, runId: input.payload.runId ?? null, sequence: input.sequence, createdAt: receivedAt, body: record });
+    if (input.type === "workflow.node.reported") this.insert("workflow_node_observations", { id: input.eventId, workflowRunId: value.id, nodeId: input.payload.nodeId, runId: linkedRunId, sequence: input.sequence, createdAt: receivedAt, body: record });
     return { status: 201, body };
   }
   private settings() {
@@ -1123,7 +1127,8 @@ export class ApplicationData {
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "workflow.run") data = this.workflowRunDetail(query.id, now);
+      if (query.kind === "workflow.run.summary") { const value=this.workflowRun(query.id);data={...value,freshness:workflowFreshness(value,now)}; }
+      else if (query.kind === "workflow.run") data = this.workflowRunDetail(query.id, now);
       else if (query.kind === "workflow.runs") {
         this.one("workflows", query.input.workflowId);
         if (query.input.planRevisionId && this.workflowRevision(query.input.planRevisionId).workflowId !== query.input.workflowId) throw new Conflict("workflow_revision_mismatch");
@@ -1140,8 +1145,8 @@ export class ApplicationData {
         data = { ...page, items: page.items.map(row => JSON.parse(row.body as string)) };
       } else if (query.kind === "workflow") data = workflows.workflow.parse(this.one("workflows", query.id));
       else if (query.kind === "workflows") {
-        this.one("projects", query.input.projectId);
-        data = this.page("workflows", "project_id=?", [query.input.projectId], query.kind, { projectId: query.input.projectId }, query.input.limit, query.input.cursor);
+        const projectId=this.one("projects", query.input.projectId).id;
+        data = this.page("workflows", "project_id=?", [projectId], query.kind, { projectId: query.input.projectId }, query.input.limit, query.input.cursor);
       } else if (query.kind === "workflow.revision") {
         const value = this.one("workflow_revisions", query.revisionId);
         if (value.workflowId !== query.id) throw new Conflict("resource_not_found");

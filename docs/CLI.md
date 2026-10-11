@@ -173,3 +173,34 @@ operator data. Producer input files are retained on failure for inspection.
 
 [The P06 receipt](implementation/P06.md) records the producer journey, failed and
 passing performance attempts, fresh production verification, and pending final review.
+
+## Reported workflows
+
+Use `register workflow --file FILE --idempotency-key UUID`,
+`register workflow-revision --workflow UUID --file FILE --idempotency-key UUID`
+and `register workflow-run --file FILE --idempotency-key UUID` to publish a plan
+and bind an observed attempt to its immutable revision. Workflow and revision
+files carry explicit IDs; revision publication requires expectedWorkflowVersion.
+The revision acknowledgement is compact; read the full immutable plan from its
+named revision endpoint. Workflow-run files contain id, workflowId and planRevisionId.
+
+`report --workflow-run UUID --type workflow.started --payload FILE` uses a distinct
+producer namespace. The selector is mutually exclusive with `--run`; old commands
+and old outbox records retain task-run behavior. Node reports use
+`workflow.node.reported` and a payload with nodeId, reported state, optional linked
+runId and inert reportedSkill. Heartbeats, success, failure and cancellation have
+their strict public workflow schemas. Reports do not complete linked tasks.
+
+A validated durable workflow-run registration establishes local sequence authority
+before delivery. With an existing destination association, an offline producer can
+preserve a never-delivered workflow, revision, attempt and reports. Flush orders
+those resource dependencies. A rejected parent keeps its dependent prefix; other
+producers still progress. Registration replay never resets allocated sequence state.
+Workflow spool leaves live under `workflow-runs/<UUID>` with explicit producer kind;
+task leaves remain `<UUID>`. Same UUIDs remain independent through native leases,
+accounting, pending descriptors, recovery, ACKs and fair cursor scheduling.
+
+`flush --workflow-run UUID` selects that producer; ordinary `flush` includes both
+kinds and pending registrations. Existing exits 0/1/2/3 and 10 MiB per-producer,
+100 MiB global limits apply. Preserve the outbox after a blocked prefix or uncertain
+reply. No command launches, stops or inspects an external agent process.

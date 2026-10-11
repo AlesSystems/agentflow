@@ -359,7 +359,8 @@ resource identity before current project checks; changed identities conflict.
 `POST /workflows/{id}/revisions` accepts an explicit revision UUID,
 `expectedWorkflowVersion`, nodes and edges. Plans are immutable DAGs bounded to
 100 nodes and 200 edges. Nodes have stable UUIDs, labels and optional same-project
-task UUIDs; edges have source/target UUIDs and optional nonnegative ordering.
+task UUIDs; its bounded publication ACK contains id, workflowId, revision and
+createdAt. Read the full plan through its revision route. Edges have source/target UUIDs and optional nonnegative ordering.
 Duplicate nodes/pairs, missing endpoints, self edges, cycles and cross-project
 links are rejected atomically. Publishing advances workflow version and revision.
 `GET /workflows/{id}/revisions` pages history; the named nested route
@@ -371,8 +372,8 @@ schemas, authentication, 64 KiB request cap and generation snapshots apply.
 `planRevisionId`. One queued/running attempt per workflow is permitted. Run
 registration identity replays its original snapshot. `GET /workflow-runs` requires
 workflowId and optionally the bound planRevisionId; history uses durable workflow
-registration order, independent of task-attempt order. `GET /workflow-runs/{id}`
-returns the selected run, every plan node's latest observation (null if missing),
+registration order, independent of task-attempt order. `GET /workflow-runs/{id}` returns bounded run metadata and freshness for producer
+adoption. `GET /workflow-runs/{id}/snapshot` returns the selected run, every plan node's latest observation (null if missing),
 a separately fresh linked task attempt and optional human closure evidence.
 
 `POST /workflow-runs/{id}/events` accepts schemaVersion 1, eventId, workflowRunId,

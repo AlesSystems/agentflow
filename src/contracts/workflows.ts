@@ -30,6 +30,8 @@ export const workflowRunQuery = z.strictObject({ ...pageQuery, workflowId: input
 const list = <S extends z.ZodType>(item: S) => z.strictObject({ items: z.array(item), total: z.number().int().nonnegative(), nextCursor: z.string().nullable() });
 export const workflowResponse = envelope(workflow);
 export const workflowsResponse = envelope(list(workflow));
+export const revisionAcknowledgement = planRevision.omit({ nodes: true, edges: true });
+export const revisionAcknowledgementResponse = envelope(revisionAcknowledgement);
 export const revisionResponse = envelope(planRevision);
 export const revisionsResponse = envelope(list(planRevision));
 export const observedWorkflowRun = workflowRun.extend({ freshness });

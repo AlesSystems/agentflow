@@ -35,3 +35,34 @@ it("durably orders never-delivered workflow revisions attempts and reports while
   expect((await f.cli(["report","--run",sameId,"--workflow-run",sameId,"--type","workflow.heartbeat","--payload",f.file({})])).code).toBe(1);
  } finally { await server.stop(); }
 }, 60000);
+it("retains a rejected workflow prerequisite and dependent prefix byte-for-byte while unrelated task reports drain",async()=>{
+ let server=await launch();const f=cliFixture(server);
+ const register=async(args:string[],body:unknown)=>{const r=await f.cli([...args,"--file",f.file(body),"--idempotency-key",randomUUID()]);expect(r.code).toBe(0);return JSON.parse(r.stdout).id as string;};
+ try{
+  const projectId=await register(["project","create"],{name:"Synthetic independent drain"}),agentId=await register(["agent","register"],{displayName:"Synthetic",source:"W01",defaultRole:"implementation"});
+  const taskRunId=await register(["run","register"],{id:randomUUID(),projectId,agentId,purpose:"planning"});
+  const workflowId=randomUUID(),revisionId=randomUUID(),workflowRunId=randomUUID(),revisionKey=randomUUID(),runKey=randomUUID();const dir=server.dir,port=server.port;await server.stop();
+  expect((await f.cli(["register","workflow","--file",f.file({id:workflowId,projectId,name:"Blocked revision"}),"--idempotency-key",randomUUID()])).code).toBe(2);
+  expect((await f.cli(["register","workflow-revision","--workflow",workflowId,"--file",f.file({id:revisionId,expectedWorkflowVersion:2,nodes:[{id:randomUUID(),label:"Node"}],edges:[]}),"--idempotency-key",revisionKey])).code).toBe(2);
+  expect((await f.cli(["register","workflow-run","--file",f.file({id:workflowRunId,workflowId,planRevisionId:revisionId}),"--idempotency-key",runKey])).code).toBe(2);
+  expect((await f.cli(["report","--workflow-run",workflowRunId,"--type","workflow.started","--payload",f.file({})])).code).toBe(2);
+  expect((await f.cli(["report","--run",taskRunId,"--type","run.started","--payload",f.file({})])).code).toBe(2);
+  const wfDir=join(f.env.AGENTFLOW_OUTBOX_DIR,"workflow-runs",workflowRunId);
+  const paths=[join(f.env.AGENTFLOW_OUTBOX_DIR,`registration-${revisionKey}.json`),join(f.env.AGENTFLOW_OUTBOX_DIR,`registration-${runKey}.json`),join(wfDir,readdirSync(wfDir).find(n=>/^1-/.test(n))!)];const bytes=paths.map(path=>readFileSync(path));
+  server=await launch({dir,port});const flushed=await f.cli(["flush"]);expect(flushed.code).toBe(3);expect(flushed.stderr).toContain("version_conflict");paths.forEach((path,i)=>expect(readFileSync(path)).toEqual(bytes[i]));
+  const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});try{expect(db.prepare("SELECT last_sequence FROM runs WHERE id=?").get(taskRunId)).toEqual({last_sequence:1});expect(db.prepare("SELECT count(*) n FROM workflow_runs").get()).toEqual({n:0});}finally{db.close();}
+ }finally{await server.stop();}
+},60000);
+it("publishes a valid plan near the request limit with a bounded registration acknowledgement",async()=>{
+ const server=await launch(),f=cliFixture(server);
+ try{
+  const p=await f.cli(["project","create","--file",f.file({name:"Synthetic request bound"}),"--idempotency-key",randomUUID()]);expect(p.code).toBe(0);const projectId=JSON.parse(p.stdout).id;
+  const workflowId=randomUUID();expect((await f.cli(["register","workflow","--file",f.file({id:workflowId,projectId,name:"Bounded acknowledgement"}),"--idempotency-key",randomUUID()])).code).toBe(0);
+  const body={id:randomUUID(),expectedWorkflowVersion:1,nodes:Array.from({length:100},()=>({id:randomUUID(),label:"界".repeat(150)})),edges:[]};let index=0;
+  while(Buffer.byteLength(JSON.stringify(body))<65500){const node=body.nodes[index++%100];if(node.label.length<200)node.label+="界";else break;}
+  while(Buffer.byteLength(JSON.stringify(body))>65500){const node=body.nodes[(--index+100)%100];node.label=node.label.slice(0,-1);}
+  expect(Buffer.byteLength(JSON.stringify(body))).toBeGreaterThan(65490);
+  const result=await f.cli(["register","workflow-revision","--workflow",workflowId,"--file",f.file(body),"--idempotency-key",randomUUID()]);expect(result.code).toBe(0);
+  const read=await fetch(server.url+`/api/v1/workflows/${workflowId}/revisions/${body.id}`,{headers:{Authorization:"Bearer "+server.credentials().reporterToken}});expect(read.status).toBe(200);expect((await read.json()).data.nodes).toEqual(body.nodes);
+ }finally{await server.stop();}
+});

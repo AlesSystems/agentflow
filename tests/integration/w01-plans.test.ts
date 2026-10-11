@@ -25,7 +25,7 @@ it("publishes immutable branching revisions and rejects invalid links without wr
   expect(next.status).toBe(201);
   const read = await call(`/workflows/${id.toUpperCase()}/revisions/${revisionId.toUpperCase()}`);
   expect(read.status).toBe(200);
-  expect((await read.json()).data).toEqual(first.data);
+  expect((await read.json()).data).toEqual({ ...first.data, nodes, edges: revision.edges });
   const db = new Database(join(server.dir, "agentflow.sqlite"), { readonly: true });
   try {
    const before = db.prepare("SELECT * FROM changes").all();

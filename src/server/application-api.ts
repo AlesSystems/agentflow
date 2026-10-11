@@ -74,9 +74,7 @@ export async function applicationApi(request: Request) {
             now: Date.now(),
           })
         : state.owned.store.snapshot(parsed.action.query, Date.now());
-    return json(reply.body, reply.status, {
-      "AgentFlow-Generation": generation!,
-    });
+    return json(reply.body, reply.status, { "AgentFlow-Generation": generation! });
   } catch (error) {
     return failure(error, generation);
   }
