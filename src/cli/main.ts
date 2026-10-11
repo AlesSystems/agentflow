@@ -32,7 +32,15 @@ function registrationResponse(path: string): z.ZodType<RegistrationResponse> {
 }
 const jobProducer = (job: Exclude<Job,{kind:"registration"}>): ProducerRef => ({kind:job.kind,id:job.runId.toLowerCase()});
 const emit = (value: unknown) => process.stdout.write(JSON.stringify(value)+"\n");
-function diagnostic(code: string,runId?: string,details?: {expectedSequence?:number;currentVersion?:number}) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),...(details?.expectedSequence===undefined?{}:{expectedSequence:details.expectedSequence}),...(details?.currentVersion===undefined?{}:{currentVersion:details.currentVersion}),repair:"Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
+const evidenceRepairs: Record<string,string> = {
+  dependencies_not_ready: "Preserve the outbox. An operator must accept current prerequisite work in the browser. Retry unchanged registration with flush after readiness is restored.",
+  review_tuple_required: "Preserve the outbox. Review registration needs the current work revision, artifact reference and rework round. Resolve tracking ownership in the browser before preparing a new attempt.",
+  review_tuple_obsolete: "Preserve the outbox. The captured evidence is obsolete. Resolve tracking ownership in the browser, then register a new attempt with the current evidence tuple.",
+  decision_required: "Preserve the outbox. Required gates need an explicit decision and evidence note. Resolve tracking ownership in the browser before preparing a valid new attempt; do not rewrite pending bytes.",
+  decision_purpose_invalid: "Preserve the outbox. Only review or verification attempts may report decisions. Prepare a valid attempt after resolving current tracking ownership.",
+  artifact_purpose_invalid: "Preserve the outbox. Only implementation success may publish an artifact. Prepare a valid observation after resolving current tracking ownership.",
+};
+function diagnostic(code: string,runId?: string,details?: {expectedSequence?:number;currentVersion?:number}) {process.stderr.write(JSON.stringify({code,...(runId ? {runId} : {}),...(details?.expectedSequence===undefined?{}:{expectedSequence:details.expectedSequence}),...(details?.currentVersion===undefined?{}:{currentVersion:details.currentVersion}),repair:evidenceRepairs[code] ?? "Preserve the outbox. Resolve rejected references or restore the original producer state. Retry uncertain delivery with flush."})+"\n");}
 async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,beforeAttempt?:()=>Promise<void>,selectEvent?:()=>Promise<EventRecord|undefined>) {
   if (job.kind === "registration") {
     const record = job.record;
