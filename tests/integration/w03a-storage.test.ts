@@ -40,3 +40,21 @@ it("does not consume busy keys and supersedes old observations after configurati
   expect(owned.store.githubSnapshot({limit:20}).body.data).toMatchObject({connection:{lastError:null}});
  }finally{owned.close();}
 });
+it("preserves prior projected observations on failure, list absence and disconnect, and never changes task facts",async()=>{
+ const owned=await openOwnedStore(mkdtempSync(join(realpathSync(tmpdir()),"w03a-observations-")));
+ try{
+  owned.store.githubRepositories({expectedVersion:1,enabled:true,repositories:["a/b"]},context({enable:true}));
+  const refresh=(input:{expectedVersion:2;repository:"a/b";number:9},head:string)=>{
+   const admitted=owned.store.githubAdmit(input,context({...input,head}),false);if(admitted.kind!=="admitted")throw Error("not admitted");
+   return owned.store.githubFinalize(admitted.intent,{outcome:"fetched",error:null,retryNotBefore:null,nextPage:null,items:[{repository:"a/b",number:9,url:"https://github.com/a/b/pull/9",title:"Synthetic",state:"open",draft:false,headSha:head,baseBranch:"main",mergedAt:null}]},Date.now());
+  };
+  const input={expectedVersion:2,repository:"a/b",number:9} as const;refresh(input,"a".repeat(40));refresh(input,"b".repeat(40));
+  expect(owned.store.githubSnapshot({limit:20}).body.data).toMatchObject({items:[{headSha:"b".repeat(40),previousHeadSha:"a".repeat(40),headChanged:true}]});
+  const failed=owned.store.githubAdmit(input,context({failed:true}),false);if(failed.kind!=="admitted")throw Error();owned.store.githubFinalize(failed.intent,{outcome:"failed",error:"inaccessible",retryNotBefore:null,nextPage:null,items:[]},Date.now());
+  expect(owned.store.githubSnapshot({limit:20}).body.data).toMatchObject({items:[{title:"Synthetic",headSha:"b".repeat(40),lastError:"inaccessible",stale:true}]});
+  const list={expectedVersion:2,repository:"a/b",page:1} as const;const absent=owned.store.githubAdmit(list,context(list),false);if(absent.kind!=="admitted")throw Error();owned.store.githubFinalize(absent.intent,{outcome:"fetched",error:null,retryNotBefore:null,nextPage:null,items:[]},Date.now());
+  expect(owned.store.githubSnapshot({limit:20}).body.data).toMatchObject({total:1});
+  owned.store.githubRepositories({expectedVersion:2,enabled:false,repositories:[]},context({disable:true}));expect(owned.store.githubSnapshot({limit:20}).body.data).toMatchObject({items:[{stale:true}]});
+  expect(owned.store.snapshot({kind:"tasks",input:{limit:20}}).body.data).toMatchObject({total:0});
+ }finally{owned.close();}
+});
