@@ -12,5 +12,8 @@ export function comparableSnapshot(
     void registrationOrder;
     latestRun = publicRun;
   }
-  return taskDetailV1.parse({ ...data, latestRun });
+  const legacy=taskDetailV1.omit({readiness:true,evidence:true});
+  const candidate={...data,latestRun};
+  if("readiness" in candidate || "evidence" in candidate){const {readiness,evidence,...shared}=taskDetailV1.parse(candidate);void readiness;void evidence;return legacy.parse(shared);}
+  return legacy.parse(candidate);
 }
