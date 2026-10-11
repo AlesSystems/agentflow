@@ -218,3 +218,13 @@ identity under the original key. An older server whose full creation reply excee
 the limit remains exit-3 blocked with original bytes retained. Upgrading the service
 allows flush of that same retained registration through the bounded representation.
 Default browser/API task replies and full event acknowledgements remain unchanged.
+
+The retained P06 helper `--smoke` controls use a stopped baseline-schema dataset
+and normal head upgrade. Smoke baseline dependencies and production assets must
+come from that baseline source; an explicit prepared checkout may be selected with
+`AGENTFLOW_P06_SMOKE_BASE_SOURCE`. Its receipts remain `acceptance: false` and do
+not qualify W01 performance. Historical P06 acceptance prerequisites remain intact.
+The real P07-to-current blocked-task upgrade regression requires the separately
+prepared P07 checkout selected by `AGENTFLOW_W01_BASE_SOURCE`; package verification
+supplies it explicitly. An unconfigured ordinary test invocation skips that single
+historical-source prerequisite rather than claiming an upgrade was exercised.
