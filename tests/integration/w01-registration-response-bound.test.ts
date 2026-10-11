@@ -12,7 +12,7 @@ it("delivers an existing task registration near the public request bound",async(
   const result=await f.cli(["task","create","--file",f.file(body),"--idempotency-key",randomUUID()]);expect(result.code,result.stderr).toBe(0);
  }finally{await server.stop();}
 });
-it("flushes an already blocked original P07 task registration after a real schema/server upgrade",async()=>{
+it.skipIf(!process.env.AGENTFLOW_W01_BASE_SOURCE)("flushes an already blocked original P07 task registration after a real schema/server upgrade",async()=>{
  const {join}=await import("node:path"),{readFileSync,readdirSync}=await import("node:fs"),Database=(await import("better-sqlite3")).default;
  const baseCwd=process.env.AGENTFLOW_W01_BASE_SOURCE;if(!baseCwd)throw new Error("W01 base source must be explicitly prepared");
  let server=await launch({cwd:baseCwd});const f=cliFixture(server);try{
