@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P06 integrated; P07 checkpoint verification is in progress.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01 and W02 integrated; W03a repaired-source verification accepted, with final package review/integration still open.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -93,3 +93,40 @@ AgentFlow-owned material is licensed under [MIT](LICENSE), copyright 2026 AlesSy
 The earlier approved P01–P07 execution controls are retained in the revised
 [execution policy](docs/EXECUTION_POLICY.md). The operator activated the expanded v1 implementation on 2026-10-09. Sequential
 verified integration and the source release remain gated by independent review.
+
+### Optional read-only GitHub observations
+
+GitHub observation starts disabled. In Settings, explicitly enable it and save up
+to ten exact `owner/repository` names, one per line. Saving replaces the entire
+selection. Choose one saved repository and fetch either a list page (20 PRs,
+pages 1–1000) or a positive PR number. Only the explicit metadata fetch contacts
+GitHub. The requested repository or exact PR is shown in Saved observations.
+Use Browse cached repository and Next cached page to inspect further saved rows;
+these controls and Refresh saved observations stay local. No linked task is needed
+to view a manually fetched PR. Local refresh, navigation, focus and workspace
+updates read cached data. Disconnect retains the cache and labels it stale.
+
+For local credential setup, use a fine-grained GitHub token restricted to the
+selected repositories with Pull requests read permission. Save it with the
+`token` JSON property in a regular, single-link file outside the active checkout,
+owned by the launching account, with mode `0600` and no symlink components.
+Configure `AGENTFLOW_GITHUB_TOKEN_FILE` in the local launch environment and restart
+AgentFlow. Do not paste a token into browser fields, URLs or shell commands. The
+UI exposes only configured, unavailable or repair status. Configured does not
+mean GitHub has verified the credential; an explicit fetch reports authentication
+or credential repair failures safely.
+
+Task details show cached metadata only for canonical GitHub PR URLs in selected
+repositories. Their Open pull request link opens that canonical URL only after
+explicit activation; unsupported and unselected links remain inert. Failed fetches retain prior observations and their fetched/attempted
+times. A PR head change marks prior head observations and head-linked external
+evidence stale. It never changes local task acceptance or infers the meaning of
+opaque artifact references. Missing or inaccessible metadata does not prove a PR
+was deleted. These controls are observations and cannot modify GitHub.
+
+
+The [W03a receipt](docs/implementation/W03a.md) records deterministic fixture
+verification, the rate-gate repair and two source-specific measured failures with
+separate scoped exceptions, plus a retained launcher setup failure. Live GitHub
+credential verification is unexecuted. Final
+package review and integration remain open; this is not a complete-v1 release.

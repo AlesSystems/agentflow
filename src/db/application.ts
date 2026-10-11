@@ -1,3 +1,5 @@
+import { GithubData } from "./github";
+import type { GithubRepositoriesInput, GithubRefreshInput, GithubQuery } from "../contracts/github";
 import * as evidence from "../contracts/evidence";
 import { validateDependencies, deriveReadiness } from "../workflows/dependencies";
 import { sameTuple } from "../workflows/reviews";
@@ -55,6 +57,8 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | {kind:"github.repositories";input:GithubRepositoriesInput}
+  | {kind:"github.refresh";input:GithubRefreshInput}
   | { kind: "task.dependencies"; id: string; input: z.infer<typeof evidence.dependenciesInput> }
   | { kind: "task.review-policy"; id: string; input: z.infer<typeof evidence.reviewPolicyInput> }
   | { kind: "task.artifact"; id: string; input: z.infer<typeof evidence.artifactInput> }
@@ -78,6 +82,7 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | {kind:"github";input:GithubQuery}
   | { kind: "workflow.readiness"; id: string; revisionId: string }
   | { kind: "task.readiness"; id: string }
   | { kind: "task.decisions"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
@@ -317,6 +322,8 @@ export class ApplicationData {
     command: ApplicationCommand,
     context: CommandContext,
   ): CommittedReply {
+    if(command.kind==="github.repositories")return new GithubData(this.db).repositories(command.input,context);
+    if(command.kind==="github.refresh")throw new Conflict("github_coordinator_required");
     return this.db
       .transaction(() => {
         const { principal, method, path, key, digest, now } = context;
@@ -1267,6 +1274,7 @@ export class ApplicationData {
     return { ...page, items: page.items.map(({ createdAt, eventBody, ...value }) => ({ ...value, receivedAt: createdAt, event: eventBody ? JSON.parse(eventBody as string) : null })) };
   }
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
+    if(query.kind==="github")return new GithubData(this.db).snapshot(query.input,now);
     return this.db.transaction(() => {
       let data: unknown;
       if (query.kind === "workflow.readiness") {

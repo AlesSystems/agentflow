@@ -107,6 +107,7 @@ it("rolls failed migration DDL and history back without serving", async () => {
     "0005_uuid_lookup",
     "0006_workflows",
     "0007_task_evidence",
+    "0008_github",
   ]);
   reopened.close();
 });
@@ -260,6 +261,7 @@ it("applies an existing fixture pending migration and restarts unchanged", async
     "0005_uuid_lookup",
     "0006_workflows",
     "0007_task_evidence",
+    "0008_github",
     "9999_fixture",
   ]);
   upgraded.close();

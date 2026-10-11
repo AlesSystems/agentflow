@@ -819,3 +819,14 @@ nav[aria-label="Project views"] a { min-height: 44px; min-width: 44px; display: 
 .task-section-heading { font-size: 17px; line-height: 24px; }
 .task-evidence-controls .checkbox-label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .task-evidence-controls .checkbox-label input { margin: 0; }
+
+.github-settings form { margin: 20px 0; }
+.github-settings h3 { margin-top: 24px; }
+.github-observation { border-top: 1px solid var(--divider); padding: 16px 0; overflow-wrap: anywhere; }
+.github-observation h3 { margin: 0 0 8px; }
+.task-github { margin-top: 24px; }
+
+.github-settings .checkbox-label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.github-settings .checkbox-label input { margin: 0; }
+.github-settings .paired-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .github-settings .paired-fields { grid-template-columns: minmax(0, 1fr); } }

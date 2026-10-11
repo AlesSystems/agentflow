@@ -6,6 +6,7 @@ import { settingsResponse } from "../contracts/responses";
 import { settingsPatch } from "../contracts/settings";
 import { freezeCommand } from "../client/commands";
 import { ApiError } from "../client/api";
+import { GithubSettings } from "./github";
 import SignOut from "../app/sign-out";
 export function Settings() {
   const query = useRead("/settings", settingsResponse);
@@ -81,6 +82,7 @@ export function Settings() {
               </p>
             </form>
           </section>
+          <GithubSettings />
           <section className="settings-section">
             <h2>Storage on this machine</h2>
             <dl>

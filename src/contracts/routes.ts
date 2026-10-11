@@ -1,3 +1,4 @@
+import * as github from "./github";
 import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
 import type { SnapshotBody } from "../db/application";
 import { z } from "zod";
@@ -104,6 +105,9 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  defineQuery({id:"getGithubConnection",method:"GET",path:"/connections/github",access:"human",input:github.githubQuery,response:github.githubResponse,status:200,query:input=>({kind:"github",input})}),
+  defineCommand({id:"replaceGithubRepositories",method:"PUT",path:"/connections/github/repositories",access:"human",input:github.githubRepositoriesInput,response:github.githubRepositoriesResponse,status:200,command:input=>({kind:"github.repositories",input})}),
+  defineCommand({id:"refreshGithub",method:"POST",path:"/connections/github/refresh",access:"human",input:github.githubRefreshInput,response:github.githubRefreshResponse,status:200,command:input=>({kind:"github.refresh",input})}),
   defineQuery({id:"getWorkflowReadiness",method:"GET",path:"/workflows/{id}/revisions/{revisionId}/readiness",access:"read",input:emptyQuery,response:workflows.workflowReadinessResponse,status:200,query:(_,id,params)=>({kind:"workflow.readiness",id,revisionId:params.revisionId})}),
   defineQuery({ id:"listGateDecisions",method:"GET",path:"/tasks/{id}/decisions",access:"read",input:evidence.evidenceQuery,response:evidence.decisionsResponse,status:200,query:(input,id)=>({kind:"task.decisions",id,input}) }),
   defineQuery({ id:"listReworks",method:"GET",path:"/tasks/{id}/reworks",access:"read",input:evidence.evidenceQuery,response:evidence.reworksResponse,status:200,query:(input,id)=>({kind:"task.reworks",id,input}) }),

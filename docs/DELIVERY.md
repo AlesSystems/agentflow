@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: P01–P07 and W01 passed acceptance, independent review, coordinator verification
+Status: P01–P07, W01, and W02 passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W02 Task5 metric/data evidence is accepted; final review and integration remain open. W03a–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. Final package review/integration/archive remain open; W03b–W04 remain unstarted.
 
 ## Package state
 
@@ -22,8 +22,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
-| W02 | Dependencies/review/rework | Task 5 metric/data gate accepted; final review open | Executable `8b76bed7eab2ebe35630cb366e4a2b257970bb9a`; unmerged | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
-| W03a | GitHub PR observation | Not started | — | — |
+| W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
+| W03a | GitHub PR observation | Qualified verification accepted with scoped exception; final review/integration/archive open | Executable `1931221636894cd5840e98a4f83d4a13bdb85b1c` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
 | W04 | Full v1 validation/release | Not started | — | — |
@@ -794,3 +794,90 @@ Task 5 measurement/evidence preparation is complete. Remaining gates are Root's
 public-allowlist/documentation verification, fresh exact-candidate full-W02
 Standards/Spec review, guarded PR/normal merge and archive-before-cleanup. W02 is
 unmerged; package completion, W03a–W04 and source release remain open.
+
+
+## Verified W02 integration and cleanup
+
+W02 passed independent full-package Standards and Spec review at `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`.
+[PR #12](https://github.com/AlesSystems/agentflow/pull/12) merged normally at
+18:50:30 UTC on 2026-10-11 to `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`. The merge tree equals the
+reviewed tree, ancestry is verified, and the primary checkout fast-forwarded cleanly.
+The branch had no required checks or active protection rules; this does not claim
+that CI ran. No bypass or force merge was used.
+
+The coordinator and archive worker independently verified the complete private
+archive, including every file hash, before a final original-tree guard and removal
+of the owned test environment. All 309,853 members and 12,289,494,076 regular-file
+bytes are retained. The archive is 3,138,513,509 bytes, SHA256
+`0cc97eebcd7acf4f03419329c6a918cb2a4f87fd5cba793fb907fc91667be730`.
+Symlinks, hardlinks, FIFOs and basic metadata are preserved; xattrs, ACLs and
+physical sparse allocation are excluded. No complete macOS backup is claimed.
+Original and quarantine roots are absent; permission repairs were zero. Only the
+completed owned branch was deleted. Global runtimes, skills and operator data
+were untouched. W03a is next; W03b, W03c and W04 still gate v1 release.
+
+
+## W03a qualified verification accepted
+
+At executable `3484cb4a20cd0070efdb1aa5c195043a9559d025`, Root accepted the
+read-only GitHub implementation/verification after independent readiness,
+original-data/source and numerical audits. The [receipt](implementation/W03a.md)
+and [allowlisted public evidence](evidence/W03a/acceptance.json) retain the original
+quiet exit 1/validfalse and the Astra medium exception for `settings-regression-3`.
+All three settings comparisons remain visible; round 3 increases 24.912740%, or
+0.208416 ms. Its cause is unknown, no resample occurred, and no W04 waiver is made.
+Every existing/new local snapshot group is strictly below 250 ms. All 990 original
+requests,90 warmups/900 measured samples,9 graceful services and zero outbound calls were
+independently reconciled. Pairing session writes are expected; six cache/read-fact
+snapshots remain unchanged.
+
+The original full unit 201/39 and Chrome 72/no skips pass at `60827b8`. Original full
+integration 493 pass/3 fail of 496/93 files remains exit 1; affected 19/2 passes close
+three additive-migration validators. Ten later qualification controls yield 506
+unique integration contracts in composed coverage. Eight focused consumer repeats
+are not added again. Types/lint/build pass; the npm OpenAPI IPC setup failure is
+preserved with its successful direct Node import-tsx reroute. Both measured sources
+have their own qualified locked installs/builds/native modules. Current production
+inputs 108 and compiled 442 are unchanged through the measured source. Optional
+live GitHub is unexecuted; existing-host, synthetic acceptance, historical raw-build
+and global-cache evidence limitations remain explicit.
+
+Only documentation and the four selected existing synthetic images are published
+here. The original approved plan digest remains a historical input even though
+its execution checklist now records the qualified stages. Final exact-candidate
+Standards/Spec review, Root public audit, scoped PR creation/attachment, normal
+matching-head merge and private archive-before-guarded-cleanup remain open.
+PLAN package boxes stay unchecked. W03b has not started; v1 is not complete.
+
+
+## W03a repaired-source qualification accepted
+
+Root accepted `1931221636894cd5840e98a4f83d4a13bdb85b1c` after the Spec rate-gate
+repair, exact readiness, independent actual-run data/source audit and a new Astra
+exception. Repository Save/disconnect/re-enable/scope changes retain active
+Retry-After; one SQL reset was removed. Fresh affected 17 cases compose 16 original
+passes with 1 post-build HTTP pass; the missing-build setup failure stays retained.
+The strengthened durable 3 repeat and amended existing Chrome 1 are qualified
+repeats, not added totals. Current composed integration 507 is 496+10+1; broader
+unit 201/39, Chrome 72 and original integration failures/repairs remain historical.
+Fresh types/lint/direct OpenAPI/build/native pass. Current 442 compiled files use
+new build ID `4Vb1NNuhxLbtEfGR4huj6`, not historical hashes. Only 1 of 108 production
+inputs changed; actual build input/dirty qualification precedes later test/docs.
+
+Keep three distinct records: historical 3484 measured exit 1/validfalse with its
+round 3 +24.912740% exception; repaired 193122 launcher setup exit 1 in 0.905663666 seconds
+before declarations/services/samples and no aggregate/percentiles, explicitly
+approved setup reroute; repaired 193122 actual run02 exit 1/validfalse in 5.402974708 seconds
+with new round 2 +33.600795%/0.258376 ms exception. All three current comparisons are
+positive; cause unknown, no noise assertion or same-source resampling. Every
+current group p95<250 ms, maximum 1.247416 ms. All 990 originals/90 warmups/900 measured,
+9 graceful services, zero outbound, six unchanged protected fact pairs and expected
+session 4/7 writes are independently reconciled. Old exception is not inherited,
+and neither exception relaxes W04 or future-source gates.
+
+[Receipt](implementation/W03a.md) and [public allowlisted reduction](evidence/W03a/acceptance.json)
+separate both measured sources, setup failure, build and coverage qualifications.
+Old main/probe and the new repair-root archives are private and Root stream-verified.
+Exact final whole-package Standards/Spec, public audit, normal PR attachment/merge
+and guarded cleanup remain open. PLAN package boxes remain unchecked; W03b and
+v1 completion remain unclaimed.

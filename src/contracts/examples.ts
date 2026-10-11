@@ -280,3 +280,7 @@ Object.assign(responseExamples,{listGateDecisions:snapshot({items:[],total:0,nex
 
 Object.assign(requestExamples,{getWorkflowReadiness:{}});
 Object.assign(responseExamples,{getWorkflowReadiness:snapshot({workflowId,revisionId,tasks:[{...task,readiness,evidence}]})});
+
+const githubConnectionExample={enabled:false,repositories:[],version:1,lastAttemptedAt:null,lastFetchedAt:null,lastError:null,retryNotBefore:null,credential:"unavailable",busy:false};
+Object.assign(requestExamples,{getGithubConnection:{},replaceGithubRepositories:{expectedVersion:1,enabled:true,repositories:["synthetic/example"]},refreshGithub:{expectedVersion:2,repository:"synthetic/example",page:1}});
+Object.assign(responseExamples,{getGithubConnection:snapshot({connection:githubConnectionExample,items:[],total:0,nextCursor:null,lookupAttempt:null}),replaceGithubRepositories:snapshot({...githubConnectionExample,enabled:true,repositories:["synthetic/example"],version:2}),refreshGithub:snapshot({repository:"synthetic/example",page:1,number:null,outcome:"failed",error:"credential_unavailable",attemptedAt:time,fetchedAt:null,nextPage:null,count:0})});
