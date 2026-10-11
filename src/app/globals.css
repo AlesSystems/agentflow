@@ -207,6 +207,11 @@ pre {
   gap: 16px;
   margin-bottom: 24px;
 }
+.project-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
 .page-heading h1 {
   margin: 4px 0;
 }
