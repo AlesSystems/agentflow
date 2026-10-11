@@ -475,17 +475,18 @@ works before any workflow attempt and during historical selection.
 
 All three connection routes require the paired browser session. `GET
 /connections/github` reads only persisted observations, with optional exact
-`repository`/`number`, default limit20, maximum100 and generation/filter-bound
+`repository`/`number`, default limit 20, maximum 100 and generation/filter-bound
 cursor. It never contacts GitHub. `PUT /connections/github/repositories` replaces
-`enabled` and at most10 exact case-insensitive repository identifiers with
+`enabled` and at most 10 exact case-insensitive repository identifiers with
 `expectedVersion` and an idempotency key; its version is independent of timezone.
 Default is disabled with no repositories.
 
 `POST /connections/github/refresh` accepts `expectedVersion`, one selected
-`repository`, and exactly one `page` (1–1000, fixed20 rows) or positive safe-integer
+`repository`, and exactly one `page` (1–1000, fixed 20 rows) or positive safe-integer
 PR `number`. An admitted command makes one fixed-origin GitHub GET using API
-2026-03-10, manual redirects, an eight-second total deadline and2MiB response bound.
-The local200 acknowledgement explicitly reports `fetched`, `failed`, `interrupted`
+`2026-03-10` verified against official documentation on 2026-10-11, manual
+redirects, an eight-second total deadline and 2 MiB response bound.
+The local `200` acknowledgement explicitly reports `fetched`, `failed`, `interrupted`
 or `superseded`; it is never task acceptance. Completed exact retries return the
 original receipt before mutable configuration/rate/busy checks. Concurrent exact
 requests share work; changed-body reuse conflicts and other busy requests consume
@@ -494,15 +495,21 @@ before Store closure, and startup finalizes pending intents without remote repla
 
 Only projected PR number/URL/title/state/draft/head/base/merged time and local
 observation/error timestamps are retained. Prior successful metadata survives
-failure, disconnect and absent list items.404 means inaccessible; it is not proof
+failure, disconnect and absent list items. A 404 means inaccessible; it is not proof
 of deletion. Current local acceptance and opaque artifact references remain
 unchanged. Changes emit only a fixed connection invalidation, without PR titles.
 
-Optional `AGENTFLOW_GITHUB_TOKEN_FILE` selects a user-only0600 JSON file outside
+Optional `AGENTFLOW_GITHUB_TOKEN_FILE` selects a user-only `0600` JSON file outside
 this checkout containing only `token`. Set up its contents through a local file
 editor; do not put values into browser commands, URLs or shell history. The opened
-file must be owned by the current user, regular, single-linked and at most4096B;
+file must be owned by the current user, regular, single-linked and at most 4096 B;
 component symlinks, malformed UTF-8/JSON, unknown keys and whitespace tokens fail
 with safe repair codes. Only admitted explicit refresh reads it. Production has
 no custom remote-origin setting. Deterministic fixture verification does not
 claim a live authorized credential check.
+
+
+[W03a qualified verification](implementation/W03a.md) records deterministic
+adapter/credential fixtures, original failure repairs, source attribution and the
+exact finite-run performance exception. Local reads remain browser-only and never
+perform remote refresh. Optional live GitHub verification was not executed.

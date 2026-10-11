@@ -302,3 +302,25 @@ explicit rework advances round. Reopen, work text, implementation registration a
 artifact replacement invalidate applicability by revision rather than deleting facts.
 Original command/event/run-registration receipts stay byte-for-byte historical;
 current strict readers and legacy receipt consumers are distinct compatibility seams.
+
+
+## W03a durable read-only connection
+
+Migration 0008 preserves earlier migration bytes. A separate connection version,
+minimal PR cache and durable admitted-intent/result ledger use the existing Store
+transaction and receipt owners. Admission and publication are short transactions;
+fixed-origin GitHub GET I/O happens outside SQLite. Exact replies survive retries,
+caller loss and interrupted startup. Publication rechecks generation, configuration
+version and exact selection; disabled or changed selection supersedes old work.
+Shutdown aborts and drains refreshes before Store closure, and startup never
+retries GitHub automatically.
+
+Cached private metadata is available only to paired browser reads, bounded at 100
+rows with stable generation/filter-bound cursors. Task DTOs, opaque artifact
+references, review applicability and human-only acceptance remain unchanged.
+Only fixed connection invalidations enter the existing feed. A head change labels
+old head-linked observations stale; failures/disconnect preserve prior cache facts.
+The optional protected credential file stays outside checkout/SQLite/receipts/
+backups and is read only after explicit authorized admission. See the
+[API](API.md#w03a-local-github-observations), [workflow contract](V1_WORKFLOWS.md#w03a-optional-read-only-github-pr-metadata)
+and [qualified implementation receipt](implementation/W03a.md).

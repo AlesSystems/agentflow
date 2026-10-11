@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a planning is active; W03b–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. Final package review/integration/archive remain open; W03b–W04 remain unstarted.
 
 ## Package state
 
@@ -23,7 +23,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
 | W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
-| W03a | GitHub PR observation | Planning; Astra gate pending | — | — |
+| W03a | GitHub PR observation | Qualified verification accepted with scoped exception; final review/integration/archive open | Executable `3484cb4a20cd0070efdb1aa5c195043a9559d025` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
 | W04 | Full v1 validation/release | Not started | — | — |
@@ -815,3 +815,36 @@ physical sparse allocation are excluded. No complete macOS backup is claimed.
 Original and quarantine roots are absent; permission repairs were zero. Only the
 completed owned branch was deleted. Global runtimes, skills and operator data
 were untouched. W03a is next; W03b, W03c and W04 still gate v1 release.
+
+
+## W03a qualified verification accepted
+
+At executable `3484cb4a20cd0070efdb1aa5c195043a9559d025`, Root accepted the
+read-only GitHub implementation/verification after independent readiness,
+original-data/source and numerical audits. The [receipt](implementation/W03a.md)
+and [allowlisted public evidence](evidence/W03a/acceptance.json) retain the original
+quiet exit 1/validfalse and the Astra medium exception for `settings-regression-3`.
+All three settings comparisons remain visible; round 3 increases 24.912740%, or
+0.208416 ms. Its cause is unknown, no resample occurred, and no W04 waiver is made.
+Every existing/new local snapshot group is strictly below 250 ms. All 990 original
+requests,90 warmups/900 measured samples,9 graceful services and zero outbound calls were
+independently reconciled. Pairing session writes are expected; six cache/read-fact
+snapshots remain unchanged.
+
+The original full unit 201/39 and Chrome 72/no skips pass at `60827b8`. Original full
+integration 493 pass/3 fail of 496/93 files remains exit 1; affected 19/2 passes close
+three additive-migration validators. Ten later qualification controls yield 506
+unique integration contracts in composed coverage. Eight focused consumer repeats
+are not added again. Types/lint/build pass; the npm OpenAPI IPC setup failure is
+preserved with its successful direct Node import-tsx reroute. Both measured sources
+have their own qualified locked installs/builds/native modules. Current production
+inputs 108 and compiled 442 are unchanged through the measured source. Optional
+live GitHub is unexecuted; existing-host, synthetic acceptance, historical raw-build
+and global-cache evidence limitations remain explicit.
+
+Only documentation and the four selected existing synthetic images are published
+here. The original approved plan digest remains a historical input even though
+its execution checklist now records the qualified stages. Final exact-candidate
+Standards/Spec review, Root public audit, scoped PR creation/attachment, normal
+matching-head merge and private archive-before-guarded-cleanup remain open.
+PLAN package boxes stay unchecked. W03b has not started; v1 is not complete.

@@ -3,7 +3,10 @@
 Status: active Phase 3 contract. W01 and W02 are integrated through PRs #11–#12,
 with source-qualified verification, review, integration and cleanup recorded in
 [the W01 receipt](implementation/W01.md) and [the W02 receipt](implementation/W02.md).
-W03a planning is active; W03a–W04 implementation and validation remain open.
+W03a implementation and qualified verification are accepted with one scoped
+relative-budget exception; final package review/integration/archive remain open.
+[Its receipt](implementation/W03a.md) preserves original failures and qualifications.
+W03b–W04 remain unstarted.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
@@ -197,12 +200,14 @@ metadata and repositories, not secret values. Respect rate limits, bounded timeo
 and safe error redaction. Verify exact current GitHub API/version/auth requirements
 in W03a against official documentation before choosing the adapter implementation.
 
-Proposed browser-only routes: `GET /connections/github`,
+Implemented browser-only routes: `GET /connections/github`,
 `PUT /connections/github/repositories`, `POST /connections/github/refresh`.
-Settings changes use version checks/receipts; refresh has a bounded asynchronous
-or synchronous result with fetched time and partial errors, without secret output.
-Planned files: GitHub adapter/contracts, settings schema, routes, Settings/task PR
-metadata views, mocked HTTP boundary and optional live integration evidence.
+Settings changes use separate version checks and receipts. Refresh performs bounded
+I/O outside SQLite, then atomically publishes a local fetched/failed/interrupted/
+superseded result without secrets. Local reads are capped at 100, selected repositories
+at 10 and remote list pages at 20. API 2026-03-10 was verified on 2026-10-11; the total
+deadline is 8 seconds and response bound 2 MiB. See the implemented [API](API.md#w03a-local-github-observations)
+and [qualified receipt](implementation/W03a.md).
 Pass with disabled mode causing zero outbound calls, exact allowlist, redacted
 errors, pagination/timeouts/rate limits, changed head, and offline stale display.
 Adapter fixture tests are required; missing live credentials are an explicit

@@ -123,3 +123,9 @@ times. A PR head change marks prior head observations and head-linked external
 evidence stale. It never changes local task acceptance or infers the meaning of
 opaque artifact references. Missing or inaccessible metadata does not prove a PR
 was deleted. These controls are observations and cannot modify GitHub.
+
+
+The [W03a receipt](docs/implementation/W03a.md) records deterministic fixture
+verification and the original finite-read performance failure with its scoped
+approved exception. Live GitHub credential verification is unexecuted. Final
+package review and integration remain open; this is not a complete-v1 release.
