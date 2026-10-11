@@ -471,7 +471,7 @@ export async function openOutbox(config: CliConfig, end: number, operations: Par
         }
         if (reply.data.data.lastSequence !== 0) return "producer_state_required" as const;
         const value: State = {formatVersion:1,...(ref.kind === "workflow-run" ? {producerKind:ref.kind} : {}),runId,allocatedThrough:0,acknowledgedThrough:0,generation:reply.generation};
-        admit(encodedBytes(value),ref); if(ref.kind === "workflow-run")pin(join(root,"workflow-runs")); secureDirectory(join(root,producerKey(id))); pin(join(root,producerKey(id))); filesystem.syncDirectory(root);
+        admit(encodedBytes(value),ref); if(ref.kind === "workflow-run")pin(join(root,"workflow-runs")); secureDirectory(join(root,producerKey(id))); pin(join(root,producerKey(id))); if(ref.kind === "workflow-run")filesystem.syncDirectory(join(root,"workflow-runs")); filesystem.syncDirectory(root);
         atomic(`${producerKey(id)}/state.json`,value);
       },until);
       return blocked?{kind:"blocked" as const,code:blocked}:reply;
