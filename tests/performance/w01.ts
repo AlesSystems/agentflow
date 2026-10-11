@@ -22,6 +22,8 @@ import {
 import {
   summarizeVisibility,
   distribution,
+  visibilityBudgetFailures,
+  viewDistributions,
   type VisibleCapture,
   type VisibleIdentity,
 } from "../fixtures/w01-capture";
@@ -277,6 +279,30 @@ if (mode === "--prepare") {
     failures: [] as string[],
   };
   const save = () => {
+    const stages = receipt.visibility as {
+      index: number;
+      expected: (VisibleIdentity & { context: number })[];
+      observations: VisibleCapture[];
+    }[];
+    const wanted = Array.from(
+      { length: repetitions },
+      (_, n) =>
+        stages.find((s) => s.index === n + 1)?.expected ??
+        Array.from({ length: reports }, (_, ordinal) =>
+          [0, 1].map((context) => ({
+            context,
+            projectId: prepared.workflows[n].projectId,
+            workflowId: prepared.workflows[n].workflowId,
+            revisionId: prepared.workflows[n].revisionId,
+            workflowRunId: prepared.workflows[n].workflowRunId,
+            nodeId: prepared.workflows[n].nodeIds[10 + ordinal],
+            eventId: `unresolved-${n + 1}-${ordinal}`,
+          })),
+        ).flat(),
+    ).flat();
+    const observed = stages.flatMap((s) => s.observations);
+    receipt.visibilitySummary = summarizeVisibility(wanted, observed);
+    receipt.visibilityByView = viewDistributions(observed);
     const temp = join(evidence, `performance-${randomUUID()}.tmp`);
     writeFileSync(temp, JSON.stringify(receipt, null, 2) + "\n", {
       mode: 0o600,
@@ -375,6 +401,15 @@ if (mode === "--prepare") {
         repetitions * reports * 2,
       );
       assert(receipt.visibilitySummary.valid);
+      if (acceptance) {
+        const failures = visibilityBudgetFailures(
+          receipt.visibilitySummary,
+          receipt.visibilityByView,
+          repetitions * reports * 2,
+        );
+        receipt.failures.push(...failures);
+        assert.equal(failures.length, 0, "aggregate visibility budgets failed");
+      }
       assert.equal(
         receipt.failures.length,
         0,

@@ -95,7 +95,12 @@ export function summarizeVisibility(
     wrong,
     hidden,
     late,
-    valid: unconfirmed === 0 && duplicate === 0 && wrong === 0 && hidden === 0,
+    valid:
+      unconfirmed === 0 &&
+      duplicate === 0 &&
+      wrong === 0 &&
+      hidden === 0 &&
+      late === 0,
     distribution: captured.length
       ? distribution(captured.map((v) => v.elapsedMs))
       : null,
@@ -213,4 +218,44 @@ export async function visibleFrames(input: {
     if (frames === 2) return result;
   } while (Date.now() < until);
   return result;
+}
+
+export function viewDistributions(
+  captured: (VisibleCapture & { view?: string })[],
+) {
+  return Object.fromEntries(
+    ["graph", "list"].flatMap((view) => {
+      const values = captured
+        .filter((v) => v.view === view)
+        .map((v) => v.elapsedMs);
+      return values.length ? [[view, distribution(values)]] : [];
+    }),
+  );
+}
+export function visibilityBudgetFailures(
+  summary: ReturnType<typeof summarizeVisibility>,
+  views: Record<string, ReturnType<typeof distribution>>,
+  expected: number,
+) {
+  const failures: string[] = [];
+  if (
+    summary.expected !== expected ||
+    summary.captured !== expected ||
+    !summary.valid
+  )
+    failures.push("incomplete or invalid visibility denominator");
+  if (summary.late) failures.push("late visibility observations");
+  if (
+    !summary.distribution ||
+    summary.distribution.count !== expected ||
+    summary.distribution.p95Ms >= 2000
+  )
+    failures.push("pooled visibility p95 >=2s or missing samples");
+  for (const view of ["graph", "list"]) {
+    if (views[view]?.count !== expected / 2)
+      failures.push(`${view} visibility denominator mismatch`);
+    if (!views[view] || views[view].p95Ms >= 2000)
+      failures.push(`${view} visibility p95 >=2s`);
+  }
+  return failures;
 }

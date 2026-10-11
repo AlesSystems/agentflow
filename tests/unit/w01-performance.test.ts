@@ -2,6 +2,8 @@ import { proofErrors } from "../fixtures/p07-proof-errors";
 import { describe, expect, it } from "vitest";
 import {
   summarizeVisibility,
+  visibilityBudgetFailures,
+  viewDistributions,
   distribution,
   type VisibleIdentity,
 } from "../fixtures/w01-capture";
@@ -99,4 +101,58 @@ it("preserves the first work failure and original capture while attempting every
     original.message,
     secondary.message,
   ]);
+});
+
+it("rejects a complete late-only visibility denominator at the exact two-second boundary", () => {
+  const expected = [
+    { context: 0, ...id("late"), view: "graph" },
+    { context: 1, ...id("list"), view: "list" },
+  ];
+  const captured = expected.map((e) => ({
+    ...e,
+    elapsedMs: e.context === 0 ? 2000 : 10,
+    frames: 2,
+    exact: true,
+    visible: true,
+    hitTest: true,
+    matched: 1,
+    wrong: 0,
+  }));
+  const summary = summarizeVisibility(expected, captured);
+  expect(summary).toMatchObject({
+    missing: 0,
+    duplicate: 0,
+    wrong: 0,
+    hidden: 0,
+    late: 1,
+    valid: false,
+  });
+});
+it("exposes slow graph samples even when every scenario and pooled p95 hides them", () => {
+  const expected = Array.from({ length: 30 }, (_, n) =>
+    [0, 1].map((context) => ({
+      context,
+      ...id(String(n)),
+      view: context === 0 ? "graph" : "list",
+    })),
+  ).flat();
+  const captured = expected.map((e) => ({
+    ...e,
+    elapsedMs:
+      e.context === 0 && [0, 10, 20].includes(Number(e.eventId)) ? 2100 : 100,
+    frames: 2,
+    exact: true,
+    visible: true,
+    hitTest: true,
+    matched: 1,
+    wrong: 0,
+  }));
+  const summary = summarizeVisibility(expected, captured),
+    views = viewDistributions(captured);
+  expect(summary.distribution!.p95Ms).toBe(100);
+  expect(views.graph.p95Ms).toBe(2100);
+  const failures = visibilityBudgetFailures(summary, views, 60);
+  expect(failures).toContain("late visibility observations");
+  expect(failures).toContain("graph visibility p95 >=2s");
+  expect(summary.valid).toBe(false);
 });

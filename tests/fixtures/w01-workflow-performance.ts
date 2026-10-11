@@ -22,6 +22,8 @@ import {
   distribution,
   visibleFrames,
   summarizeVisibility,
+  viewDistributions,
+  visibilityBudgetFailures,
   type VisibleCapture,
 } from "./w01-capture";
 import { invokeCli } from "./w01-legacy-performance";
@@ -352,6 +354,7 @@ export async function visibilityScenario(
       generation: string | null;
     }[],
     summary: null as ReturnType<typeof summarizeVisibility> | null,
+    views: {} as ReturnType<typeof viewDistributions>,
     database: null as ReturnType<typeof database> | null,
     failure: "",
     qualification:
@@ -640,20 +643,27 @@ export async function visibilityScenario(
     }
     assert.equal(result.database.rows.length, fixture.lastSequence + reports);
     result.summary = summarizeVisibility(expected, result.observations);
+    result.views = viewDistributions(result.observations);
     assert.equal(result.summary.expected, reports * 2);
     assert(
       result.summary.valid,
-      "finite visible denominator has missing/wrong/duplicate/hidden evidence",
+      "finite visible denominator has missing/wrong/duplicate/hidden/unconfirmed/late evidence",
     );
-    if (acceptance && result.summary.distribution!.p95Ms >= 2000) {
-      receipt.failures.push(`${index} CLI→visible p95>=2s`);
-      throw new Error("VISIBLE_BUDGET_FAILED");
+    if (acceptance) {
+      const failures = visibilityBudgetFailures(
+        result.summary,
+        result.views,
+        reports * 2,
+      );
+      receipt.failures.push(...failures.map((f) => `${index} ${f}`));
+      assert.equal(failures.length, 0, "VISIBLE_BUDGET_FAILED");
     }
     result.status = "finalized";
   } catch (error) {
     errors.capture("visible work", error);
   } finally {
     result.summary = summarizeVisibility(expected, result.observations);
+    result.views = viewDistributions(result.observations);
     errors.save(save, "visible before cleanup");
     await errors.attempt("visible browser", async () => browser?.close());
     await errors.attempt("visible proxy", async () => proxy?.close());
