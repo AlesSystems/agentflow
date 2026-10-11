@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: P01–P07 and W01 passed acceptance, independent review, coordinator verification
+Status: P01–P07, W01, and W02 passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W02 Task5 metric/data evidence is accepted; final review and integration remain open. W03a–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a planning is active; W03b–W04 remain unstarted.
 
 ## Package state
 
@@ -22,8 +22,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
-| W02 | Dependencies/review/rework | Task 5 metric/data gate accepted; final review open | Executable `8b76bed7eab2ebe35630cb366e4a2b257970bb9a`; unmerged | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
-| W03a | GitHub PR observation | Not started | — | — |
+| W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
+| W03a | GitHub PR observation | Planning; Astra gate pending | — | — |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
 | W04 | Full v1 validation/release | Not started | — | — |
@@ -794,3 +794,24 @@ Task 5 measurement/evidence preparation is complete. Remaining gates are Root's
 public-allowlist/documentation verification, fresh exact-candidate full-W02
 Standards/Spec review, guarded PR/normal merge and archive-before-cleanup. W02 is
 unmerged; package completion, W03a–W04 and source release remain open.
+
+
+## Verified W02 integration and cleanup
+
+W02 passed independent full-package Standards and Spec review at `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`.
+[PR #12](https://github.com/AlesSystems/agentflow/pull/12) merged normally at
+18:50:30 UTC on 2026-10-11 to `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`. The merge tree equals the
+reviewed tree, ancestry is verified, and the primary checkout fast-forwarded cleanly.
+The branch had no required checks or active protection rules; this does not claim
+that CI ran. No bypass or force merge was used.
+
+The coordinator and archive worker independently verified the complete private
+archive, including every file hash, before a final original-tree guard and removal
+of the owned test environment. All 309,853 members and 12,289,494,076 regular-file
+bytes are retained. The archive is 3,138,513,509 bytes, SHA256
+`0cc97eebcd7acf4f03419329c6a918cb2a4f87fd5cba793fb907fc91667be730`.
+Symlinks, hardlinks, FIFOs and basic metadata are preserved; xattrs, ACLs and
+physical sparse allocation are excluded. No complete macOS backup is claimed.
+Original and quarantine roots are absent; permission repairs were zero. Only the
+completed owned branch was deleted. Global runtimes, skills and operator data
+were untouched. W03a is next; W03b, W03c and W04 still gate v1 release.

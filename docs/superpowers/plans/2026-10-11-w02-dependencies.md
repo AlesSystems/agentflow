@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use task-by-task execution, behavioral tests at the named seams, and independent review. The operator requires Astra medium approval of this exact plan before implementation. Root owns integration and cleanup.
 
-**Status:** Backend and CLI Tasks 1–3 passed independent progression review at `fc02721e8497ccea2d9ced93b766d0b277624c63` and coordinator evidence verification. Task 4 UI passed independent progression review at `8f1e46bc7f1005b47333188d0f153672248035f1` and coordinator verification. Task 5 preparation/helpers passed scoped source review at `de24f611ac4db630d2ec1b732b786a53db32acc8` and coordinator input/control audits; actual timing and final integration remain open. W01 is integrated through [PR #11](https://github.com/AlesSystems/agentflow/pull/11), merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`; its guarded cleanup is complete. Original approved plan SHA256 is `1d9ff305efa848b8a01e51d3cfb5377a3bdb9f506cf0dd1202d6776c6a9da0df`. This status/checklist update does not change the approved implementation semantics.
+**Status:** W02 passed all task gates, independent full-package reviews at `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`, verified PR #12 integration at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, and guarded archival/cleanup. The measured executable remains `8b76bed`; original failed and source-stage evidence stays qualified in the receipt. Original approved plan SHA256 is `1d9ff305efa848b8a01e51d3cfb5377a3bdb9f506cf0dd1202d6776c6a9da0df`. Status/checklist updates do not change its implementation semantics.
 
 **Goal:** Let the operator track real prerequisite acceptance, explicit reported review decisions, and successive rework without permitting old evidence to accept new work.
 
@@ -74,7 +74,7 @@ The backend scout established that registration already advances implementation 
 - [x] After Root's one quiet release, run three interleaved base/head repetitions, 100 measured plus10warmup per source/changed operation. Compare existing board/task snapshots, implementation registration, success, completion/reopen, and real CLI registration/report paths with equivalent policy-disabled valid workloads. Include default full task API replies and retained minimal CLI behavior where affected. Capture original ACKs and inspect committed rows. New dependency/policy/artifact/rework/readiness/gate reads/reports use three head runs and p95<250ms HTTP. Legacy/new CLI clocks include spawn→exit and full pipe drain, with5s deadline and20s hard bound; do not apply HTTP250ms to process startup. Any >20% relative p95 regression requires explanation and Astra medium approval before integration.
 - [x] In three scenarios, use actual CLI events plus browser-only synthetic commands to drive10current readiness/decision transitions observed by two paired contexts, Graph and List. A single controller measures dispatch→two-frame exact visible/hit-tested confirmation, p95<2s per view/scenario. Keep original identities, all warmup/measured samples, missing/wrong/duplicate/hidden/late counts, and resource cleanup. Never count an unconfirmed value as zero latency. This is bounded W02 evidence; W04 still owns integrated combined-load/release proof.
 - [x] Root independently checks actual source/build/raw sample and SQLite joins. Retain originals privately, publish only allowlisted synthetic summaries/screenshots/notices. Update API/BACKEND/CLI/contracts, W02 receipt, task checklist and delivery ledger with source attribution and limitations.
-- [ ] Obtain independent exact-candidate Standards and Spec reviews with no unresolved blockers. Root reads reports, verifies Git origin/head/base/actual protections/checks/rules, creates and attaches scoped PR, and uses normal matching-head merge. Verify merged commit/tree/ancestry, fast-forward primary, archive necessary owned evidence before guarded cleanup, delete only completed owned branches. Continue to W03a. No tag/release or complete-v1 claim in W02.
+- [x] Obtain independent exact-candidate Standards and Spec reviews with no unresolved blockers. Root reads reports, verifies Git origin/head/base/actual protections/checks/rules, creates and attaches scoped PR, and uses normal matching-head merge. Verify merged commit/tree/ancestry, fast-forward primary, archive necessary owned evidence before guarded cleanup, delete only completed owned branches. Continue to W03a. No tag/release or complete-v1 claim in W02.
 
 ## Stop and review contract
 
@@ -91,5 +91,5 @@ HTTP, ordinary CLI and per-scenario/view visibility gates pass. Deliberate queue
 setup creation remains outside visibility clocks and is separately qualified.
 Current full unit is 199/38 at clean `8b`; source-stage integration/Chrome and
 fresh-build continuity remain explicit in the [receipt](../../implementation/W02.md).
-Quiet01/02 remain failures. Final exact-candidate reviews, PR integration and
-cleanup stay unchecked. The approved behavior and budgets above are unchanged.
+Quiet01/02 remain failures. Exact-candidate reviews, PR #12 integration and
+guarded cleanup subsequently passed. The approved behavior and budgets above are unchanged.
