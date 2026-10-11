@@ -4,18 +4,20 @@ import {createHash} from "node:crypto";
 import {readFileSync,existsSync,readdirSync,statSync} from "node:fs";
 import {resolve,dirname,relative} from "node:path";
 import ts from "typescript";
+import {reviewedOutboxSHA256,validateRetainedSourceFacts,validateRetainedApplicationFacts} from "./p07-app-build-policy";
+export {reviewedOutboxSHA256} from "./p07-app-build-policy";
 const outbox="src/cli/outbox.ts";
-export const reviewedOutboxSHA256="1eef5f50075acf4bcf5334c1ede3539f9781af1c127e899f3a3f9fa2e8dd93b9";
 const hash=(bytes:Buffer)=>createHash("sha256").update(bytes).digest("hex");
 export function retainedApplication(baseline:string){
  const paths=["src","migrations","package.json","package-lock.json","next.config.ts","postcss.config.mjs","tsconfig.json"];
  const changed=execFileSync("git",["diff","--name-only",baseline,"--",...paths],{encoding:"utf8"}).trim().split("\n").filter(Boolean);
- assert(changed.every(path=>path===outbox),"Only the reviewed CLI outbox change qualifies retained application assets");
- assert.equal(hash(readFileSync(outbox)),reviewedOutboxSHA256,"Reviewed CLI source hash required");
+ const cliSHA256=hash(readFileSync(outbox));
  const files=execFileSync("git",["ls-files","--",...paths],{encoding:"utf8"}).trim().split("\n");
- const unchanged=Object.fromEntries(files.filter(path=>path!==outbox).map(path=>{const bytes=readFileSync(path);assert(bytes.equals(execFileSync("git",["show",`${baseline}:${path}`],{maxBuffer:10*1024*1024})),`Changed application input: ${path}`);return [path,hash(bytes)];}));
+ const differingInputs:string[]=[];
+ const unchanged=Object.fromEntries(files.filter(path=>path!==outbox).map(path=>{const bytes=readFileSync(path);if(!bytes.equals(execFileSync("git",["show",`${baseline}:${path}`],{maxBuffer:10*1024*1024})))differingInputs.push(path);return [path,hash(bytes)];}));
+ const sourceFacts={changedPaths:changed,cliSHA256,differingInputs};validateRetainedSourceFacts(sourceFacts);
  const assets:Record<string,string>={};for(const path of readdirSync(".next",{recursive:true}).map(String).sort()){if(statSync(resolve(".next",path)).isFile())assets[path]=hash(readFileSync(resolve(".next",path)));}
- assert.equal(Object.keys(assets).length,417,"Retained application asset count required");assert.equal(hash(Buffer.from(JSON.stringify(assets))),"2a6051ff1b4eee8e0d4fbfb9ac7765a4f7366df112c5d36cf5507b8a0b35457b","Exact retained application asset hashes required");
+ const assetCount=Object.keys(assets).length,assetSHA256=hash(Buffer.from(JSON.stringify(assets)));
  const config=ts.readConfigFile("tsconfig.json",ts.sys.readFile);assert(!config.error);const options=ts.parseJsonConfigFileContent(config.config,ts.sys,process.cwd()).options;
  const roots=files.filter(path=>/^src\/(app|server)\//.test(path)&&/\.[cm]?[jt]sx?$/.test(path));
  const visited=new Set<string>();const edges:Record<string,string[]>={};const nonExecutableLeaves:Record<string,string>={};
@@ -27,5 +29,6 @@ export function retainedApplication(baseline:string){
    ts.forEachChild(node,walk);
   }walk(source);edges[relative(process.cwd(),file)]=dependencies;
  }roots.forEach(visit);
- return {head:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSHA256:hash(execFileSync("git",["diff","HEAD"])),node:{version:process.version,platform:process.platform,arch:process.arch,executableSHA256:hash(readFileSync(process.execPath))},driverHashes:Object.fromEntries(["tests/performance/p07.ts","tests/performance/p07-cli.ts","tests/fixtures/p07-flush-stage.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-flush-boundary.ts","tests/fixtures/p07-ordinary.ts","tests/fixtures/p07-proof-errors.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts"].map(path=>[path,hash(readFileSync(path))])),assets,baseline,cliSource:outbox,reviewedOutboxSHA256,unchanged,roots,nonExecutableLeaves,externalDependencyQualification:"External package behavior pinned by unchanged package and lock; literal internal imports resolved using current TypeScript config; exact globals.css is a nonexecutable leaf",reachable:[...visited].map(path=>relative(process.cwd(),path)).sort(),edges,qualification:"Retained initial fresh-build assets qualify unchanged application only; changed CLI executes current tsx source"};
+ const qualificationFacts={...sourceFacts,assetCount,assetSHA256,reachable:[...visited].map(path=>relative(process.cwd(),path)).sort()};validateRetainedApplicationFacts(qualificationFacts);
+ return {qualificationFacts,head:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),workingDiffSHA256:hash(execFileSync("git",["diff","HEAD"])),node:{version:process.version,platform:process.platform,arch:process.arch,executableSHA256:hash(readFileSync(process.execPath))},driverHashes:Object.fromEntries(["tests/performance/p07.ts","tests/performance/p07-cli.ts","tests/fixtures/p07-flush-stage.ts","tests/fixtures/p07-app-build-policy.ts","tests/fixtures/p07-flush.ts","tests/fixtures/p07-flush-boundary.ts","tests/fixtures/p07-ordinary.ts","tests/fixtures/p07-proof-errors.ts","tests/fixtures/p06-performance.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/server.ts"].map(path=>[path,hash(readFileSync(path))])),assets,baseline,cliSource:outbox,reviewedOutboxSHA256,unchanged,roots,nonExecutableLeaves,externalDependencyQualification:"External package behavior pinned by unchanged package and lock; literal internal imports resolved using current TypeScript config; exact globals.css is a nonexecutable leaf",reachable:[...visited].map(path=>relative(process.cwd(),path)).sort(),edges,qualification:"Retained initial fresh-build assets qualify unchanged application only; changed CLI executes current tsx source"};
 }
