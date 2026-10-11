@@ -1,3 +1,8 @@
+import {
+  boundedLaunch,
+  boundedFetch,
+  readBoundedText,
+} from "../fixtures/w01-runtime";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
@@ -28,6 +33,17 @@ import {
   type VisibleIdentity,
 } from "../fixtures/w01-capture";
 export const definition = {
+  ownedDeadlines: {
+    httpMs: 10000,
+    healthMs: 1000,
+    startupMs: 30000,
+    serviceTerminateMs: 3000,
+    serviceKillMs: 3000,
+    proxyCloseMs: 5000,
+    browserCloseMs: 5000,
+    cliKillMs: 20000,
+    cliPipeMs: 1000,
+  },
   nativeHTTP: {
     operations: [
       "ingestion",
@@ -329,6 +345,9 @@ if (mode === "--prepare") {
               root,
               counts: { samples, producers: 10 },
               acceptance,
+              launcher: boundedLaunch,
+              request: boundedFetch,
+              readText: readBoundedText,
               receipt,
               save: safeSave,
             }),

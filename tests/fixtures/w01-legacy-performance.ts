@@ -1,4 +1,10 @@
 import {
+  boundedLaunch,
+  boundedFetch,
+  readBoundedText,
+  boundedProxy,
+} from "./w01-runtime";
+import {
   captureEventSpool,
   capturePendingSpool,
   validateEventSpool,
@@ -153,6 +159,10 @@ export async function legacyCompare(
       digest: string;
     }[],
     database: {} as Record<string, unknown>,
+    proxyFailures: {} as Record<
+      string,
+      Awaited<ReturnType<typeof boundedProxy>>["failures"]
+    >,
     missing: 5 * 2 * samples,
     failure: "",
     budgetFailures: [] as string[],
@@ -192,11 +202,11 @@ export async function legacyCompare(
     for (const label of labels) {
       const dir = join(root, `legacy-${index}-${label}`);
       cpSync(prepared.seedDir, dir, { recursive: true });
-      const server = (servers[label] = await launch({
+      const server = (servers[label] = await boundedLaunch({
         dir,
         cwd: sources[label],
       }));
-      proxies[label] = await publicProxy(server, (request, body, reply) => {
+      proxies[label] = await boundedProxy(server, (request, body, reply) => {
         if (!reply && request.url?.endsWith("/events")) {
           const input = JSON.parse(body.toString("utf8"));
           const capture = captureEventSpool(
@@ -232,6 +242,7 @@ export async function legacyCompare(
           });
         return undefined;
       });
+      result.proxyFailures[label] = proxies[label]!.failures;
       const inputs = join(root, `legacy-inputs-${index}-${label}`);
       mkdirSync(inputs, { mode: 0o700 });
       const token = join(inputs, "token");
@@ -264,7 +275,7 @@ export async function legacyCompare(
           title: `Synthetic measured task ${ordinal}`,
         };
         const dispatchMs = performance.now();
-        const response = await fetch(server.url + "/api/v1/tasks", {
+        const response = await boundedFetch(server.url + "/api/v1/tasks", {
           method: "POST",
           headers: {
             Authorization: "Bearer " + server.credentials().reporterToken,
@@ -273,21 +284,27 @@ export async function legacyCompare(
           },
           body: JSON.stringify(taskInput),
         });
-        const responseText = await response.text(),
-          completedMs = performance.now();
-        result.samples.push({
+        const taskCapture = {
           operation: "taskCreationDefaultFullHTTP",
           label,
           ordinal,
           warmup: ordinal < 10,
           input: taskInput,
           dispatchMs,
-          completedMs,
-          elapsedMs: completedMs - dispatchMs,
+          completedMs: null as number | null,
+          elapsedMs: null as number | null,
           status: response.status,
-          responseText,
+          responseText: "",
           generation: response.headers.get("agentflow-generation"),
-        });
+        };
+        result.samples.push(taskCapture);
+        const responseText = await readBoundedText(
+            response,
+            (text) => (taskCapture.responseText = text),
+          ),
+          completedMs = performance.now();
+        taskCapture.completedMs = completedMs;
+        taskCapture.elapsedMs = completedMs - dispatchMs;
         assert.equal(response.status, 201);
         const task = taskResponse.parse(JSON.parse(responseText));
         assert.equal(response.headers.get("preference-applied"), null);

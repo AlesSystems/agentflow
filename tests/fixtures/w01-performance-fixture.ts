@@ -1,3 +1,4 @@
+import { boundedLaunch, boundedFetch, readBoundedText } from "./w01-runtime";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -13,7 +14,6 @@ import {
 import { isAbsolute, join, relative } from "node:path";
 import { createRequire } from "node:module";
 import Database from "better-sqlite3";
-import { launch } from "./server";
 import { sourceProvenance } from "./w01-provenance";
 import type { seedPerformance } from "./p06-performance";
 export const baselineSha = "dd26c4b00867e7680c3baf0cf2be39b60502aecf";
@@ -78,6 +78,7 @@ export function sourceIdentity(root: string) {
       "tests/performance/w01.ts",
       "tests/fixtures/w01-capture.ts",
       "tests/fixtures/w01-spool.ts",
+      "tests/fixtures/w01-runtime.ts",
       "tests/fixtures/w01-performance-fixture.ts",
       "tests/fixtures/w01-legacy-performance.ts",
       "tests/fixtures/w01-workflow-performance.ts",
@@ -132,10 +133,10 @@ export async function workflowFixture(
   dir: string,
   seed: LegacySeed,
 ): Promise<WorkflowFixture> {
-  const server = await launch({ dir });
+  const server = await boundedLaunch({ dir });
   try {
     async function post(path: string, input: unknown) {
-      const response = await fetch(server.url + "/api/v1" + path, {
+      const response = await boundedFetch(server.url + "/api/v1" + path, {
         method: "POST",
         headers: {
           Authorization: "Bearer " + server.credentials().reporterToken,
@@ -144,7 +145,7 @@ export async function workflowFixture(
         },
         body: JSON.stringify(input),
       });
-      const text = await response.text();
+      const text = await readBoundedText(response);
       assert.equal(
         response.status,
         201,
@@ -272,7 +273,7 @@ export async function preparePerformance(
   const seed = JSON.parse(readFileSync(seedOutput, "utf8")) as LegacySeed;
   const headSeed = join(root, "head-upgraded-seed");
   cpSync(seedDir, headSeed, { recursive: true });
-  const upgrade = await launch({ dir: headSeed });
+  const upgrade = await boundedLaunch({ dir: headSeed });
   await upgrade.stop();
   const workflows: WorkflowFixture[] = [];
   for (let i = 1; i <= 3; i++) {

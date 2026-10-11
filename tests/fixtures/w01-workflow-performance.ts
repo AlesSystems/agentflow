@@ -1,4 +1,12 @@
 import {
+  boundedLaunch,
+  boundedFetch,
+  readBoundedText,
+  boundedProxy,
+  boundedPair,
+  boundedBrowser,
+} from "./w01-runtime";
+import {
   captureEventSpool,
   capturePendingSpool,
   validateEventSpool,
@@ -8,7 +16,7 @@ import { randomUUID } from "node:crypto";
 import { cpSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import Database from "better-sqlite3";
-import { chromium, expect, type Browser, type Page } from "@playwright/test";
+import { expect, type Browser, type Page } from "@playwright/test";
 import {
   revisionResponse,
   workflowRunResponse,
@@ -19,7 +27,7 @@ import {
   workflowEventResponse,
 } from "../../src/contracts/workflows";
 import { canonicalDigest } from "../../src/domain/request-digest";
-import { launch, pair } from "./server";
+import { launch } from "./server";
 import { publicProxy } from "./p06-proxy";
 import { proofErrors } from "./p07-proof-errors";
 import { failureFact } from "./p07-warm-error";
@@ -120,7 +128,7 @@ export async function workflowQueries(
   let server: Awaited<ReturnType<typeof launch>> | undefined;
   try {
     errors.save(save, "workflow query initial save", true);
-    server = await launch({ dir });
+    server = await boundedLaunch({ dir });
     const reads = {
       revision: {
         path: `/workflows/${fixture.workflowId}/revisions/${fixture.revisionId}`,
@@ -170,7 +178,7 @@ export async function workflowQueries(
           responseText: null as string | null,
         };
         result.requests.push(fact);
-        const response: Response = await fetch(
+        const response: Response = await boundedFetch(
           server.url +
             "/api/v1" +
             (name === "workflowIngestion"
@@ -190,7 +198,9 @@ export async function workflowQueries(
         );
         fact.status = response.status;
         fact.generation = response.headers.get("agentflow-generation");
-        const text = await response.text();
+        const text = await readBoundedText(response, (text) => {
+          fact.responseText = text;
+        });
         fact.responseText = text;
         const decoded = JSON.parse(text);
         fact.completedMs = performance.now();
@@ -346,6 +356,7 @@ export async function visibilityScenario(
     })[],
     invocations: [] as unknown[],
     setupInvocations: [] as unknown[],
+    proxyFailures: [] as Awaited<ReturnType<typeof boundedProxy>>["failures"],
     eventSpool: [] as ReturnType<typeof captureEventSpool>[],
     setupSpool: [] as ReturnType<typeof captureEventSpool>[],
     pendingSpool: [] as ReturnType<typeof captureEventSpool>[],
@@ -377,13 +388,14 @@ export async function visibilityScenario(
   Object.assign(result, { failureFacts: errors.facts });
   let server: Awaited<ReturnType<typeof launch>> | undefined,
     proxy: Awaited<ReturnType<typeof publicProxy>> | undefined,
-    browser: Browser | undefined;
+    browser: Browser | undefined,
+    browserOwner: Awaited<ReturnType<typeof boundedBrowser>> | undefined;
   const pages: Page[] = [];
   let sampling = false;
   try {
     errors.save(save, "visible initial save", true);
-    server = await launch({ dir });
-    proxy = await publicProxy(server, (request, body, reply) => {
+    server = await boundedLaunch({ dir });
+    proxy = await boundedProxy(server, (request, body, reply) => {
       if (!reply && request.url?.endsWith("/events")) {
         const input = JSON.parse(body.toString("utf8")),
           capture = captureEventSpool(
@@ -407,6 +419,7 @@ export async function visibilityScenario(
       }
       return undefined;
     });
+    result.proxyFailures = proxy.failures;
     const inputs = join(root, `workflow-visible-inputs-${index}`);
     mkdirSync(inputs, { mode: 0o700 });
     const token = join(inputs, "token");
@@ -513,11 +526,9 @@ export async function visibilityScenario(
     }
     errors.save(save, "visible original setup reports", true);
     sampling = true;
-    browser = await chromium.launch({
-      channel:
-        process.env.AGENTFLOW_TEST_BROWSER === "chrome" ? "chrome" : undefined,
-    });
-    const cookie = await pair(server);
+    browserOwner = await boundedBrowser();
+    browser = browserOwner.browser;
+    const cookie = await boundedPair(server);
     for (const context of [0, 1]) {
       const profile = await browser.newContext({
         viewport:
@@ -638,7 +649,8 @@ export async function visibilityScenario(
       for (const capture of captures)
         if (capture.status === "rejected") throw capture.reason;
     }
-    await browser.close();
+    await browserOwner!.close();
+    browserOwner = undefined;
     browser = undefined;
     await server.stop();
     server = undefined;
