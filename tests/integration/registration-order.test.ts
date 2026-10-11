@@ -509,11 +509,12 @@ it("preserves linked active, terminal and taskless legacy facts without inventin
         rows.map((row) =>
           Object.fromEntries(
             Object.entries(row).filter(
-              ([name]) => name !== "registration_order",
+              ([name]) => !["registration_order","artifact_ref","rework_round"].includes(name),
             ),
           ),
         ),
       ).toEqual(facts);
+      expect(rows.map(row=>({artifact_ref:row.artifact_ref,rework_round:row.rework_round}))).toEqual(rows.map(()=>({artifact_ref:null,rework_round:null})));
       expect(rows.map((row) => row.registration_order)).toEqual([
         1, 2, 3, 4, 5,
       ]);
