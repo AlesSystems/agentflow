@@ -10,8 +10,9 @@ import { canonicalDigest } from "../../src/domain/request-digest";
 import type { CommandContext } from "../../src/db/application";
 import { settings } from "../../src/contracts/settings";
 import { uuid } from "../../src/contracts/common";
-import { githubRefreshResponse, githubResponse, type GithubMetadata } from "../../src/contracts/github";
-import { boundedLaunch, boundedPair, boundedFetch, readBoundedText } from "../fixtures/w01-runtime";
+import { githubRefreshResponse, type GithubMetadata } from "../../src/contracts/github";
+import { boundedLaunch, boundedFetch, readBoundedText } from "../fixtures/w01-runtime";
+import { cacheIdentities, validateCache, qualifiedService, budgetFailures, finishCapture } from "../fixtures/w03a-qualification";
 import { distribution } from "../fixtures/w01-capture";
 
 type Prepared = { head: string; baseline: string; headDir: string; baseDir: string; repositories: string[]; rows: number };
@@ -26,7 +27,7 @@ assert(!existsSync(output), "capture directory must be new");
 mkdirSync(output, { mode: 0o700 });
 const save = (name: string, value: unknown) => writeFileSync(join(output, name), JSON.stringify(value, null, 2) + "\n", { mode: 0o600, flag: "wx" });
 const context = (input: unknown): CommandContext => ({ principal: "operator", method: "POST", path: "/api/v1/connections/github/refresh", key: randomUUID(), digest: canonicalDigest(input), now: Date.now() });
-const expected = Array.from({ length: 10 }, (_, repository) => Array.from({ length: 100 }, (_, number) => [`synthetic/repo${repository}`, number + 1] as const)).flat();
+const expected = cacheIdentities;
 let outbound = 0;
 const wires: { method: string | undefined; url: string | undefined; receivedAt: number }[] = [];
 const remote = createServer((req, res) => { outbound++; wires.push({ method: req.method, url: req.url, receivedAt: Date.now() }); res.statusCode = 500; res.end(); });
@@ -40,9 +41,8 @@ function facts(dataDir: string) {
 }
 async function service(source: string, dataDir: string, head: boolean, work: (server: Awaited<ReturnType<typeof boundedLaunch>>, cookie: string) => Promise<void>) {
  const before = head ? facts(dataDir) : null;
- const server = await boundedLaunch({ cwd: source, dir: dataDir, ...(head ? { entry: "tests/fixtures/w03a-server.ts", extraEnv: { W03A_FIXTURE_ORIGIN: origin, AGENTFLOW_GITHUB_TOKEN_FILE: join(root, "synthetic-credential.json") } } : {}) });
- try { await work(server, await boundedPair(server)); }
- finally { await server.stop(); cleanup.push({ source, dataDir, pid: server.child.pid, exitCode: server.child.exitCode, signalCode: server.child.signalCode, logs: server.logs() }); if (head) { const after = facts(dataDir); save(`read-facts-${cleanup.length}.json`, { before, after }); assert.deepEqual(after, before, "public reads must not alter cache, attempts, receipts, connection or changes"); cleanup.push({ dataDir, readFactsSHA256: createHash("sha256").update(JSON.stringify(after)).digest("hex"), readFactsUnchanged: true }); } }
+ await qualifiedService({ cwd: source, dir: dataDir, ...(head ? { entry: "tests/fixtures/w03a-server.ts", extraEnv: { W03A_FIXTURE_ORIGIN: origin, AGENTFLOW_GITHUB_TOKEN_FILE: join(root, "synthetic-credential.json") } } : {}) }, cleanup, work);
+ if (head) { const after = facts(dataDir); save(`read-facts-${cleanup.length}.json`, { before, after }); assert.deepEqual(after, before, "public reads must not alter cache, attempts, receipts, connection or changes"); }
 }
 async function read(server: Awaited<ReturnType<typeof boundedLaunch>>, cookie: string, path: string) {
  const response = await boundedFetch(server.url + path, { headers: { Cookie: cookie } });
@@ -54,16 +54,8 @@ function validateSettings(body: { data: unknown; generation: unknown }, dataDir:
  uuid.parse(body.generation); const parsed = settings.parse(body.data);
  assert.equal(parsed.timezone, "UTC"); assert.equal(parsed.version, 1); assert.equal(parsed.dataLocation, dataDir); assert.equal(parsed.storageMeasurement, "observational");
 }
-function validateCache(body: unknown, wanted: readonly (readonly [string, number])[], total: number) {
- const parsed = githubResponse.parse(body);
- assert.equal(parsed.data.total, total);
- assert.deepEqual(parsed.data.connection.repositories, expected.filter((_, index) => index % 100 === 0).map(row => row[0]));
- assert.equal(parsed.data.connection.enabled, true);
- assert.deepEqual(parsed.data.items.map(item => [item.repository, item.number]), wanted);
- for (const item of parsed.data.items) { assert.equal(item.title, "Synthetic PR"); assert.equal(item.url, `https://github.com/${item.repository}/pull/${item.number}`); assert.equal(item.headSha, "a".repeat(40)); }
- return parsed;
-}
-try {
+
+await finishCapture(async () => {
  const mode = process.argv[2];
  if (mode === "prepare") {
   assert(!existsSync(join(root, "prepared.json")), "prepared fixture must be new");
@@ -132,10 +124,9 @@ try {
   assert.equal(samples.length, declarations.length); assert.equal(new Set(samples.map(sample => sample.id)).size, 990); assert.deepEqual([...samples].map(sample => ({ id: sample.id, warmup: sample.warmup })).sort((a, b) => a.id.localeCompare(b.id)), [...declarations].sort((a, b) => a.id.localeCompare(b.id))); assert.equal(outbound, 0);
   const summaries = Array.from({ length: 3 }, (_, i) => { const round = i + 1; const summarize = (source: string, operation: string) => { const rows = samples.filter(sample => sample.source === source && sample.operation === operation && sample.round === round); assert.equal(rows.length, 110); assert.equal(rows.filter(row => row.warmup).length, 10); assert(rows.every(row => row.status === 200 && row.failure === null && row.elapsedMs !== null && Number.isFinite(row.elapsedMs))); return distribution(rows.filter(row => !row.warmup).map(row => row.elapsedMs!)); }; const base = summarize(prepared.baseline, "settings"), head = summarize(prepared.head, "settings"), cache = summarize(prepared.head, "cache"); return { round, base, head, cache, settingsRegressionPercent: (head.p95Ms / base.p95Ms - 1) * 100, approvalRequired: head.p95Ms > base.p95Ms * 1.2 }; });
   save("summary.json", { prepared, outbound, summaries, cleanup });
-  assert(summaries.every(group => group.cache.p95Ms < 250), "cached snapshot p95 budget exceeded");
-  assert(summaries.every(group => !group.approvalRequired), "existing settings p95 regression requires explanation and Astra approval");
+  assert.equal(budgetFailures(summaries).length, 0, "snapshot budget or existing regression requires approval");
  } else throw Error("prepare or measure required");
-} finally {
+}, async () => {
  await new Promise<void>(resolve => { remote.close(() => resolve()); remote.closeAllConnections(); });
  save("cleanup.json", { outbound, wires, fixtureOrigin: origin, services: cleanup, remoteListening: remote.listening });
-}
+}, () => {});
