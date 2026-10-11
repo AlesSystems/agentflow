@@ -23,6 +23,7 @@ import { ApiError } from "../../client/api";
 import { useRead, useWorkspace, QueryFeedback } from "../../client/provider";
 import { usePaged } from "../../client/paged";
 import {
+  workflowReadinessResponse,
   workflowsResponse,
   workflowResponse,
   revisionsResponse,
@@ -34,6 +35,8 @@ import {
   workflowClose,
   type WorkflowPlan,
 } from "../../contracts/workflows";
+import { AcceptanceFacts, acceptanceLabel } from "../tasks/evidence";
+import type { TaskSnapshot } from "../../contracts/tasks";
 import { ReportingLabel } from "../tracking";
 import { graphLayout } from "./layout";
 function sameId(value: string, expected: string | null) {
@@ -233,6 +236,8 @@ function Plan({
   revisionId: string;
   initial: Record<string, string>;
 }) {
+  const currentQuery=useRead(`/workflows/${workflowId}/revisions/${revisionId}/readiness`,workflowReadinessResponse);
+  const currentTasks=useMemo(()=>new Map((currentQuery.data?.data.tasks ?? []).map(task=>[task.id.toLowerCase(),task])),[currentQuery.data]);
   const revision = useRead(
       `/workflows/${workflowId}/revisions/${revisionId}`,
       revisionResponse,
@@ -280,6 +285,7 @@ function Plan({
         loading={revision.isPending}
         retry={() => void revision.refetch()}
       />
+      <QueryFeedback error={currentQuery.error} loading={currentQuery.isPending} retry={()=>void currentQuery.refetch()}/>
       <label>
         Workflow attempt
         <select
@@ -314,6 +320,7 @@ function Plan({
             onFocusRestored,
             onNodeFocusChange: setRememberedFocus,
           }}
+          currentTasks={currentTasks}
           plan={revision.data.data}
           runId={selectedRun}
         />
@@ -322,6 +329,7 @@ function Plan({
   );
 }
 function PlanEvidence({
+  currentTasks,
   projectId,
   plan,
   runId,
@@ -337,6 +345,7 @@ function PlanEvidence({
   projectId: string;
   workflowId: string;
   revisionId: string;
+  currentTasks: Map<string,TaskSnapshot>;
   plan: WorkflowPlan;
   runId?: string;
   nodeId: string;
@@ -358,6 +367,7 @@ function PlanEvidence({
   return runId ? (
     <ReportedPlan
       {...{
+        currentTasks,
         projectId,
         plan,
         runId,
@@ -385,6 +395,7 @@ function PlanEvidence({
           onFocusRestored,
           onNodeFocusChange,
         }}
+        currentTasks={currentTasks}
         statuses={new Map()}
       />
       {selected && (
@@ -412,6 +423,7 @@ function PlanEvidence({
               Open linked task
             </Link>
           )}
+          <CurrentTaskFacts taskId={selected.taskId} currentTasks={currentTasks}/>
           <p>Linked attempt Unknown</p>
         </section>
       )}
@@ -419,6 +431,7 @@ function PlanEvidence({
   );
 }
 function PlanNodes({
+  currentTasks,
   plan,
   nodeId,
   setNode,
@@ -435,6 +448,7 @@ function PlanNodes({
   view: string;
   setView: (v: string) => void;
   statuses: Map<string, string>;
+  currentTasks: Map<string,TaskSnapshot>;
 } & NodeFocus) {
   const root = useRef<HTMLElement>(null);
   const [restoreOnMount] = useState(restoreFocus);
@@ -503,6 +517,7 @@ function PlanNodes({
   }
   const nodes = useMemo<Node[]>(() => {
     const labels = new Map(plan.nodes.map((n) => [n.id, n.label]));
+    const taskIds=new Map(plan.nodes.map(n=>[n.id,n.taskId]));
     return graphLayout(plan).map((n) => ({
       ...n,
       width: 230,
@@ -510,17 +525,19 @@ function PlanNodes({
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
       ariaLabel: `${labels.get(n.id)} · ${statuses.get(n.id) ?? "Unknown"}`,
+      domAttributes:{"aria-describedby":`current-node-${n.id}`},
       data: {
         label: (
           <>
             <span className="workflow-node-title">{labels.get(n.id)}</span>
             <span>{statuses.get(n.id) ?? "Unknown"}</span>
+            <span id={`current-node-${n.id}`} className="workflow-readiness">{currentLabel(taskIds.get(n.id),currentTasks)}</span>
           </>
         ),
       },
       selected: n.id === nodeId,
     }));
-  }, [plan, nodeId, statuses]);
+  }, [plan, nodeId, statuses,currentTasks]);
   const edges: Edge[] = plan.edges.map((e, i) => ({
     id: String(i),
     source: e.source,
@@ -618,11 +635,13 @@ function PlanNodes({
             <li key={n.id}>
               <button
                 data-node-id={n.id}
+                aria-describedby={`current-node-${n.id}`}
                 aria-pressed={nodeId === n.id}
                 onClick={() => setNode(n.id)}
               >
                 {n.label} · {statuses.get(n.id) ?? "Unknown"}
               </button>
+              <span id={`current-node-${n.id}`} className="workflow-readiness">{currentLabel(n.taskId,currentTasks)}</span>
             </li>
           ))}
         </ul>
@@ -633,6 +652,7 @@ function PlanNodes({
 function ReportedPlan(
   props: {
     projectId: string;
+    currentTasks: Map<string,TaskSnapshot>;
     plan: WorkflowPlan;
     runId: string;
     nodeId: string;
@@ -785,6 +805,7 @@ function ReportedPlan(
           ) : (
             <p>Linked attempt Unknown</p>
           )}
+          <CurrentTaskFacts taskId={selected.taskId} currentTasks={props.currentTasks}/>
           <NodeHistory
             key={selected.nodeId}
             runId={props.runId}
@@ -993,4 +1014,15 @@ function WorkflowEvents({ runId }: { runId: string }) {
       <More page={page} label="workflow reports" />
     </section>
   );
+}
+
+function currentLabel(taskId:string|undefined,currentTasks:Map<string,TaskSnapshot>) {
+  if(!taskId)return "Task unlinked";
+  const task=currentTasks.get(taskId.toLowerCase());
+  if(!task)return "Task readiness Unknown";
+  return acceptanceLabel(task);
+}
+function CurrentTaskFacts({taskId,currentTasks}:{taskId:string|null|undefined;currentTasks:Map<string,TaskSnapshot>}) {
+  const task=taskId ? currentTasks.get(taskId.toLowerCase()) : undefined;
+  return task ? <><p className="metadata">Current linked-task acceptance. This is separate from the selected historical plan and reports.</p><AcceptanceFacts task={task} readiness={task.readiness} evidence={task.evidence}/></> : <p>{taskId ? "Current linked-task readiness Unknown" : "Task unlinked"}</p>;
 }

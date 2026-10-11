@@ -170,3 +170,5 @@ export const taskDetailV1 = z.strictObject({
   }),
 });
 export type Task = z.infer<typeof task>;
+
+export type TaskSnapshot = z.infer<typeof taskSnapshot>;

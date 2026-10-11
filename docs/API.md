@@ -463,3 +463,10 @@ execution evidence. Implementation success may publish `artifactRef` and optiona
 No report completes a task. Required current negatives remain blocking even after
 another approval for the same tuple. Existing implementation-current, Review,
 no-active-attempt and human-acceptance conditions remain in force.
+
+`GET /workflows/{id}/revisions/{revisionId}/readiness` provides one authenticated,
+generation/cursor-bound current snapshot for the distinct linked tasks in that
+immutable revision (maximum 100). It includes their task, prerequisite and gate
+facts through batched reads. Unlinked nodes create no task entry. The selected
+revision and reported observations remain immutable; this separate snapshot also
+works before any workflow attempt and during historical selection.

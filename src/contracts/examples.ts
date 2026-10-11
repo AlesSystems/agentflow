@@ -277,3 +277,6 @@ Object.assign(responseExamples, { replaceDependencies:snapshot({...task,version:
 
 Object.assign(requestExamples,{listGateDecisions:{},listReworks:{}});
 Object.assign(responseExamples,{listGateDecisions:snapshot({items:[],total:0,nextCursor:null}),listReworks:snapshot({items:[],total:0,nextCursor:null})});
+
+Object.assign(requestExamples,{getWorkflowReadiness:{}});
+Object.assign(responseExamples,{getWorkflowReadiness:snapshot({workflowId,revisionId,tasks:[{...task,readiness,evidence}]})});

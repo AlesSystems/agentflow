@@ -78,6 +78,7 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | { kind: "workflow.readiness"; id: string; revisionId: string }
   | { kind: "task.readiness"; id: string }
   | { kind: "task.decisions"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
   | { kind: "task.reworks"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
@@ -1268,7 +1269,17 @@ export class ApplicationData {
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "task.readiness") {
+      if (query.kind === "workflow.readiness") {
+        const workflow=this.one("workflows",query.id), revision=this.workflowRevision(query.revisionId);
+        if (revision.workflowId !== workflow.id) throw new Conflict("resource_not_found");
+        const ids=[...new Set(revision.nodes.flatMap(node=>node.taskId ? [node.taskId.toLowerCase()] : []))];
+        const rows=ids.length ? this.db.prepare(`SELECT * FROM tasks WHERE id COLLATE NOCASE IN (${ids.map(()=>"?").join(",")}) LIMIT 101`).all(...ids) as Row[] : [];
+        if (rows.length !== ids.length) throw new Conflict("identity_ambiguous");
+        const values=rows.map(row=>task.parse(serialize(row)));
+        if (new Set(values.map(value=>value.id.toLowerCase())).size !== values.length) throw new Conflict("identity_ambiguous");
+        const summaries=this.acceptanceSnapshots(values);
+        data={workflowId:workflow.id,revisionId:revision.id,tasks:values.map(value=>({...value,...summaries.get(value.id)!}))};
+      } else if (query.kind === "task.readiness") {
         const value = this.one("tasks",query.id);
         data = this.readiness(value.id as string);
       } else if (query.kind === "task.evidence" || query.kind === "task.decisions" || query.kind === "task.reworks") {

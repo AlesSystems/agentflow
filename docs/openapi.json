@@ -11,6 +11,828 @@
     }
   ],
   "paths": {
+    "/api/v1/workflows/{id}/revisions/{revisionId}/readiness": {
+      "get": {
+        "operationId": "getWorkflowReadiness",
+        "security": [
+          {
+            "browserSession": []
+          },
+          {
+            "reporterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Committed result",
+            "headers": {
+              "AgentFlow-Generation": {
+                "description": "Current database generation, including exact retries.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "workflowId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "revisionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "tasks": {
+                          "maxItems": 100,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 200
+                              },
+                              "description": {
+                                "type": "string",
+                                "maxLength": 20000
+                              },
+                              "acceptanceCriteria": {
+                                "type": "string",
+                                "maxLength": 8000
+                              },
+                              "priority": {
+                                "type": "string",
+                                "enum": [
+                                  "low",
+                                  "normal",
+                                  "high",
+                                  "urgent"
+                                ]
+                              },
+                              "tags": {
+                                "maxItems": 20,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 40
+                                }
+                              },
+                              "assignedAgentId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "targetRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "orchestrator",
+                                      "implementation",
+                                      "reviewer",
+                                      "verifier"
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "parentTaskId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "branch": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 200
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "pullRequestUrl": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2000,
+                                    "format": "uri"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "blockedReason": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 4000
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "projectId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "backlog",
+                                  "in_progress",
+                                  "review",
+                                  "completed"
+                                ]
+                              },
+                              "version": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "workRevision": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "reviewRequired": {
+                                "default": false,
+                                "type": "boolean"
+                              },
+                              "verificationRequired": {
+                                "default": false,
+                                "type": "boolean"
+                              },
+                              "reworkRound": {
+                                "default": 0,
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "updatedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "completedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "readiness": {
+                                "type": "object",
+                                "properties": {
+                                  "ready": {
+                                    "type": "boolean"
+                                  },
+                                  "prerequisites": {
+                                    "maxItems": 20,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "taskId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                        },
+                                        "currentWorkRevision": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "acceptedWorkRevision": {
+                                          "anyOf": [
+                                            {
+                                              "type": "integer",
+                                              "exclusiveMinimum": 0,
+                                              "maximum": 9007199254740991
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        },
+                                        "status": {
+                                          "type": "string"
+                                        },
+                                        "reason": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "enum": [
+                                                "not_completed",
+                                                "acceptance_obsolete"
+                                              ]
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "taskId",
+                                        "currentWorkRevision",
+                                        "acceptedWorkRevision",
+                                        "status",
+                                        "reason"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "blockedPrerequisiteIds": {
+                                    "maxItems": 20,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "ready",
+                                  "prerequisites",
+                                  "blockedPrerequisiteIds"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "evidence": {
+                                "type": "object",
+                                "properties": {
+                                  "currentArtifact": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "workRevision": {
+                                            "type": "integer",
+                                            "exclusiveMinimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "artifactRef": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 2000
+                                          },
+                                          "reworkRound": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "id": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                          },
+                                          "taskId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                          },
+                                          "runId": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "actor": {
+                                            "type": "string",
+                                            "enum": [
+                                              "operator",
+                                              "reporter"
+                                            ]
+                                          },
+                                          "displayUrl": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "maxLength": 2000,
+                                                "format": "uri"
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "createdAt": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                          }
+                                        },
+                                        "required": [
+                                          "workRevision",
+                                          "artifactRef",
+                                          "reworkRound",
+                                          "id",
+                                          "taskId",
+                                          "runId",
+                                          "actor",
+                                          "displayUrl",
+                                          "createdAt"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "review": {
+                                    "type": "object",
+                                    "properties": {
+                                      "required": {
+                                        "type": "boolean"
+                                      },
+                                      "approved": {
+                                        "type": "boolean"
+                                      },
+                                      "changesRequested": {
+                                        "type": "boolean"
+                                      },
+                                      "latestDecision": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "workRevision": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "artifactRef": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 2000
+                                              },
+                                              "reworkRound": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "id": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "taskId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "purpose": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "review",
+                                                  "verification"
+                                                ]
+                                              },
+                                              "decision": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "approved",
+                                                  "changes_requested"
+                                                ]
+                                              },
+                                              "evidenceNote": {
+                                                "type": "string"
+                                              },
+                                              "createdAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "workRevision",
+                                              "artifactRef",
+                                              "reworkRound",
+                                              "id",
+                                              "taskId",
+                                              "runId",
+                                              "eventId",
+                                              "purpose",
+                                              "decision",
+                                              "evidenceNote",
+                                              "createdAt"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "required",
+                                      "approved",
+                                      "changesRequested",
+                                      "latestDecision"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "verification": {
+                                    "type": "object",
+                                    "properties": {
+                                      "required": {
+                                        "type": "boolean"
+                                      },
+                                      "approved": {
+                                        "type": "boolean"
+                                      },
+                                      "changesRequested": {
+                                        "type": "boolean"
+                                      },
+                                      "latestDecision": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "workRevision": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "artifactRef": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 2000
+                                              },
+                                              "reworkRound": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "id": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "taskId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "purpose": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "review",
+                                                  "verification"
+                                                ]
+                                              },
+                                              "decision": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "approved",
+                                                  "changes_requested"
+                                                ]
+                                              },
+                                              "evidenceNote": {
+                                                "type": "string"
+                                              },
+                                              "createdAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "workRevision",
+                                              "artifactRef",
+                                              "reworkRound",
+                                              "id",
+                                              "taskId",
+                                              "runId",
+                                              "eventId",
+                                              "purpose",
+                                              "decision",
+                                              "evidenceNote",
+                                              "createdAt"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "required",
+                                      "approved",
+                                      "changesRequested",
+                                      "latestDecision"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "implementationCurrent": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "currentArtifact",
+                                  "review",
+                                  "verification",
+                                  "implementationCurrent"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "description",
+                              "acceptanceCriteria",
+                              "priority",
+                              "tags",
+                              "assignedAgentId",
+                              "targetRole",
+                              "parentTaskId",
+                              "branch",
+                              "pullRequestUrl",
+                              "blockedReason",
+                              "id",
+                              "projectId",
+                              "status",
+                              "version",
+                              "workRevision",
+                              "reviewRequired",
+                              "verificationRequired",
+                              "reworkRound",
+                              "createdAt",
+                              "updatedAt",
+                              "completedAt",
+                              "readiness",
+                              "evidence"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "workflowId",
+                        "revisionId",
+                        "tasks"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "snapshotCursor": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
+                    },
+                    "generation": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "snapshotCursor",
+                    "generation"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "workflowId": "10000000-0000-4000-8000-000000000011",
+                    "revisionId": "10000000-0000-4000-8000-000000000012",
+                    "tasks": [
+                      {
+                        "id": "10000000-0000-4000-8000-000000000002",
+                        "projectId": "10000000-0000-4000-8000-000000000001",
+                        "parentTaskId": null,
+                        "title": "Synthetic task",
+                        "description": "",
+                        "acceptanceCriteria": "",
+                        "status": "backlog",
+                        "priority": "normal",
+                        "tags": [],
+                        "assignedAgentId": null,
+                        "targetRole": null,
+                        "branch": null,
+                        "pullRequestUrl": null,
+                        "blockedReason": null,
+                        "version": 1,
+                        "workRevision": 1,
+                        "reviewRequired": false,
+                        "verificationRequired": false,
+                        "reworkRound": 0,
+                        "createdAt": "2026-10-09T00:00:00.000Z",
+                        "updatedAt": "2026-10-09T00:00:00.000Z",
+                        "completedAt": null,
+                        "readiness": {
+                          "ready": true,
+                          "prerequisites": [],
+                          "blockedPrerequisiteIds": []
+                        },
+                        "evidence": {
+                          "currentArtifact": null,
+                          "review": {
+                            "required": false,
+                            "approved": false,
+                            "changesRequested": false,
+                            "latestDecision": null
+                          },
+                          "verification": {
+                            "required": false,
+                            "approved": false,
+                            "changesRequested": false,
+                            "latestDecision": null
+                          },
+                          "implementationCurrent": true
+                        }
+                      }
+                    ]
+                  },
+                  "snapshotCursor": "0",
+                  "generation": "10000000-0000-4000-8000-000000000004"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "409": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "415": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "422": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RetryableError"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
+      },
+      "head": {
+        "operationId": "getWorkflowReadinessHead",
+        "security": [
+          {
+            "browserSession": []
+          },
+          {
+            "reporterBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bodyless snapshot status",
+            "headers": {
+              "AgentFlow-Generation": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tasks/{id}/decisions": {
       "get": {
         "operationId": "listGateDecisions",

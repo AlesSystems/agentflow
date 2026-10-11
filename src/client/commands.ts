@@ -1,7 +1,7 @@
 import type { Task } from "../contracts/tasks";
 export type FrozenCommand = {
   path: string;
-  method: "POST" | "PATCH";
+  method: "POST" | "PATCH" | "PUT";
   body: string;
   key: string;
 };
