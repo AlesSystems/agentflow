@@ -479,7 +479,9 @@ All three connection routes require the paired browser session. `GET
 cursor. It never contacts GitHub. `PUT /connections/github/repositories` replaces
 `enabled` and at most 10 exact case-insensitive repository identifiers with
 `expectedVersion` and an idempotency key; its version is independent of timezone.
-Default is disabled with no repositories.
+Default is disabled with no repositories. Repository saves, disconnect/re-enable,
+and scope replacement preserve an active connection-wide Retry-After deadline;
+new refresh keys remain gated until it expires.
 
 `POST /connections/github/refresh` accepts `expectedVersion`, one selected
 `repository`, and exactly one `page` (1–1000, fixed 20 rows) or positive safe-integer
