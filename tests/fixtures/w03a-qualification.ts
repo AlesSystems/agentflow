@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { uuid } from "../../src/contracts/common";
 import { githubResponse } from "../../src/contracts/github";
 import { stop } from "./server";
 import { boundedLaunch, boundedPair, deadline, ownedBounds } from "./w01-runtime";
@@ -36,18 +37,19 @@ export function reconcile(declared: { id: string; warmup: boolean }[], samples: 
  for (const sample of samples) counts.set(sample.id, (counts.get(sample.id) ?? 0) + 1);
  const missing = declared.filter(row => !counts.has(row.id)).map(row => row.id), duplicate = [...counts].filter(([, count]) => count !== 1).map(([id]) => id), invalid: string[] = [];
  for (const row of samples) { const expected = wanted.get(row.id); let valid = !!expected && expected.warmup === row.warmup && row.status === 200 && row.elapsedMs !== null && Number.isFinite(row.elapsedMs) && row.elapsedMs >= 0 && row.drainedMs !== null && row.drainedMs >= row.dispatchMs && Math.abs(row.elapsedMs - (row.drainedMs - row.dispatchMs)) < 0.000001;
-  try { const body = JSON.parse(row.text!); valid = valid && typeof row.generation === "string" && body.generation === row.generation; } catch { valid = false; }
+  try { uuid.parse(row.generation); const body = JSON.parse(row.text!); valid = valid && typeof row.generation === "string" && body.generation === row.generation; } catch { valid = false; }
   if (!valid) invalid.push(row.id);
  }
  const failed = samples.filter(row => row.failure !== null).map(row => row.id), unconfirmed = samples.filter(row => !row.confirmed).map(row => row.id);
  return { declaredIds: declared.map(row => row.id), expected: declared.length, attempted: samples.length, attemptedIds: samples.map(row => row.id), missing, failed, unconfirmed, duplicate, invalid, primaryFailure: primary, cleanupFailures: cleanup, valid: new Set(declared.map(row => row.id)).size === declared.length && !missing.length && !failed.length && !unconfirmed.length && !duplicate.length && !invalid.length && primary === null && !cleanup.length };
 }
 export async function qualifiedService(options: Parameters<typeof boundedLaunch>[0], records: unknown[], work: (server: Awaited<ReturnType<typeof boundedLaunch>>, cookie: string) => Promise<void>, pair = boundedPair) {
- const record = { attempt: records.length + 1, source: options?.cwd, dataDir: options?.dir, pid: undefined as number | undefined, exitCode: null as number | null, signalCode: null as NodeJS.Signals | null, stdout: "", stderr: "", closed: false, phase: "launch", primaryFailure: null as string | null, cleanupFailure: null as string | null };
+ const record = { attempt: records.length + 1, source: options?.cwd, dataDir: options?.dir, pid: null as number | null, exitCode: null as number | null, signalCode: null as NodeJS.Signals | null, stdout: "", stderr: "", stdoutBase64: "", stderrBase64: "", closed: false, phase: "launch", primaryFailure: null as string | null, cleanupFailure: null as string | null };
  records.push(record); let child: import("node:child_process").ChildProcess | undefined, server: Awaited<ReturnType<typeof boundedLaunch>> | undefined;
+ const stdout: Buffer[] = [], stderr: Buffer[] = [];
  let closed = Promise.resolve(); let primary: unknown, cleanup: unknown;
  try {
-  server = await boundedLaunch({ ...options, onChild: observed => { child = observed; record.pid = observed.pid; observed.stdout!.on("data", chunk => record.stdout += chunk); observed.stderr!.on("data", chunk => record.stderr += chunk); closed = new Promise<void>(resolve => observed.once("close", (code, signal) => { record.closed = true; record.exitCode = code; record.signalCode = signal; resolve(); })); } });
+  server = await boundedLaunch({ ...options, onChild: observed => { child = observed; record.pid = observed.pid ?? null; observed.stdout!.on("data", chunk => stdout.push(Buffer.from(chunk))); observed.stderr!.on("data", chunk => stderr.push(Buffer.from(chunk))); closed = new Promise<void>(resolve => observed.once("close", (code, signal) => { record.closed = true; record.exitCode = code; record.signalCode = signal; resolve(); })); } });
   record.phase = "pair"; const cookie = await pair(server); record.phase = "work"; await work(server, cookie);
  } catch (error) { primary = error; record.primaryFailure = String(error); }
  try {
@@ -55,6 +57,7 @@ export async function qualifiedService(options: Parameters<typeof boundedLaunch>
   await deadline(closed, options?.bounds?.killMs ?? ownedBounds.killMs, "QUALIFIED_OUTPUT_DRAIN_DEADLINE");
   assert(record.closed && record.exitCode === 0 && record.signalCode === null, "qualified graceful shutdown requires exit0 and null signal after output drain");
  } catch (error) { cleanup = error; record.cleanupFailure = String(error); }
+ const out = Buffer.concat(stdout), err = Buffer.concat(stderr); record.stdout = out.toString("utf8"); record.stderr = err.toString("utf8"); record.stdoutBase64 = out.toString("base64"); record.stderrBase64 = err.toString("base64");
  if (primary !== undefined) throw primary;
  if (cleanup !== undefined) throw cleanup;
  record.phase = "closed";

@@ -5,7 +5,7 @@ import { expect, it } from "vitest";
 import type { ChildProcess } from "node:child_process";
 import { launch } from "../fixtures/server";
 function retain(name: string, value: unknown) {
- if (process.env.AGENTFLOW_W02_EVIDENCE_DIR) writeFileSync(join(process.env.AGENTFLOW_W02_EVIDENCE_DIR, `w03a-${name}.json`), JSON.stringify(value, null, 2), { mode: 0o600, flag: "wx" });
+ if (process.env.AGENTFLOW_W02_EVIDENCE_DIR) writeFileSync(join(process.env.AGENTFLOW_W02_EVIDENCE_DIR, `w03a-${name}.json`), JSON.stringify({ acceptance: false, control: name, original: value }, null, 2), { mode: 0o600, flag: "wx" });
 }
 function childFixture(mode: string) {
  const dir = mkdtempSync(join(tmpdir(), "w03a-control-"));
