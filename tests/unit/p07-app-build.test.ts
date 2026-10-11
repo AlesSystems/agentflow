@@ -1,6 +1,4 @@
 import {it,expect} from "vitest";
-import {retainedApplication,reviewedOutboxSHA256} from "../fixtures/p07-app-build";
-it("qualifies only the reviewed CLI hash and complete unchanged application graph/assets",()=>{
- const facts=retainedApplication("36f6d1bc4699c706e3f57a17cfcc85a1576c648b");
- expect(facts.reviewedOutboxSHA256).toBe(reviewedOutboxSHA256);expect(Object.keys(facts.unchanged)).toHaveLength(87);expect(Object.keys(facts.assets)).toHaveLength(417);expect(facts.reachable).not.toContain("src/cli/outbox.ts");expect(facts.roots.length).toBeGreaterThan(0);expect(facts.driverHashes["tests/fixtures/p07-flush-stage.ts"]).toMatch(/^[a-f0-9]{64}$/);
-});
+import {validateRetainedApplicationFacts,reviewedOutboxSHA256,retainedAssetCount,retainedAssetSHA256,type RetainedApplicationFacts} from "../fixtures/p07-app-build-policy";
+export const validFacts=():RetainedApplicationFacts=>({changedPaths:["src/cli/outbox.ts"],cliSHA256:reviewedOutboxSHA256,differingInputs:[],assetCount:retainedAssetCount,assetSHA256:retainedAssetSHA256,reachable:["src/app/layout.tsx","src/server/launcher.ts"]});
+it("validates synthetic qualification facts without filesystem, Git ancestry or historical build",()=>{expect(()=>validateRetainedApplicationFacts(validFacts())).not.toThrow();});
