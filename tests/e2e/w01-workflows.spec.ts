@@ -400,6 +400,62 @@ test("two workflow contexts retain bound selection and clear discarded evidence 
         tab.getByText(f.verificationReport.eventId, { exact: true }),
       ).toBeVisible();
     }
+    await page
+      .locator(`.react-flow__node[data-id="${f.verificationNodeId}"]`)
+      .focus();
+    await expect(
+      page.locator(`.react-flow__node[data-id="${f.verificationNodeId}"]`),
+    ).toBeFocused();
+    await page.evaluate(() => {
+      const events: unknown[] = [];
+      Object.assign(window, { w01FocusProbe: events });
+      const summary = (value: EventTarget | null) =>
+        value instanceof Element
+          ? {
+              tag: value.tagName,
+              nodeId:
+                value
+                  .closest(".react-flow__node[data-id],button[data-node-id]")
+                  ?.getAttribute("data-id") ??
+                value.getAttribute("data-node-id"),
+              role: value.getAttribute("role"),
+              dialog: !!value.closest('[role="dialog"]'),
+              connected: value.isConnected,
+              visibility: getComputedStyle(value).visibility,
+              bounds: {
+                width: value.getBoundingClientRect().width,
+                height: value.getBoundingClientRect().height,
+              },
+              hasFocus: document.hasFocus(),
+              activeSame: document.activeElement === value,
+              replacementSame: value.matches(".react-flow__node[data-id]")
+                ? document.querySelector(
+                    `.react-flow__node[data-id="${value.getAttribute("data-id")}"]`,
+                  ) === value
+                : null,
+              dialogs: Array.from(
+                document.querySelectorAll('[role="dialog"]'),
+              ).map((d) => ({
+                visibility: getComputedStyle(d).visibility,
+                connected: d.isConnected,
+              })),
+            }
+          : null;
+      for (const type of ["focusin", "focusout"])
+        document.addEventListener(
+          type,
+          (event) => {
+            if (events.length < 100)
+              events.push({
+                type,
+                target: summary(event.target),
+                related: summary((event as FocusEvent).relatedTarget),
+                active: summary(document.activeElement),
+              });
+          },
+          true,
+        );
+    });
     const originalUrl = page.url(),
       oldGeneration = await page.evaluate(
         async () =>
@@ -508,6 +564,15 @@ test("two workflow contexts retain bound selection and clear discarded evidence 
       expect(generation).not.toBe(oldGeneration);
     }
     await expect(page).toHaveURL(originalUrl);
+    console.log(
+      JSON.stringify({
+        proof: "generation focus trace",
+        events: await page.evaluate(() => Reflect.get(window, "w01FocusProbe")),
+      }),
+    );
+    await expect(
+      page.locator(`.react-flow__node[data-id="${f.verificationNodeId}"]`),
+    ).toBeFocused();
     await expect(
       page.getByText(f.verificationReport.eventId, { exact: true }),
     ).toBeVisible();
@@ -657,6 +722,157 @@ test("a workflow selected under another project cannot expose its plan links", a
     await expect(
       page.getByRole("link", { name: "Open linked task", exact: true }),
     ).toHaveCount(0);
+  } finally {
+    await server.stop();
+  }
+});
+test("local task and attempt returns restore selected node focus in both views", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server);
+    await pairPage(page, server);
+    for (const view of ["graph", "list"]) {
+      for (const label of ["Open linked task", "Open reported attempt"]) {
+        await page.goto(f.url + `&view=${view}`);
+        await expect(
+          page.getByRole("heading", { name: "Verify the change", exact: true }),
+        ).toBeVisible();
+        const selected =
+          view === "graph"
+            ? page.locator(
+                `.react-flow__node[data-id="${f.verificationNodeId}"]`,
+              )
+            : page.locator(`button[data-node-id="${f.verificationNodeId}"]`);
+        await selected.focus();
+        await page.getByRole("link", { name: label, exact: true }).click();
+        await page
+          .getByRole("link", { name: "Back to workflow", exact: true })
+          .click();
+        await expect(selected).toBeFocused();
+        await expect(
+          page.getByRole("heading", { name: "Verify the change", exact: true }),
+        ).toBeVisible();
+      }
+    }
+  } finally {
+    await server.stop();
+  }
+});
+
+test("real report refresh preserves node focus and does not steal control focus", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server);
+    await pairPage(page, server);
+    await page.goto(f.url + "&focus=node");
+    const selected = page.locator(
+      `.react-flow__node[data-id="${f.verificationNodeId}"]`,
+    );
+    await expect(selected).toBeFocused();
+    const control = page.getByRole("button", { name: "Graph", exact: true });
+    await control.focus();
+    const event = await f.report("workflow.node.reported", {
+      nodeId: f.verificationNodeId,
+      state: "running",
+    });
+    await expect(page.locator(".workflow-evidence")).toHaveAttribute(
+      "data-event-id",
+      event.eventId,
+    );
+    await expect(control).toBeFocused();
+    await selected.focus();
+    const next = await f.report("workflow.node.reported", {
+      nodeId: f.unknownNodeId,
+      state: "running",
+    });
+    await expect(
+      page.getByText(new RegExp(` · Sequence ${next.acceptedSequence}$`)),
+    ).toBeVisible();
+    await expect(selected).toBeFocused();
+  } finally {
+    await server.stop();
+  }
+});
+test("graph Space selects evidence and Escape restores the selected node", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server);
+    await pairPage(page, server);
+    await page.goto(f.url);
+    const node = page.locator(
+      `.react-flow__node[data-id="${f.implementationNodeId}"]`,
+    );
+    await expect(node).toBeVisible();
+    expect(await node.evaluate(element=>({width:(element as HTMLElement).offsetWidth,height:(element as HTMLElement).offsetHeight}))).toEqual({width:230,height:104});
+    await page.evaluate(() => {
+      const events: unknown[] = [];
+      Object.assign(window, { w01FocusProbe: events });
+      for (const type of ["focusin", "focusout"])
+        document.addEventListener(
+          type,
+          (event) => {
+            if (events.length < 100) {
+              const t = event.target as HTMLElement,
+                r = (event as FocusEvent).relatedTarget as HTMLElement | null;
+              events.push({
+                type,
+                target: t?.tagName,
+                nodeId: t
+                  ?.closest(".react-flow__node[data-id]")
+                  ?.getAttribute("data-id"),
+                related: r?.tagName,
+                relatedNodeId: r
+                  ?.closest(".react-flow__node[data-id]")
+                  ?.getAttribute("data-id"),
+              });
+            }
+          },
+          true,
+        );
+    });
+    await node.focus();
+    console.log(
+      JSON.stringify({
+        proof: "Space focus trace",
+        events: await page.evaluate(() => Reflect.get(window, "w01FocusProbe")),
+      }),
+    );
+    console.log(
+      JSON.stringify({
+        proof: "Space target readiness",
+        target: await node.evaluate((element) => ({
+          connected: element.isConnected,
+          tabIndex: (element as HTMLElement).tabIndex,
+          visibility: getComputedStyle(element).visibility,
+          display: getComputedStyle(element).display,
+          box: {
+            width: element.getBoundingClientRect().width,
+            height: element.getBoundingClientRect().height,
+          },
+          activeTag: document.activeElement?.tagName,
+          activeNode: document.activeElement?.getAttribute("data-id"),
+          hasFocus: document.hasFocus(),
+          inert: !!element.closest("[inert]"),
+          dialogs: document.querySelectorAll('[role="dialog"]').length,
+        })),
+      }),
+    );
+    await expect(node).toBeFocused();
+    await page.keyboard.press("Space");
+    await expect(
+      page.getByRole("heading", { name: "Build the change", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("link", { name: "Open linked task", exact: true })
+      .focus();
+    await page.keyboard.press("Escape");
+    await expect(node).toBeFocused();
   } finally {
     await server.stop();
   }

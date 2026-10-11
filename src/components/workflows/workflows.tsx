@@ -2,6 +2,7 @@
 import Link from "next/link";
 import {
   useEffect,
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -38,6 +39,11 @@ import { graphLayout } from "./layout";
 function sameId(value: string, expected: string | null) {
   return expected !== null && value.toLowerCase() === expected.toLowerCase();
 }
+type NodeFocus = {
+  restoreFocus: boolean;
+  onFocusRestored: () => void;
+  onNodeFocusChange: (focused: boolean) => void;
+};
 function subscribeNarrow(changed: () => void) {
   const media = window.matchMedia("(max-width: 700px)");
   media.addEventListener("change", changed);
@@ -237,7 +243,10 @@ function Plan({
     ),
     [runId, setRun] = useState(initial.workflowRunId ?? ""),
     [nodeId, setNode] = useState(initial.nodeId ?? ""),
-    [chosenView, setView] = useState(initial.view ?? "");
+    [chosenView, setView] = useState(initial.view ?? ""),
+    [returnFocus, setReturnFocus] = useState(initial.focus === "node"),
+    [rememberedFocus, setRememberedFocus] = useState(false);
+  const onFocusRestored = useCallback(() => setReturnFocus(false), []);
   const selectedRun = runId || runs.items[0]?.id;
   const selectedNode = nodeId || revision.data?.data.nodes[0]?.id || "";
   // Capture each default once; refresh/reset must not choose a different record.
@@ -301,6 +310,9 @@ function Plan({
             view,
             setView,
             context,
+            restoreFocus: returnFocus || rememberedFocus,
+            onFocusRestored,
+            onNodeFocusChange: setRememberedFocus,
           }}
           plan={revision.data.data}
           runId={selectedRun}
@@ -318,6 +330,9 @@ function PlanEvidence({
   view,
   setView,
   context,
+  restoreFocus,
+  onFocusRestored,
+  onNodeFocusChange,
 }: {
   projectId: string;
   workflowId: string;
@@ -329,16 +344,37 @@ function PlanEvidence({
   view: string;
   setView: (v: string) => void;
   context: URLSearchParams;
-}) {
+} & NodeFocus) {
   return runId ? (
     <ReportedPlan
-      {...{ projectId, plan, runId, nodeId, setNode, view, setView, context }}
+      {...{
+        projectId,
+        plan,
+        runId,
+        nodeId,
+        setNode,
+        view,
+        setView,
+        context,
+        restoreFocus,
+        onFocusRestored,
+        onNodeFocusChange,
+      }}
     />
   ) : (
     <>
       <p>No workflow attempt registered for this revision.</p>
       <PlanNodes
-        {...{ plan, nodeId, setNode, view, setView }}
+        {...{
+          plan,
+          nodeId,
+          setNode,
+          view,
+          setView,
+          restoreFocus,
+          onFocusRestored,
+          onNodeFocusChange,
+        }}
         statuses={new Map()}
       />
     </>
@@ -351,6 +387,9 @@ function PlanNodes({
   view,
   setView,
   statuses,
+  restoreFocus,
+  onFocusRestored,
+  onNodeFocusChange,
 }: {
   plan: WorkflowPlan;
   nodeId: string;
@@ -358,8 +397,52 @@ function PlanNodes({
   view: string;
   setView: (v: string) => void;
   statuses: Map<string, string>;
-}) {
+} & NodeFocus) {
   const root = useRef<HTMLElement>(null);
+  const [restoreOnMount] = useState(restoreFocus);
+  const restoredForMount = useRef(false);
+  useEffect(() => {
+    if (
+      !restoreOnMount ||
+      restoredForMount.current ||
+      !plan.nodes.some((n) => n.id === nodeId)
+    )
+      return;
+    let observer: MutationObserver | undefined;
+    const restore = () => {
+      const element = root.current?.querySelector<HTMLElement>(
+        view === "graph"
+          ? `.react-flow__node[data-id="${nodeId}"]`
+          : `button[data-node-id="${nodeId}"]`,
+      );
+      if (!element) return;
+      const style = getComputedStyle(element),
+        box = element.getBoundingClientRect();
+      if (
+        style.visibility !== "visible" ||
+        style.display === "none" ||
+        !box.width ||
+        !box.height
+      )
+        return;
+      element.focus();
+      if (document.activeElement !== element) return;
+      restoredForMount.current = true;
+      onFocusRestored();
+      observer?.disconnect();
+    };
+    restore();
+    if (!restoredForMount.current && root.current) {
+      observer = new MutationObserver(restore);
+      observer.observe(root.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style", "class", "tabindex"],
+      });
+    }
+    return () => observer?.disconnect();
+  }, [restoreOnMount, nodeId, view, plan.nodes, onFocusRestored]);
   function focusNode() {
     const element = root.current?.querySelector<HTMLElement>(
       view === "graph"
@@ -384,6 +467,8 @@ function PlanNodes({
     const labels = new Map(plan.nodes.map((n) => [n.id, n.label]));
     return graphLayout(plan).map((n) => ({
       ...n,
+      width: 230,
+      height: 104,
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
       ariaLabel: `${labels.get(n.id)} · ${statuses.get(n.id) ?? "Unknown"}`,
@@ -408,7 +493,35 @@ function PlanNodes({
     <section
       ref={root}
       aria-label="Published plan"
-      onKeyDown={(e) => {
+      onFocusCapture={(e) =>
+        onNodeFocusChange(
+          e.target instanceof Element &&
+            !!e.target.closest(
+              ".react-flow__node[data-id],button[data-node-id]",
+            ),
+        )
+      }
+      onBlurCapture={(e) => {
+        const next = e.relatedTarget;
+        if (
+          !next ||
+          root.current?.contains(next) ||
+          (next instanceof Element && next.closest('[role="dialog"]'))
+        )
+          return;
+        onNodeFocusChange(false);
+      }}
+      onKeyDownCapture={(e) => {
+        if (view === "graph" && (e.key === "Enter" || e.key === " ")) {
+          const id = (e.target as HTMLElement)
+            .closest(".react-flow__node[data-id]")
+            ?.getAttribute("data-id");
+          if (id) {
+            e.preventDefault();
+            e.stopPropagation();
+            setNode(id);
+          }
+        }
         if (e.key === "Escape") {
           e.preventDefault();
           focusNode();
@@ -479,16 +592,18 @@ function PlanNodes({
     </section>
   );
 }
-function ReportedPlan(props: {
-  projectId: string;
-  plan: WorkflowPlan;
-  runId: string;
-  nodeId: string;
-  setNode: (id: string) => void;
-  view: string;
-  setView: (v: string) => void;
-  context: URLSearchParams;
-}) {
+function ReportedPlan(
+  props: {
+    projectId: string;
+    plan: WorkflowPlan;
+    runId: string;
+    nodeId: string;
+    setNode: (id: string) => void;
+    view: string;
+    setView: (v: string) => void;
+    context: URLSearchParams;
+  } & NodeFocus,
+) {
   function returnToPlan() {
     document
       .querySelector<HTMLElement>(
@@ -509,11 +624,20 @@ function ReportedPlan(props: {
     sameId(run.projectId, props.projectId) &&
     sameId(run.planRevisionId, props.context.get("revisionId")) &&
     sameId(run.workflowId, props.context.get("workflowId"));
-  const nodes = bound ? run.nodes : [],
-    statuses = new Map(
-      nodes.map((n) => [n.nodeId, n.observation?.payload.state ?? "Unknown"]),
-    ),
-    selected = nodes.find(
+  const nodes = bound ? run.nodes : undefined;
+  const statuses = useMemo(
+    () =>
+      new Map(
+        nodes
+          ? nodes.map((n) => [
+              n.nodeId,
+              n.observation?.payload.state ?? "Unknown",
+            ])
+          : [],
+      ),
+    [nodes],
+  );
+  const selected = nodes?.find(
       (n) => n.nodeId === (props.nodeId || props.plan.nodes[0]?.id),
     );
   return (

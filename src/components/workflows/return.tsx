@@ -19,6 +19,7 @@ export function WorkflowReturn({
   }
   const view = raw.get("view");
   if (view === "list" || view === "graph") search.set("view", view);
+  search.set("focus", "node");
   return (
     <p>
       <Link href={`/projects/${project.data}/workflows?${search}`}>

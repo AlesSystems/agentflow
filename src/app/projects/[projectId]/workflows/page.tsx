@@ -22,6 +22,7 @@ export default async function Page({
     if (parsed.success) selection[key] = parsed.data;
   }
   if (raw.view === "list" || raw.view === "graph") selection.view = raw.view;
+  if (raw.focus === "node") selection.focus = "node";
   const data = await pageData(
     `/workflows?projectId=${projectId}&limit=20`,
     { kind: "workflows", input: { projectId, limit: 20 } },
