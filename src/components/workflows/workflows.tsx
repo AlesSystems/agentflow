@@ -23,6 +23,7 @@ import { useRead, useWorkspace, QueryFeedback } from "../../client/provider";
 import { usePaged } from "../../client/paged";
 import {
   workflowsResponse,
+  workflowResponse,
   revisionsResponse,
   revisionResponse,
   workflowRunsResponse,
@@ -34,6 +35,9 @@ import {
 } from "../../contracts/workflows";
 import { ReportingLabel } from "../tracking";
 import { graphLayout } from "./layout";
+function sameId(value: string, expected: string | null) {
+  return expected !== null && value.toLowerCase() === expected.toLowerCase();
+}
 function subscribeNarrow(changed: () => void) {
   const media = window.matchMedia("(max-width: 700px)");
   media.addEventListener("change", changed);
@@ -119,7 +123,7 @@ export function Workflows({
         </p>
       )}
       {id && (
-        <PublishedPlan
+        <BoundWorkflow
           key={id}
           projectId={projectId}
           workflowId={id}
@@ -127,6 +131,38 @@ export function Workflows({
         />
       )}
     </div>
+  );
+}
+function BoundWorkflow(props: {
+  projectId: string;
+  workflowId: string;
+  initial: Record<string, string>;
+}) {
+  const query = useRead(`/workflows/${props.workflowId}`, workflowResponse);
+  const [knownBinding, setKnownBinding] = useState(false);
+  const workflow = query.data?.data;
+  const bound =
+    workflow &&
+    sameId(workflow.id, props.workflowId) &&
+    sameId(workflow.projectId, props.projectId);
+  if (bound && !knownBinding) setKnownBinding(true);
+  // Preserve selector state during generation repair; each query still supplies
+  // current-generation data, and an explicit mismatch hides the entire plan.
+  const showPlan = bound || (knownBinding && !workflow);
+  return (
+    <>
+      <QueryFeedback
+        error={query.error}
+        loading={query.isPending}
+        retry={() => void query.refetch()}
+      />
+      {workflow && !bound && (
+        <p role="alert">
+          This workflow belongs to another project. Choose a matching workflow.
+        </p>
+      )}
+      {showPlan && <PublishedPlan {...props} />}
+    </>
   );
 }
 function PublishedPlan({
@@ -469,9 +505,10 @@ function ReportedPlan(props: {
     run = query.data?.data;
   const bound =
     run &&
-    run.projectId === props.projectId &&
-    run.planRevisionId === props.context.get("revisionId") &&
-    run.workflowId === props.context.get("workflowId");
+    sameId(run.id, props.runId) &&
+    sameId(run.projectId, props.projectId) &&
+    sameId(run.planRevisionId, props.context.get("revisionId")) &&
+    sameId(run.workflowId, props.context.get("workflowId"));
   const nodes = bound ? run.nodes : [],
     statuses = new Map(
       nodes.map((n) => [n.nodeId, n.observation?.payload.state ?? "Unknown"]),

@@ -12,9 +12,11 @@ export default async function Page({
   params: Promise<{ projectId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { projectId } = await params,
+  const { projectId: rawProjectId } = await params,
     raw = await searchParams,
     selection: Record<string, string> = {};
+  const project = inputUuid.safeParse(rawProjectId);
+  const projectId = project.success ? project.data : rawProjectId;
   for (const key of ["workflowId", "revisionId", "workflowRunId", "nodeId"]) {
     const parsed = inputUuid.safeParse(raw[key]);
     if (parsed.success) selection[key] = parsed.data;

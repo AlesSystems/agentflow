@@ -582,3 +582,82 @@ test("two workflow contexts retain bound selection and clear discarded evidence 
     await server.stop();
   }
 });
+test("uppercase project URL retains matching workflow evidence", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server);
+    await pairPage(page, server);
+    await page.goto(f.url.replace(f.projectId, f.projectId.toUpperCase()));
+    await expect(
+      page.getByRole("heading", { name: "Verify the change", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(f.verificationReport.eventId, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "This attempt belongs to another plan. Choose a matching attempt.",
+        { exact: true },
+      ),
+    ).toHaveCount(0);
+  } finally {
+    await server.stop();
+  }
+});
+test("legacy physical uppercase project and attempt bind through canonical workflow URLs", async ({
+  page,
+}) => {
+  const { legacyWorkflow } = await import("../fixtures/w01-legacy"),
+    f = await legacyWorkflow();
+  try {
+    await pairPage(page, f.server);
+    await page.goto(f.url);
+    await expect(
+      page.getByRole("heading", {
+        name: "Legacy linked evidence",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(f.eventId, { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Open reported attempt", exact: true }),
+    ).toHaveAttribute("href", new RegExp(f.taskRunId.toLowerCase()));
+    await expect(
+      page.getByText(
+        "This attempt belongs to another plan. Choose a matching attempt.",
+        { exact: true },
+      ),
+    ).toHaveCount(0);
+  } finally {
+    await f.server.stop();
+  }
+});
+test("a workflow selected under another project cannot expose its plan links", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server),
+      otherProject = await f.register(["project", "create"], {
+        name: "Synthetic other workflow project",
+      });
+    await pairPage(page, server);
+    await page.goto(f.url.replace(f.projectId, otherProject));
+    await expect(
+      page.getByText(
+        "This workflow belongs to another project. Choose a matching workflow.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Verify the change", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Open linked task", exact: true }),
+    ).toHaveCount(0);
+  } finally {
+    await server.stop();
+  }
+});
