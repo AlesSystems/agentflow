@@ -29,6 +29,7 @@ export async function launch(
     nodeArgs?: string[];
     extraEnv?: Record<string, string>;
     bounds?: OwnedBounds;
+    onChild?: (child: ChildProcess) => void;
   } = {},
 ) {
   const dir =
@@ -66,6 +67,7 @@ export async function launch(
       stdio: [options.stdin ? "pipe" : "ignore", "pipe", "pipe"],
     },
   );
+  options.onChild?.(child);
   let spawnError: Error | undefined;
   if (options.bounds)
     child.once("error", (error) => {
