@@ -21,6 +21,7 @@ import {
 } from "../fixtures/w01-workflow-performance";
 import {
   summarizeVisibility,
+  distribution,
   type VisibleCapture,
   type VisibleIdentity,
 } from "../fixtures/w01-capture";
@@ -80,6 +81,7 @@ export const definition = {
     reportsPerScenario: 10,
     contexts: 2,
     expectedObservations: 60,
+    views: { graph: 30, list: 30 },
     warmups: 0,
     absoluteP95Ms: 2000,
     captureBoundMs: 5000,
@@ -250,6 +252,7 @@ if (mode === "--prepare") {
     workflow: [] as unknown[],
     visibility: [] as unknown[],
     visibilitySummary: null as ReturnType<typeof summarizeVisibility> | null,
+    visibilityByView: {} as Record<string, ReturnType<typeof distribution>>,
     failures: [] as string[],
   };
   const save = () => {
@@ -332,6 +335,17 @@ if (mode === "--prepare") {
         visible.flatMap((v) => v.expected),
         visible.flatMap((v) => v.observations),
       );
+      for (const view of ["graph", "list"]) {
+        const values = visible
+          .flatMap((v) => v.observations)
+          .filter(
+            (v) => (v as VisibleCapture & { view: string }).view === view,
+          );
+        receipt.visibilityByView[view] = distribution(
+          values.map((v) => v.elapsedMs),
+        );
+        assert.equal(values.length, repetitions * reports);
+      }
       assert.equal(
         receipt.visibilitySummary.expected,
         repetitions * reports * 2,

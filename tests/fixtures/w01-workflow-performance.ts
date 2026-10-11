@@ -313,6 +313,7 @@ export async function visibilityScenario(
   const expected = Array.from({ length: reports }, (_, ordinal) =>
     [0, 1].map((context) => ({
       context,
+      view: context === 0 ? "graph" : "list",
       projectId: fixture.projectId,
       workflowId: fixture.workflowId,
       revisionId: fixture.revisionId,
@@ -340,7 +341,7 @@ export async function visibilityScenario(
     database: null as ReturnType<typeof database> | null,
     failure: "",
     qualification:
-      "Finite real CLI dispatch through exact two-frame visible/hit-tested node evidence in two independent browser contexts, desktop1440/list and narrow375/list. Controller performance clock measures both endpoints; no server/browser clock subtraction. Process startup is included. Not sustained/burst or whole-v1 proof.",
+      "Finite real CLI dispatch through exact two-frame visible/hit-tested node evidence in two independent browser contexts, desktop1440/graph and narrow375/list. Controller performance clock measures both endpoints; no server/browser clock subtraction. Process startup is included. Not sustained/burst or whole-v1 proof.",
   };
   receipt.visibility.push(result);
   const errors = proofErrors((error) => {
@@ -400,7 +401,7 @@ export async function visibilityScenario(
         revisionId: fixture.revisionId,
         workflowRunId: fixture.workflowRunId,
         nodeId: fixture.nodeIds[10],
-        view: "list",
+        view: context === 0 ? "graph" : "list",
       });
       await page.goto(
         server.url + `/projects/${fixture.projectId}/workflows?${search}`,
@@ -418,7 +419,13 @@ export async function visibilityScenario(
     for (let ordinal = 0; ordinal < reports; ordinal++) {
       const nodeId = fixture.nodeIds[10 + ordinal];
       for (const page of pages) {
-        await page.locator(`button[data-node-id="${nodeId}"]`).click();
+        if (page === pages[0]) {
+          const node = page.locator(`.react-flow__node[data-id="${nodeId}"]`);
+          await expect(node).toBeVisible();
+          await node.focus();
+          await expect(node).toBeFocused();
+          await page.keyboard.press("Space");
+        } else await page.locator(`button[data-node-id="${nodeId}"]`).click();
         await expect(
           page.getByRole("heading", {
             name: `Synthetic plan node ${10 + ordinal}`,

@@ -171,22 +171,33 @@ export async function workflowFixture(
       workflowId,
       planRevisionId: revisionId,
     });
-    for (const [sequence, type, payload] of [
-      [1, "workflow.started", {}],
-      [
-        2,
-        "workflow.node.reported",
-        { nodeId: nodeIds[0], state: "pending", runId: seed.runs[0] },
-      ],
-    ] as const)
+    await post(`/workflow-runs/${workflowRunId}/events`, {
+      schemaVersion: 1,
+      eventId: randomUUID(),
+      workflowRunId,
+      sequence: 1,
+      type: "workflow.started",
+      occurredAt: new Date().toISOString(),
+      payload: {},
+    });
+    for (let i = 0; i < 100; i++)
       await post(`/workflow-runs/${workflowRunId}/events`, {
         schemaVersion: 1,
         eventId: randomUUID(),
         workflowRunId,
-        sequence,
-        type,
+        sequence: i + 2,
+        type: "workflow.node.reported",
         occurredAt: new Date().toISOString(),
-        payload,
+        payload: {
+          nodeId: nodeIds[i],
+          state: "pending",
+          ...(i < 10 ? { runId: seed.runs[i] } : {}),
+          reportedSkill: {
+            name: "Synthetic inert skill",
+            source: "synthetic://W01/measure",
+            version: "1",
+          },
+        },
       });
     return {
       dir,
@@ -196,7 +207,7 @@ export async function workflowFixture(
       workflowRunId,
       nodeIds,
       tasks: seed.tasks,
-      lastSequence: 2,
+      lastSequence: 101,
     };
   } finally {
     await server.stop();
@@ -256,6 +267,20 @@ export async function preparePerformance(
     cpSync(headSeed, dir, { recursive: true });
     workflows.push(await workflowFixture(dir, seed));
   }
+  const schemas = {
+    base: schema(seedDir),
+    head: schema(headSeed),
+    workflows: workflows.map((v) => schema(v.dir)),
+  };
+  for (const entry of [schemas.base, schemas.head, ...schemas.workflows]) {
+    assert.deepEqual(entry.integrity, [{ integrity_check: "ok" }]);
+    assert.deepEqual(entry.foreignKeys, []);
+    assert.deepEqual(entry.counts, {
+      tasks: 1000,
+      runs: 20,
+      run_events: 10000,
+    });
+  }
   const prepared = {
     root,
     baseSource,
@@ -268,11 +293,7 @@ export async function preparePerformance(
       head: sourceIdentity(process.cwd()),
     },
     files: treeHashes(root),
-    schema: {
-      base: schema(seedDir),
-      head: schema(headSeed),
-      workflows: workflows.map((v) => schema(v.dir)),
-    },
+    schema: schemas,
   };
   writeFileSync(
     join(root, "prepared.json"),
