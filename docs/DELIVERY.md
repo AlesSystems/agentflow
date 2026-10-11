@@ -20,7 +20,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
-| P07 | Phase 2 checkpoint | Validation passed; final review/integration pending | Executable `2b27403a797dcb3c7a640b14a0b104ac611d154a`; docs/public candidate `9c5bc701a7ff9fda6961de9d54a7e0c23bfd83c3` | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
+| P07 | Phase 2 checkpoint | Validation passed; final review/integration pending | Unit repair `05af7932868438659e1be12f68c00d76582bed4b`; docs/public candidate `378ce33d56c55b8e9e5efdf9e3ac88bef877ee13` | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
 | W03a | GitHub PR observation | Not started | — | — |
@@ -440,7 +440,7 @@ continue through W01–W04 before the final independently reviewed v1 source rel
 
 ## Current P07 handoff
 
-All current verification passed at executable source
+Earlier full verification passed at executable source
 `2b27403a797dcb3c7a640b14a0b104ac611d154a`: 153 unit tests in 32 files,
 396 integration tests in 63 files, and 34 actual Chrome journeys. Full lint,
 types (`--incremental false`), OpenAPI and diff checks passed. The final
@@ -506,3 +506,57 @@ completeness and dev-tool audit limitations remain in the receipt.
 Next: independent Standards and Spec review of the coordinator's exact candidate,
 then guarded PR/normal merge, owned artifact cleanup and W01 planning/Astra medium
 approval. P07 remains unchecked until integration; no v1 tag/release is created here.
+
+
+### P07 default-unit portability finding and repair
+
+Standards and Spec review at `740869af215458d4d599b952ba0a0806fe492c0d`
+found one shared P2: default unit verification depended on a private historical
+`.next` identity and P06 source equality. Generic negative assertions could mask
+their target with an earlier environment failure. No other blocking finding was
+identified. Their original reports are retained with SHA-256
+`ee85f440d6e779b5c115bd3c71bffcdb3b562071434a74e8fd62425a86afd882` and
+`093a2aa1ef1da211a18e69d4c7196267b8d41b196922a6113899a39964f15029`.
+
+Astra medium approved bounded repair plan
+`956c6ffa89c5ac3d414d421fb867e914f0f22b82cceef7a48772e7fd34ebc881`
+with approval `09b723698a8349c6929eb72c0188071b9b8577ffce5f043de2b0d7dd7dc1f8e1`.
+Commits `a6a5494` (test), `05af793` (fix) and `378ce33` (docs) separate the
+fixed policy from actual qualification acquisition. The real measurement wrapper
+still acquires and validates Git differences, byte equality, CLI hash, the exact
+417-asset aggregate and the actual import graph, with no passing overrides or
+skips. Hermetic unit cases test one corrupted fact and its specific reason.
+
+Actual RED in a new full-history clone without `.next` was one failure and three
+passes: the positive test raised ENOENT. At executable
+`05af7932868438659e1be12f68c00d76582bed4b`, **156 unit tests in 32 files passed
+in 3.51 seconds without a build**. Seven focused controls passed both before and
+after an uncommitted synthetic launcher comment in only that disposable clone.
+The actual historical guard rejected the changed input specifically before any
+missing-build error. Existing pinned dependencies were linked, not reinstalled.
+Full types with incremental writes disabled, lint, OpenAPI and diff passed.
+
+The repaired real guard ran read-only once against the retained build. Root
+independently matched its 417 assets, 87 inputs, reviewed CLI hash, 67 modules,
+28 roots, edges and CSS leaf to the earlier freeze and current files. Root also
+matched 4,034 new regular-file hashes, 4,444 identities/modes, 417 tracked files
+in both clean candidates, actual logs, the build-absent clone, its isolated drift,
+core evidence/tool/addon hashes and public receipt append. Scoped lsof was empty.
+Root repair verification SHA-256 is
+`d21ee274e48812c7737147e55386f03ccb7de9009cf0a6d9d54d094f05037d1c`.
+The first coordinator read check used an incorrect public field name; correction
+was a read-only tooling fix, with no test/product rerun or artifact mutation.
+
+The final worker candidate `378ce33d56c55b8e9e5efdf9e3ac88bef877ee13` changes
+only documentation/public attribution after executable `05af793`. Application,
+CLI, migrations, package/config, integration/browser and timed measurement-stage
+inputs are unchanged from their recorded executions. The 396 integration and
+34 Chrome passes stay attributed to `2b27403`; application performance stays
+`534140b` and repaired CLI throughput stays `2b27403`. New portable unit/static
+results belong to `05af793`. No result is relabeled as a new whole campaign.
+
+Next gate is both original independent reviewers' exact repaired-candidate
+closure, including this coordinator documentation commit. Guarded PR/normal
+merge and archive-before-delete cleanup follow; W01 remains unstarted. Cleanup
+preparation lists exact owned roots and an absent historical review-path exemption.
+No archive or deletion has occurred, and no P07/v1 release is claimed.
