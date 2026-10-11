@@ -45,3 +45,24 @@ W01 proves real producer → database → graph/list across two browsers, select
 retention, 375 px, 200% zoom, and keyboard access. W02 proves dependency and rework
 cases. W04 validates the integrated journey and load. Static design diagrams do
 not satisfy these runtime gates. No execution controls belong in this surface.
+
+## Direction contract
+
+THESIS: Trace one reported plan and its evidence without hiding unknown work. The
+approved graph/list/evidence structure is fixed by W01; no new visual-world round.
+
+OWN-WORLD: Keep the Work board's paper, ink outlines, pastel written status markers
+and system type. Graph nodes share that vocabulary; evidence stays plain.
+
+STORY: Select a workflow, immutable revision and attempt, inspect a node, then open
+its authoritative task or linked attempt with a local return context.
+
+FIRST VIEWPORT: Project sibling navigation, Workflows title, three native selectors
+and graph/list controls sit above a bounded graph. Selected evidence follows the
+plan. Narrow view starts with the complete list and readable inline evidence.
+
+FORM: The explicitly approved reported graph with equivalent list. It inherits the
+selected Work board world, seed 73cf6fb7. Node selection and zoom carry interaction;
+there are no graph-editing affordances or decorative motion.
+
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
