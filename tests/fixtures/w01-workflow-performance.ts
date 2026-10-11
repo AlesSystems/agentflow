@@ -1,3 +1,8 @@
+import {
+  captureEventSpool,
+  capturePendingSpool,
+  validateEventSpool,
+} from "./w01-spool";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { cpSync, mkdirSync, writeFileSync } from "node:fs";
@@ -318,6 +323,7 @@ export async function visibilityScenario(
     revisionId: randomUUID(),
     workflowRunId: randomUUID(),
   };
+  const outboxDir = join(root, `workflow-visible-inputs-${index}`, "outbox");
   const expected = Array.from({ length: reports }, (_, ordinal) =>
     [0, 1].map((context) => ({
       context,
@@ -340,6 +346,9 @@ export async function visibilityScenario(
     })[],
     invocations: [] as unknown[],
     setupInvocations: [] as unknown[],
+    eventSpool: [] as ReturnType<typeof captureEventSpool>[],
+    setupSpool: [] as ReturnType<typeof captureEventSpool>[],
+    pendingSpool: [] as ReturnType<typeof captureEventSpool>[],
     setupTransport: [] as {
       path: string;
       requestText: string;
@@ -375,6 +384,16 @@ export async function visibilityScenario(
     errors.save(save, "visible initial save", true);
     server = await launch({ dir });
     proxy = await publicProxy(server, (request, body, reply) => {
+      if (!reply && request.url?.endsWith("/events")) {
+        const input = JSON.parse(body.toString("utf8")),
+          capture = captureEventSpool(
+            outboxDir,
+            { kind: "workflow-run", id: fixture.workflowRunId },
+            input,
+          );
+        (sampling ? result.eventSpool : result.setupSpool).push(capture);
+        validateEventSpool(capture, input);
+      }
       if (reply && body.length) {
         const raw = {
           path: request.url ?? "",
@@ -395,7 +414,7 @@ export async function visibilityScenario(
     const env = {
       PORT: String(proxy.port),
       AGENTFLOW_REPORTER_TOKEN_FILE: token,
-      AGENTFLOW_OUTBOX_DIR: join(inputs, "outbox"),
+      AGENTFLOW_OUTBOX_DIR: outboxDir,
     };
     async function registration(args: string[], body: unknown, label: string) {
       const file = join(inputs, `setup-${label}.json`);
@@ -638,6 +657,12 @@ export async function visibilityScenario(
       const { receivedAt, ...storedInput } = JSON.parse(row.body);
       assert.equal(typeof receivedAt, "string");
       assert.deepEqual(storedInput, input);
+      const spool = [...result.setupSpool, ...result.eventSpool].find(
+        (s) => s.body?.eventId === input.eventId,
+      );
+      assert(spool, "actual workflow preforward spool missing");
+      validateEventSpool(spool, input);
+      assert.deepEqual(spool.body, storedInput);
       assert.equal(row.acknowledgement, request.responseText);
       assert.equal(row.sequence, input.sequence);
     }
@@ -664,6 +689,14 @@ export async function visibilityScenario(
   } finally {
     result.summary = summarizeVisibility(expected, result.observations);
     result.views = viewDistributions(result.observations);
+    await errors.attempt("visible pending spool", async () => {
+      result.pendingSpool.push(
+        ...capturePendingSpool(outboxDir, {
+          kind: "workflow-run",
+          id: fixture.workflowRunId,
+        }),
+      );
+    });
     errors.save(save, "visible before cleanup");
     await errors.attempt("visible browser", async () => browser?.close());
     await errors.attempt("visible proxy", async () => proxy?.close());

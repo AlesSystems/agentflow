@@ -77,6 +77,7 @@ export function sourceIdentity(root: string) {
     [
       "tests/performance/w01.ts",
       "tests/fixtures/w01-capture.ts",
+      "tests/fixtures/w01-spool.ts",
       "tests/fixtures/w01-performance-fixture.ts",
       "tests/fixtures/w01-legacy-performance.ts",
       "tests/fixtures/w01-workflow-performance.ts",

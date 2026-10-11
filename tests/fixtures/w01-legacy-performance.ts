@@ -1,3 +1,8 @@
+import {
+  captureEventSpool,
+  capturePendingSpool,
+  validateEventSpool,
+} from "./w01-spool";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -131,6 +136,14 @@ export async function legacyCompare(
       body: unknown;
       digest: string;
     }[],
+    eventSpool: [] as {
+      label: string;
+      capture: ReturnType<typeof captureEventSpool>;
+    }[],
+    pendingSpool: [] as {
+      label: string;
+      capture: ReturnType<typeof captureEventSpool>;
+    }[],
     queue: [] as {
       label: string;
       filename: string;
@@ -184,6 +197,16 @@ export async function legacyCompare(
         cwd: sources[label],
       }));
       proxies[label] = await publicProxy(server, (request, body, reply) => {
+        if (!reply && request.url?.endsWith("/events")) {
+          const input = JSON.parse(body.toString("utf8"));
+          const capture = captureEventSpool(
+            configs[label]!.outbox,
+            { kind: "run", id: input.runId },
+            input,
+          );
+          result.eventSpool.push({ label, capture });
+          validateEventSpool(capture, input);
+        }
         if (!reply && request.url === "/api/v1/tasks") {
           const key = String(request.headers["idempotency-key"]),
             path = join(configs[label]!.outbox, `registration-${key}.json`),
@@ -361,7 +384,7 @@ export async function legacyCompare(
           warmup: ordinal < 10,
           ...queued,
         });
-        assert.equal(queued.code, 2, "lease-held report must remain durable");
+
         const leaf = join(config.outbox, prepared.seed.runs[0]);
         const names = readdirSync(leaf).filter((name) =>
           /^\d+-.*\.json$/.test(name),
@@ -380,6 +403,13 @@ export async function legacyCompare(
           result.queue.push(fact);
           return fact;
         });
+        result.pendingSpool.push(
+          ...capturePendingSpool(config.outbox, {
+            kind: "run",
+            id: prepared.seed.runs[0],
+          }).map((capture) => ({ label, capture })),
+        );
+        assert.equal(queued.code, 2, "lease-held report must remain durable");
         assert.equal(originals.length, 1);
         const event = eventInput.parse(originals[0].body);
         assert.equal(event.runId, prepared.seed.runs[0]);
@@ -532,6 +562,13 @@ export async function legacyCompare(
           assert.equal(typeof receivedAt, "string");
           assert.deepEqual(storedInput, input);
           assert.equal(row.digest, canonicalDigest(input));
+          const spool = result.eventSpool.find(
+            (s) =>
+              s.label === label && s.capture.body?.eventId === input.eventId,
+          );
+          assert(spool, "actual preforward spool missing");
+          validateEventSpool(spool.capture, input);
+          assert.deepEqual(spool.capture.body, storedInput);
           assert.equal(ack.generation, transport.generation);
           const queued = result.queue.find(
             (q) =>
@@ -561,6 +598,16 @@ export async function legacyCompare(
       (n, v) => n + 2 * samples - v.base.length - v.head.length,
       0,
     );
+    for (const label of labels)
+      if (configs[label])
+        await errors.attempt("legacy pending spool " + label, async () => {
+          result.pendingSpool.push(
+            ...capturePendingSpool(configs[label]!.outbox, {
+              kind: "run",
+              id: prepared.seed.runs[0],
+            }).map((capture) => ({ label, capture })),
+          );
+        });
     errors.save(save, "legacy before cleanup");
     for (const label of labels) {
       await errors.attempt("legacy lease " + label, async () =>
