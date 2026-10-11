@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import type { ChildProcess } from "node:child_process";
 import { launch } from "../fixtures/server";
+function retain(name: string, value: unknown) {
+ if (process.env.AGENTFLOW_W02_EVIDENCE_DIR) writeFileSync(join(process.env.AGENTFLOW_W02_EVIDENCE_DIR, `w03a-${name}.json`), JSON.stringify(value, null, 2), { mode: 0o600, flag: "wx" });
+}
 function childFixture(mode: string) {
  const dir = mkdtempSync(join(tmpdir(), "w03a-control-"));
  const entry = join(dir, "child.mjs");
@@ -16,25 +19,28 @@ for (const mode of ["ready", "startup"]) it(`captures separate original child st
  const options = { ...childFixture(mode), onChild };
  if (mode === "startup") await expect(launch(options)).rejects.toThrow("launch exited 7");
  else { const server = await launch(options); await server.stop(); }
+ retain(`streams-${mode}`, { stdout, stderr, closed });
  expect(stdout).toContain("original stdout"); expect(stderr).toContain("original stderr"); expect(closed).toBe(true);
  if (mode === "ready") { expect(stdout).toContain("drained stdout"); expect(stderr).toContain("drained stderr"); }
 });
 import { createServer } from "node:http";
-import { finishCapture, qualifiedService, budgetFailures, validateCache } from "../fixtures/w03a-qualification";
+import { finishCapture, qualifiedService, budgetFailures, validateCache, reconcile } from "../fixtures/w03a-qualification";
 import { boundedFetch, readBoundedText } from "../fixtures/w01-runtime";
 it("final reconciliation follows cleanup and preserves failed public originals and both errors", async () => {
  const remote = createServer((_req, res) => { res.statusCode = 503; res.end("synthetic failure body"); });
  await new Promise<void>(resolve => remote.listen(0, "127.0.0.1", resolve));
  const order: string[] = []; let final: unknown; let raw: unknown;
  const work = async () => { const response = await boundedFetch(`http://127.0.0.1:${(remote.address() as { port: number }).port}`); const text = await readBoundedText(response); raw = { status: response.status, text }; order.push("work"); throw Error("PUBLIC_503"); };
- await expect(finishCapture(work, async () => { await new Promise<void>(resolve => remote.close(() => resolve())); order.push("cleanup"); throw Error("CLEANUP_FAILED"); }, (primary, cleanup) => { order.push("final"); final = { primary, cleanup }; })).rejects.toThrow("PUBLIC_503");
+ const captured = await finishCapture(work, async () => { await new Promise<void>(resolve => remote.close(() => resolve())); order.push("cleanup"); throw Error("CLEANUP_FAILED"); }, (primary, cleanup) => { order.push("final"); final = { primary, cleanup }; }).then(() => null, error => String(error));
+ retain("failure-finalization", { raw, order, final, captured }); expect(captured).toContain("PUBLIC_503");
  expect(raw).toEqual({ status: 503, text: "synthetic failure body" }); expect(order).toEqual(["work", "cleanup", "final"]); expect(final).toEqual({ primary: "Error: PUBLIC_503", cleanup: ["Error: CLEANUP_FAILED"] });
 });
 for (const mode of ["hang", "nonzero", "startup"]) it(`rejects and attributes ${mode} lifecycle failures after separate stream drain`, async () => {
  const options = childFixture(mode); const code = mode === "nonzero" ? 7 : 0;
  if (mode !== "startup") writeFileSync(options.entry, `import {createServer} from 'node:http'; console.log('original stdout'); console.error('original stderr'); const server=createServer((q,r)=>r.end('{}')); server.listen(Number(process.env.PORT),'127.0.0.1'); process.on('SIGTERM',()=>{${mode === "hang" ? "console.error('ignored shutdown');" : `server.close(()=>{console.log('drained stdout');console.error('drained stderr');process.exit(${code})});`}});`);
  const records: unknown[] = [];
- await expect(qualifiedService({ ...options, cwd: process.cwd() }, records, async () => {}, async () => "synthetic-cookie")).rejects.toThrow();
+ const captured = await qualifiedService({ ...options, cwd: process.cwd() }, records, async () => {}, async () => "synthetic-cookie").then(() => null, error => String(error));
+ retain(`service-${mode}`, { records, captured }); expect(captured).not.toBe(null);
  expect(records).toHaveLength(1); expect(records[0]).toMatchObject({ source: process.cwd(), dataDir: options.dir, closed: true, stdout: expect.stringContaining("original stdout"), stderr: expect.stringContaining("original stderr") });
  if (mode === "hang") expect(records[0]).toMatchObject({ exitCode: null, signalCode: "SIGKILL", cleanupFailure: expect.stringContaining("graceful") });
  else expect(records[0]).toMatchObject({ exitCode: 7, signalCode: null });
@@ -49,4 +55,20 @@ it("rejects schema-valid wrong seeded cache fields", () => {
  const body = { generation: "11111111-1111-4111-8111-111111111111", snapshotCursor: "51", data: { connection: { enabled: true, repositories: Array.from({ length: 10 }, (_, i) => `synthetic/repo${i}`), version: 2, lastAttemptedAt: null, lastFetchedAt: null, lastError: null, retryNotBefore: null, credential: "configured", busy: false }, items: [item], total: 1, nextCursor: null, lookupAttempt: null } };
  expect(validateCache(body, [["synthetic/repo0", 1]], 1).data.items[0].state).toBe("open");
  for (const wrong of [{ state: "closed" }, { draft: true }, { baseBranch: "wrong" }, { mergedAt: "2026-10-11T13:00:00.000Z" }, { previousHeadSha: "b".repeat(40) }, { lastError: "offline" }, { headChanged: true }]) expect(() => validateCache({ ...body, data: { ...body.data, items: [{ ...item, ...wrong }] } }, [["synthetic/repo0", 1]], 1)).toThrow();
+ const provenance = { generation: body.generation, snapshotCursor: "51", rows: [{ repository: item.repository, number: 1, fetched_at: Date.parse(item.fetchedAt), last_attempted_at: Date.parse(item.lastAttemptedAt) }] };
+ expect(validateCache(body, [["synthetic/repo0", 1]], 1, provenance).snapshotCursor).toBe("51");
+ for (const wrong of [{ ...provenance, generation: "22222222-2222-4222-8222-222222222222" }, { ...provenance, snapshotCursor: "52" }, { ...provenance, rows: [{ ...provenance.rows[0], fetched_at: provenance.rows[0].fetched_at + 1 }] }, { ...provenance, rows: [{ ...provenance.rows[0], last_attempted_at: provenance.rows[0].last_attempted_at + 1 }] }]) expect(() => validateCache(body, [["synthetic/repo0", 1]], 1, wrong)).toThrow();
+});
+it("reconciles990declared identities without manufacturing missing samples or discarding failed originals", () => {
+ const declared = Array.from({ length: 990 }, (_, i) => ({ id: `declared-${i}`, warmup: i < 10 }));
+ const ok = { id: "declared-0", warmup: true, status: 200, elapsedMs: 2, failure: null, confirmed: true, text: '{"generation":"11111111-1111-4111-8111-111111111111"}', generation: "11111111-1111-4111-8111-111111111111", dispatchMs: 10, drainedMs: 12 };
+ const receipt = reconcile(declared, [ok, { ...ok, id: "declared-1", status: 503, failure: "failed status", confirmed: false }, { ...ok, id: "outside" }, ok], "primary", ["cleanup"]);
+ retain("reconciliation", receipt);
+ expect(receipt.expected).toBe(990); expect(receipt.attempted).toBe(4); expect(receipt.missing).toHaveLength(988); expect(receipt.failed).toEqual(["declared-1"]); expect(receipt.unconfirmed).toEqual(["declared-1"]); expect(receipt.duplicate).toEqual(["declared-0"]); expect(receipt.invalid).toEqual(["declared-1", "outside"]); expect(receipt.valid).toBe(false); expect(receipt.primaryFailure).toBe("primary"); expect(receipt.cleanupFailures).toEqual(["cleanup"]);
+});
+it("retains an actual rejected pairing response and gracefully drains its child", async () => {
+ const options = childFixture("ready"); writeFileSync(join(options.dir, "credentials.json"), JSON.stringify({ pairingToken: "SYNTHETIC_PAIRING_TOKEN" }), { mode: 0o600 });
+ writeFileSync(options.entry, "import {createServer} from 'node:http'; console.log('pair stdout'); console.error('pair stderr'); const server=createServer((q,r)=>{r.statusCode=q.url.endsWith('/session')?503:200;r.end('synthetic pairing unavailable')});server.listen(Number(process.env.PORT),'127.0.0.1');process.on('SIGTERM',()=>server.close(()=>process.exit(0)));");
+ const records: unknown[] = []; const captured = await qualifiedService({ ...options, cwd: process.cwd() }, records, async () => { throw Error("work must not run"); }).then(() => null, error => String(error));
+ retain("pair-rejected", { records, captured }); expect(captured).toContain("pair status 503 synthetic pairing unavailable"); expect(records).toHaveLength(1); expect(records[0]).toMatchObject({ phase: "pair", closed: true, exitCode: 0, signalCode: null, stdout: "pair stdout\n", stderr: "pair stderr\n", cleanupFailure: null });
 });
