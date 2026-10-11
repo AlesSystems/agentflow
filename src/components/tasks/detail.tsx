@@ -1,4 +1,5 @@
 "use client";
+import { TaskGithub } from "../github";
 import { AcceptanceFacts, ReportedEvidenceHistory } from "./evidence";
 import { dependenciesInput, reviewPolicyInput, artifactInput, reworkInput } from "../../contracts/evidence";
 import { useEffect, useState } from "react";
@@ -652,17 +653,7 @@ export function TaskDetail({
               )}
             </section>
           )}
-          {task.pullRequestUrl && (
-            <p>
-              <a
-                href={task.pullRequestUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open pull request
-              </a>
-            </p>
-          )}
+          {task.pullRequestUrl && <TaskGithub url={task.pullRequestUrl} />}
           <section className="comments">
             <h2 className="task-section-heading">
               Comments{" "}
