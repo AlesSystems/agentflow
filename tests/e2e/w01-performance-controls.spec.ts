@@ -34,7 +34,7 @@ test("finite visibility helper detects wrong, hidden, absent and duplicate evide
       JSON.stringify({ acceptance: false, helperControl: kind, result }),
     );
     if (kind === "valid")
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         frames: 2,
         exact: true,
         visible: true,

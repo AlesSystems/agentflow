@@ -1,3 +1,4 @@
+import { proofErrors } from "../fixtures/p07-proof-errors";
 import { describe, expect, it } from "vitest";
 import {
   summarizeVisibility,
@@ -17,18 +18,16 @@ describe("W01 finite performance capture", () => {
     const expected = Array.from({ length: 30 }, (_, n) =>
       [0, 1].map((context) => ({ context, ...id(String(n)) })),
     ).flat();
-    const captured = expected
-      .slice(0, 59)
-      .map((e, n) => ({
-        ...e,
-        elapsedMs: n === 0 ? 2000 : 10,
-        frames: 2,
-        exact: n !== 1,
-        visible: n !== 2,
-        hitTest: n !== 2,
-        matched: 1,
-        wrong: n === 1 ? 1 : 0,
-      }));
+    const captured = expected.slice(0, 59).map((e, n) => ({
+      ...e,
+      elapsedMs: n === 0 ? 2000 : 10,
+      frames: 2,
+      exact: n !== 1,
+      visible: n !== 2,
+      hitTest: n !== 2,
+      matched: 1,
+      wrong: n === 1 ? 1 : 0,
+    }));
     const facts = summarizeVisibility(expected, [...captured, captured[3]]);
     expect(facts.expected).toBe(60);
     expect(facts.captured).toBe(60);
@@ -67,4 +66,37 @@ describe("W01 finite performance capture", () => {
     expect(() => distribution([])).toThrow();
     expect(() => distribution([Number.NaN])).toThrow();
   });
+});
+
+it("preserves the first work failure and original capture while attempting every cleanup and recording secondary failures", async () => {
+  const original = new Error("original report rejected"),
+    secondary = new Error("cleanup failed");
+  const receipt = {
+    raw: "original decoded ACK bytes",
+    primary: "",
+    cleanup: [] as string[],
+  };
+  const errors = proofErrors(
+    (error) => (receipt.primary = (error as Error).message),
+  );
+  errors.capture("work", original);
+  await errors.attempt("first cleanup", async () => {
+    receipt.cleanup.push("first");
+    throw secondary;
+  });
+  await errors.attempt("second cleanup", async () => {
+    receipt.cleanup.push("second");
+  });
+  let saved = "";
+  errors.save(() => (saved = JSON.stringify(receipt)), "failure snapshot");
+  expect(() => errors.throwFirst()).toThrow(original);
+  expect(JSON.parse(saved)).toEqual({
+    raw: "original decoded ACK bytes",
+    primary: original.message,
+    cleanup: ["first", "second"],
+  });
+  expect(errors.facts.errors.map((f) => f.error.message)).toEqual([
+    original.message,
+    secondary.message,
+  ]);
 });

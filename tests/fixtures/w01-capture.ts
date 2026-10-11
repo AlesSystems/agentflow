@@ -66,7 +66,7 @@ export function summarizeVisibility(
           e[field as keyof VisibleIdentity] ===
           v[field as keyof VisibleIdentity],
       );
-    if (bound) present.add(k);
+    if (bound && v.matched > 0) present.add(k);
     if (!bound || !v.exact || v.wrong > 0) wrong++;
     if (!v.visible || !v.hitTest) hidden++;
     if (v.elapsedMs >= 2000) late++;
@@ -117,6 +117,8 @@ export async function visibleFrames(input: {
       hitTest: false,
       matched: 0,
       wrong: 0,
+      observed: [] as Record<string, string | undefined>[],
+      otherEventIds: [] as string[],
     };
   do {
     await new Promise<void>((resolve) =>
@@ -168,6 +170,21 @@ export async function visibleFrames(input: {
     const exact = bound.length === 1 && panels.length === 1;
     frames = exact && visible && hit ? frames + 1 : 0;
     result = {
+      observed: panels.map((p) => ({
+        projectId: location.pathname.split("/")[2],
+        workflowId: p.dataset.workflowId,
+        revisionId: p.dataset.planRevisionId,
+        workflowRunId: p.dataset.workflowRunId,
+        nodeId: p.dataset.nodeId,
+        eventId: p.dataset.eventId,
+      })),
+      otherEventIds: [
+        ...document.querySelectorAll<HTMLElement>(
+          ".workflow-evidence[data-event-id]",
+        ),
+      ]
+        .map((p) => p.dataset.eventId ?? "")
+        .filter((id) => id !== e.eventId),
       frames: Math.min(frames, 2),
       exact,
       visible,
