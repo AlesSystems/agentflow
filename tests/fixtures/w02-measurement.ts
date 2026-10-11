@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import type { Page } from "@playwright/test";
+import type { MutationGate } from "./w02-mutation";
 import { uuid } from "../../src/contracts/common";
 import { distribution } from "./w01-capture";
 import { deadline } from "./w01-runtime";
@@ -17,8 +18,8 @@ export function summarizeCurrent(expected:CurrentExpected[],captures:CurrentCapt
  return {expected:expected.length,captured:captures.length,notRun,missing,unconfirmed,duplicate,wrong,hidden,late,valid:!missing&&!unconfirmed&&!duplicate&&!wrong&&!hidden&&!late,distribution:captures.length&&captures.every(c=>Number.isFinite(c.elapsedMs)&&c.elapsedMs>=0)?distribution(captures.map(c=>c.elapsedMs)):null};
 }
 export function visibilitySummary(receipts:VisibilityReceipt[]){return {overall:summarizeCurrent(receipts.flatMap(r=>r.expected),receipts.flatMap(r=>r.captures)),scenarios:receipts.map(r=>({scenario:r.scenario,summary:summarizeCurrent(r.expected,r.captures),views:(["graph","list"] as const).map(view=>({view,summary:summarizeCurrent(r.expected.filter(e=>e.view===view),r.captures.filter(c=>c.view===view))}))}))};}
-export function summarizeSamples(expected:{id:string;warmup:boolean}[],samples:{id:string;warmup:boolean;elapsedMs:number;status:number}[]){
- assert.equal(new Set(expected.map(e=>e.id)).size,expected.length);assert.equal(samples.length,expected.length,"all original warm and measured samples required");assert.equal(new Set(samples.map(e=>e.id)).size,samples.length);for(const e of expected){const s=samples.find(s=>s.id===e.id);assert(s&&s.warmup===e.warmup&&s.status>=200&&s.status<300&&Number.isFinite(s.elapsedMs)&&s.elapsedMs>=0,"missing/failed/nonfinite sample");}return distribution(samples.filter(s=>!s.warmup).map(s=>s.elapsedMs));
+export function summarizeSamples(expected:{id:string;warmup:boolean}[],samples:{id:string;warmup:boolean;elapsedMs:number|null;status:number|null}[]){
+ assert.equal(new Set(expected.map(e=>e.id)).size,expected.length);assert.equal(samples.length,expected.length,"all original warm and measured samples required");assert.equal(new Set(samples.map(e=>e.id)).size,samples.length);for(const e of expected){const s=samples.find(s=>s.id===e.id);assert(s&&s.warmup===e.warmup&&typeof s.status==="number"&&s.status>=200&&s.status<300&&typeof s.elapsedMs==="number"&&Number.isFinite(s.elapsedMs)&&s.elapsedMs>=0,"missing/failed/nonfinite sample");}return distribution(samples.filter(s=>!s.warmup).map(s=>{assert(s.elapsedMs!==null);return s.elapsedMs;}));
 }
 export function validateReceiptBody(stored:unknown,wire:unknown,minimal:boolean,project:(body:unknown)=>unknown){const expected=minimal?project(stored):stored;assert.deepEqual(expected,wire,"original receipt/selected wire representation mismatch");return minimal?expected:undefined;}
 export function validateGeneration(header:string|null,body:{generation?:unknown}){uuid.parse(header);assert.equal(header,body.generation,"original generation header/envelope mismatch");return header!;}
@@ -43,6 +44,7 @@ export async function currentFrames(e:CurrentExpected & {captureBoundMs?:number}
   result={frames,matched,exact:!!exact,visible,hitTest,observed:panels.map(p=>({...p.dataset,route:location.href,literal:value?.textContent??undefined,top:box?String(box.top):undefined,bottom:box?String(box.bottom):undefined}))};if(frames===2)return result;
  }return result;
 }
-export async function dispatchCurrent(receipt:VisibilityReceipt,expected:CurrentExpected[],pages:Page[],dispatch:()=>Promise<unknown>,save:()=>void,captureBoundMs=5000,enforceBudget=true){
+export async function dispatchCurrent(receipt:VisibilityReceipt,expected:CurrentExpected[],pages:Page[],dispatch:()=>Promise<unknown>,save:()=>void,captureBoundMs=5000,enforceBudget=true,gate?:MutationGate):Promise<void>{
+ if(gate)return gate.run(()=>dispatchCurrent(receipt,expected,pages,dispatch,save,captureBoundMs,enforceBudget),pacing=>{receipt.originals.push({kind:"mutationPermit",scenario:expected[0].scenario,index:expected[0].index,pacing});});
  for(const e of expected){const slot=receipt.expected.findIndex(s=>s.scenario===e.scenario&&s.index===e.index&&s.context===e.context);assert(slot>=0,"undeclared visibility slot");receipt.expected[slot]=e;}save();const start=performance.now();const probes=pages.map((page,context)=>deadline(page.evaluate(currentFrames,{...expected[context],captureBoundMs}).then(facts=>({...expected[context],...facts,elapsedMs:performance.now()-start})),6000,"W02_CURRENT_PROBE_DEADLINE"));const results=await Promise.allSettled([dispatch(),...probes]);for(const r of results.slice(1))if(r.status==="fulfilled")receipt.captures.push(r.value as CurrentCapture);receipt.summary=summarizeCurrent(receipt.expected,receipt.captures);save();for(const r of results)if(r.status==="rejected")throw r.reason;const s=summarizeCurrent(expected,receipt.captures.filter(c=>c.index===expected[0].index));assert(!s.missing&&!s.unconfirmed&&!s.duplicate&&!s.wrong&&!s.hidden&&(!enforceBudget||!s.late),"current transition not confirmed");
 }

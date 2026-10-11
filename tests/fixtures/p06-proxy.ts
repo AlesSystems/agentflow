@@ -10,7 +10,7 @@ type Decision =
       headers?: Record<string, string>;
       truncate?: boolean;
     };
-type Reply = { status: number; body: Buffer; generation: string | null };
+type Reply = { status: number; body: Buffer; generation: string | null; retryAfter:string|null };
 export async function publicProxy(
   server: Pick<Awaited<ReturnType<typeof launch>>, "url">,
   decide: (
@@ -83,6 +83,7 @@ export async function publicProxy(
           status: response.status,
           body: Buffer.alloc(0),
           generation: response.headers.get("agentflow-generation"),
+          retryAfter: response.headers.get("retry-after"),
         };
         if (bounds && response.body) {
           const reader = response.body.getReader(),
