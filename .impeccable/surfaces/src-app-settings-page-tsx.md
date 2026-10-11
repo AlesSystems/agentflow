@@ -16,12 +16,16 @@ repository names. A manual request selects one saved repository and either a
 bounded list page or an exact PR number. Configuration has its own version.
 One form owner retains immutable request bytes and key after uncertain replies.
 Conflicts retain intent and offer local refresh, review and deliberate resubmission.
-A configured credential is not verified token health. Setup contains no secret
+Requested PR metadata is shown through a local exact lookup. Repository cache
+pages use the existing bounded cursor with local next/first controls; no task
+creation is required to inspect a manual observation. A configured credential
+is not verified token health. Setup contains no secret
 input, value or filesystem path. Failure and disconnect preserve labeled cache.
 
 Task details parse only canonical task PR URLs. Their human-only local lookup
 uses the existing workspace cache and update owner. Unsupported and unselected
-URLs stay inert. Observed head changes describe GitHub evidence freshness without
+URLs stay inert. Canonical selected task PRs retain the explicit Open pull request
+anchor with safe new-tab attributes. Observed head changes describe GitHub evidence freshness without
 changing task acceptance, work revision or opaque artifact references.
 
 The focused browser packet uses synthetic data and an injected trusted local HTTP

@@ -100,8 +100,11 @@ GitHub observation starts disabled. In Settings, explicitly enable it and save u
 to ten exact `owner/repository` names, one per line. Saving replaces the entire
 selection. Choose one saved repository and fetch either a list page (20 PRs,
 pages 1–1000) or a positive PR number. Only the explicit metadata fetch contacts
-GitHub. Local refresh, navigation, focus and workspace updates read cached data.
-Disconnect retains the cache and labels it stale.
+GitHub. The requested repository or exact PR is shown in Saved observations.
+Use Browse cached repository and Next cached page to inspect further saved rows;
+these controls and Refresh saved observations stay local. No linked task is needed
+to view a manually fetched PR. Local refresh, navigation, focus and workspace
+updates read cached data. Disconnect retains the cache and labels it stale.
 
 For local credential setup, use a fine-grained GitHub token restricted to the
 selected repositories with Pull requests read permission. Save it with the
@@ -114,7 +117,8 @@ mean GitHub has verified the credential; an explicit fetch reports authenticatio
 or credential repair failures safely.
 
 Task details show cached metadata only for canonical GitHub PR URLs in selected
-repositories. Failed fetches retain prior observations and their fetched/attempted
+repositories. Their Open pull request link opens that canonical URL only after
+explicit activation; unsupported and unselected links remain inert. Failed fetches retain prior observations and their fetched/attempted
 times. A PR head change marks prior head observations and head-linked external
 evidence stale. It never changes local task acceptance or infers the meaning of
 opaque artifact references. Missing or inaccessible metadata does not prove a PR
