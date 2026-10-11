@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { expect,it } from "vitest";
+import Database from "better-sqlite3";
 import { openOwnedStore } from "../../src/db";
 import { GithubCoordinator } from "../../src/integrations/github/coordinator";
 import { canonicalDigest } from "../../src/domain/request-digest";
@@ -44,7 +45,8 @@ it("preserves Retry-After across saves, disconnect and scope replacement while r
   expect(receipt.body.data).toMatchObject({outcome:"failed",error:"rate_limited"});expect(calls).toBe(1);
   const connection=()=> (coordinator.snapshot({limit:1}).body.data as {connection:{retryNotBefore:string|null}}).connection;
   const deadline=connection().retryNotBefore!;expect(Date.parse(deadline)).toBeGreaterThan(c.now);
-  const blocked=async(version:number,repository="a/b")=>{const input={expectedVersion:version,repository,page:1} as const;await expect(coordinator.refresh(input,{...context(input),now:c.now+1})).rejects.toThrow("github_rate_limited");expect(connection().retryNotBefore).toBe(deadline);expect(calls).toBe(1);expect(await coordinator.refresh(request,c)).toEqual(receipt);};
+  const durable=()=>{const db=new Database(join(dir,"data","agentflow.sqlite"),{readonly:true});try{return {connection:db.prepare("SELECT retry_not_before FROM github_connection WHERE singleton=1").get(),receipts:db.prepare("SELECT count(*) AS count FROM receipts WHERE path=?").get(c.path),intents:db.prepare("SELECT count(*) AS count FROM github_refresh_intents").get()};}finally{db.close();}};
+  const blocked=async(version:number,repository="a/b")=>{const input={expectedVersion:version,repository,page:1} as const;await expect(coordinator.refresh(input,{...context(input),now:c.now+1})).rejects.toThrow("github_rate_limited");expect(connection().retryNotBefore).toBe(deadline);expect(calls).toBe(1);expect(await coordinator.refresh(request,c)).toEqual(receipt);expect(durable()).toEqual({connection:{retry_not_before:Date.parse(deadline)},receipts:{count:1},intents:{count:1}});};
   save(2,true,["a/b"]);await blocked(3);
   save(3,false,[]);expect(await coordinator.refresh(request,c)).toEqual(receipt);expect(connection().retryNotBefore).toBe(deadline);
   save(4,true,["a/b"]);await blocked(5);

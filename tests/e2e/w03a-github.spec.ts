@@ -220,6 +220,13 @@ test("historical configuration replies converge and a busy key retries without c
     await page.getByRole("button", { name: "Fetch GitHub metadata", exact: true }).click();
     await expect(page.getByText(/GitHub configuration changed or this request conflicts/)).toBeVisible();
     expect(wires).toHaveLength(rateCalls);
+    await page.getByRole("button", { name: "Refresh locally and prepare new request", exact: true }).click();
+    await page.getByRole("button", { name: "Save GitHub selection", exact: true }).click();
+    await expect(page.getByText("GitHub selection saved.", { exact: true })).toBeVisible();
+    await expect(page.getByText(/GitHub retry not before/)).toBeVisible();
+    await page.getByRole("button", { name: "Fetch GitHub metadata", exact: true }).click();
+    await expect(page.getByText(/GitHub configuration changed or this request conflicts/)).toBeVisible();
+    expect(wires).toHaveLength(rateCalls);
     if (proof) writeFileSync(join(proof, "historical-busy-rate.json"), JSON.stringify({ requests, busyRequests, wires }, null, 2), { mode: 0o600 });
   } finally { fixture.release(); await other.close(); await fixture.stop(); }
 });
