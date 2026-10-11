@@ -11,6 +11,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
+import { createRequire } from "node:module";
 import Database from "better-sqlite3";
 import { launch } from "./server";
 import { sourceProvenance } from "./w01-provenance";
@@ -56,6 +57,21 @@ function treeHashes(
 }
 export function sourceIdentity(root: string) {
   const source = sourceProvenance(root);
+  const require = createRequire(join(root, "package.json"));
+  const NativeDatabase = require("better-sqlite3") as typeof Database;
+  const probe = new NativeDatabase(":memory:");
+  probe.close();
+  const addons = Object.keys(require.cache).filter(
+    (path) =>
+      path.startsWith(root + "/") &&
+      path.includes("better-sqlite3") &&
+      path.endsWith(".node"),
+  );
+  assert.equal(
+    addons.length,
+    1,
+    "one actual loaded source-owned SQLite addon required",
+  );
   const measurementHelperHashes = Object.fromEntries(
     [
       "tests/performance/w01.ts",
@@ -77,14 +93,8 @@ export function sourceIdentity(root: string) {
   return {
     ...source,
     measurementHelperHashes,
-    sqliteAddonSha256: hash(
-      readFileSync(
-        join(
-          root,
-          "node_modules/better-sqlite3/build/Release/better_sqlite3.node",
-        ),
-      ),
-    ),
+    sqliteAddonPath: addons[0],
+    sqliteAddonSha256: hash(readFileSync(addons[0])),
     buildFiles: treeHashes(join(root, ".next")),
     qualification:
       "Separate owned source, exact lock, native addon and production build; no shared dependency/build substitution",
