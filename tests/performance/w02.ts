@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import { mkdirSync,writeFileSync,existsSync } from "node:fs";
+import { join,isAbsolute } from "node:path";
+import { prepareW02,readW02 } from "../fixtures/w02-preparation";
+import { operationRun,oldHTTP,oldCLI,newHTTP,type Transport } from "../fixtures/w02-operations";
+import { currentScenario,type VisibilityReceipt } from "../fixtures/w02-visibility";
+import { ordinaryBoundary } from "../fixtures/p07-ordinary";
+export const definition={base:"integrated W01 e5bf6da",head:"frozen W02",repetitions:3,warmups:10,measured:100,oldHTTP,oldCLI,newHTTP,httpP95Ms:250,relativeP95Percent:20,cliDeadlineMs:5000,cliHardBoundMs:20000,visibility:{scenarios:3,transitions:10,contexts:2,expected:60,p95Ms:2000,timing:"One controller real CLI flush spawn or browser command dispatch to two exact visible hit-tested animation frames. CLI event creation and intentional queue/outage happen beforehand and their originals are retained separately; that queue time is not included in this delivery visibility clock. No browser/server clock subtraction."}};
+const preparedRoot=process.env.AGENTFLOW_W02_PREPARED_ROOT;
+if(process.argv.includes("--prepare")){assert(preparedRoot);const base=process.env.AGENTFLOW_W02_W01_SOURCE;assert(base);await prepareW02(preparedRoot,base,process.cwd(),{base:[...oldHTTP,...oldCLI],head:[...oldHTTP,...oldCLI,...newHTTP]});console.log(JSON.stringify({mode:"prepared",acceptance:false,preparedRoot,definition}));}
+else if(process.argv.includes("--run")){
+ assert.equal(process.env.AGENTFLOW_W02_QUIET_RELEASE,"frozen-one-run","Root explicit frozen quiet release required");assert(preparedRoot);const p=readW02(preparedRoot),root=process.env.AGENTFLOW_W02_MEASUREMENT_DIR;assert(root&&isAbsolute(root)&&!existsSync(root));mkdirSync(root,{mode:0o700});
+ const receipt={definition,expected:p.samples,acceptance:true,raw:[] as Transport[],failures:[] as string[],cleanupFailures:[] as unknown[],comparisons:[] as {index:number;order:string[];operations:Record<string,unknown>}[],visibility:[] as VisibilityReceipt[]};
+ await ordinaryBoundary(receipt,async save=>{for(let index=1;index<=3;index++){const order=index%2?["base","head"] as const:["head","base"] as const,comparison={index,order:[...order],operations:{} as Record<string,unknown>};receipt.comparisons.push(comparison);for(const label of order)comparison.operations[label]=await operationRun(p,label,index,root,100,10,save,receipt.raw,receipt.cleanupFailures);comparison.operations.head={...comparison.operations.head as object,...await operationRun(p,"head",index,root,100,10,save,receipt.raw,receipt.cleanupFailures,true)};save();}
+ for(let scenario=1;scenario<=3;scenario++){const r:VisibilityReceipt={expected:[],captures:[],originals:[],failures:[]};receipt.visibility.push(r);await currentScenario(p,scenario,root,r,save);}
+ // Budgets are enforced only after complete identities/denominators and originals.
+ for(const c of receipt.comparisons){const base=c.operations.base as Record<string,{p95Ms:number}>,head=c.operations.head as Record<string,{p95Ms:number}>;for(const operation of oldHTTP)assert(base[operation].p95Ms<250,`Base HTTP budget ${operation}`);for(const operation of [...oldHTTP,...newHTTP])assert(head[operation].p95Ms<250,`HTTP budget ${operation}`);for(const operation of [...oldHTTP,...oldCLI])assert(head[operation].p95Ms<=base[operation].p95Ms*1.2,`ASTRA_APPROVAL_REQUIRED >20% ${operation}`);}save();},()=>writeFileSync(join(root,"measurement.json"),JSON.stringify(receipt,null,2),{mode:0o600}),()=>console.log(JSON.stringify({root,failures:receipt.failures})),()=>{process.exitCode=1;});
+}else throw new Error("Choose --prepare or Root-released --run; no implicit timing");

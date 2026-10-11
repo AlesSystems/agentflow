@@ -5,7 +5,7 @@ import { evidenceResponse, decisionsResponse, reworksResponse } from "../../cont
 import { usePaged } from "../../client/paged";
 export function AcceptanceFacts({task,readiness,evidence,headingLevel=3}:{task:Task;readiness:TaskReadiness;evidence:TaskGateSummary;headingLevel?:2|3}) {
   const Heading=headingLevel === 2 ? "h2" : "h3";
-  return <section className="acceptance-facts" aria-label="Current acceptance requirements" data-task-id={task.id} data-work-revision={task.workRevision} data-rework-round={task.reworkRound} data-artifact-ref={evidence.currentArtifact?.artifactRef ?? ""} data-ready={readiness.ready}>
+  return <section className="acceptance-facts" aria-label="Current acceptance requirements" data-task-id={task.id} data-task-version={task.version} data-review-event-id={evidence.review.latestDecision?.eventId ?? ""} data-review-decision={evidence.review.changesRequested ? "changes_requested" : evidence.review.approved ? "approved" : "none"} data-work-revision={task.workRevision} data-rework-round={task.reworkRound} data-artifact-ref={evidence.currentArtifact?.artifactRef ?? ""} data-ready={readiness.ready}>
     <Heading className="task-section-heading">Current acceptance requirements</Heading>
     <p>Revision {task.workRevision} · Rework round {task.reworkRound}</p>
     <p>{readiness.ready ? "Prerequisites ready" : "Prerequisites blocked"}</p>
