@@ -492,7 +492,7 @@ export function TaskDetail({
               <label>Reason for rework<textarea disabled={evidenceDisabled||task.status!=="review"} required maxLength={4000} value={reworkDraft?.reason ?? ""} onChange={event=>setReworkDraft({version:reworkDraft?.version ?? task.version,reason:event.target.value})}/></label>
               <button disabled={evidenceDisabled||task.status!=="review"||!reworkDraft}>Return to Backlog for rework</button>
             </form>
-            {evidenceDirty && <button disabled={busy} onClick={()=>{if(confirm("Discard unsaved prerequisite and evidence drafts?")){setDependenciesDraft(null);setPolicyDraft(null);setArtifactDraft(null);setReworkDraft(null);setCommand(null);}}}>Discard evidence drafts</button>}
+            {evidenceDirty && <button disabled={busy} onClick={()=>{if(confirm("Discard unsaved prerequisite and evidence drafts?")){setDependenciesDraft(null);setPolicyDraft(null);setArtifactDraft(null);setReworkDraft(null);if(command && ["dependencies","policy","artifact","rework"].includes(command.kind))setCommand(null);}}}>Discard evidence drafts</button>}
             {command && ["dependencies","policy","artifact","rework"].includes(command.kind) && <button disabled={busy} onClick={()=>void prepareEvidence(command.kind as EvidenceKind)}>Refresh and prepare new request</button>}
             </details>
           </section>
