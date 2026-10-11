@@ -24,11 +24,12 @@ const errors: Record<GithubError, string> = {
 };
 const time = (value: string | null) => value ? new Date(value).toLocaleString() : "Not yet";
 type Selection = { enabled: boolean; repositories: string; version: number };
+type ObservationScope = { repository: string; number?: number };
 type Pending = { command: FrozenCommand; kind: "selection" | "refresh"; state: "sending" | "retry" };
 
 export function GithubSettings() {
   const query = useRead("/connections/github", githubResponse);
-  const { api, pair, connection: browserConnection } = useWorkspace();
+  const { api, pair, generation, connection: browserConnection } = useWorkspace();
   const cache = useQueryClient();
   const [draft, setDraft] = useState<Selection | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -36,6 +37,7 @@ export function GithubSettings() {
   const [repository, setRepository] = useState("");
   const [mode, setMode] = useState("page");
   const [target, setTarget] = useState("1");
+  const [observation, setObservation] = useState<ObservationScope | null>(null);
   const data = query.data?.data;
   const saved = data?.connection;
   const sending = pending?.state === "sending";
@@ -48,7 +50,7 @@ export function GithubSettings() {
       await api.command(command);
       if (kind === "selection") setDraft(null);
       setPending(null);
-      setMessage(kind === "selection" ? "GitHub selection saved." : "Observation request recorded. The local cache below shows the latest result.");
+      setMessage(kind === "selection" ? "GitHub selection saved." : "Observation request recorded. Inspect the requested target in Saved observations.");
       await cache.invalidateQueries();
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) pair();
@@ -93,6 +95,7 @@ export function GithubSettings() {
         const parsed = githubRefreshInput.safeParse({ expectedVersion: saved.version, repository: selected, [mode]: Number(target) });
         if (!parsed.success) { setMessage("Choose one saved repository and a page from 1 to 1000 or a positive PR number."); return; }
         setRepository(selected);
+        setObservation({ repository: parsed.data.repository, ...("number" in parsed.data ? { number: parsed.data.number } : {}) });
         void send(freezeCommand("/connections/github/refresh", "POST", parsed.data), "refresh");
       }}>
         <label>Repository to observe<select aria-label="Repository to observe" value={selected} disabled={locked || !saved.enabled} onChange={event => setRepository(event.target.value)}>{!saved.repositories.length && <option value="">No repositories selected</option>}{repository && !saved.repositories.includes(repository) && <option value={repository}>{repository} (no longer selected)</option>}{saved.repositories.map(value => <option key={value}>{value}</option>)}</select></label>
@@ -107,11 +110,32 @@ export function GithubSettings() {
       {browserConnection.state !== "connected" && <p className="notice">Local browser updates are {browserConnection.state}. Cached GitHub observations remain last-known data; this does not describe GitHub connectivity.</p>}
       <p role="status">{sending ? "Submitting GitHub request…" : message}</p>
       <div className="actions">{pending?.state === "retry" && <button onClick={() => void send(pending.command, pending.kind)}>Retry exact GitHub request</button>}<button disabled={sending} onClick={() => void prepare()}>{pending ? "Refresh locally and prepare new request" : "Refresh local GitHub cache"}</button></div>
-      <h3>Saved observations</h3>
-      {data.items.length ? data.items.map(item => <GithubObservation key={`${item.repository}/${item.number}`} item={item} enabled={saved.enabled} localRetained={!!query.error || query.fetchStatus === "paused" || browserConnection.state !== "connected"} />) : <p>No cached PR metadata. Select a repository and fetch a page or PR number.</p>}
-      {data.nextCursor && <p className="metadata">Showing the first {data.items.length} of {data.total} cached observations. Open a linked task for an exact local lookup.</p>}
+      <GithubSavedObservations key={`${generation}:${observation?.repository ?? ""}:${observation?.number ?? ""}`} scope={observation} browse={() => setObservation(observation ? { repository: observation.repository } : null)} />
     </>}
   </section>;
+}
+function GithubSavedObservations({ scope, browse }: { scope: ObservationScope | null; browse: () => void }) {
+  const [cursor, setCursor] = useState<string | null>(null);
+  const params = new URLSearchParams({ limit: "20" });
+  if (scope) params.set("repository", scope.repository);
+  if (scope?.number !== undefined) params.set("number", String(scope.number));
+  if (cursor) params.set("cursor", cursor);
+  const query = useRead(`/connections/github?${params}`, githubResponse);
+  const { connection } = useWorkspace();
+  const data = query.data?.data;
+  return <div className="github-saved-observations">
+    <h3>Saved observations</h3>
+    <p className="metadata">{scope ? scope.number !== undefined ? `Requested PR: ${scope.repository} #${scope.number}` : `Cached repository: ${scope.repository}` : "Cached repositories"}. This view reads local saved data only.</p>
+    <QueryFeedback error={query.error} loading={query.isPending} retry={() => void query.refetch()} />
+    {query.fetchStatus === "paused" && <p role="status">Local browser is offline. Cached GitHub observations are retained.</p>}
+    <div className="actions"><button onClick={() => void query.refetch()}>Refresh saved observations</button>{scope?.number !== undefined && <button onClick={browse}>Browse cached repository</button>}</div>
+    {data && <>
+      {data.items.length ? data.items.map(item => <GithubObservation key={`${item.repository}/${item.number}`} item={item} enabled={data.connection.enabled} localRetained={!!query.error || query.fetchStatus === "paused" || connection.state !== "connected"} />) : <p>{scope?.number !== undefined ? `No cached observation for ${scope.repository} #${scope.number}.` : "No cached PR metadata. Select a repository and fetch a page or PR number."}</p>}
+      {data.lookupAttempt && <p>{data.lookupAttempt.error ? errors[data.lookupAttempt.error] : "PR lookup recorded."} Last attempted: {time(data.lookupAttempt.attemptedAt)}.</p>}
+      <p className="metadata">Showing {data.items.length} of {data.total} cached observations{cursor ? " on this page" : ""}.</p>
+      <div className="actions">{cursor && <button onClick={() => setCursor(null)}>First cached page</button>}{data.nextCursor && <button onClick={() => setCursor(data.nextCursor)}>Next cached page</button>}</div>
+    </>}
+  </div>;
 }
 function GithubObservation({ item, enabled, localRetained }: { item: z.infer<typeof githubPullRequest>; enabled: boolean; localRetained: boolean }) {
   return <article className="github-observation">
@@ -136,6 +160,7 @@ function TaskGithubLookup({ repository, number }: { repository: string; number: 
     {query.fetchStatus === "paused" && <p role="status">Local browser is offline. Cached GitHub observations are retained.</p>}
     <button onClick={() => void query.refetch()}>Refresh local PR observation</button>
     {data && (!data.connection.repositories.includes(repository) ? <p>This repository is not selected. This link is inert for observation. Select it explicitly in Settings to observe metadata.</p> : <>
+      <p><a href={`https://github.com/${repository}/pull/${number}`} target="_blank" rel="noopener noreferrer">Open pull request</a></p>
       {data.items[0] ? <GithubObservation item={data.items[0]} enabled={data.connection.enabled} localRetained={!!query.error || query.fetchStatus === "paused" || connection.state !== "connected"} /> : <p>No cached observation for {repository} #{number}. Use Settings to fetch this PR number explicitly.</p>}
       {data.lookupAttempt?.error && <p>{errors[data.lookupAttempt.error]} Last attempted: {time(data.lookupAttempt.attemptedAt)}.</p>}
       <p className="metadata">This local lookup never contacts GitHub and never changes task acceptance.</p>
