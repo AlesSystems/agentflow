@@ -20,6 +20,7 @@ export async function launch(
     stdin?: boolean;
     cwd?: string;
     entry?: string;
+    nodeArgs?: string[];
     extraEnv?: Record<string, string>;
   } = {},
 ) {
@@ -39,6 +40,7 @@ export async function launch(
           String(port),
         ]
       : [
+          ...(options.nodeArgs ?? []),
           "--import",
           "tsx",
           options.entry ?? "src/server/launcher.ts",

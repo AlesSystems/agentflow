@@ -1,0 +1,1141 @@
+{
+  "synthetic": true,
+  "disposition": "P07 validation checkpoint; final review and integration pending",
+  "executionSource": "2b27403a797dcb3c7a640b14a0b104ac611d154a",
+  "verification": {
+    "unit": {
+      "passed": 153,
+      "files": 32,
+      "seconds": 5.34
+    },
+    "integration": {
+      "passed": 396,
+      "files": 63,
+      "seconds": 474.81
+    },
+    "Chrome": {
+      "passed": 34,
+      "controllerSeconds": 227.0138218330103,
+      "channel": "chrome"
+    },
+    "fullTypes": {
+      "exit": 0,
+      "incremental": false
+    },
+    "fullLint": {
+      "exit": 0
+    },
+    "OpenAPI": {
+      "exit": 0
+    },
+    "diff": {
+      "exit": 0
+    },
+    "isolatedStreamFixtureBuild": "required integration fixture build only; retained main application assets preserved",
+    "outputRestoration": "original ignored directory bytes/modes/identities and review-subtree absence restored"
+  },
+  "host": {
+    "node": "v24.15.0",
+    "npm": "11.12.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "macOS": "27.0 (26A428)",
+    "ChromeInstalledVersion": "154.0.8037.99",
+    "ChromeQualification": "Current installed Chrome metadata; actual suite uses explicit channel chrome; no additional browser launched"
+  },
+  "applicationPerformance": {
+    "measuredSource": "534140b1d0030650a2cbe7f146345a9a0dec4f61",
+    "applicability": "87 unchanged application/build inputs plus 417 exact retained assets; reviewed changed CLI module unreachable from 67 application/server modules rooted at 28 entries",
+    "privateOriginalSHA256": "8525c37ba801e3d778b00e74fa4accebb6723fc1aa5b1645df9d0ff7fd9bd7c2",
+    "loads": [
+      {
+        "scenario": 0,
+        "counts": {
+          "tasks": 1000,
+          "events": 10000,
+          "producers": 10
+        },
+        "phases": [
+          {
+            "phase": "sustained",
+            "elapsedMs": 300002.060125,
+            "achievedEventsPerSecond": 19.999862659276463,
+            "dispatchLagMs": {
+              "count": 6000,
+              "p95Ms": 3.692957999999635,
+              "maxMs": 6.331500000000233
+            },
+            "HTTPMs": {
+              "count": 6000,
+              "p95Ms": 21.65474999998696,
+              "maxMs": 29.14916600000288
+            }
+          },
+          {
+            "phase": "burst",
+            "elapsedMs": 10000.908291,
+            "achievedEventsPerSecond": 99.99091791491762,
+            "dispatchLagMs": {
+              "count": 1000,
+              "p95Ms": 2.7270409999764524,
+              "maxMs": 13.656040999980178
+            },
+            "HTTPMs": {
+              "count": 1000,
+              "p95Ms": 18.24945800000569,
+              "maxMs": 25.049457999994047
+            }
+          }
+        ],
+        "observations": [
+          {
+            "phase": "sustained",
+            "tab": 0,
+            "expected": 60,
+            "accepted": 60,
+            "confirmed": 60,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 60,
+            "p95Ms": 528.2013330000045,
+            "maxMs": 566.1037499999948
+          },
+          {
+            "phase": "sustained",
+            "tab": 1,
+            "expected": 60,
+            "accepted": 60,
+            "confirmed": 60,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 60,
+            "p95Ms": 492.16829199995846,
+            "maxMs": 583.2029160000002
+          },
+          {
+            "phase": "burst",
+            "tab": 0,
+            "expected": 4,
+            "accepted": 4,
+            "confirmed": 4,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 4,
+            "p95Ms": 175.01225000002887,
+            "maxMs": 175.01225000002887
+          },
+          {
+            "phase": "burst",
+            "tab": 1,
+            "expected": 4,
+            "accepted": 4,
+            "confirmed": 4,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 4,
+            "p95Ms": 247.52316599996993,
+            "maxMs": 247.52316599996993
+          }
+        ],
+        "burstPrecision": "four samples per full scenario/tab; nearest-rank p95 is maximum"
+      },
+      {
+        "scenario": 1,
+        "counts": {
+          "tasks": 1000,
+          "events": 10000,
+          "producers": 10
+        },
+        "phases": [
+          {
+            "phase": "sustained",
+            "elapsedMs": 300000.290958,
+            "achievedEventsPerSecond": 19.999980602818813,
+            "dispatchLagMs": {
+              "count": 6000,
+              "p95Ms": 3.501583000062965,
+              "maxMs": 9.18654200003948
+            },
+            "HTTPMs": {
+              "count": 6000,
+              "p95Ms": 22.016166999936104,
+              "maxMs": 28.44124999997439
+            }
+          },
+          {
+            "phase": "burst",
+            "elapsedMs": 10000.871625000029,
+            "achievedEventsPerSecond": 99.99128450966364,
+            "dispatchLagMs": {
+              "count": 1000,
+              "p95Ms": 3.5116670000134036,
+              "maxMs": 11.236000000033528
+            },
+            "HTTPMs": {
+              "count": 1000,
+              "p95Ms": 20.491665999987163,
+              "maxMs": 26.529625000082888
+            }
+          }
+        ],
+        "observations": [
+          {
+            "phase": "sustained",
+            "tab": 0,
+            "expected": 60,
+            "accepted": 60,
+            "confirmed": 60,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 60,
+            "p95Ms": 512.8260420000297,
+            "maxMs": 528.8461249999818
+          },
+          {
+            "phase": "sustained",
+            "tab": 1,
+            "expected": 60,
+            "accepted": 60,
+            "confirmed": 60,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 60,
+            "p95Ms": 488.7600410000887,
+            "maxMs": 572.75662499998
+          },
+          {
+            "phase": "burst",
+            "tab": 0,
+            "expected": 4,
+            "accepted": 4,
+            "confirmed": 4,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 4,
+            "p95Ms": 285.8629169999622,
+            "maxMs": 285.8629169999622
+          },
+          {
+            "phase": "burst",
+            "tab": 1,
+            "expected": 4,
+            "accepted": 4,
+            "confirmed": 4,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 4,
+            "p95Ms": 302.4636669999454,
+            "maxMs": 302.4636669999454
+          }
+        ],
+        "burstPrecision": "four samples per full scenario/tab; nearest-rank p95 is maximum"
+      },
+      {
+        "scenario": 2,
+        "counts": {
+          "tasks": 1000,
+          "events": 10000,
+          "producers": 10
+        },
+        "phases": [
+          {
+            "phase": "sustained",
+            "elapsedMs": 300001.01220799994,
+            "achievedEventsPerSecond": 19.99993251969435,
+            "dispatchLagMs": {
+              "count": 6000,
+              "p95Ms": 3.642957999953069,
+              "maxMs": 10.572374999988824
+            },
+            "HTTPMs": {
+              "count": 6000,
+              "p95Ms": 21.85595800005831,
+              "maxMs": 38.027666999958456
+            }
+          },
+          {
+            "phase": "burst",
+            "elapsedMs": 10000.663834000006,
+            "achievedEventsPerSecond": 99.99336210064627,
+            "dispatchLagMs": {
+              "count": 1000,
+              "p95Ms": 2.9185839999699965,
+              "maxMs": 12.16095900000073
+            },
+            "HTTPMs": {
+              "count": 1000,
+              "p95Ms": 19.162374999956228,
+              "maxMs": 24.675500000012107
+            }
+          }
+        ],
+        "observations": [
+          {
+            "phase": "sustained",
+            "tab": 0,
+            "expected": 60,
+            "accepted": 60,
+            "confirmed": 60,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 60,
+            "p95Ms": 491.31345800007693,
+            "maxMs": 537.2079999999842
+          },
+          {
+            "phase": "sustained",
+            "tab": 1,
+            "expected": 60,
+            "accepted": 60,
+            "confirmed": 60,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 60,
+            "p95Ms": 520.5642920000246,
+            "maxMs": 573.6423340000911
+          },
+          {
+            "phase": "burst",
+            "tab": 0,
+            "expected": 4,
+            "accepted": 4,
+            "confirmed": 4,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 4,
+            "p95Ms": 280.4722499999916,
+            "maxMs": 280.4722499999916
+          },
+          {
+            "phase": "burst",
+            "tab": 1,
+            "expected": 4,
+            "accepted": 4,
+            "confirmed": 4,
+            "missing": 0,
+            "wrong": 0,
+            "duplicate": 0,
+            "late": 0,
+            "count": 4,
+            "p95Ms": 289.9316669999389,
+            "maxMs": 289.9316669999389
+          }
+        ],
+        "burstPrecision": "four samples per full scenario/tab; nearest-rank p95 is maximum"
+      }
+    ],
+    "syntheticObservationSamples": [
+      {
+        "synthetic": true,
+        "scenario": 0,
+        "tab": 0,
+        "phase": "sustained",
+        "eventId": "ed1b9c04-b6b1-4153-a420-e57f6a4cccdc",
+        "runId": "f331d816-c400-4588-a2a3-6e9e2afb9e85",
+        "sequence": 2,
+        "message": "P07 s0 sustained p0 q2 ed1b9c04-b6b1-4153-a420-e57f6a4cccdc",
+        "HTTPStatus": 201,
+        "decodedACK": {
+          "data": {
+            "eventId": "ed1b9c04-b6b1-4153-a420-e57f6a4cccdc",
+            "runId": "f331d816-c400-4588-a2a3-6e9e2afb9e85",
+            "acceptedSequence": 2,
+            "receivedAt": "2026-10-10T21:15:26.547Z"
+          },
+          "snapshotCursor": "21074",
+          "generation": "dc0f2df3-4304-4549-a911-9d75d3c92024"
+        },
+        "visibleReceipt": "2026-10-10T21:15:26.547Z",
+        "dispatchToConfirmationUpperBoundMs": 382.0268750000005,
+        "twoFrames": true,
+        "errors": []
+      },
+      {
+        "synthetic": true,
+        "scenario": 0,
+        "tab": 1,
+        "phase": "sustained",
+        "eventId": "ed1b9c04-b6b1-4153-a420-e57f6a4cccdc",
+        "runId": "f331d816-c400-4588-a2a3-6e9e2afb9e85",
+        "sequence": 2,
+        "message": "P07 s0 sustained p0 q2 ed1b9c04-b6b1-4153-a420-e57f6a4cccdc",
+        "HTTPStatus": 201,
+        "decodedACK": {
+          "data": {
+            "eventId": "ed1b9c04-b6b1-4153-a420-e57f6a4cccdc",
+            "runId": "f331d816-c400-4588-a2a3-6e9e2afb9e85",
+            "acceptedSequence": 2,
+            "receivedAt": "2026-10-10T21:15:26.547Z"
+          },
+          "snapshotCursor": "21074",
+          "generation": "dc0f2df3-4304-4549-a911-9d75d3c92024"
+        },
+        "visibleReceipt": "2026-10-10T21:15:26.547Z",
+        "dispatchToConfirmationUpperBoundMs": 583.2029160000002,
+        "twoFrames": true,
+        "errors": []
+      },
+      {
+        "synthetic": true,
+        "scenario": 1,
+        "tab": 0,
+        "phase": "sustained",
+        "eventId": "83224bb7-0970-4268-a081-24f28a6526df",
+        "runId": "4d47e759-9f3e-456f-8879-f426d280ef37",
+        "sequence": 2,
+        "message": "P07 s1 sustained p0 q2 83224bb7-0970-4268-a081-24f28a6526df",
+        "HTTPStatus": 201,
+        "decodedACK": {
+          "data": {
+            "eventId": "83224bb7-0970-4268-a081-24f28a6526df",
+            "runId": "4d47e759-9f3e-456f-8879-f426d280ef37",
+            "acceptedSequence": 2,
+            "receivedAt": "2026-10-10T21:20:41.204Z"
+          },
+          "snapshotCursor": "21074",
+          "generation": "ec870b2e-3872-4989-a892-605cbb63a438"
+        },
+        "visibleReceipt": "2026-10-10T21:20:41.204Z",
+        "dispatchToConfirmationUpperBoundMs": 371.0989159999881,
+        "twoFrames": true,
+        "errors": []
+      },
+      {
+        "synthetic": true,
+        "scenario": 1,
+        "tab": 1,
+        "phase": "sustained",
+        "eventId": "83224bb7-0970-4268-a081-24f28a6526df",
+        "runId": "4d47e759-9f3e-456f-8879-f426d280ef37",
+        "sequence": 2,
+        "message": "P07 s1 sustained p0 q2 83224bb7-0970-4268-a081-24f28a6526df",
+        "HTTPStatus": 201,
+        "decodedACK": {
+          "data": {
+            "eventId": "83224bb7-0970-4268-a081-24f28a6526df",
+            "runId": "4d47e759-9f3e-456f-8879-f426d280ef37",
+            "acceptedSequence": 2,
+            "receivedAt": "2026-10-10T21:20:41.204Z"
+          },
+          "snapshotCursor": "21074",
+          "generation": "ec870b2e-3872-4989-a892-605cbb63a438"
+        },
+        "visibleReceipt": "2026-10-10T21:20:41.204Z",
+        "dispatchToConfirmationUpperBoundMs": 572.75662499998,
+        "twoFrames": true,
+        "errors": []
+      },
+      {
+        "synthetic": true,
+        "scenario": 2,
+        "tab": 0,
+        "phase": "sustained",
+        "eventId": "94aaa35e-de12-472f-8a90-90d67f3c5d6b",
+        "runId": "ec5d7630-5d80-4093-8842-690b88e171c0",
+        "sequence": 2,
+        "message": "P07 s2 sustained p0 q2 94aaa35e-de12-472f-8a90-90d67f3c5d6b",
+        "HTTPStatus": 201,
+        "decodedACK": {
+          "data": {
+            "eventId": "94aaa35e-de12-472f-8a90-90d67f3c5d6b",
+            "runId": "ec5d7630-5d80-4093-8842-690b88e171c0",
+            "acceptedSequence": 2,
+            "receivedAt": "2026-10-10T21:25:55.501Z"
+          },
+          "snapshotCursor": "21074",
+          "generation": "81c689ee-282e-49b9-b1b6-c52708b45adc"
+        },
+        "visibleReceipt": "2026-10-10T21:25:55.501Z",
+        "dispatchToConfirmationUpperBoundMs": 371.0732919999864,
+        "twoFrames": true,
+        "errors": []
+      },
+      {
+        "synthetic": true,
+        "scenario": 2,
+        "tab": 1,
+        "phase": "sustained",
+        "eventId": "94aaa35e-de12-472f-8a90-90d67f3c5d6b",
+        "runId": "ec5d7630-5d80-4093-8842-690b88e171c0",
+        "sequence": 2,
+        "message": "P07 s2 sustained p0 q2 94aaa35e-de12-472f-8a90-90d67f3c5d6b",
+        "HTTPStatus": 201,
+        "decodedACK": {
+          "data": {
+            "eventId": "94aaa35e-de12-472f-8a90-90d67f3c5d6b",
+            "runId": "ec5d7630-5d80-4093-8842-690b88e171c0",
+            "acceptedSequence": 2,
+            "receivedAt": "2026-10-10T21:25:55.501Z"
+          },
+          "snapshotCursor": "21074",
+          "generation": "81c689ee-282e-49b9-b1b6-c52708b45adc"
+        },
+        "visibleReceipt": "2026-10-10T21:25:55.501Z",
+        "dispatchToConfirmationUpperBoundMs": 573.6423340000911,
+        "twoFrames": true,
+        "errors": []
+      }
+    ],
+    "confirmedTargets": 384,
+    "missingWrongDuplicateLate": 0,
+    "strictMissedSlots": 0,
+    "native": {
+      "comparisons": [
+        {
+          "comparison": 1,
+          "operations": {
+            "ingestion": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0896669998764992,
+                "p95Ms": 1.4791250000707805,
+                "maxMs": 4.419750000117347
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.0749999999534339,
+                "p95Ms": 1.4172919997945428,
+                "maxMs": 3.2994580001104623
+              },
+              "p95ChangePercent": -4.180376930501395
+            },
+            "tasks": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0413749997969717,
+                "p95Ms": 1.3172079999931157,
+                "maxMs": 1.6216669999994338
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.0386250000447035,
+                "p95Ms": 1.315500000026077,
+                "maxMs": 1.6199580000247806
+              },
+              "p95ChangePercent": -0.12966820479738406
+            },
+            "detail": {
+              "base": {
+                "count": 100,
+                "p50Ms": 0.7308340000454336,
+                "p95Ms": 1.0098749999888241,
+                "maxMs": 1.459917000029236
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 0.6996669999789447,
+                "p95Ms": 0.9917500000447035,
+                "maxMs": 2.499540999997407
+              },
+              "p95ChangePercent": -1.794776575746626
+            },
+            "board": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.1540409999433905,
+                "p95Ms": 1.4250829999800771,
+                "maxMs": 2.3617920000106096
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.159125000005588,
+                "p95Ms": 1.4489170000888407,
+                "maxMs": 1.587792000034824
+              },
+              "p95ChangePercent": 1.6724639974722066
+            },
+            "overview": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.421749999979511,
+                "p95Ms": 1.9470830000936985,
+                "maxMs": 2.272542000049725
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.409042000072077,
+                "p95Ms": 1.7786669998895377,
+                "maxMs": 3.240290999878198
+              },
+              "p95ChangePercent": -8.649656958437635
+            },
+            "tracking": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.1438329999800771,
+                "p95Ms": 1.494999999878928,
+                "maxMs": 2.425667000003159
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.1240419999230653,
+                "p95Ms": 1.4610419999808073,
+                "maxMs": 3.1177499999757856
+              },
+              "p95ChangePercent": -2.27143812045959
+            },
+            "events": {
+              "base": {
+                "count": 100,
+                "p50Ms": 0.7296670000068843,
+                "p95Ms": 1.0675419999752194,
+                "maxMs": 1.8493340001441538
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 0.7466669999994338,
+                "p95Ms": 1.1360420000273734,
+                "maxMs": 2.381667000008747
+              },
+              "p95ChangePercent": 6.4166093749701725
+            }
+          },
+          "budgetFailures": []
+        },
+        {
+          "comparison": 2,
+          "operations": {
+            "ingestion": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0678329998627305,
+                "p95Ms": 1.3549579998943955,
+                "maxMs": 3.7242499999701977
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.0465409997850657,
+                "p95Ms": 1.474707999965176,
+                "maxMs": 3.821665999945253
+              },
+              "p95ChangePercent": 8.83791232496607
+            },
+            "tasks": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0417920001782477,
+                "p95Ms": 1.3621249999850988,
+                "maxMs": 2.782916999887675
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.02295899996534,
+                "p95Ms": 1.2897920000832528,
+                "maxMs": 1.407666000071913
+              },
+              "p95ChangePercent": -5.310305581546282
+            },
+            "detail": {
+              "base": {
+                "count": 100,
+                "p50Ms": 0.6682500001043081,
+                "p95Ms": 1.0256250000093132,
+                "maxMs": 2.8345000001136214
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 0.6787500001955777,
+                "p95Ms": 1.081125000026077,
+                "maxMs": 1.7369589998852462
+              },
+              "p95ChangePercent": 5.411334553687741
+            },
+            "board": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.157166999997571,
+                "p95Ms": 1.427957999985665,
+                "maxMs": 1.6104589998722076
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.1538339999970049,
+                "p95Ms": 1.452375000109896,
+                "maxMs": 1.7457910000812262
+              },
+              "p95ChangePercent": 1.7099242501863676
+            },
+            "overview": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.3834579999092966,
+                "p95Ms": 1.7162079999689013,
+                "maxMs": 1.9838330000638962
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.3832079998683184,
+                "p95Ms": 1.6912500001490116,
+                "maxMs": 1.9782499999273568
+              },
+              "p95ChangePercent": -1.4542526209143647
+            },
+            "tracking": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.1017080000601709,
+                "p95Ms": 1.499208000022918,
+                "maxMs": 3.020625000121072
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.125125000020489,
+                "p95Ms": 1.4196659999433905,
+                "maxMs": 2.255416000029072
+              },
+              "p95ChangePercent": -5.305601362740298
+            },
+            "events": {
+              "base": {
+                "count": 100,
+                "p50Ms": 0.7212920000310987,
+                "p95Ms": 1.1289999999571592,
+                "maxMs": 1.82445800001733
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 0.7160000000149012,
+                "p95Ms": 1.1374589998740703,
+                "maxMs": 2.1300419999752194
+              },
+              "p95ChangePercent": 0.7492471140152501
+            }
+          },
+          "budgetFailures": []
+        },
+        {
+          "comparison": 3,
+          "operations": {
+            "ingestion": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0711250000167638,
+                "p95Ms": 1.4088330001104623,
+                "maxMs": 3.7549169999547303
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.0835420000366867,
+                "p95Ms": 1.5339999999850988,
+                "maxMs": 3.5146669999230653
+              },
+              "p95ChangePercent": 8.884445485364312
+            },
+            "tasks": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0592910000123084,
+                "p95Ms": 1.322124999947846,
+                "maxMs": 1.5024999999441206
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.0315000000409782,
+                "p95Ms": 1.2572089999448508,
+                "maxMs": 2.095333999954164
+              },
+              "p95ChangePercent": -4.909974473333145
+            },
+            "detail": {
+              "base": {
+                "count": 100,
+                "p50Ms": 0.691249999916181,
+                "p95Ms": 0.9298340000677854,
+                "maxMs": 1.8006659999955446
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 0.6935000000521541,
+                "p95Ms": 1.0256250000093132,
+                "maxMs": 2.683500000042841
+              },
+              "p95ChangePercent": 10.301946361882287
+            },
+            "board": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.1305830001365393,
+                "p95Ms": 1.515667000086978,
+                "maxMs": 1.602500000037253
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.1453329999931157,
+                "p95Ms": 1.467833000002429,
+                "maxMs": 1.6819160000886768
+              },
+              "p95ChangePercent": -3.1559702811900125
+            },
+            "overview": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.3689160000067204,
+                "p95Ms": 1.7802500000689179,
+                "maxMs": 2.4116249999497086
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.3679170000832528,
+                "p95Ms": 1.7265419999603182,
+                "maxMs": 1.909415999893099
+              },
+              "p95ChangePercent": -3.0168796577177637
+            },
+            "tracking": {
+              "base": {
+                "count": 100,
+                "p50Ms": 1.0980419998522848,
+                "p95Ms": 1.4379170001484454,
+                "maxMs": 2.3022499999497086
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 1.0875829998403788,
+                "p95Ms": 1.4682080000638962,
+                "maxMs": 3.0626669998746365
+              },
+              "p95ChangePercent": 2.1065888999381555
+            },
+            "events": {
+              "base": {
+                "count": 100,
+                "p50Ms": 0.6953749998938292,
+                "p95Ms": 1.058166999835521,
+                "maxMs": 2.818625000072643
+              },
+              "head": {
+                "count": 100,
+                "p50Ms": 0.7069159999955446,
+                "p95Ms": 1.0421670000068843,
+                "maxMs": 2.1522910001222044
+              },
+              "p95ChangePercent": -1.512048649326958
+            }
+          },
+          "budgetFailures": []
+        }
+      ],
+      "rawRequests": 4620,
+      "measuredSamples": 4200,
+      "warmupsPerSourcePerOperation": 10,
+      "measuredPerSourcePerOperation": 100,
+      "measurement": "one controller monotonic clock; UTF8 decoding+JSON.parse included before schema validation"
+    },
+    "resources": {
+      "cycles": 100,
+      "fixedTasks": 1000,
+      "fixedHistoricEvents": 10000,
+      "heapBeforeBytes": 82066400,
+      "heapAfterBytes": 82663864,
+      "heapChangePercent": 0.7280251113732206,
+      "streamLeasesBefore": 2,
+      "streamLeasesAfter": 2,
+      "streamLeasesAfterShutdown": 0
+    },
+    "qualification": "Individually attributed historical application measurements, not an entire old campaign relabeled at current CLI source"
+  },
+  "currentCLI": {
+    "measuredSource": "2b27403a797dcb3c7a640b14a0b104ac611d154a",
+    "privateOriginalSHA256": "ea90e0c344bb97b10a6f9997ba55b019caf76978e3b185ddd24ccc35fd6d9e21",
+    "independentReconciliationSHA256": "efd2acdfc39952f16f52c77a238ceb2200ab922b74c74cf0dc1234445a1becc9",
+    "trials": [
+      {
+        "index": 1,
+        "setupMsExcluded": 213853.974291,
+        "elapsedMsIncludingFreshCLIStartup": 92815.614459,
+        "reportsQueuedViaRealSubprocesses": 1000,
+        "uniqueCommittedOriginals": 1000,
+        "exactReplay200": 9,
+        "httpAttempts": 1009,
+        "stdoutAttempts": 1000,
+        "fullACKEnvelopeJoins": 1009,
+        "apiDecodedTextEvents": 1000,
+        "allocated": 1000,
+        "acked": 1000,
+        "pending": 0,
+        "counts": {
+          "projects": 1,
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 11000,
+          "changes": 23052
+        },
+        "cleanupFailures": 0
+      },
+      {
+        "index": 2,
+        "setupMsExcluded": 216400.76979199995,
+        "elapsedMsIncludingFreshCLIStartup": 92462.68379100005,
+        "reportsQueuedViaRealSubprocesses": 1000,
+        "uniqueCommittedOriginals": 1000,
+        "exactReplay200": 10,
+        "httpAttempts": 1010,
+        "stdoutAttempts": 1000,
+        "fullACKEnvelopeJoins": 1010,
+        "apiDecodedTextEvents": 1000,
+        "allocated": 1000,
+        "acked": 1000,
+        "pending": 0,
+        "counts": {
+          "projects": 1,
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 11000,
+          "changes": 23052
+        },
+        "cleanupFailures": 0
+      },
+      {
+        "index": 3,
+        "setupMsExcluded": 214781.449625,
+        "elapsedMsIncludingFreshCLIStartup": 92634.66350000002,
+        "reportsQueuedViaRealSubprocesses": 1000,
+        "uniqueCommittedOriginals": 1000,
+        "exactReplay200": 13,
+        "httpAttempts": 1013,
+        "stdoutAttempts": 1000,
+        "fullACKEnvelopeJoins": 1013,
+        "apiDecodedTextEvents": 1000,
+        "allocated": 1000,
+        "acked": 1000,
+        "pending": 0,
+        "counts": {
+          "projects": 1,
+          "tasks": 1000,
+          "agents": 10,
+          "runs": 20,
+          "run_events": 11000,
+          "changes": 23052
+        },
+        "cleanupFailures": 0
+      }
+    ],
+    "totals": {
+      "freshTrials": 3,
+      "originalQueueBodyDigestAndFullACKJoins": 3000,
+      "pending": 0,
+      "missing": 0,
+      "duplicate": 0,
+      "exactReplay200": 32
+    },
+    "budgetMs": 120000,
+    "qualification": "Absolute current-source gate; no relative CLI speedup claim. Each fresh fixture: 1,000 tasks / 10,000 historical events / 10 producers / two Chrome contexts. Original queue bytes / full ACK / API / DB / stdout / watermarks joined independently after teardown."
+  },
+  "currentJourney": {
+    "contexts": 2,
+    "stages": [
+      {
+        "stage": "registered",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc"
+      },
+      {
+        "stage": "running",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc"
+      },
+      {
+        "stage": "offline-request",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc"
+      },
+      {
+        "stage": "queued",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc"
+      },
+      {
+        "stage": "recovered",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc"
+      },
+      {
+        "stage": "implementation-review",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc",
+        "taskStatus": "review"
+      },
+      {
+        "stage": "verification-running",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc"
+      },
+      {
+        "stage": "done",
+        "projectId": "082b60fb-253e-4187-a8ff-9f5a95879fe8",
+        "taskId": "c93b81f6-1ff3-417a-a075-18021b61538e",
+        "implementationId": "4304d97a-01ce-4016-9393-ffb99844fa59",
+        "verificationId": "eec038d8-c4b3-4322-bffa-189c9bfa39dc",
+        "taskStatus": "review"
+      },
+      {
+        "stage": "joined acceptance reopen backup restore",
+        "synthetic": true,
+        "tabsRevokedAndRepaired": 2
+      }
+    ],
+    "privateOriginalSHA256": "ce5edf4923e72bc86690ded0bbf6f8fb8840ff58246e553630e37984515006e4",
+    "screenshots": [
+      "producer-review-tab1.png",
+      "producer-review-tab2.png"
+    ],
+    "screenshotQualification": "Current synthetic Review observations before acceptance; not persistence or performance proof",
+    "realSilence": {
+      "contexts": 2,
+      "receivedAt": "2026-10-11T00:00:45.534Z",
+      "observedAt": "2026-10-11T00:01:45.818Z",
+      "privateOriginalSHA256": "ba1c7df944f34f49a176d5365c79b3bae258afab67528043e7c04b6219e14af4",
+      "qualification": "Actual CLI failure and more than 60 seconds of real silence; healthy contexts display stale/execution uncertain"
+    }
+  },
+  "historicalClassifications": [
+    {
+      "stage": "earlier reduced-smoke/helper failure controls",
+      "classification": "Retained failed/partial evidence; not full acceptance or actual disk-full proof"
+    },
+    {
+      "stage": "original full performance attempt",
+      "classification": "Failed strict burst cadence MISSED_SLOT; all reported persistence facts retained"
+    },
+    {
+      "stage": "short/warm instrumented diagnostics",
+      "classification": "Original500ms stall not reproduced; no cause-specific scheduling/server patch or foreign-clock timing claim"
+    },
+    {
+      "stage": "original full verification",
+      "classification": "Failed aggregate six-child concurrent case; original six individual outputs unavailable and cause unknown"
+    },
+    {
+      "stage": "D1 six-process diagnosis",
+      "classification": "Not reproduced; six queued outcomes preserved"
+    },
+    {
+      "stage": "D2 controlled native/FS schedule",
+      "classification": "Independent real ENOENT counterexample before reader publication lease; not historical attribution"
+    },
+    {
+      "stage": "warm accounting repair",
+      "classification": "Real lease-order/prefix and warm quota/reservation regressions pass; cold safety guards retained"
+    },
+    {
+      "stage": "current verification",
+      "classification": "All current suites pass; new six child outputs retained before assertion"
+    }
+  ],
+  "installation": {
+    "initialCommittedSource": "9727bf986c6a7afdb0a8746f5ccd132aca9303dd",
+    "lockSHA256": "f87f27acb470eb86cbcbdd4ded750df327a46def7d2f52a91956c4f59f0b06fc",
+    "priorNodeModules": false,
+    "priorMainBuild": false,
+    "globalNpmCacheReuse": true,
+    "mainBuildId": "iGyOK2XYVjB6TslPCCQVK",
+    "retainedAssetCount": 417,
+    "newMainBuildOrInstallInVerification": false,
+    "qualification": "Retained initial fresh production build qualifies unchanged application only; changed CLI runs current pinned tsx source and currenttypes pass"
+  },
+  "noticeInventory": "dependency-notices.json",
+  "limits": [
+    "Named macOS/Chrome synthetic fixtures; no pristine OS or Linux claim",
+    "ResponseUTF8text is decoded text, not wire bytes; producer serialized body reconstruction is not original transport capture",
+    "Visibility is one-controller dispatch-to-confirmation upper bound with actual viewport / style / hit-test / two-frame checks; no browser/server clock subtraction",
+    "Burst four markers per tab/scenario: nearest-rank p95 is the maximum, with limited precision",
+    "Synthetic browser acceptance is not actual human attestation",
+    "No new application load/native/resource measurement or extra performance campaign in current verification",
+    "No P07 release/tag or complete v1 claim; final Standards/Spec / integration / owned cleanup / W01 remain required"
+  ],
+  "defaultUnitPortability": {
+    "finding": "Original final Standards/Spec shared P2: default qualification tests depended on private historical build/ancestry and generic negative failures",
+    "executableSource": "05af7932868438659e1be12f68c00d76582bed4b",
+    "actualRED": {
+      "source": "740869af215458d4d599b952ba0a0806fe492c0d",
+      "failed": 1,
+      "passed": 3,
+      "files": 2,
+      "reason": "ENOENT scandir .next; original generic negatives remained passed"
+    },
+    "currentFullUnit": {
+      "passed": 156,
+      "files": 32,
+      "seconds": 3.51,
+      "buildAbsent": true,
+      "privateOriginalSHA256": "bc5357206478d1a4ea4d1cf947d4b010636cfdaef3a6952003848fdea406cb98"
+    },
+    "specificHermeticCases": {
+      "passed": 7,
+      "files": 2,
+      "boundaries": [
+        "valid synthetic facts",
+        "application difference",
+        "application input equality",
+        "reviewed CLI hash",
+        "asset count",
+        "asset hash",
+        "CLI reachability"
+      ],
+      "qualification": "Pure fixed-policy cases require no filesystem, historical build or Git ancestry; fixture constants are policy-test data, not historical identity proof"
+    },
+    "cloneDrift": {
+      "focusedPassed": 7,
+      "changedInput": "synthetic launcher comment in disposable clone only",
+      "realGuardRejection": "retained_application_difference",
+      "buildAbsent": true,
+      "committedOrSynchronized": false
+    },
+    "retainedQualification": {
+      "actualReadOnlyCalls": 1,
+      "bindingAssets": 417,
+      "unchangedInputs": 87,
+      "resolvedModules": 67,
+      "applicationServerRoots": 28,
+      "bindingComparisonSHA256": "49ea9ec2d4855e174b48526550d51893c9499ecac5b963667fbe9e3c19cf4701",
+      "qualification": "Actual Git/files/CLI/assets/import graph acquired; fixed policy applied with no passing overrides or missing-fact defaults; real unresolved/nonliteral/CSS checks retained"
+    },
+    "staticChecks": {
+      "fullTypesIncrementalFalse": 0,
+      "fullLint": 0,
+      "OpenAPI": 0,
+      "diff": 0
+    },
+    "dependencies": "New full-history local clone with no .next; disclosed symlink reuse of pinned existing dependencies, no installation/build claim",
+    "carryForward": "Application/CLI/migration/package/integration/browser and measurement-stage inputs byte-identical to recorded executions. Integration396/Chrome34 remain attributed to2b; application performance534 and repaired CLI2b are not rerun or relabeled. Qualification fixture/unit provenance legitimately changes.",
+    "reviewState": "Both original final reviewers must rereview exact repaired candidate before integration; P07 remains open"
+  }
+}

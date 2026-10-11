@@ -4,9 +4,9 @@ import type { ApplicationCommand } from "../../src/db/application";
 import { eventInput } from "../../src/contracts/observations";
 import { canonicalDigest } from "../../src/domain/request-digest";
 
-export async function seedPerformance(dir: string, counts: { tasks: number; events: number; producers: number }) {
+export async function seedPerformance(dir: string, counts: { tasks: number; events: number; producers: number }, epoch = Date.now()) {
   const owned = await openOwnedStore(dir);
-  let now = Date.now();
+  let now = epoch;
   function send(command: ApplicationCommand) {
     const reply = owned.store.command(command, { principal: "reporter", method: "POST", path: command.kind, key: randomUUID(), digest: canonicalDigest(command.input), now: now++ });
     if (reply.status !== 201) throw new Error("fixture_seed_rejected");

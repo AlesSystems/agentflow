@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P05 are integrated through PRs #4–#8; P06 producer, performance, and full validation checks have passed and await final independent review and integration. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P06 are integrated through PRs #4–#9. P07 validation has passed; exact-candidate independent review and integration remain before W01. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -115,11 +115,11 @@ Run browser and real-server integration tests against a production build. Record
 
 Depends on P04. Proposed files include `src/cli/`, outbox modules, CLI integration tests, and an integration walkthrough.
 
-- [ ] Implement registration commands and reports using public HTTP contracts.
-- [ ] Allocate IDs and per-run sequences under a lock, then preserve reports before delivery.
-- [ ] Implement bounded outbox storage, flush, retry/backoff, exit codes, and actionable non-retryable errors.
-- [ ] Document token access without URL/query secrets or shell-history examples containing real credentials.
-- [ ] Provide an executable external producer walkthrough demonstrating one implementation attempt and a separate review or verification attempt on the same task, including heartbeats, retry, and flush.
+- [x] Implement registration commands and reports using public HTTP contracts.
+- [x] Allocate IDs and per-run sequences under a lock, then preserve reports before delivery.
+- [x] Implement bounded outbox storage, flush, retry/backoff, exit codes, and actionable non-retryable errors.
+- [x] Document token access without URL/query secrets or shell-history examples containing real credentials.
+- [x] Provide an executable external producer walkthrough demonstrating one implementation attempt and a separate review or verification attempt on the same task, including heartbeats, retry, and flush.
 
 Pass when a real CLI report appears in the API and SQLite, including after server downtime and a CLI restart. Replay the same queued item after a lost response and observe no duplicate. Test concurrent report calls, permissions, full disk/outbox, authentication failure, missing sequence data, and restored-database limitations.
 

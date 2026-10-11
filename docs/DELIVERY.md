@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: five packages passed acceptance, independent review, coordinator verification
+Status: six packages passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. P06 producer, performance, and full validation checks passed; final independent review and integration remain open. P07 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. P07 validation passed and awaits final independent review and integration; W01 through W04 have not started.
 
 ## Package state
 
@@ -19,8 +19,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P03 | Work board | Integrated | Candidate `8847228f0fc1612c5fb0dbfabe56278cb56365c6`; merge `cf44dd9103c091c10c9608468e5956e506c6705c`, PR #6 | [Receipt](implementation/P03.md), [verification](evidence/P03/verification.json) |
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
-| P06 | CLI hooks | Implementing | CLI repair `154a921`; measured runtime `4bb6dee`; branch `codex/v1-p06-cli-hooks` | [Delivery-lock repair](#p06-delivery-lock-repair-checkpoint); final re-review and integration open |
-| P07 | Phase 2 checkpoint | Not started | — | — |
+| P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
+| P07 | Phase 2 checkpoint | Validation passed; final review/integration pending | Unit repair `05af7932868438659e1be12f68c00d76582bed4b`; docs/public candidate `378ce33d56c55b8e9e5efdf9e3ac88bef877ee13` | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
 | W03a | GitHub PR observation | Not started | — | — |
@@ -402,3 +402,161 @@ for final review and enumerated cleanup. Earlier unenumerated RED roots are not
 claimed or removed. Source is frozen for independent Spec re-review of the
 original counterexample and Standards delta review at the coordinator's final
 candidate. Guarded PR/merge, cleanup and P07 remain held; P06 stays unchecked.
+
+## Verified P06 integration
+
+[PR #9](https://github.com/AlesSystems/agentflow/pull/9) merged final candidate
+`e568f6fe84cc3c62ebb26dbb22092673d23f07ce` at
+`36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, 2026-10-10T10:33:42Z.
+Final independent Standards and Spec re-reviews approved that exact candidate,
+closing the sole native delivery I/O classification finding. Root read both
+reports and independently verified the source, evidence and applicability gates.
+Final stable patch ID is `39e385bf38463a4282523578f18b3ad27d0708ba`.
+
+GitHub showed the approved head, unchanged P05 base, clean mergeability, no required
+checks, no branch protection and no active branch rules. The verification ledger
+passed for the exact head before normal merge with `--match-head-commit`; no admin
+bypass or force update occurred. Root verified mergedAt/merge/head and candidate
+ancestry, and the integrated tree equals the reviewed tree. Clean primary `main`
+and the managed runtime checkout advanced to the merge. Owned local and remote
+P06 branches were deleted; unrelated branches and source links were preserved.
+
+Scoped cleanup preserved 163 complete private archives, then removed 162 exact
+inventoried temporary roots with zero skips. Fresh canonical path, UID/device/inode
+and open-file guards preceded removal. Root independently checked all archive
+hashes/manifests, 55,277 members, 52,822 regular-file byte hashes/modes, and absence
+of every removed path. Both failed and accepted performance datasets and P05
+cached assets remain preserved; a partial FIFO archive is separately classified.
+Raw/public proof and current runtime assets remain unchanged. Unenumerated earlier
+temporary directories and operator data were not claimed or removed.
+[The public cleanup summary](implementation/evidence/P06/cleanup-summary.json)
+records verification hashes without exposing credential archives.
+
+Next: plan P07's Phase 2 checkpoint, obtain Astra medium approval, then execute
+isolated-install, combined-load observer sampling, recovery/auth/keyboard/license
+and full relevant validation under the execution policy. P07 is not a v0.1 release;
+continue through W01–W04 before the final independently reviewed v1 source release.
+
+
+## Current P07 handoff
+
+Earlier full verification passed at executable source
+`2b27403a797dcb3c7a640b14a0b104ac611d154a`: 153 unit tests in 32 files,
+396 integration tests in 63 files, and 34 actual Chrome journeys. Full lint,
+types (`--incremental false`), OpenAPI and diff checks passed. The final
+`9c5bc701a7ff9fda6961de9d54a7e0c23bfd83c3` delta is documentation and public
+synthetic evidence only. Coordinator documentation updates precede independent
+Standards and Spec review of the exact integration candidate.
+
+Astra medium approved the original P07 plan and the bounded measurement and
+warm-accounting repair plans. The final repair plan SHA-256 is
+`78c28dd784956130671550d0e1649d0599414df7200d941a42ae6cfadcb1a966`;
+its approval is `1232c041cf9badb54b16b5f02c17124a96cbca6c3ad30f390ab8e57e2a4205bf`.
+Independent shipping/helper readiness approval at `2b27403` is
+`c94d981cd7192fa3b77de11d51e982d2397811fc933823e3872212af058afec6`.
+The shipping change moves initialized outbox accounting behind its existing
+native publication lease. Cold bootstrap, ownership, quotas, durable preservation,
+sequence allocation and delivery contracts retain focused regression coverage.
+An independently controlled filesystem/native-lock race supplied a real ENOENT
+counterexample. It does not establish the cause of an earlier aggregate test
+failure whose six individual outputs were unavailable. New concurrent tests
+retain every actual child return before asserting.
+
+Historical application measurements belong to `534140b`: three full load scenarios
+with 21,000 timed events, 384 confirmed browser targets and no missing/wrong/late
+targets or strict missed slots. Sustained HTTP p95 was 21.65–22.02 ms; worst
+visible p95 was 528.20 ms. Three native comparisons retained 4,200 measured
+samples plus 420 warmups; worst p95 was 1.947 ms and worst positive change
+10.302%, below the 20% budget. After 100 connection cycles, server heap changed
++0.728%, stream leases returned to baseline and shutdown resources reached zero.
+Applicability to current application code is proven by 87 unchanged application/
+build inputs, 417 exact retained assets and a checked import graph excluding the
+changed CLI module. These are attributed application measurements, not a current
+execution of the whole earlier campaign.
+
+The changed CLI was measured separately at `2b27403` through three fresh
+1,000-report fixtures. Startup-inclusive flush walls were 92,815.614, 92,462.684
+and 92,634.664 ms, all below 120,000 ms. Root reconciled 3,000 unique original
+queue bodies, full HTTP acknowledgements, API, SQLite, stdout and sequence
+watermarks, with zero pending/missing/duplicate originals. The 32 exact HTTP 200
+replays are separate. Setup time is excluded and disclosed. No relative CLI
+speedup is claimed.
+
+Root matched the final freeze, 416 tracked files in both sources, 52,889 new
+regular-file hashes, 55,119 descendant identities/modes and all five historical
+inventories. Three intentional FIFO fixtures were classified without reading
+them. Original ignored outputs were restored with their bytes, modes and inode
+identities; the previously absent review output subtree remains absent. Main
+assets, native addon and installed tool hashes match; post-audit scoped lsof
+was empty. Root inspected both published screenshots and verified the whitelist
+receipt. Private full evidence stays outside tracked data; public files contain
+synthetic identities and summaries. Root's final verification receipt SHA-256 is
+`8ffafba91d1c919c753149636e727226488d6a4cd3d1e5d15ea5ada999cda05b`.
+
+The fresh installation began at `9727bf9` with no node_modules or build output
+and reused the global npm cache. Named host: macOS 27.0 build 26A428, arm64,
+Node 24.15.0, npm 11.12.1 and Chrome 154.0.8037.99. Retained initial production
+assets qualify the unchanged application; the changed CLI executes current tsx
+source. There is no pristine-OS or Linux claim. Browser accept/reopen scenarios
+exercise synthetic human-role commands, not actual human attestations. Burst
+visibility has four samples per tab/scenario, so nearest-rank p95 equals maximum.
+Decoded UTF-8 response text is distinct from transport bytes. Dependency notice
+completeness and dev-tool audit limitations remain in the receipt.
+
+Next: independent Standards and Spec review of the coordinator's exact candidate,
+then guarded PR/normal merge, owned artifact cleanup and W01 planning/Astra medium
+approval. P07 remains unchecked until integration; no v1 tag/release is created here.
+
+
+### P07 default-unit portability finding and repair
+
+Standards and Spec review at `740869af215458d4d599b952ba0a0806fe492c0d`
+found one shared P2: default unit verification depended on a private historical
+`.next` identity and P06 source equality. Generic negative assertions could mask
+their target with an earlier environment failure. No other blocking finding was
+identified. Their original reports are retained with SHA-256
+`ee85f440d6e779b5c115bd3c71bffcdb3b562071434a74e8fd62425a86afd882` and
+`093a2aa1ef1da211a18e69d4c7196267b8d41b196922a6113899a39964f15029`.
+
+Astra medium approved bounded repair plan
+`956c6ffa89c5ac3d414d421fb867e914f0f22b82cceef7a48772e7fd34ebc881`
+with approval `09b723698a8349c6929eb72c0188071b9b8577ffce5f043de2b0d7dd7dc1f8e1`.
+Commits `a6a5494` (test), `05af793` (fix) and `378ce33` (docs) separate the
+fixed policy from actual qualification acquisition. The real measurement wrapper
+still acquires and validates Git differences, byte equality, CLI hash, the exact
+417-asset aggregate and the actual import graph, with no passing overrides or
+skips. Hermetic unit cases test one corrupted fact and its specific reason.
+
+Actual RED in a new full-history clone without `.next` was one failure and three
+passes: the positive test raised ENOENT. At executable
+`05af7932868438659e1be12f68c00d76582bed4b`, **156 unit tests in 32 files passed
+in 3.51 seconds without a build**. Seven focused controls passed both before and
+after an uncommitted synthetic launcher comment in only that disposable clone.
+The actual historical guard rejected the changed input specifically before any
+missing-build error. Existing pinned dependencies were linked, not reinstalled.
+Full types with incremental writes disabled, lint, OpenAPI and diff passed.
+
+The repaired real guard ran read-only once against the retained build. Root
+independently matched its 417 assets, 87 inputs, reviewed CLI hash, 67 modules,
+28 roots, edges and CSS leaf to the earlier freeze and current files. Root also
+matched 4,034 new regular-file hashes, 4,444 identities/modes, 417 tracked files
+in both clean candidates, actual logs, the build-absent clone, its isolated drift,
+core evidence/tool/addon hashes and public receipt append. Scoped lsof was empty.
+Root repair verification SHA-256 is
+`d21ee274e48812c7737147e55386f03ccb7de9009cf0a6d9d54d094f05037d1c`.
+The first coordinator read check used an incorrect public field name; correction
+was a read-only tooling fix, with no test/product rerun or artifact mutation.
+
+The final worker candidate `378ce33d56c55b8e9e5efdf9e3ac88bef877ee13` changes
+only documentation/public attribution after executable `05af793`. Application,
+CLI, migrations, package/config, integration/browser and timed measurement-stage
+inputs are unchanged from their recorded executions. The 396 integration and
+34 Chrome passes stay attributed to `2b27403`; application performance stays
+`534140b` and repaired CLI throughput stays `2b27403`. New portable unit/static
+results belong to `05af793`. No result is relabeled as a new whole campaign.
+
+Next gate is both original independent reviewers' exact repaired-candidate
+closure, including this coordinator documentation commit. Guarded PR/normal
+merge and archive-before-delete cleanup follow; W01 remains unstarted. Cleanup
+preparation lists exact owned roots and an absent historical review-path exemption.
+No archive or deletion has occurred, and no P07/v1 release is claimed.
