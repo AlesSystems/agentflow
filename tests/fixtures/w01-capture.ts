@@ -112,6 +112,7 @@ export async function visibleFrames(input: {
   let frames = 0,
     result = {
       frames: 0,
+      frameDeadline: false,
       exact: false,
       visible: false,
       hitTest: false,
@@ -121,9 +122,21 @@ export async function visibleFrames(input: {
       otherEventIds: [] as string[],
     };
   do {
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => resolve()),
-    );
+    const arrived = await new Promise<boolean>((resolve) => {
+      let frame = 0;
+      const timer = setTimeout(
+        () => {
+          cancelAnimationFrame(frame);
+          resolve(false);
+        },
+        Math.max(0, until - Date.now()),
+      );
+      frame = requestAnimationFrame(() => {
+        clearTimeout(timer);
+        resolve(true);
+      });
+    });
+    if (!arrived) return { ...result, frameDeadline: true };
     const panels = [
       ...document.querySelectorAll<HTMLElement>(
         ".workflow-evidence[data-event-id]",
@@ -153,6 +166,10 @@ export async function visibleFrames(input: {
       box.height > 0 &&
       style?.visibility !== "hidden" &&
       style?.display !== "none" &&
+      !!paragraph?.checkVisibility({
+        checkOpacity: true,
+        checkVisibilityCSS: true,
+      }) &&
       box.top >= 0 &&
       box.bottom <= innerHeight &&
       box.left >= 0 &&
@@ -185,6 +202,7 @@ export async function visibleFrames(input: {
       ]
         .map((p) => p.dataset.eventId ?? "")
         .filter((id) => id !== e.eventId),
+      frameDeadline: false,
       frames: Math.min(frames, 2),
       exact,
       visible,
