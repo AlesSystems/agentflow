@@ -1,3 +1,4 @@
+import { ordinaryBoundary } from "./p07-ordinary";
 import assert from "node:assert/strict";
 import { openSync,writeSync,fsyncSync,closeSync,lstatSync } from "node:fs";
 import { join } from "node:path";
@@ -10,3 +11,5 @@ export function captureJournal(root:string,header:unknown,io:{write:(fd:number,b
  const save:FactSave=(fact,phase,kind="fact")=>{assert(fact&&typeof fact==="object"&&"id" in fact&&typeof fact.id==="string","explicit journal fact identity required");append(kind,fact.id,phase,fact);};
  return {path,save,checkpoint(fact:unknown,write:()=>void){let primary:unknown;try{save(fact,"checkpoint","campaign");}catch(error){primary=error;}try{write();}catch(error){if(primary instanceof Error)Object.assign(primary,{aggregatePersistenceFailure:String(error)});else primary??=error;}if(primary!==undefined)throw primary;},close(){if(!closed){closed=true;closeSync(fd);}},ordinal:()=>ordinal};
 }
+
+export async function journalBoundary(result:Parameters<typeof ordinaryBoundary>[0]&{acceptance:boolean},work:Parameters<typeof ordinaryBoundary>[1],journal:ReturnType<typeof captureJournal>,snapshot:()=>unknown,write:()=>void,summary:()=>void,exitFailure:()=>void){return ordinaryBoundary(result,work,()=>journal.checkpoint(snapshot(),write),summary,exitFailure);}
