@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: seven packages passed acceptance, independent review, coordinator verification
+Status: P01–P07 and W01 passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W02 final verification is active; W03a–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W02 Task5 metric/data evidence is accepted; final review and integration remain open. W03a–W04 remain unstarted.
 
 ## Package state
 
@@ -22,7 +22,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
-| W02 | Dependencies/review/rework | Final verification active | Helper/source `de24f611ac4db630d2ec1b732b786a53db32acc8`; timing and integration pending | [Receipt](implementation/W02.md) |
+| W02 | Dependencies/review/rework | Task 5 metric/data gate accepted; final review open | Executable `8b76bed7eab2ebe35630cb366e4a2b257970bb9a`; unmerged | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
 | W03a | GitHub PR observation | Not started | — | — |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
@@ -762,3 +762,35 @@ Next: final frozen-input quiet release, one real campaign, metric/regression
 decisions, exact final candidate reviews, normal matching-head PR merge and
 archive-before-owned-cleanup. All W02 completion, W03a–W04 and source release boxes
 remain open. No timing, merge, or complete-v1 result is claimed here.
+
+
+## W02 Task 5 metric and data gate accepted
+
+The coordinator accepted the one released journal-protocol quiet campaign at clean
+`8b76bed7eab2ebe35630cb366e4a2b257970bb9a`, after independent raw/SQL, journal,
+numerical and input-provenance audits. All 10,230 declared samples are present
+(930 warmups, 9,300 measured), with 16,830 setup records and 60 strict current-value
+confirmations. Missing/unconfirmed/wrong/duplicate/hidden/late/failed and cleanup
+counts are zero. Worst existing relative p95 is +16.383%; no >20% Astra exception
+is required. Maximum head existing/new HTTP group p95 is 8.535/9.611 ms, CLI group
+p95 655.902 ms, and overall visible p95 735.862 ms. Maximum scenario/view p95 is
+782.684 ms. All 3,366 ordinary native full-drain clocks are <=5 seconds.
+
+Fifteen deliberate queued setup invocations take roughly 5.1 seconds before the
+measured visibility clock, exit 2 after synthetic 503s, and retain the separate
+20-second hard bound. They are not five-second CLI metric passes. Serial 15 ms
+cooldown is outside sample clocks; W04 still owns integrated combined-load and
+unrestricted throughput proof. The [public synthetic summary](evidence/W02/acceptance.json)
+and [receipt](implementation/W02.md#accepted-w02-task-5-metric-and-data-gate) preserve
+all group/view reductions, original failure and source/build qualifications.
+
+Current full unit passes 199/38 at clean `8b76bed`. The historical whole integration
+and Chrome invocations retain their original sources and honest composed repair
+coverage. Quiet01/02 remain failed; quiet02's cause remains unproven. Final head
+installation/build is actual `8d44b0d` with unchanged application/lock/addon/compiled
+bytes through `8b`; documentation does not claim a new build or whole-suite rerun.
+
+Task 5 measurement/evidence preparation is complete. Remaining gates are Root's
+public-allowlist/documentation verification, fresh exact-candidate full-W02
+Standards/Spec review, guarded PR/normal merge and archive-before-cleanup. W02 is
+unmerged; package completion, W03a–W04 and source release remain open.

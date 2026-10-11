@@ -1,0 +1,1521 @@
+{
+  "formatVersion": 1,
+  "package": "W02",
+  "status": "Task5 metric and data gate accepted; final exact-candidate review and integration open",
+  "executableCandidate": "8b76bed7eab2ebe35630cb366e4a2b257970bb9a",
+  "integratedW01Base": "e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168",
+  "productionBuildSource": "8d44b0d07a1f5a5b554e09970534f3958999bd89",
+  "dataset": "Synthetic isolated fixtures only; raw data, database files and credentials remain private",
+  "protocol": {
+    "repetitions": 3,
+    "orders": [
+      [
+        "base",
+        "head"
+      ],
+      [
+        "head",
+        "base"
+      ],
+      [
+        "base",
+        "head"
+      ]
+    ],
+    "groups": 93,
+    "measuredPerGroup": 100,
+    "warmupsPerGroup": 10,
+    "mutationCooldownMs": 15,
+    "cooldownOutsideClocks": true,
+    "sampleCounts": {
+      "declared": 10230,
+      "warmups": 930,
+      "measured": 9300,
+      "setups": 16830,
+      "raw": 27060
+    },
+    "fixtures": {
+      "tasksPerSource": 1000,
+      "eventsPerSource": 10000,
+      "headWorkflowNodes": 100,
+      "headWorkflowEdges": 200
+    },
+    "qualification": "Serial paced latency with active-fact capture journal. W04 retains integrated combined-load and unrestricted throughput validation."
+  },
+  "budgets": {
+    "httpP95Ms": 250,
+    "relativeP95Percent": 20,
+    "ordinaryCliFullExitAndDrainMs": 5000,
+    "cliHardKillBoundMs": 20000,
+    "visibilityP95PerScenarioViewMs": 2000
+  },
+  "operationMetrics": [
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "boardSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.505999999999858,
+        "p95Ms": 4.16833299999962,
+        "maxMs": 4.699165999999877
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "completion",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.314417000001413,
+        "p95Ms": 5.962999999999738,
+        "maxMs": 6.777541999999812
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "implementationRegistration",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.955500000000029,
+        "p95Ms": 6.615208000000166,
+        "maxMs": 9.788625000000138
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "implementationRegistrationCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 289.33141700000124,
+        "p95Ms": 361.16395800000464,
+        "maxMs": 380.8727920000092
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "implementationReportCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 535.7335420000018,
+        "p95Ms": 631.0645409999997,
+        "maxMs": 657.1742919999815
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "implementationSuccess",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.197833000001992,
+        "p95Ms": 7.301499999999578,
+        "maxMs": 10.136332999998558
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "reopen",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.002874999998312,
+        "p95Ms": 5.625333000003593,
+        "maxMs": 6.598041999997804
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "taskCreatePreference",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 443.08720800001174,
+        "p95Ms": 460.14045899995835,
+        "maxMs": 506.40204200003063
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "taskCreationDefaultFullHTTP",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.9437500000058208,
+        "p95Ms": 5.929833000001963,
+        "maxMs": 9.39787499999511
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 1,
+      "operation": "taskSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.0876250000001164,
+        "p95Ms": 5.1973330000000715,
+        "maxMs": 5.771624999999858
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "boardSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.440249999985099,
+        "p95Ms": 4.8793750000186265,
+        "maxMs": 8.035708000068553
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "completion",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.8158750000875443,
+        "p95Ms": 6.658625000156462,
+        "maxMs": 9.081875000149012
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "implementationRegistration",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.004625000059605,
+        "p95Ms": 7.151124999974854,
+        "maxMs": 8.487332999939099
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "implementationRegistrationCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 287.285208000103,
+        "p95Ms": 378.5413750000298,
+        "maxMs": 409.60766700003296
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "implementationReportCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 551.9123750000726,
+        "p95Ms": 618.765374999959,
+        "maxMs": 646.6119170000311
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "implementationSuccess",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.433958000037819,
+        "p95Ms": 6.4977500000968575,
+        "maxMs": 9.831499999971129
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "reopen",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.255875000031665,
+        "p95Ms": 6.699541999958456,
+        "maxMs": 7.321541000157595
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "taskCreatePreference",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 431.02241700002924,
+        "p95Ms": 446.39375000004657,
+        "maxMs": 453.5769999998156
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "taskCreationDefaultFullHTTP",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.4849170001689345,
+        "p95Ms": 6.924041999969631,
+        "maxMs": 10.486000000033528
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 2,
+      "operation": "taskSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.013249999959953,
+        "p95Ms": 4.649582999991253,
+        "maxMs": 5.0389999999897555
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "boardSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.4627080000936985,
+        "p95Ms": 6.365125000011176,
+        "maxMs": 7.030291999923065
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "completion",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.879875000100583,
+        "p95Ms": 6.745666999835521,
+        "maxMs": 9.810333000030369
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "implementationRegistration",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 6.963624999858439,
+        "p95Ms": 8.310499999905005,
+        "maxMs": 9.68487500003539
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "implementationRegistrationCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 284.9329589998815,
+        "p95Ms": 360.83016699994914,
+        "maxMs": 372.01150000002235
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "implementationReportCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 527.1343330000527,
+        "p95Ms": 612.7646669999231,
+        "maxMs": 626.7980830001179
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "implementationSuccess",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 6.39166700001806,
+        "p95Ms": 7.90445900009945,
+        "maxMs": 13.118250000057742
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "reopen",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.8372499998658895,
+        "p95Ms": 6.681332999840379,
+        "maxMs": 8.41400000010617
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "taskCreatePreference",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 433.7374579999596,
+        "p95Ms": 448.2689159999136,
+        "maxMs": 478.5777080000844
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "taskCreationDefaultFullHTTP",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.4404160000849515,
+        "p95Ms": 6.73291700007394,
+        "maxMs": 8.819041999988258
+      }
+    },
+    {
+      "label": "base",
+      "repetition": 3,
+      "operation": "taskSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.231832999968901,
+        "p95Ms": 5.64691699994728,
+        "maxMs": 6.332124999957159
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "artifact",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.819666999974288,
+        "p95Ms": 7.814666000078432,
+        "maxMs": 8.951833000057377
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "artifactHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 2.6512909999582916,
+        "p95Ms": 4.162249999935739,
+        "maxMs": 4.677499999990687
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "boardSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.119957999966573,
+        "p95Ms": 4.851250000006985,
+        "maxMs": 5.228000000002794
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "completion",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.148832999984734,
+        "p95Ms": 5.737374999967869,
+        "maxMs": 7.521249999990687
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "decisionHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 2.6331250000512227,
+        "p95Ms": 4.210916999960318,
+        "maxMs": 4.924624999985099
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "dependencies",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.388334000017494,
+        "p95Ms": 7.676083000027575,
+        "maxMs": 13.722958000027575
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "gateRead",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.0302089999895543,
+        "p95Ms": 4.935457999934442,
+        "maxMs": 5.826249999925494
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "gateReport",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.05925000004936,
+        "p95Ms": 6.1792500000447035,
+        "maxMs": 12.537000000011176
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "implementationRegistration",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.57650000002468,
+        "p95Ms": 7.641499999968801,
+        "maxMs": 9.653667000005953
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "implementationRegistrationCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 294.0289169999887,
+        "p95Ms": 371.8943330000038,
+        "maxMs": 384.1983749999781
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "implementationReportCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 538.8098330000066,
+        "p95Ms": 641.0492499999236,
+        "maxMs": 661.9031250000698
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "implementationSuccess",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.250666000007186,
+        "p95Ms": 7.1590829999768175,
+        "maxMs": 9.189165999996476
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "policy",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.412666999967769,
+        "p95Ms": 7.562665999983437,
+        "maxMs": 9.246415999950841
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "readiness",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 2.8154589999467134,
+        "p95Ms": 4.858624999993481,
+        "maxMs": 5.2707090000621974
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "reopen",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.6530839999904856,
+        "p95Ms": 4.984124999959022,
+        "maxMs": 6.306749999988824
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "rework",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.128167000017129,
+        "p95Ms": 5.4866669999901205,
+        "maxMs": 8.729334000032395
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "reworkHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 2.051915999967605,
+        "p95Ms": 4.270833999966271,
+        "maxMs": 4.656084000016563
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "taskCreatePreference",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 443.4000000000233,
+        "p95Ms": 462.40500000002794,
+        "maxMs": 481.2857500000391
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "taskCreationDefaultFullHTTP",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.763541999971494,
+        "p95Ms": 5.9938749999855645,
+        "maxMs": 18.361582999990787
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "taskSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.3636249999981374,
+        "p95Ms": 4.473541999992449,
+        "maxMs": 6.1616659999708645
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 1,
+      "operation": "workflowReadiness",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.79425000003539,
+        "p95Ms": 5.568958000047132,
+        "maxMs": 6.017375000054017
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "artifact",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 8.137000000104308,
+        "p95Ms": 9.611333000008017,
+        "maxMs": 10.651584000093862
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "artifactHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.9763329999987036,
+        "p95Ms": 5.591084000188857,
+        "maxMs": 7.4330829998943955
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "boardSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.7667090001050383,
+        "p95Ms": 4.722957999911159,
+        "maxMs": 7.620084000052884
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "completion",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.9777919999323785,
+        "p95Ms": 5.152082999935374,
+        "maxMs": 6.810749999945983
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "decisionHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.936708000022918,
+        "p95Ms": 5.527958000078797,
+        "maxMs": 28.112666999921203
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "dependencies",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 7.766999999992549,
+        "p95Ms": 9.339083000086248,
+        "maxMs": 22.219458000035957
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "gateRead",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.449583000037819,
+        "p95Ms": 6.38129199994728,
+        "maxMs": 7.632125000003725
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "gateReport",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 6.396166000049561,
+        "p95Ms": 8.023624999914318,
+        "maxMs": 16.82274999981746
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "implementationRegistration",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.401708999997936,
+        "p95Ms": 7.453083000029437,
+        "maxMs": 8.36337499995716
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "implementationRegistrationCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 291.13208399992436,
+        "p95Ms": 367.4547920000041,
+        "maxMs": 376.58062500006054
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "implementationReportCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 541.7612090000184,
+        "p95Ms": 655.9024579999968,
+        "maxMs": 700.8049589999719
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "implementationSuccess",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.387749999994412,
+        "p95Ms": 6.469084000098519,
+        "maxMs": 7.750791999977082
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "policy",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 7.436375000048429,
+        "p95Ms": 9.109291000058874,
+        "maxMs": 10.147166999988258
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "readiness",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.8649170000571758,
+        "p95Ms": 5.291083000134677,
+        "maxMs": 10.445458000060171
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "reopen",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.677125000045635,
+        "p95Ms": 4.824917000019923,
+        "maxMs": 6.655958000104874
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "rework",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.60833299998194,
+        "p95Ms": 7.291582999983802,
+        "maxMs": 10.743541999952868
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "reworkHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.884958000155166,
+        "p95Ms": 5.392291999887675,
+        "maxMs": 5.517333999974653
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "taskCreatePreference",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 453.67808400001377,
+        "p95Ms": 467.4940420000348,
+        "maxMs": 484.96979200001806
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "taskCreationDefaultFullHTTP",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.8533330000936985,
+        "p95Ms": 5.842791000031866,
+        "maxMs": 9.50808399997186
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "taskSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.423458000062965,
+        "p95Ms": 4.9452499999897555,
+        "maxMs": 5.381999999983236
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 2,
+      "operation": "workflowReadiness",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.8632089998573065,
+        "p95Ms": 5.302082999842241,
+        "maxMs": 6.019457999849692
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "artifact",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 8.206917000003159,
+        "p95Ms": 9.432374999858439,
+        "maxMs": 10.907166999997571
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "artifactHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.7758329999633133,
+        "p95Ms": 5.211207999847829,
+        "maxMs": 5.596125000156462
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "boardSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.0549590000882745,
+        "p95Ms": 4.514041000045836,
+        "maxMs": 4.745875000022352
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "completion",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.020917000016198,
+        "p95Ms": 7.113291000016034,
+        "maxMs": 9.136916999937966
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "decisionHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.3238750000018626,
+        "p95Ms": 4.7583329998888075,
+        "maxMs": 5.759416999993846
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "dependencies",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 7.854166999924928,
+        "p95Ms": 9.427000000141561,
+        "maxMs": 11.421583999879658
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "gateRead",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.529208000050858,
+        "p95Ms": 6.276791000040248,
+        "maxMs": 10.415874999947846
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "gateReport",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 6.426958000287414,
+        "p95Ms": 7.845958000048995,
+        "maxMs": 10.97137500019744
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "implementationRegistration",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 7.580707999877632,
+        "p95Ms": 8.534791000187397,
+        "maxMs": 11.190707999980077
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "implementationRegistrationCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 285.42279199999757,
+        "p95Ms": 364.59908300009556,
+        "maxMs": 383.61745800008066
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "implementationReportCLI",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 523.909292000113,
+        "p95Ms": 612.5523749999702,
+        "maxMs": 683.8647079998627
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "implementationSuccess",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 6.328125,
+        "p95Ms": 8.020207999972627,
+        "maxMs": 17.111332999775186
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "policy",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 7.124459000071511,
+        "p95Ms": 8.62016599997878,
+        "maxMs": 9.441209000069648
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "readiness",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.499957999913022,
+        "p95Ms": 5.898584000067785,
+        "maxMs": 6.278167000040412
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "reopen",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.65908299991861,
+        "p95Ms": 7.097749999957159,
+        "maxMs": 7.4858750000130385
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "rework",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.334917000029236,
+        "p95Ms": 7.104750000173226,
+        "maxMs": 9.682334000011906
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "reworkHistory",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 3.58095799991861,
+        "p95Ms": 4.92312499997206,
+        "maxMs": 5.402875000145286
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "taskCreatePreference",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 430.93558400007896,
+        "p95Ms": 445.3724579999689,
+        "maxMs": 463.60425000009127
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "taskCreationDefaultFullHTTP",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 5.205874999985099,
+        "p95Ms": 6.887249999912456,
+        "maxMs": 15.128750000149012
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "taskSnapshot",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 2.7304580002091825,
+        "p95Ms": 5.758707999950275,
+        "maxMs": 9.178624999942258
+      }
+    },
+    {
+      "label": "head",
+      "repetition": 3,
+      "operation": "workflowReadiness",
+      "warmups": 10,
+      "measured": 100,
+      "distribution": {
+        "count": 100,
+        "p50Ms": 4.758166000247002,
+        "p95Ms": 5.428542000241578,
+        "maxMs": 6.052958999760449
+      }
+    }
+  ],
+  "worstExistingRelative": {
+    "operation": "boardSnapshot",
+    "repetition": 1,
+    "baseP95Ms": 4.16833299999962,
+    "headP95Ms": 4.851250000006985,
+    "relativePercent": 16.383455928483315
+  },
+  "maximumHeadGroupP95Ms": {
+    "existingHTTP": 8.534791000187397,
+    "newHTTP": 9.611333000008017,
+    "CLI": 655.9024579999968
+  },
+  "ordinaryCLI": {
+    "invocations": 3366,
+    "allWarmSetupMeasuredClocksChecked": true,
+    "maximumFullDrainMs": 709.6901249999646,
+    "failures": 0
+  },
+  "intentionalQueuedSetup": {
+    "invocations": 15,
+    "nativeExitCode": 2,
+    "response503Attempts": 106,
+    "fullDrainMinMaxMs": [
+      5096.494750000071,
+      5114.513832999859
+    ],
+    "outsideVisibilityDeliveryClock": true,
+    "qualification": "Intentional queue creation exhausts native delivery before measured flush. These roughly5.1-second clocks are bounded by20seconds and are not measured5-second CLI passes."
+  },
+  "visibility": {
+    "expected": 60,
+    "captured": 60,
+    "allStrict": true,
+    "overall": {
+      "count": 60,
+      "p50Ms": 366.5239579998888,
+      "p95Ms": 735.8620000001974,
+      "maxMs": 782.6844170000404
+    },
+    "overallByView": {
+      "graph": {
+        "count": 30,
+        "p50Ms": 300.3100420003757,
+        "p95Ms": 768.1045840000734,
+        "maxMs": 782.6844170000404
+      },
+      "list": {
+        "count": 30,
+        "p50Ms": 368.51891700038686,
+        "p95Ms": 719.181541999802,
+        "maxMs": 735.8620000001974
+      }
+    },
+    "byScenarioView": [
+      {
+        "scenario": 1,
+        "view": "graph",
+        "distribution": {
+          "count": 10,
+          "p50Ms": 245.757874999661,
+          "p95Ms": 285.0440420000814,
+          "maxMs": 285.0440420000814
+        }
+      },
+      {
+        "scenario": 1,
+        "view": "list",
+        "distribution": {
+          "count": 10,
+          "p50Ms": 363.7411249997094,
+          "p95Ms": 419.8999580000527,
+          "maxMs": 419.8999580000527
+        }
+      },
+      {
+        "scenario": 2,
+        "view": "graph",
+        "distribution": {
+          "count": 10,
+          "p50Ms": 682.1825830000453,
+          "p95Ms": 782.6844170000404,
+          "maxMs": 782.6844170000404
+        }
+      },
+      {
+        "scenario": 2,
+        "view": "list",
+        "distribution": {
+          "count": 10,
+          "p50Ms": 366.5239579998888,
+          "p95Ms": 470.630792000331,
+          "maxMs": 470.630792000331
+        }
+      },
+      {
+        "scenario": 3,
+        "view": "graph",
+        "distribution": {
+          "count": 10,
+          "p50Ms": 349.45016700029373,
+          "p95Ms": 649.3144160001539,
+          "maxMs": 649.3144160001539
+        }
+      },
+      {
+        "scenario": 3,
+        "view": "list",
+        "distribution": {
+          "count": 10,
+          "p50Ms": 386.13266699993983,
+          "p95Ms": 735.8620000001974,
+          "maxMs": 735.8620000001974
+        }
+      }
+    ],
+    "missing": 0,
+    "unconfirmed": 0,
+    "failed": 0
+  },
+  "auditCounts": {
+    "operationMutationJoins": 20790,
+    "minimalFullReceiptJoins": 660,
+    "operationEventJoins": 3960,
+    "operationNativeClocks": 3300,
+    "browserCommands": 37,
+    "visibilityEventACKs": 44,
+    "wireInvocations": 3381,
+    "wireAttempts": 8195,
+    "wireGET": 4723,
+    "wirePOST": 3472,
+    "successfulWireSQLJoins": 3366,
+    "journalRecords": 113330,
+    "preDispatchProbes": 60,
+    "missingVisibility": 0,
+    "cleanupFailures": 0,
+    "primaryFailures": 0,
+    "persistenceFailures": 0
+  },
+  "verification": {
+    "fullUnit": {
+      "tests": 199,
+      "files": 38,
+      "exit": 0,
+      "source": "8b76bed7eab2ebe35630cb366e4a2b257970bb9a",
+      "cleanAndStable": true,
+      "receiptSha256": "8349c84ccfcde23f1e23d1628bcb1ac067b6d83ea3102c8e61b1ecd6d846d444"
+    },
+    "integration": {
+      "originalWhole": {
+        "passed": 469,
+        "failed": 5,
+        "total": 474,
+        "exit": 1
+      },
+      "composedDistinctOriginalContracts": 474,
+      "qualification": "Original failed invocation remains failed; affected42+1 passing repairs compose its original contracts. Later helper negatives and journal controls have separate focused receipts."
+    },
+    "chrome": {
+      "whole": {
+        "passed": 61,
+        "skipped": 0,
+        "source": "a767c7baa98dd758e441c133e982fac17dc04ba0"
+      },
+      "laterAffectedControls": 6,
+      "qualification": "Whole61 run is source-stage evidence. Six later helper controls match affected browser code; no current whole Chrome rerun is claimed."
+    },
+    "terminalBoundary": {
+      "affectedUnitTests": 22,
+      "exit": 0,
+      "qualification": "Actual dirty3df stage matches final8b helper/test bytes; writable terminal failure is persisted before aggregate, dual persistence failure preserves primary and secondary."
+    },
+    "typesAndLint": {
+      "exit": 0,
+      "qualification": "Final terminal-stage byte manifests match8b; actual invocation HEAD remains dirty3df."
+    },
+    "installAndBuild": {
+      "headSource": "8d44b0d07a1f5a5b554e09970534f3958999bd89",
+      "exit": 0,
+      "qualification": "Own fresh lockfile installation and production build; application/lock/addon/compiled bytes unchanged through8b. No new8b build is claimed."
+    }
+  },
+  "sources": {
+    "measurementSha256": "500e990aff1a4a2546893f4f39d1ab000b5bfc3add6a26bb066d12295e9d284b",
+    "journalSha256": "8fe2ba3c1c97d7c1f2d7c96913776e950718e87087a5e032a63c2a34a3f6a3bd",
+    "coordinatorAcceptanceSha256": "f2f2a2e099827fd4b0ac3a9941104c2a9a812ee27c632d7fcd0446dd29d00109"
+  },
+  "host": {
+    "os": "macOS27.0 build26A428",
+    "architecture": "arm64",
+    "cpu": "Apple M4 Pro,12CPU",
+    "memoryGiB": 24,
+    "node": "24.15.0",
+    "npm": "11.12.1",
+    "chrome": "154.0.8037.99",
+    "qualification": "Named host checkout; no pristine-OS or Linux claim"
+  },
+  "limits": [
+    "Quiet01 rate-limited setup and quiet02 native queued-exit campaigns remain failed. Quiet02 historical cause remains unproven despite later passing replay probes.",
+    "Quiet01 missing failed setup body/key/header originals and historical shared overwritten failed scenario JSON remain unavailable; no reconstruction.",
+    "An ignored historical Playwright error-context file was removed by the later runner; original hash remains, bytes were not newly archived.",
+    "414 declared head compiled files exclude traces/cache;416 full noncache files include trace and trace-build. Base declared compiled count411.",
+    "Synthetic browser-role acceptance is not a human attestation. Static Task4 exports retain their captured source stages.",
+    "Final exact-candidate Standards/Spec review, normal PR integration and guarded cleanup remain open; no complete-v1 or release claim."
+  ],
+  "visualEvidence": [
+    {
+      "file": "workflow-desktop.png",
+      "label": "Graph desktop",
+      "sha256": "cbc1e1b73fd3a2deb1ea8af72e3b698853426630d14decb5de0d003b9b7365a0",
+      "pixels": [
+        1280,
+        2771
+      ],
+      "bytes": 259030,
+      "actualInvocationHead": "34a9a5151f32f607d81dab658ef708cd461cf826",
+      "actualInvocationDirty": true,
+      "sourceQualification": "Original Task4 synthetic capture; later request-owner and measurement helpers preserve rendering. It is not a new current-source runtime or metric capture."
+    },
+    {
+      "file": "workflow-mobile.png",
+      "label": "List375 full page",
+      "sha256": "111c1fecb831b845c1326c0a65cc3241c53e2311faad3375b98da8e5eb8a16e2",
+      "pixels": [
+        375,
+        2820
+      ],
+      "bytes": 226749,
+      "actualInvocationHead": "34a9a5151f32f607d81dab658ef708cd461cf826",
+      "actualInvocationDirty": true,
+      "sourceQualification": "Original Task4 synthetic capture; later request-owner and measurement helpers preserve rendering. It is not a new current-source runtime or metric capture."
+    },
+    {
+      "file": "task-desktop.png",
+      "label": "Task desktop",
+      "sha256": "5e19423620cb11042aee00832c1610f1b1cb7cabf03c5c19aba32682d698ad20",
+      "pixels": [
+        1280,
+        2990
+      ],
+      "bytes": 204063,
+      "actualInvocationHead": "701035149f2db6def211bbe9a3989f5af8336f76",
+      "actualInvocationDirty": true,
+      "sourceQualification": "Original Task4 synthetic capture; later request-owner and measurement helpers preserve rendering. It is not a new current-source runtime or metric capture."
+    },
+    {
+      "file": "task-mobile.png",
+      "label": "Task375 full page",
+      "sha256": "33f8e6928d179cc72930416bd701d1e38cb8a2d93dcfdd55cd5ad94bf9ea6303",
+      "pixels": [
+        375,
+        2393
+      ],
+      "bytes": 129215,
+      "actualInvocationHead": "701035149f2db6def211bbe9a3989f5af8336f76",
+      "actualInvocationDirty": true,
+      "sourceQualification": "Original Task4 synthetic capture; later request-owner and measurement helpers preserve rendering. It is not a new current-source runtime or metric capture."
+    }
+  ]
+}
