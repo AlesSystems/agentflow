@@ -310,6 +310,12 @@ export async function visibilityScenario(
 ) {
   const dir = join(root, `workflow-visible-${index}`);
   cpSync(fixture.dir, dir, { recursive: true });
+  fixture = {
+    ...fixture,
+    workflowId: randomUUID(),
+    revisionId: randomUUID(),
+    workflowRunId: randomUUID(),
+  };
   const expected = Array.from({ length: reports }, (_, ordinal) =>
     [0, 1].map((context) => ({
       context,
@@ -331,6 +337,14 @@ export async function visibilityScenario(
       otherEventIds?: string[];
     })[],
     invocations: [] as unknown[],
+    setupInvocations: [] as unknown[],
+    setupTransport: [] as {
+      path: string;
+      requestText: string;
+      responseText: string;
+      status: number;
+      generation: string | null;
+    }[],
     transport: [] as {
       requestText: string;
       responseText: string;
@@ -341,7 +355,7 @@ export async function visibilityScenario(
     database: null as ReturnType<typeof database> | null,
     failure: "",
     qualification:
-      "Finite real CLI dispatch through exact two-frame visible/hit-tested node evidence in two independent browser contexts, desktop1440/graph and narrow375/list. Controller performance clock measures both endpoints; no server/browser clock subtraction. Process startup is included. Not sustained/burst or whole-v1 proof.",
+      "Selected workflow is registered and its101-event initial producer prefix is delivered through actual CLI before samples, preserving durable local sequence authority. Finite real CLI dispatch through exact two-frame visible/hit-tested node evidence in two independent browser contexts, desktop1440/graph and narrow375/list. Controller performance clock measures both endpoints; no server/browser clock subtraction. Process startup is included. Not sustained/burst or whole-v1 proof.",
   };
   receipt.visibility.push(result);
   const errors = proofErrors((error) => {
@@ -353,17 +367,22 @@ export async function visibilityScenario(
     proxy: Awaited<ReturnType<typeof publicProxy>> | undefined,
     browser: Browser | undefined;
   const pages: Page[] = [];
+  let sampling = false;
   try {
     errors.save(save, "visible initial save", true);
     server = await launch({ dir });
-    proxy = await publicProxy(server, (_request, body, reply) => {
-      if (reply && body.length)
-        result.transport.push({
+    proxy = await publicProxy(server, (request, body, reply) => {
+      if (reply && body.length) {
+        const raw = {
+          path: request.url ?? "",
           requestText: body.toString("utf8"),
           responseText: reply.body.toString("utf8"),
           status: reply.status,
           generation: reply.generation,
-        });
+        };
+        if (sampling) result.transport.push(raw);
+        else result.setupTransport.push(raw);
+      }
       return undefined;
     });
     const inputs = join(root, `workflow-visible-inputs-${index}`);
@@ -375,6 +394,103 @@ export async function visibilityScenario(
       AGENTFLOW_REPORTER_TOKEN_FILE: token,
       AGENTFLOW_OUTBOX_DIR: join(inputs, "outbox"),
     };
+    async function registration(args: string[], body: unknown, label: string) {
+      const file = join(inputs, `setup-${label}.json`);
+      writeFileSync(file, JSON.stringify(body), { mode: 0o600 });
+      const invocation = await invokeCli(
+        process.cwd(),
+        [...args, "--file", file, "--idempotency-key", randomUUID()],
+        env,
+      );
+      result.setupInvocations.push({ label, ...invocation });
+      errors.save(save, "visible original setup registration", true);
+      assert.equal(invocation.code, 0, `workflow CLI setup ${label} rejected`);
+      return JSON.parse(invocation.stdout);
+    }
+    await registration(
+      ["register", "workflow"],
+      {
+        id: fixture.workflowId,
+        projectId: fixture.projectId,
+        name: "Finite real CLI measurement",
+      },
+      "workflow",
+    );
+    const edges = [];
+    for (let gap = 1; gap <= 2; gap++)
+      for (let i = 0; i + gap < 100; i++)
+        edges.push({
+          source: fixture.nodeIds[i],
+          target: fixture.nodeIds[i + gap],
+        });
+    for (let i = 0; i < 3; i++)
+      edges.push({
+        source: fixture.nodeIds[i],
+        target: fixture.nodeIds[i + 3],
+      });
+    assert.equal(edges.length, 200);
+    await registration(
+      ["register", "workflow-revision", "--workflow", fixture.workflowId],
+      {
+        id: fixture.revisionId,
+        expectedWorkflowVersion: 1,
+        nodes: fixture.nodeIds.map((id, i) => ({
+          id,
+          label: `Synthetic plan node ${i}`,
+          taskId: fixture.tasks[i],
+        })),
+        edges,
+      },
+      "revision",
+    );
+    await registration(
+      ["register", "workflow-run"],
+      {
+        id: fixture.workflowRunId,
+        workflowId: fixture.workflowId,
+        planRevisionId: fixture.revisionId,
+      },
+      "attempt",
+    );
+    for (let sequence = 1; sequence <= 101; sequence++) {
+      const node = sequence - 2,
+        type = sequence === 1 ? "workflow.started" : "workflow.node.reported",
+        body =
+          sequence === 1
+            ? {}
+            : {
+                nodeId: fixture.nodeIds[node],
+                state: "pending",
+                ...(node < 10 ? { runId: fixture.linkedRuns[node] } : {}),
+                reportedSkill: {
+                  name: "Synthetic inert skill",
+                  source: "synthetic://W01/measure",
+                  version: "1",
+                },
+              };
+      const file = join(inputs, `setup-report-${sequence}.json`);
+      writeFileSync(file, JSON.stringify(body), { mode: 0o600 });
+      const invocation = await invokeCli(
+        process.cwd(),
+        [
+          "report",
+          "--workflow-run",
+          fixture.workflowRunId,
+          "--type",
+          type,
+          "--payload",
+          file,
+        ],
+        env,
+      );
+      result.setupInvocations.push({ sequence, ...invocation });
+      assert.equal(invocation.code, 0, "real CLI setup report rejected");
+      const ack = JSON.parse(invocation.stdout);
+      assert.equal(ack.acceptedSequence, sequence);
+      assert.equal(ack.workflowRunId, fixture.workflowRunId);
+    }
+    errors.save(save, "visible original setup reports", true);
+    sampling = true;
     browser = await chromium.launch({
       channel:
         process.env.AGENTFLOW_TEST_BROWSER === "chrome" ? "chrome" : undefined,
@@ -454,7 +570,8 @@ export async function visibilityScenario(
         env,
       );
       result.invocations.push({ ordinal, ...invocation });
-      errors.save(save, "visible original CLI capture", true);
+      // Original CLI/transport facts are captured before validation; aggregate
+      // persistence follows frame completion or failure cleanup.
       assert.equal(invocation.code, 0, "workflow CLI report rejected");
       const ack = JSON.parse(invocation.stdout),
         original = result.transport.find(
@@ -476,10 +593,16 @@ export async function visibilityScenario(
       const captures = await Promise.allSettled(
         pages.map(async (page, context) => {
           const identity = identities.find((e) => e.context === context)!;
-          const raw = await page.evaluate(visibleFrames, {
-            identity,
-            maxWaitMs: 5000,
-          });
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const raw = await Promise.race([
+            page.evaluate(visibleFrames, { identity, maxWaitMs: 5000 }),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(
+                () => reject(new Error("VISIBLE_CONTROLLER_DEADLINE")),
+                6000,
+              );
+            }),
+          ]).finally(() => clearTimeout(timer));
           const capture = {
             ...identity,
             ...raw,
@@ -499,7 +622,11 @@ export async function visibilityScenario(
     server = undefined;
     result.database = database(dir, fixture.workflowRunId);
     errors.save(save, "visible original database capture", true);
-    for (const request of result.transport) {
+    const setupEvents = result.setupTransport.filter((r) =>
+      r.path.endsWith("/events"),
+    );
+    assert.equal(setupEvents.length, fixture.lastSequence);
+    for (const request of [...setupEvents, ...result.transport]) {
       const input = workflowEventInput.parse(JSON.parse(request.requestText));
       const row: WorkflowDatabase["rows"][number] | undefined =
         result.database.rows.find((r) => r.event_id === input.eventId);

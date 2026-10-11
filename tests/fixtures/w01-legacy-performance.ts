@@ -69,7 +69,8 @@ export async function legacyCompare(
     index % 2 ? (["base", "head"] as const) : (["head", "base"] as const);
   const operations = Object.fromEntries(
     [
-      "taskCreationHTTP",
+      "taskCreationDefaultFullHTTP",
+      "taskCreatePreference",
       "legacyOnlineReport",
       "legacyDurableQueue",
       "legacyFlushSingle",
@@ -89,6 +90,14 @@ export async function legacyCompare(
       responseText: string;
       generation: string | null;
     }[],
+    registrations: [] as {
+      label: string;
+      key: string;
+      originalBytesBase64: string;
+      sha256: string;
+      body: unknown;
+      digest: string;
+    }[],
     queue: [] as {
       label: string;
       filename: string;
@@ -98,11 +107,11 @@ export async function legacyCompare(
       digest: string;
     }[],
     database: {} as Record<string, unknown>,
-    missing: 4 * 2 * samples,
+    missing: 5 * 2 * samples,
     failure: "",
     budgetFailures: [] as string[],
     qualification:
-      "Same complete dataset and CLI task producer semantics. HTTP task creation is direct native HTTP with identical Prefer:return=minimal; baseline ignores it and returns full original task. Real CLI online/queue/flush use the same bounded loopback capture proxy for complete decoded ACK text, not wire bytes. Queue timing holds the native delivery lease and requires durable exit2; flush sends that exact one-event prefix. CLI wall timing includes process startup, local publication, requests, retries/backoff and exit; it has a 20-second kill bound and <=20% relative p95 regression gate, not the native HTTP 250ms absolute budget. Each CLI source retains its native 5-second delivery deadline.",
+      "Same complete dataset and CLI task producer semantics. Default task creation is direct native HTTP without Prefer and retains the original full response in both sources. Actual CLI task creation includes its durable registration publication and full fallback/Prefer:minimal behavior. Real CLI online/queue/flush use the same bounded loopback capture proxy for complete decoded ACK text, not wire bytes. Queue timing holds the native delivery lease and requires durable exit2; flush sends that exact one-event prefix. CLI wall timing includes process startup, local publication, requests, retries/backoff and exit; it has a 20-second kill bound and <=20% relative p95 regression gate, not the native HTTP 250ms absolute budget. Each CLI source retains its native 5-second delivery deadline.",
   };
   receipt.legacy.push(result);
   const errors = proofErrors((error) => {
@@ -142,6 +151,20 @@ export async function legacyCompare(
         cwd: sources[label],
       }));
       proxies[label] = await publicProxy(server, (request, body, reply) => {
+        if (!reply && request.url === "/api/v1/tasks") {
+          const key = String(request.headers["idempotency-key"]),
+            path = join(configs[label]!.outbox, `registration-${key}.json`),
+            bytes = readFileSync(path),
+            record = JSON.parse(bytes.toString("utf8"));
+          result.registrations.push({
+            label,
+            key,
+            originalBytesBase64: bytes.toString("base64"),
+            sha256: hash(bytes),
+            body: record.body,
+            digest: record.digest,
+          });
+        }
         if (reply)
           result.transport.push({
             label,
@@ -191,14 +214,13 @@ export async function legacyCompare(
             Authorization: "Bearer " + server.credentials().reporterToken,
             "Content-Type": "application/json",
             "Idempotency-Key": randomUUID(),
-            Prefer: "return=minimal",
           },
           body: JSON.stringify(taskInput),
         });
         const responseText = await response.text(),
           completedMs = performance.now();
         result.samples.push({
-          operation: "taskCreationHTTP",
+          operation: "taskCreationDefaultFullHTTP",
           label,
           ordinal,
           warmup: ordinal < 10,
@@ -211,15 +233,61 @@ export async function legacyCompare(
           generation: response.headers.get("agentflow-generation"),
         });
         assert.equal(response.status, 201);
-        const task =
-          label === "head"
-            ? taskRegistrationResponse.parse(JSON.parse(responseText))
-            : taskResponse.parse(JSON.parse(responseText));
+        const task = taskResponse.parse(JSON.parse(responseText));
+        assert.equal(response.headers.get("preference-applied"), null);
         assert.equal(task.data.projectId, prepared.seed.projectId);
         assert.equal(task.data.version, 1);
         assert.equal(task.data.workRevision, 1);
         if (ordinal >= 10)
-          operations.taskCreationHTTP[label].push(completedMs - dispatchMs);
+          operations.taskCreationDefaultFullHTTP[label].push(
+            completedMs - dispatchMs,
+          );
+        const cliTaskBody = {
+            projectId: prepared.seed.projectId,
+            title: `Synthetic CLI measured task ${ordinal}`,
+          },
+          key = randomUUID(),
+          file = join(inputDir, `task-${ordinal}.json`);
+        writeFileSync(file, JSON.stringify(cliTaskBody), { mode: 0o600 });
+        const created = await invokeCli(
+          sources[label],
+          ["task", "create", "--file", file, "--idempotency-key", key],
+          env,
+        );
+        result.samples.push({
+          operation: "taskCreatePreference",
+          label,
+          ordinal,
+          warmup: ordinal < 10,
+          input: cliTaskBody,
+          key,
+          ...created,
+        });
+        assert.equal(created.code, 0, "actual CLI task creation rejected");
+        const taskAck = JSON.parse(created.stdout),
+          original = result.transport.find(
+            (t) =>
+              t.label === label &&
+              t.path === "/api/v1/tasks" &&
+              JSON.parse(t.requestText).title === cliTaskBody.title,
+          );
+        assert(original);
+        const reply =
+          label === "head"
+            ? taskRegistrationResponse.parse(JSON.parse(original.responseText))
+            : taskResponse.parse(JSON.parse(original.responseText));
+        assert.equal(reply.data.id, taskAck.id);
+        assert.equal(reply.data.projectId, prepared.seed.projectId);
+        assert.equal(reply.data.version, 1);
+        assert.equal(reply.data.workRevision, 1);
+        const registration = result.registrations.find(
+          (r) => r.label === label && r.key === key,
+        );
+        assert(registration);
+        assert.deepEqual(registration.body, cliTaskBody);
+        assert.equal(registration.digest, canonicalDigest(cliTaskBody));
+        if (ordinal >= 10)
+          operations.taskCreatePreference[label].push(created.elapsedMs);
         const args = [
           "report",
           "--run",
@@ -322,7 +390,7 @@ export async function legacyCompare(
       result.operations[name] = { base, head, p95ChangePercent };
       if (acceptance) {
         if (
-          name === "taskCreationHTTP" &&
+          name === "taskCreationDefaultFullHTTP" &&
           (base.p95Ms >= 250 || head.p95Ms >= 250)
         )
           result.budgetFailures.push(`${index} ${name} native HTTP p95>=250ms`);
@@ -355,7 +423,7 @@ export async function legacyCompare(
         }[];
         const tasks = db
           .prepare(
-            "SELECT id,project_id,title,version,work_revision FROM tasks WHERE title LIKE 'Synthetic measured task %' ORDER BY title",
+            "SELECT id,project_id,title,version,work_revision FROM tasks WHERE title LIKE 'Synthetic measured task %' OR title LIKE 'Synthetic CLI measured task %' ORDER BY title",
           )
           .all() as {
           id: string;
@@ -372,7 +440,7 @@ export async function legacyCompare(
         };
         errors.save(save, "legacy original database capture", true);
         assert.equal(rows.length, (samples + 10) * 2);
-        assert.equal(tasks.length, samples + 10);
+        assert.equal(tasks.length, (samples + 10) * 2);
         for (const sample of result.samples as {
           operation: string;
           label: string;
@@ -380,7 +448,7 @@ export async function legacyCompare(
           input?: { title: string };
         }[])
           if (
-            sample.operation === "taskCreationHTTP" &&
+            sample.operation === "taskCreationDefaultFullHTTP" &&
             sample.label === label
           ) {
             const id = JSON.parse(sample.responseText!).data.id;
@@ -391,6 +459,28 @@ export async function legacyCompare(
             assert.equal(task.version, 1);
             assert.equal(task.work_revision, 1);
           }
+        for (const sample of result.samples as {
+          operation: string;
+          label: string;
+          stdout?: string;
+          input?: { title: string };
+        }[])
+          if (
+            sample.operation === "taskCreatePreference" &&
+            sample.label === label
+          ) {
+            const id = JSON.parse(sample.stdout!).id;
+            const task = tasks.find((t) => t.id === id);
+            assert(task);
+            assert.equal(task.title, sample.input!.title);
+            assert.equal(task.project_id, prepared.seed.projectId);
+            assert.equal(task.version, 1);
+            assert.equal(task.work_revision, 1);
+          }
+        assert.equal(
+          result.registrations.filter((r) => r.label === label).length,
+          samples + 10,
+        );
         for (const row of rows) {
           const ack = eventResponse.parse(JSON.parse(row.acknowledgement));
           assert.equal(ack.data.eventId, row.event_id);
@@ -464,7 +554,7 @@ export async function legacyCompare(
                 .all(prepared.seed.runs[0]),
               tasks: db
                 .prepare(
-                  "SELECT id,project_id,title,version,work_revision FROM tasks WHERE title LIKE 'Synthetic measured task %' ORDER BY title",
+                  "SELECT id,project_id,title,version,work_revision FROM tasks WHERE title LIKE 'Synthetic measured task %' OR title LIKE 'Synthetic CLI measured task %' ORDER BY title",
                 )
                 .all(),
               integrity: db.pragma("integrity_check"),

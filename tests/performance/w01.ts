@@ -35,7 +35,7 @@ export const definition = {
       "overview",
       "tracking",
       "events",
-      "taskCreationHTTP",
+      "taskCreationDefaultFullHTTP",
     ],
     repetitions: 3,
     sources: 2,
@@ -46,6 +46,7 @@ export const definition = {
   },
   legacyCLI: {
     operations: [
+      "taskCreatePreference",
       "legacyOnlineReport",
       "legacyDurableQueue",
       "legacyFlushSingle",
@@ -85,8 +86,16 @@ export const definition = {
     warmups: 0,
     absoluteP95Ms: 2000,
     captureBoundMs: 5000,
+    controllerBoundMs: 6000,
     timing:
       "Single controller CLI dispatch→two-frame exact identity, visible and hit-tested completion. Includes real CLI startup. No server/browser clock subtraction. All observations, missing/wrong/duplicate/hidden/unconfirmed/late counts retained.",
+  },
+  taskRegistrationJoins: {
+    defaultHTTP: 660,
+    realCLI: 660,
+    total: 1320,
+    qualification:
+      "Includes measured and10warmup creations. Real CLI captures original durable registration bytes and decoded full-or-minimal response, joined to persisted generated task identity and known bindings.",
   },
   originalEventACKJoins: {
     native: 660,
@@ -191,7 +200,9 @@ async function nativeIdentity(
 }
 const mode = process.argv[2];
 assert(
-  ["--prepare", "--control", "--acceptance"].includes(mode),
+  ["--prepare", "--control", "--control-changed", "--acceptance"].includes(
+    mode,
+  ),
   "explicit W01 preparation/control/acceptance mode required",
 );
 const preparedRoot = process.env.AGENTFLOW_W01_PREPARED_ROOT;
@@ -216,7 +227,8 @@ if (mode === "--prepare") {
     }),
   );
 } else {
-  const acceptance = mode === "--acceptance";
+  const acceptance = mode === "--acceptance",
+    changedControl = mode === "--control-changed";
   if (acceptance)
     assert.equal(
       process.env.AGENTFLOW_W01_QUIET_RELEASE,
@@ -243,7 +255,16 @@ if (mode === "--prepare") {
     mode: acceptance ? "acceptance" : "helper-control",
     acceptance,
     definition,
-    actualCounts: { repetitions, samples, warmups: 10, reports, contexts: 2 },
+    actualCounts: {
+      repetitions,
+      samples,
+      warmups: 10,
+      reports,
+      contexts: 2,
+      stages: changedControl
+        ? ["legacyChanged", "visibility"]
+        : ["native", "legacy", "workflow", "visibility"],
+    },
     startedAt: new Date().toISOString(),
     sources: prepared.sources,
     preparedFiles: prepared.files,
@@ -267,38 +288,40 @@ if (mode === "--prepare") {
     receipt,
     async (safeSave) => {
       for (let index = 1; index <= repetitions; index++) {
-        const nativeErrors = proofErrors((error) =>
-          receipt.failures.push(
-            error instanceof Error ? error.message : "native stage failure",
-          ),
-        );
-        await nativeErrors.attempt("native comparison", async () =>
-          nativeCompare({
-            index,
-            baseSource: prepared.baseSource,
-            seed: prepared.seed,
-            seedDir: prepared.seedDir,
-            root,
-            counts: { samples, producers: 10 },
-            acceptance,
-            receipt,
-            save: safeSave,
-          }),
-        );
-        await nativeErrors.attempt(
-          "native original identity capture",
-          async () =>
-            nativeIdentity(
-              index,
-              prepared,
-              root,
-              receipt,
-              safeSave,
-              samples,
-              !nativeErrors.failed(),
+        if (!changedControl) {
+          const nativeErrors = proofErrors((error) =>
+            receipt.failures.push(
+              error instanceof Error ? error.message : "native stage failure",
             ),
-        );
-        nativeErrors.throwFirst();
+          );
+          await nativeErrors.attempt("native comparison", async () =>
+            nativeCompare({
+              index,
+              baseSource: prepared.baseSource,
+              seed: prepared.seed,
+              seedDir: prepared.seedDir,
+              root,
+              counts: { samples, producers: 10 },
+              acceptance,
+              receipt,
+              save: safeSave,
+            }),
+          );
+          await nativeErrors.attempt(
+            "native original identity capture",
+            async () =>
+              nativeIdentity(
+                index,
+                prepared,
+                root,
+                receipt,
+                safeSave,
+                samples,
+                !nativeErrors.failed(),
+              ),
+          );
+          nativeErrors.throwFirst();
+        }
         await legacyCompare(
           index,
           prepared,
@@ -308,15 +331,16 @@ if (mode === "--prepare") {
           receipt,
           safeSave,
         );
-        await workflowQueries(
-          index,
-          prepared.workflows[index - 1],
-          root,
-          samples,
-          acceptance,
-          receipt,
-          safeSave,
-        );
+        if (!changedControl)
+          await workflowQueries(
+            index,
+            prepared.workflows[index - 1],
+            root,
+            samples,
+            acceptance,
+            receipt,
+            safeSave,
+          );
         await visibilityScenario(
           index,
           prepared.workflows[index - 1],

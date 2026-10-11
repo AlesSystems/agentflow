@@ -26,6 +26,7 @@ export type WorkflowFixture = {
   workflowRunId: string;
   nodeIds: string[];
   tasks: string[];
+  linkedRuns: string[];
   lastSequence: number;
 };
 export type Prepared = {
@@ -217,6 +218,7 @@ export async function workflowFixture(
       workflowRunId,
       nodeIds,
       tasks: seed.tasks,
+      linkedRuns: seed.runs,
       lastSequence: 101,
     };
   } finally {
