@@ -9,7 +9,7 @@ export async function publicProxy(server: Awaited<ReturnType<typeof launch>>,dec
       const chunks:Buffer[]=[];for await(const chunk of req)chunks.push(Buffer.from(chunk));const body=Buffer.concat(chunks);
       function finish(result:Decision){if("drop"in result){res.destroy();return;}res.writeHead(result.status,result.headers);if(result.truncate){res.write(result.body);res.socket?.end();}else res.end(result.body);}
       const before=await decide(req,body);if(before){finish(before);return;}
-      const headers:Record<string,string>={};for(const name of ["authorization","content-type","idempotency-key"]){const value=req.headers[name];if(typeof value==="string")headers[name]=value;}
+      const headers:Record<string,string>={};for(const name of ["authorization","content-type","idempotency-key","prefer"]){const value=req.headers[name];if(typeof value==="string")headers[name]=value;}
       const response=await fetch(server.url+req.url,{method:req.method,headers,body:req.method==="POST"?body:undefined,redirect:"manual"});
       const bytes=Buffer.from(await response.arrayBuffer());
       const after=await decide(req,body,{status:response.status,body:bytes,generation:response.headers.get("agentflow-generation")});if(after){finish(after);return;}
