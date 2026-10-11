@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. W01 planning is next; W01 through W04 feature implementation has not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. W01 implementation and verification are ready for final integration review; it has not merged. W02–W04 remain unstarted.
 
 ## Package state
 
@@ -21,7 +21,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
-| W01 | Reported workflow graph | Not started | — | — |
+| W01 | Reported workflow graph | Ready for final integration review | Executable `7eb85f3ab9ccb93405e283541e86501fa5f19260`; merge pending | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
 | W02 | Dependencies/review/rework | Not started | — | — |
 | W03a | GitHub PR observation | Not started | — | — |
 | W03b | Export/retention | Not started | — | — |
@@ -602,3 +602,54 @@ Global caches, operator data, primary checkout and managed worktree were retaine
 P07 boxes and its qualified Phase 2 performance targets are complete. W04 still
 requires fresh integrated-v1 validation. There is no P07 release. Next: the W01
 reported-workflow plan, Astra medium approval, then real persistence/CLI before UI.
+
+## W01 ready for final integration review
+
+Executable `7eb85f3ab9ccb93405e283541e86501fa5f19260` implements immutable bounded
+plans, revision-bound observations, typed durable workflow CLI producers and
+read-only graph/list evidence. Independent source closures resolved backend,
+CLI durability, UI binding/focus and measurement-helper findings. The final
+documentation/public evidence candidate still requires exact Standards/Spec and
+coordinator verification before the guarded package PR and normal merge. No W01
+integration, W02 work or release is recorded here.
+
+The [W01 receipt](implementation/W01.md) and
+[allowlisted synthetic summary](evidence/W01/acceptance.json) record actual sources,
+commands, results and limits. Full unit passed 173/173 at `f0aab8d`. Integration
+composes 71 fully passing files from the original failed invocation with eight
+corrected evidence-destination files (16/16), covering 457 unique contracts at
+unchanged `f0aab8d`. Chrome composes 54 original passes at `9907003` and three
+scoped corrected passes at `7eb85f3`, covering 57 unique contracts. Original
+failed commands retain their original exits; neither composition claims a fresh
+all-pass full command at the measured source. Types, lint, OpenAPI and production
+build passed on the final file inputs. Unit/integration have no invocation-specific
+bracket receipts; exact Chrome/source/build qualification and the historical
+overwritten-build limitation remain explicit.
+
+One coordinator-released quiet `--acceptance` invocation exited 0 on 2026-10-11.
+An independent full-original audit joined 2,340 sampled original ACKs, 1,320 task
+creations, 660 durable registration originals and typed pre-forward spool/state
+bytes to 18 actual immutable checkpointed SQLite databases. Counts were 5,280
+existing HTTP records, 2,640 real comparison CLI samples and 1,980 new workflow
+HTTP records, including each 100 measured + 10 warmups/source/operation/repetition.
+Three visibility scenarios yielded 60/60 exact observations, graph30/list30,
+with every missing/wrong/duplicate/hidden/unconfirmed/late count zero. Graph p95
+was 750.002042 ms, list 632.722833 ms and overall 749.125125 ms. Worst existing
+head HTTP p95 was 2.222959 ms, worst new workflow HTTP p95 1.666042 ms and largest
+existing relative p95 change 14.425973%, within the approved limits. CLI wall
+timing includes startup/native work and uses its separate bounds.
+
+Exact base/head sources, helpers, 803 compiled files, native addons and 38 prepared
+files stayed unchanged. Scoped post-run ownership census was empty; cleanup
+flags/timestamps retain their qualifications. Current-lock fresh checkout
+installation contains 486 packages, exact React Flow 12.12.0 and 20 added notices.
+Production audit is zero; nine development records match P07 and 33 unknown
+installed baseline notice entries remain explicit. This is named-macOS finite
+W01 evidence, not pristine-OS/Linux, physical power-loss, W04 or human attestation.
+Four current synthetic desktop/narrow workflow/board exports are linked in the
+receipt; later captures were export-only, without a third design iteration.
+
+Remaining: exact final candidate/evidence review, coordinator verification,
+guarded PR/normal matching-head merge, archive-before-cleanup and only then W02.
+Package completion boxes remain open until reviewed integration. No tag or
+complete-v1 claim is made.

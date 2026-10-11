@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07 are integrated through PRs #4–#10. W01 is next: its implementation plan requires Astra medium approval before feature work. Implementation boxes remain unchecked until each package is reviewed and integrated. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07 are integrated through PRs #4–#10. W01 implementation and qualified verification are ready for final integration review; [its receipt](docs/implementation/W01.md) records the measured executable and remaining gate. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -149,6 +149,12 @@ choices. Update backend/API/OpenAPI documentation with each implementation so
 planned and executable contracts stay aligned. All scopes below are required.
 
 ### W01. Observe a reported workflow
+
+Implementation/evidence work is complete in the
+[task checklist](docs/superpowers/plans/2026-10-11-w01-workflows.md), including one
+independently audited quiet measurement at `7eb85f3`. These package completion
+boxes stay open for final exact-candidate review and verified integration. W01
+has not merged; W02 has not started.
 
 Depends on P07. Proposed files: `src/workflows/`, `src/db/schema/workflows.ts`,
 `src/app/api/v1/workflows/`, `src/app/projects/[projectId]/workflows/`,
