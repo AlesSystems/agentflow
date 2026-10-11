@@ -1,3 +1,5 @@
+import { historyLine } from "./history";
+import { historyExportExamples } from "./examples";
 import { taskRegistrationExample } from "./examples";
 import { taskRegistrationResponse } from "./task-registration";
 import { foundationSchemas } from "./foundation";
@@ -80,6 +82,17 @@ function responses(
 export function openapiDocument() {
   const paths: Record<string, Record<string, unknown>> = {};
   for (const endpoint of endpoints) {
+    if (endpoint.kind === "export") {
+      const lines=historyExportExamples;
+      endpoint.input.parse(requestExamples[endpoint.id]);
+      for(const line of lines)historyLine.parse(line);
+      const example=lines.map(line=>JSON.stringify(line)).join("\n")+"\n";
+      const headers={"AgentFlow-Generation":{schema:schema(uuid)}};
+      const parameters=[{in:"query",name:"content",required:true,schema:{type:"string"},example:"tasks,attempts,workflows,github",description:"Nonempty duplicate-free subset in canonical order. Unknown and repeated keys, cursor and unsupported groups are rejected before copying."},{in:"query",name:"generation",required:true,schema:schema(uuid)}];
+      const errors=responses(200,endpoint.response,undefined);
+      paths["/api/v1"+endpoint.path]={get:{operationId:endpoint.id,description:endpoint.description,security:[{browserSession:[]}],parameters,responses:{...errors,200:{description:"Versioned JSONL manifest, explicit record lines, and completion only after all selected records",headers,content:{"application/x-ndjson":{schema:{type:"string"},example,"x-line-schema":schema(historyLine)}}}}},head:{operationId:endpoint.id+"Head",security:[{browserSession:[]}],parameters,responses:{...errors,200:{description:"Validated bodyless export status; creates no snapshot",headers}}}};
+      continue;
+    }
     if (endpoint.kind === "stream") {
       const properties = (schema(endpoint.input, "input") as {
         properties: Record<string, unknown>;

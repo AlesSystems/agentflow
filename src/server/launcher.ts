@@ -1,3 +1,4 @@
+import { HistoryRuntime } from "../history/runtime";
 import { GithubCoordinator } from "../integrations/github/coordinator";
 import { createServer, type IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
@@ -36,6 +37,7 @@ export async function startRuntime(
   let app: Awaited<ReturnType<(typeof import("next"))["default"]>> | undefined;
   let server: ReturnType<typeof createServer> | undefined;
   const github=new GithubCoordinator(owned.store,config.githubTokenFile,hooks.githubTransport);
+  let history:HistoryRuntime|undefined;
   const mutationBudget = new MutationBudget();
   const streams = new ChangeStreams(owned.store, owned.credentials);
   const sockets = new Set<Socket>();
@@ -45,6 +47,7 @@ export async function startRuntime(
     if (shutdownPromise) return shutdownPromise;
     beginClosing();
     github.beginClosing();
+    history?.beginClosing();
     streams.close();
     shutdownPromise = (async () => {
       if (server) {
@@ -60,6 +63,7 @@ export async function startRuntime(
       }
       await Promise.allSettled([...requests]);
       await github.close();
+      await history?.close();
       await owned.store.drain();
       await app?.close();
       await hooks.beforeStoreClose?.();
@@ -69,6 +73,8 @@ export async function startRuntime(
     return shutdownPromise;
   }
   try {
+    const historyOwner=new HistoryRuntime(owned.store);
+    history=historyOwner;
     const next = (await import("next")).default;
     app = next({
       dir: owned.instance.appRoot.path,
@@ -77,7 +83,7 @@ export async function startRuntime(
       port: config.port,
     });
     await app.prepare();
-    publishRuntime(config, owned, github);
+    publishRuntime(config, owned, github, historyOwner);
     const handler = app.getRequestHandler();
     async function dispatch(
       request: IncomingMessage,
@@ -151,6 +157,12 @@ export async function startRuntime(
           await streams.serve(request, response, headers, url);
           return;
         }
+        if (matched?.endpoint.kind === "export") {
+          const headers=new Headers();
+          for(const [key,value] of Object.entries(request.headers))if(typeof value === "string")headers.set(key,value);
+          await historyOwner.serveExport(request,response,headers,url);
+          return;
+        }
         await hooks.beforeDispatch?.(request);
         if (!["GET", "HEAD"].includes(request.method || "GET")) {
           const body = await boundedBody(request);
@@ -207,7 +219,7 @@ export async function startRuntime(
       server!.once("error", reject);
       server!.listen(config.port, config.host, resolve);
     });
-    return { shutdown, owned, server, streams, diagnostics: () => ({ requests: requests.size, sockets: sockets.size, activeSockets: [...sockets].filter(socket => !socket.destroyed).length }) };
+    return { shutdown, owned, server, streams, history:historyOwner, diagnostics: () => ({ requests: requests.size, sockets: sockets.size, activeSockets: [...sockets].filter(socket => !socket.destroyed).length }) };
   } catch (error) {
     await shutdown();
     throw error;
