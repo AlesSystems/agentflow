@@ -348,3 +348,21 @@ stored producer reports except heartbeat noise, plus separately typed human
 tracking closure facts with reason and no producer event/occurred time. Raw
 `/runs/{id}/events` remains ascending sequence and retains every heartbeat.
 All endpoints share registered read authentication, strict schemas and OpenAPI.
+
+### Reported workflow plans (W01)
+
+Reporters may publish `POST /workflows` with an explicit UUID, project UUID and
+name. `GET /workflows?projectId=UUID` returns a bounded snapshot page and
+`GET /workflows/{id}` reads its metadata. Workflow creation resolves an identical
+resource identity before current project checks; changed identities conflict.
+
+`POST /workflows/{id}/revisions` accepts an explicit revision UUID,
+`expectedWorkflowVersion`, nodes and edges. Plans are immutable DAGs bounded to
+100 nodes and 200 edges. Nodes have stable UUIDs, labels and optional same-project
+task UUIDs; edges have source/target UUIDs and optional nonnegative ordering.
+Duplicate nodes/pairs, missing endpoints, self edges, cycles and cross-project
+links are rejected atomically. Publishing advances workflow version and revision.
+`GET /workflows/{id}/revisions` pages history; the named nested route
+`GET /workflows/{id}/revisions/{revisionId}` requires the revision's original
+workflow. All captured UUIDs and receipt paths are canonicalized. Existing strict
+schemas, authentication, 64 KiB request cap and generation snapshots apply.

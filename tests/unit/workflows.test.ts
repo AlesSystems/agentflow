@@ -33,3 +33,12 @@ it("orders workflow transitions and measures silence independently", () => {
   expect(workflowFreshness(next, Date.parse(facts.createdAt) + 60001).stale).toBe(true);
   expect(() => decideWorkflowEvent(facts, { ...event, sequence: 2 }, Date.now())).toThrow("sequence_gap");
 });
+it("canonicalizes and validates every nested path parameter", async () => {
+  const { matchEndpoint, validResourceId } = await import("../../src/contracts/routes");
+  const id = randomUUID(), revisionId = randomUUID();
+  const matched = matchEndpoint("GET", `/api/v1/workflows/${id.toUpperCase()}/revisions/${revisionId.toUpperCase()}`)!;
+  expect(matched.params).toEqual({ id, revisionId });
+  expect(matched.path).toBe(`/api/v1/workflows/${id}/revisions/${revisionId}`);
+  expect(Object.values(matched.params).every(validResourceId)).toBe(true);
+  expect(Object.values(matchEndpoint("GET", `/api/v1/workflows/${id}/revisions/invalid`)!.params).every(validResourceId)).toBe(false);
+});

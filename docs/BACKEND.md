@@ -249,3 +249,11 @@ boundary, total and generation/filter-bound cursor in one snapshot transaction.
 Raw event history retains all ordered heartbeats. Neither summaries, Activity nor
 the browser's connection state infer external process liveness. Human stale-record
 closure still records an operator fact without a producer event or execution signal.
+
+### Immutable workflow publication
+
+Migration 0006 adds workflow metadata, immutable validated JSON revisions and
+original registration identities. Publication uses the existing immediate command
+transaction, receipt and durable change feed. A revision captures its original
+nodes and edges; later publication cannot mutate its labels or task links.
+Revision identity retries resolve before mutable archive/version checks.

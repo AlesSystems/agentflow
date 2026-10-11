@@ -15,7 +15,7 @@ export async function applicationApi(request: Request) {
       (value) => (generation = value),
     );
     if (!matched) throw new HttpError(404, "resource_not_found");
-    if (!validResourceId(matched.id))
+    if (!Object.values(matched.params).every(validResourceId))
       throw new HttpError(422, "validation_failed");
     const { endpoint, id, path } = matched;
     if (endpoint.kind === "stream") throw new HttpError(503, "unavailable");
@@ -49,7 +49,7 @@ export async function applicationApi(request: Request) {
       original.schemaVersion !== 1
     )
       throw new HttpError(422, "unsupported_schema_version");
-    const parsed = endpoint.parseRequest(original, id ?? "");
+    const parsed = endpoint.parseRequest(original, id ?? "", matched.params);
     if (!parsed.success)
       throw new HttpError(
         endpoint.kind === "command" ? 422 : 400,

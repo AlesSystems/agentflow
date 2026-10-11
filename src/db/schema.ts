@@ -352,3 +352,10 @@ export const runClosures = sqliteTable(
     check("run_closures_actor", sql`${t.actor}='operator'`),
   ],
 );
+export const workflows = sqliteTable("workflows", {
+ id: text("id").primaryKey().notNull(), projectId: text("project_id").notNull().references(() => projects.id), name: text("name").notNull(), version: integer("version").notNull(), createdAt: integer("created_at").notNull(),
+}, t => [index("workflows_project").on(t.projectId, t.createdAt, t.id), check("workflows_version", sql`${t.version} BETWEEN 1 AND 9007199254740991`)]);
+export const workflowRevisions = sqliteTable("workflow_revisions", {
+ id: text("id").primaryKey().notNull(), workflowId: text("workflow_id").notNull().references(() => workflows.id), revision: integer("revision").notNull(), nodes: text("nodes").notNull(), edges: text("edges").notNull(), digest: text("digest").notNull(), body: text("body").notNull(), createdAt: integer("created_at").notNull(),
+}, t => [uniqueIndex("workflow_revisions_identity").on(t.workflowId, t.revision), index("workflow_revisions_workflow").on(t.workflowId, t.revision), check("workflow_revisions_revision", sql`${t.revision} BETWEEN 1 AND 9007199254740991`), check("workflow_revisions_nodes", sql`json_valid(${t.nodes})`), check("workflow_revisions_edges", sql`json_valid(${t.edges})`), check("workflow_revisions_body", sql`json_valid(${t.body})`)]);
+export const workflowIdentities = sqliteTable("workflow_identities", { workflowId: text("workflow_id").primaryKey().notNull().references(() => workflows.id), digest: text("digest").notNull(), body: text("body").notNull() }, t => [check("workflow_identities_body", sql`json_valid(${t.body})`)]);

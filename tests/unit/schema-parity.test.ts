@@ -107,3 +107,14 @@ it("mirrors additive order checks and allocator checks while documenting trigger
     "last_value",
   ]);
 });
+it("mirrors workflow plan checks in the additive migration", async () => {
+  const { workflows, workflowRevisions, workflowIdentities } = await import("../../src/db/schema");
+  const migration = readFileSync("migrations/0006_workflows.sql", "utf8");
+  const dialect = new SQLiteSyncDialect();
+  for (const table of [workflows, workflowRevisions, workflowIdentities]) {
+    const config = getTableConfig(table);
+    const start = migration.indexOf("CREATE TABLE " + config.name + " (");
+    const end = migration.indexOf(";", start);
+    expect(config.checks.map(c => normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(migration.slice(start, end)).map(normalize).sort());
+  }
+});

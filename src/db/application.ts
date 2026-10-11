@@ -1,3 +1,5 @@
+import * as workflows from "../contracts/workflows";
+import { validateWorkflowPlan } from "../domain/workflows";
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import { statSync } from "node:fs";
@@ -50,6 +52,8 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | { kind: "workflow.create"; input: z.infer<typeof workflows.workflowCreate> }
+  | { kind: "workflow.revision"; id: string; input: z.infer<typeof workflows.planRevisionCreate> }
   | { kind: "agent.create"; input: z.infer<typeof agentCreate> }
   | { kind: "agent.patch"; id: string; input: z.infer<typeof agentPatch> }
   | { kind: "run.register"; input: z.infer<typeof runRegister> }
@@ -64,6 +68,10 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | { kind: "workflows"; input: z.infer<typeof workflows.workflowQuery> }
+  | { kind: "workflow"; id: string }
+  | { kind: "workflow.revisions"; id: string; input: z.infer<typeof workflows.workflowHistoryQuery> }
+  | { kind: "workflow.revision"; id: string; revisionId: string }
   | { kind: "tracking.agents"; input: z.infer<typeof agentQuery> }
   | { kind: "tracking.runs"; input: z.infer<typeof runQuery> }
   | { kind: "tracking.run"; id: string }
@@ -109,7 +117,7 @@ function serialize(row: Row): Row {
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       camel(key),
-      key === "tags"
+      ["tags", "nodes", "edges"].includes(key)
         ? JSON.parse(value as string)
         : key.endsWith("_at") && value !== null
           ? new Date(value as number).toISOString()
@@ -121,7 +129,7 @@ function persisted(record: Row): Row {
   return Object.fromEntries(
     Object.entries(record).map(([key, value]) => [
       snake(key),
-      key === "tags"
+      ["tags", "nodes", "edges"].includes(key)
         ? JSON.stringify(value)
         : key.endsWith("At") && value !== null
           ? Date.parse(value as string)
@@ -272,7 +280,44 @@ export class ApplicationData {
         const time = new Date(now).toISOString();
         let data: unknown;
         let status = 200;
-        if (command.kind === "agent.create") {
+        if (command.kind === "workflow.create") {
+          const existing = this.find("workflows", command.input.id);
+          if (existing) {
+            const identity = this.db.prepare("SELECT digest,body FROM workflow_identities WHERE workflow_id=?").get(existing.id) as { digest: string; body: string };
+            if (identity.digest !== digest) throw new Conflict("workflow_conflict");
+            const body = JSON.parse(identity.body) as SnapshotBody;
+            this.receipt(context, 200, body);
+            return { status: 200, body };
+          }
+          const projectValue = this.activeProject(command.input.projectId);
+          data = { ...command.input, projectId: projectValue.id, version: 1, createdAt: time };
+          this.insert("workflows", data as Row);
+          this.change("workflow", command.input.id, projectValue.id, "created", now);
+          status = 201;
+          this.db.prepare("INSERT INTO workflow_identities VALUES(?,?,?)").run(command.input.id, digest, JSON.stringify(this.body(data)));
+        } else if (command.kind === "workflow.revision") {
+          const existing = this.find("workflow_revisions", command.input.id);
+          if (existing) {
+            if (existing.workflow_id !== command.id || existing.digest !== digest) throw new Conflict("workflow_revision_conflict");
+            const body = JSON.parse(existing.body as string) as SnapshotBody;
+            this.receipt(context, 200, body);
+            return { status: 200, body };
+          }
+          const value = workflows.workflow.parse(this.one("workflows", command.id));
+          this.activeProject(value.projectId);
+          if (value.version !== command.input.expectedWorkflowVersion) throw new Conflict("version_conflict", value.version);
+          validateWorkflowPlan({ nodes: command.input.nodes, edges: command.input.edges });
+          for (const node of command.input.nodes) if (node.taskId) {
+            const linked = task.parse(this.one("tasks", node.taskId));
+            if (linked.projectId !== value.projectId) throw new Conflict("task_project_mismatch");
+          }
+          const last = this.db.prepare("SELECT coalesce(max(revision),0) AS revision FROM workflow_revisions WHERE workflow_id=?").get(value.id) as { revision: number };
+          data = { id: command.input.id, workflowId: value.id, revision: last.revision + 1, nodes: command.input.nodes, edges: command.input.edges, createdAt: time };
+          this.update("workflows", { ...value, version: value.version + 1 });
+          this.change("workflow", value.id, value.projectId, "revision_published", now);
+          this.insert("workflow_revisions", { ...(data as Row), digest, body: JSON.stringify(this.body(data)) });
+          status = 201;
+        } else if (command.kind === "agent.create") {
           const id = command.input.id?.toLowerCase() ?? randomUUID();
           if (this.find("agents", id)) throw new Conflict("agent_conflict");
           const value = { ...command.input, id, version: 1, createdAt: time };
@@ -987,7 +1032,21 @@ export class ApplicationData {
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "tracking.agents") {
+      if (query.kind === "workflow") data = workflows.workflow.parse(this.one("workflows", query.id));
+      else if (query.kind === "workflows") {
+        this.one("projects", query.input.projectId);
+        data = this.page("workflows", "project_id=?", [query.input.projectId], query.kind, { projectId: query.input.projectId }, query.input.limit, query.input.cursor);
+      } else if (query.kind === "workflow.revision") {
+        const value = this.one("workflow_revisions", query.revisionId);
+        if (value.workflowId !== query.id) throw new Conflict("resource_not_found");
+        const { digest, body, ...revision } = value;
+        void digest; void body;
+        data = workflows.planRevision.parse(revision);
+      } else if (query.kind === "workflow.revisions") {
+        this.one("workflows", query.id);
+        const page = this.page("workflow_revisions", "workflow_id=?", [query.id], query.kind, { workflowId: query.id }, query.input.limit, query.input.cursor, "revision");
+        data = { ...page, items: page.items.map(({ digest, body, ...revision }) => { void digest; void body; return workflows.planRevision.parse(revision); }) };
+      } else if (query.kind === "tracking.agents") {
         data = this.page(`(SELECT a.*,
           (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state='running' AND r.last_received_at>=${now - 60000}) AS fresh_running,
           (SELECT count(*) FROM runs r WHERE r.agent_id=a.id AND r.state='queued' AND r.last_sequence=0) AS queued_no_report,

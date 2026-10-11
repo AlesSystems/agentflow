@@ -249,3 +249,12 @@ Object.assign(responseExamples, {
   trackingBoard: snapshot({ columns: ["backlog", "in_progress", "review", "completed"].map(status => ({ status, items: status === "backlog" ? [{ ...task, latestAttempt: null }] : [], total: status === "backlog" ? 1 : 0, nextCursor: null })) }),
   activity: snapshot(list({ id: "event:" + eventId, kind: "report", runId, projectId, agentId, taskId, agentName: observedAgent.displayName, agentSource: observedAgent.source, projectName: project.name, taskTitle: task.title, purpose: observedRun.purpose, model: null, receivedAt: time, occurredAt: time, event: { ...event, receivedAt: time }, reason: null })),
 });
+const workflowId = "10000000-0000-4000-8000-000000000011";
+const revisionId = "10000000-0000-4000-8000-000000000012";
+const nodeId = "10000000-0000-4000-8000-000000000013";
+const workflowExample = { id: workflowId, projectId, name: "Synthetic workflow", version: 1, createdAt: time };
+const revisionExample = { id: revisionId, workflowId, revision: 1, nodes: [{ id: nodeId, label: "Implementation", taskId }], edges: [], createdAt: time };
+Object.assign(requestExamples, {
+ createWorkflow: { id: workflowId, projectId, name: workflowExample.name }, listWorkflows: { projectId }, getWorkflow: {}, createWorkflowRevision: { id: revisionId, expectedWorkflowVersion: 1, nodes: revisionExample.nodes, edges: [] }, listWorkflowRevisions: {}, getWorkflowRevision: {},
+});
+Object.assign(responseExamples, { createWorkflow: snapshot(workflowExample), listWorkflows: snapshot(list(workflowExample)), getWorkflow: snapshot(workflowExample), createWorkflowRevision: snapshot(revisionExample), listWorkflowRevisions: snapshot(list(revisionExample)), getWorkflowRevision: snapshot(revisionExample) });

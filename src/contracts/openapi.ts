@@ -125,10 +125,10 @@ export function openapiDocument() {
       required?: string[];
     };
     const parameters: unknown[] = [];
-    if (endpoint.path.includes("{id}"))
+    for (const match of endpoint.path.matchAll(/\{([A-Za-z][A-Za-z0-9]*)\}/g))
       parameters.push({
         in: "path",
-        name: "id",
+        name: match[1],
         required: true,
         schema: schema(uuid),
       });
