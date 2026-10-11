@@ -1,8 +1,9 @@
 # v1 workflows and evidence
 
 Status: active Phase 3 contract. W01 is integrated through PR #11, with qualified
-verification recorded in [its receipt](implementation/W01.md). W02 is planning
-only and requires Astra medium approval before source implementation. W03a–W04
+verification recorded in [its receipt](implementation/W01.md). W02 backend and CLI Tasks 1–3 have approved source and recovery evidence; its
+[receipt](implementation/W02.md) retains qualifications. W02 UI and final package
+verification remain open after exact-plan Astra medium approval. W03a–W04
 remain unimplemented and unvalidated. The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.

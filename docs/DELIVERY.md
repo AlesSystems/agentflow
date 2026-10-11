@@ -677,3 +677,28 @@ results retain their original sources and qualifications.
 W01 completion boxes are closed. Next is the [W02 implementation plan](superpowers/plans/2026-10-11-w02-dependencies.md),
 then exact-plan Astra medium approval before its first source change. W03a–W04
 and source release remain open. No tag or complete-v1 claim is made.
+
+
+## W02 backend and CLI progression
+
+Exact-plan Astra medium approval preceded implementation. Approved plan SHA256
+is `1d9ff305efa848b8a01e51d3cfb5377a3bdb9f506cf0dd1202d6776c6a9da0df`; its
+review report hash and complete source lineage are in [the W02 receipt](implementation/W02.md).
+Backend/CLI checkpoint `fc02721e8497ccea2d9ced93b766d0b277624c63` passed independent
+Standards and Spec progression review and coordinator verification. Two reproduced
+findings were repaired: actual stored UUID identity for dependency writes and
+safe actionable CLI conflict diagnostics. No source blocker remains at this gate.
+
+Actual checks include 177 unit tests at clean application candidate `1d539da`,
+qualified upgrade/repair/race checks, three clean CLI cases at `2fba0d5`, and
+Store/SQLite current-evidence recovery and archived receipt checks. The coordinator
+verified recorded input attribution, actual retained rows and pending bytes. Prior
+failed commands, pre-commit attribution, overwritten failed scenario JSON, and
+unbracketed private helper hashes remain explicit limitations. Synthetic operator
+fixtures are not human attestations. No historical check is relabeled as a run at
+the later documentation checkpoint.
+
+Tasks 1–3 are closed in the [W02 task checklist](superpowers/plans/2026-10-11-w02-dependencies.md).
+Next is Task 4 UI under the same approved plan, followed by final browser/suite/
+performance/exact-review gates. All W02 package completion boxes, W03a–W04 and
+source release remain open. No W02 PR or merge is recorded at this stage.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use task-by-task execution, behavioral tests at the named seams, and independent review. The operator requires Astra medium approval of this exact plan before implementation. Root owns integration and cleanup.
 
-**Status:** Planning only. W01 is integrated through [PR #11](https://github.com/AlesSystems/agentflow/pull/11), merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W01 archive verification and guarded cleanup are complete. W02 source implementation has not started.
+**Status:** Backend and CLI Tasks 1–3 passed independent progression review at `fc02721e8497ccea2d9ced93b766d0b277624c63` and coordinator evidence verification. Task 4 UI and Task 5 final verification/integration remain open. W01 is integrated through [PR #11](https://github.com/AlesSystems/agentflow/pull/11), merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`; its guarded cleanup is complete. Original approved plan SHA256 is `1d9ff305efa848b8a01e51d3cfb5377a3bdb9f506cf0dd1202d6776c6a9da0df`. This status/checklist update does not change the approved implementation semantics.
 
 **Goal:** Let the operator track real prerequisite acceptance, explicit reported review decisions, and successive rework without permitting old evidence to accept new work.
 
@@ -35,27 +35,27 @@ The backend scout established that registration already advances implementation 
 
 ## Task 1. Add contracts and durable evidence
 
-- [ ] Add meaningful RED schema/domain/SQLite cases for default-false upgrade, strict unknown fields, nullable tuples, explicit decision purposes, bounded references/notes, and unchanged legacy success bodies.
-- [ ] Add migration 0007 and indexed relational dependencies with same-project referential checks. Preserve prior checksums and existing registration allocators/identity/event ledgers. Backfill defaults without inventing approvals, references, or rounds.
-- [ ] Extend strict shared task/run DTOs and explicit SQL projections, mapping policy booleans. Keep request limit, generation headers, no-store envelopes, bounded error details, UUID normalization, and immutable original receipt shapes.
-- [ ] Define human `PUT /tasks/{id}/dependencies`, `PATCH /tasks/{id}/review-policy`, `POST /tasks/{id}/artifact`, `POST /tasks/{id}/rework`, and authenticated `GET /tasks/{id}/readiness`. Define bounded evidence history only if existing reads cannot represent it. Update examples/generated OpenAPI and focused parity tests.
-- [ ] Run focused unit/migration/contract tests and typecheck. Commit each coherent behavioral contract and implementation separately.
+- [x] Add meaningful RED schema/domain/SQLite cases for default-false upgrade, strict unknown fields, nullable tuples, explicit decision purposes, bounded references/notes, and unchanged legacy success bodies.
+- [x] Add migration 0007 and indexed relational dependencies with same-project referential checks. Preserve prior checksums and existing registration allocators/identity/event ledgers. Backfill defaults without inventing approvals, references, or rounds.
+- [x] Extend strict shared task/run DTOs and explicit SQL projections, mapping policy booleans. Keep request limit, generation headers, no-store envelopes, bounded error details, UUID normalization, and immutable original receipt shapes.
+- [x] Define human `PUT /tasks/{id}/dependencies`, `PATCH /tasks/{id}/review-policy`, `POST /tasks/{id}/artifact`, `POST /tasks/{id}/rework`, and authenticated `GET /tasks/{id}/readiness`. Define bounded evidence history only if existing reads cannot represent it. Update examples/generated OpenAPI and focused parity tests.
+- [x] Run focused unit/migration/contract tests and typecheck. Commit each coherent behavioral contract and implementation separately.
 
 ## Task 2. Enforce dependency and approval transactions
 
-- [ ] Prove a diamond DAG, empty readiness, max20, duplicate/self/missing/cross-project/archived/cyclic references, concurrent opposing edges, and parent/plan-edge independence through real HTTP and SQLite.
-- [ ] Implement atomic dependency replacement and readiness query. Prove prerequisite metadata edits preserve readiness, while reopen/work changes invalidate it. A no-active policy edit guard applies to both dependencies and review policy.
-- [ ] Gate new implementation registration and human completion in their existing immediate transaction. Run real simultaneous HTTP prerequisite-reopen versus registration and completion races. Inspect resulting rows and accept only legal serialization outcomes. Existing active reports and manual status moves still work after a prerequisite becomes blocked.
-- [ ] Implement artifact facts, authoritative run tuple capture, explicit gate decisions, current applicability, sticky required negatives, policy edits, and rework. Prove negative then same-tuple positive still blocks, followed by new work/artifact/fresh approval and browser-role completion.
-- [ ] Prove same reference across a new implementation attempt cannot resurrect approval; replacement, description/criteria edit, reopen, and rework invalidate old decisions; title edits do not. Test manual evidence, both required gates, optional negative, legacy decision-free success, missing artifact, latest implementation failure, and no active ownership bypass.
-- [ ] Inspect actual immutable event/command receipt bodies and rows for exact retry after terminal state, archive, rework, restart, and restore. Same-key changed-body and stale tuple/version rejection write nothing. Lost response retries do not advance round/revision twice. Reporter credentials reject every new human command and completion before receipt disclosure.
-- [ ] Run focused real database/HTTP tests, existing task/run rules and types. Get independent source review before rendering the new acceptance controls.
+- [x] Prove a diamond DAG, empty readiness, max20, duplicate/self/missing/cross-project/archived/cyclic references, concurrent opposing edges, and parent/plan-edge independence through real HTTP and SQLite.
+- [x] Implement atomic dependency replacement and readiness query. Prove prerequisite metadata edits preserve readiness, while reopen/work changes invalidate it. A no-active policy edit guard applies to both dependencies and review policy.
+- [x] Gate new implementation registration and human completion in their existing immediate transaction. Run real simultaneous HTTP prerequisite-reopen versus registration and completion races. Inspect resulting rows and accept only legal serialization outcomes. Existing active reports and manual status moves still work after a prerequisite becomes blocked.
+- [x] Implement artifact facts, authoritative run tuple capture, explicit gate decisions, current applicability, sticky required negatives, policy edits, and rework. Prove negative then same-tuple positive still blocks, followed by new work/artifact/fresh approval and browser-role completion.
+- [x] Prove same reference across a new implementation attempt cannot resurrect approval; replacement, description/criteria edit, reopen, and rework invalidate old decisions; title edits do not. Test manual evidence, both required gates, optional negative, legacy decision-free success, missing artifact, latest implementation failure, and no active ownership bypass.
+- [x] Inspect actual immutable event/command receipt bodies and rows for exact retry after terminal state, archive, rework, restart, and restore. Same-key changed-body and stale tuple/version rejection write nothing. Lost response retries do not advance round/revision twice. Reporter credentials reject every new human command and completion before receipt disclosure.
+- [x] Run focused real database/HTTP tests, existing task/run rules and types. Get independent source review before rendering the new acceptance controls.
 
 ## Task 3. Exercise real CLI evidence and recovery
 
-- [ ] Use actual CLI subprocess register/report bodies to publish implementation artifact, tuple-bound review and verification decisions, and explicit negative evidence. Join original ACK IDs/digests/sequences to SQLite and task readiness/evidence reads.
-- [ ] Queue new optional bodies during downtime, restart CLI/service, flush, and exact replay without mutation or duplicate decisions. Preserve unchanged legacy producers, typed workflow namespace, queue limits, native locks, reply cap, and immutable registration identity.
-- [ ] Upgrade a stopped W01 synthetic fixture through the normal launcher migration, with implementation/review history, manual completion and pending old outbox. Restart and backup/restore preserve historical facts and current applicability. Generation/session/outbox limits remain explicit. No private provider storage or process actions.
+- [x] Use actual CLI subprocess register/report bodies to publish implementation artifact, tuple-bound review and verification decisions, and explicit negative evidence. Join original ACK IDs/digests/sequences to SQLite and task readiness/evidence reads.
+- [x] Queue new optional bodies during downtime, restart CLI/service, flush, and exact replay without mutation or duplicate decisions. Preserve unchanged legacy producers, typed workflow namespace, queue limits, native locks, reply cap, and immutable registration identity.
+- [x] Upgrade a stopped W01 synthetic fixture through the normal launcher migration, with implementation/review history, manual completion and pending old outbox. Restart and backup/restore preserve historical facts and current applicability. Generation/session/outbox limits remain explicit. No private provider storage or process actions.
 
 ## Task 4. Extend the selected task and graph surfaces
 
