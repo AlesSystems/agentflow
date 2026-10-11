@@ -638,8 +638,8 @@ function ReportedPlan(
     [nodes],
   );
   const selected = nodes?.find(
-      (n) => n.nodeId === (props.nodeId || props.plan.nodes[0]?.id),
-    );
+    (n) => n.nodeId === (props.nodeId || props.plan.nodes[0]?.id),
+  );
   return (
     <>
       <QueryFeedback
@@ -751,6 +751,9 @@ function ReportedPlan(
             key={selected.nodeId}
             runId={props.runId}
             nodeId={selected.nodeId}
+            projectId={props.projectId}
+            taskId={selected.taskId}
+            context={props.context}
           />
         </section>
       )}
@@ -758,7 +761,19 @@ function ReportedPlan(
     </>
   );
 }
-function NodeHistory({ runId, nodeId }: { runId: string; nodeId: string }) {
+function NodeHistory({
+  runId,
+  nodeId,
+  projectId,
+  taskId,
+  context,
+}: {
+  runId: string;
+  nodeId: string;
+  projectId: string;
+  taskId?: string | null;
+  context: URLSearchParams;
+}) {
   const page = usePaged(
     `/workflow-runs/${runId}/nodes/${nodeId}/observations?limit=20`,
     workflowNodeHistoryResponse,
@@ -786,6 +801,24 @@ function NodeHistory({ runId, nodeId }: { runId: string; nodeId: string }) {
               Reported attempt {o.payload.runId ?? "Unknown"} · Skill{" "}
               {o.payload.reportedSkill?.name ?? "Unknown"}
             </p>
+            {taskId && (
+              <p>
+                <Link
+                  href={`/projects/${projectId}/tasks/${taskId}?workflowReturn=${encodeURIComponent(context.toString())}`}
+                >
+                  Open historical task
+                </Link>
+              </p>
+            )}
+            {o.payload.runId && (
+              <p>
+                <Link
+                  href={`/runs/${o.payload.runId}?workflowReturn=${encodeURIComponent(context.toString())}&projectId=${projectId}`}
+                >
+                  Open historical attempt
+                </Link>
+              </p>
+            )}
             <p className="break-word">
               Skill source {o.payload.reportedSkill?.source ?? "Unknown"} ·
               Version {o.payload.reportedSkill?.version ?? "Unknown"}

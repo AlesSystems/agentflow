@@ -877,3 +877,73 @@ test("graph Space selects evidence and Escape restores the selected node", async
     await server.stop();
   }
 });
+test("distinct historical node attempts remain reachable after a missing-run observation", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server),
+      later = await f.report("workflow.node.reported", {
+        nodeId: f.implementationNodeId,
+        runId: f.verificationRunId,
+        state: "running",
+        reportedSkill: { name: "Synthetic verification skill" },
+      });
+    await f.report("workflow.node.reported", {
+      nodeId: f.implementationNodeId,
+      state: "pending",
+    });
+    await pairPage(page, server);
+    await page.goto(
+      f.url.replace(f.verificationNodeId, f.implementationNodeId) +
+        "&view=list",
+    );
+    await expect(
+      page.getByText("Linked attempt Unknown", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Open reported attempt", exact: true }),
+    ).toHaveCount(0);
+    for (const [eventId, runId, purpose] of [
+      [f.implementationReport.eventId, f.implementationRunId, "implementation"],
+      [later.eventId, f.verificationRunId, "verification"],
+    ]) {
+      const row = page
+          .locator(".workflow-evidence li")
+          .filter({ hasText: `Report ${eventId}` }),
+        link = row.getByRole("link", {
+          name: "Open historical attempt",
+          exact: true,
+        });
+      await expect(link).toHaveAttribute(
+        "href",
+        new RegExp(`/runs/${runId}\\?`),
+      );
+      await link.click();
+      await expect(
+        page.getByRole("heading", {
+          name: `${purpose} · Synthetic workflow producer`,
+          exact: true,
+        }),
+      ).toBeVisible();
+      const actual = await page.evaluate(
+        async (id) =>
+          (await (await fetch(`/api/v1/tracking/runs/${id}`)).json()).data,
+        runId,
+      );
+      expect(actual.id).toBe(runId);
+      expect(actual.purpose).toBe(purpose);
+      await page
+        .getByRole("link", { name: "Back to workflow", exact: true })
+        .click();
+      await expect(
+        page.locator(`button[data-node-id="${f.implementationNodeId}"]`),
+      ).toBeFocused();
+      await expect(
+        page.getByText("Linked attempt Unknown", { exact: true }),
+      ).toBeVisible();
+    }
+  } finally {
+    await server.stop();
+  }
+});
