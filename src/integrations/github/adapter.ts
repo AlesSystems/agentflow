@@ -30,15 +30,15 @@ function project(value:unknown,request:GithubRefreshInput):GithubMetadata{
 }
 function nextPage(link:string|null,request:GithubRefreshInput){
  if(!link)return null;if(!("page" in request))throw Error();
- let next:number|null=null;
+ let next:number|null=null;let hasNext=false;
  for(const part of link.split(",")){
   const match=/^\s*<([^>]+)>;\s*rel="([a-z ]+)"\s*$/.exec(part);if(!match)throw Error();
   const url=new URL(match[1]);
   if(url.origin!=="https://api.github.com"||url.pathname!==`/repos/${request.repository}/pulls`||url.username||url.password||url.hash)throw Error();
   const params=url.searchParams;const keys=[...params.keys()];
-  if(keys.length!==4||new Set(keys).size!==4||params.get("state")!=="all"||params.get("per_page")!=="20"||params.get("sort")!=="created"||!/^([1-9][0-9]{0,3})$/.test(params.get("page")??""))throw Error();
-  const page=Number(params.get("page"));if(page>1000)throw Error();
-  if(match[2].split(" ").includes("next")){if(next!==null||page!==request.page+1)throw Error();next=page;}
+  if(keys.length!==4||new Set(keys).size!==4||params.get("state")!=="all"||params.get("per_page")!=="20"||params.get("sort")!=="created"||!/^[1-9][0-9]*$/.test(params.get("page")??""))throw Error();
+  const page=params.get("page")!;
+  if(match[2].split(" ").includes("next")){if(hasNext||page!==String(request.page+1))throw Error();hasNext=true;if(request.page<1000)next=request.page+1;}
  }
  return next;
 }
