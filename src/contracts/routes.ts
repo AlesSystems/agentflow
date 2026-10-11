@@ -100,6 +100,13 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  defineCommand({ id: "registerWorkflowRun", method: "POST", path: "/workflow-runs", access: "report", input: workflows.workflowRunRegister, response: workflows.workflowRunResponse, status: 201, command: input => ({ kind: "workflow.run.register", input }) }),
+  defineQuery({ id: "listWorkflowRuns", method: "GET", path: "/workflow-runs", access: "read", input: workflows.workflowRunQuery, response: workflows.workflowRunsResponse, status: 200, query: input => ({ kind: "workflow.runs", input }) }),
+  defineQuery({ id: "getWorkflowRun", method: "GET", path: "/workflow-runs/{id}", access: "read", input: emptyQuery, response: workflows.workflowRunDetailResponse, status: 200, query: (_, id) => ({ kind: "workflow.run", id }) }),
+  defineCommand({ id: "ingestWorkflowEvent", method: "POST", path: "/workflow-runs/{id}/events", access: "report", input: workflows.workflowEventInput, response: workflows.workflowEventResponse, status: 201, eventIdentity: true, command: (input, id) => ({ kind: "workflow.run.event", id, input }) }),
+  defineQuery({ id: "listWorkflowEvents", method: "GET", path: "/workflow-runs/{id}/events", access: "read", input: workflows.workflowHistoryQuery, response: workflows.workflowEventsResponse, status: 200, query: (input, id) => ({ kind: "workflow.events", id, input }) }),
+  defineQuery({ id: "listWorkflowNodeObservations", method: "GET", path: "/workflow-runs/{id}/nodes/{nodeId}/observations", access: "read", input: workflows.workflowHistoryQuery, response: workflows.workflowNodeHistoryResponse, status: 200, query: (input, id, params) => ({ kind: "workflow.nodes", id, nodeId: params.nodeId, input }) }),
+  defineCommand({ id: "closeWorkflowRun", method: "POST", path: "/workflow-runs/{id}/close", access: "human", input: workflows.workflowClose, response: workflows.workflowRunResponse, status: 200, command: (input, id) => ({ kind: "workflow.run.close", id, input }) }),
   defineCommand({ id: "createWorkflow", method: "POST", path: "/workflows", access: "report", input: workflows.workflowCreate, response: workflows.workflowResponse, status: 201, command: input => ({ kind: "workflow.create", input }) }),
   defineQuery({ id: "listWorkflows", method: "GET", path: "/workflows", access: "read", input: workflows.workflowQuery, response: workflows.workflowsResponse, status: 200, query: input => ({ kind: "workflows", input }) }),
   defineQuery({ id: "getWorkflow", method: "GET", path: "/workflows/{id}", access: "read", input: emptyQuery, response: workflows.workflowResponse, status: 200, query: (_, id) => ({ kind: "workflow", id }) }),

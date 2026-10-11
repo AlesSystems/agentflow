@@ -172,7 +172,7 @@ export function openapiDocument() {
           endpoint.response,
           responseExamples[endpoint.id],
         ),
-        ...(["registerRun", "ingestEvent"].includes(endpoint.id)
+        ...(["registerRun", "ingestEvent", "createWorkflow", "createWorkflowRevision", "registerWorkflowRun", "ingestWorkflowEvent"].includes(endpoint.id)
           ? {
               200: {
                 description:

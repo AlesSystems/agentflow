@@ -62,6 +62,7 @@ export async function applicationApi(request: Request) {
       parsed.action.command.input.runId !== id
     )
       throw new HttpError(422, "validation_failed");
+    if (parsed.action.kind === "command" && parsed.action.command.kind === "workflow.run.event" && parsed.action.command.input.workflowRunId !== id) throw new HttpError(422, "validation_failed");
     const reply =
       parsed.action.kind === "command"
         ? state.owned.store.command(parsed.action.command, {

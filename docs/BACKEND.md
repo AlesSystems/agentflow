@@ -257,3 +257,12 @@ original registration identities. Publication uses the existing immediate comman
 transaction, receipt and durable change feed. A revision captures its original
 nodes and edges; later publication cannot mutate its labels or task links.
 Revision identity retries resolve before mutable archive/version checks.
+
+Workflow attempts allocate a separate non-reusing registration order inside the
+immediate transaction. Native allocator and binding triggers preserve order,
+workflow/project/revision identity and history through restart, VACUUM and restore.
+Active uniqueness is a partial SQLite index. Workflow events, node observations,
+projections and durable changes commit together. Raw task and workflow event IDs
+cannot collide. Node history is append-only; a latest-observation snapshot selects
+at most one observation per node and never inherits missing skill metadata.
+Workflow heartbeat, linked-attempt freshness and browser connection are independent.

@@ -366,3 +366,30 @@ links are rejected atomically. Publishing advances workflow version and revision
 `GET /workflows/{id}/revisions/{revisionId}` requires the revision's original
 workflow. All captured UUIDs and receipt paths are canonicalized. Existing strict
 schemas, authentication, 64 KiB request cap and generation snapshots apply.
+
+`POST /workflow-runs` registers an explicit attempt UUID, workflow UUID and exact
+`planRevisionId`. One queued/running attempt per workflow is permitted. Run
+registration identity replays its original snapshot. `GET /workflow-runs` requires
+workflowId and optionally the bound planRevisionId; history uses durable workflow
+registration order, independent of task-attempt order. `GET /workflow-runs/{id}`
+returns the selected run, every plan node's latest observation (null if missing),
+a separately fresh linked task attempt and optional human closure evidence.
+
+`POST /workflow-runs/{id}/events` accepts schemaVersion 1, eventId, workflowRunId,
+sequence beginning at 1, occurredAt, type and strict payload. Start transitions
+queued to running; node reports and heartbeat require running. Succeeded, failed
+and cancelled are terminal; queued cancellation is allowed. Exact identities
+resolve their original ACK before mutable state checks. Event IDs are shared with
+task reports; cross-kind reuse conflicts. Gaps, changed identities and reused
+sequences write nothing. Node reports can reference only the bound revision's
+nodes. Optional linked runId must belong to that node's same-project task.
+Optional reportedSkill is inert bounded name/source/version text.
+
+`GET /workflow-runs/{id}/events` and
+`GET /workflow-runs/{id}/nodes/{nodeId}/observations` page append-only evidence
+with generation-bound cursors and at most 100 records. A workflow outcome never
+changes task acceptance or linked run lifecycle. Human-only
+`POST /workflow-runs/{id}/close` requires expectedVersion and reason, applies only
+to active silence over 60 seconds and records interrupted without refreshing the
+last report time or controlling any external process. Project archive rejects
+active workflow attempts as well as task attempts.
