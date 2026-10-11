@@ -7,7 +7,7 @@ export class Conflict extends Error {
   constructor(
     readonly code: string,
     readonly currentVersion?: number,
-    readonly details?: { expectedSequence?: number; blockedPrerequisiteIds?: string[] },
+    readonly details?: { expectedSequence?: number; blockedPrerequisiteIds?: string[]; prerequisites?: TaskReadiness["prerequisites"] },
   ) {
     super(code);
   }
@@ -105,7 +105,7 @@ export function decideTask(
         latest.workRevision !== task.workRevision)
     )
       throw new Conflict("implementation_not_current");
-    if (facts.readiness && !facts.readiness.ready) throw new Conflict("dependencies_not_ready",undefined,{blockedPrerequisiteIds:facts.readiness.blockedPrerequisiteIds});
+    if (facts.readiness && !facts.readiness.ready) throw new Conflict("dependencies_not_ready",undefined,{blockedPrerequisiteIds:facts.readiness.blockedPrerequisiteIds,prerequisites:facts.readiness.prerequisites});
     if (facts.evidence) assertAcceptanceEvidence(facts.evidence);
     return {
       task: {

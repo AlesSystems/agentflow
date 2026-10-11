@@ -97,13 +97,13 @@ export const responseExamples: Record<string, unknown> = {
     columns: ["backlog", "in_progress", "review", "completed"].map(
       (status) => ({
         status,
-        items: status === "backlog" ? [task] : [],
+        items: status === "backlog" ? [{...task,readiness,evidence}] : [],
         total: status === "backlog" ? 1 : 0,
         nextCursor: null,
       }),
     ),
   }),
-  listTasks: snapshot(list(task)),
+  listTasks: snapshot(list({...task,readiness,evidence})),
   createTask: snapshot(task),
   getTask: snapshot({
     task, readiness, evidence,
@@ -250,8 +250,8 @@ const runSummary = { ...observedRun, agentName: observedAgent.displayName, agent
 Object.assign(requestExamples, { trackingAgents: {}, trackingRuns: {}, trackingRun: {}, trackingTasks: { projectId }, trackingBoard: {}, activity: { projectId } });
 Object.assign(responseExamples, {
   trackingAgents: snapshot(list({ id: agentId, displayName: observedAgent.displayName, source: observedAgent.source, defaultRole: observedAgent.defaultRole, version: 1, createdAt: time, freshRunning: 0, queuedNoReport: 1, staleActive: 0 })),
-  trackingRuns: snapshot(list(runSummary)), trackingRun: snapshot(runSummary), trackingTasks: snapshot(list({ ...task, latestAttempt: runSummary })),
-  trackingBoard: snapshot({ columns: ["backlog", "in_progress", "review", "completed"].map(status => ({ status, items: status === "backlog" ? [{ ...task, latestAttempt: null }] : [], total: status === "backlog" ? 1 : 0, nextCursor: null })) }),
+  trackingRuns: snapshot(list(runSummary)), trackingRun: snapshot(runSummary), trackingTasks: snapshot(list({ ...task, readiness, evidence, latestAttempt: runSummary })),
+  trackingBoard: snapshot({ columns: ["backlog", "in_progress", "review", "completed"].map(status => ({ status, items: status === "backlog" ? [{ ...task, readiness, evidence, latestAttempt: null }] : [], total: status === "backlog" ? 1 : 0, nextCursor: null })) }),
   activity: snapshot(list({ id: "event:" + eventId, kind: "report", runId, projectId, agentId, taskId, agentName: observedAgent.displayName, agentSource: observedAgent.source, projectName: project.name, taskTitle: task.title, purpose: observedRun.purpose, model: null, receivedAt: time, occurredAt: time, event: { ...event, receivedAt: time }, reason: null })),
 });
 const workflowId = "10000000-0000-4000-8000-000000000011";
@@ -274,3 +274,6 @@ export const taskRegistrationExample = snapshot({kind:"task",id:taskId,projectId
 
 Object.assign(requestExamples, { replaceDependencies:{expectedVersion:1,prerequisiteIds:[]},editReviewPolicy:{expectedVersion:1,reviewRequired:true,verificationRequired:false},publishArtifact:{expectedVersion:1,artifactRef:"synthetic:commit"},requestRework:{expectedVersion:1,reason:"Synthetic changes requested"},getReadiness:{},listArtifacts:{} });
 Object.assign(responseExamples, { replaceDependencies:snapshot({...task,version:2}),editReviewPolicy:snapshot({...task,version:2,reviewRequired:true}),publishArtifact:snapshot({...task,version:2}),requestRework:snapshot({...task,version:2,workRevision:2,reworkRound:1}),getReadiness:snapshot(readiness),listArtifacts:snapshot({items:[],total:0,nextCursor:null}) });
+
+Object.assign(requestExamples,{listGateDecisions:{},listReworks:{}});
+Object.assign(responseExamples,{listGateDecisions:snapshot({items:[],total:0,nextCursor:null}),listReworks:snapshot({items:[],total:0,nextCursor:null})});

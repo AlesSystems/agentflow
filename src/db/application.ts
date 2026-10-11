@@ -79,6 +79,8 @@ export type ApplicationCommand =
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
   | { kind: "task.readiness"; id: string }
+  | { kind: "task.decisions"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
+  | { kind: "task.reworks"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
   | { kind: "task.evidence"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
   | { kind: "workflow.runs"; input: z.infer<typeof workflows.workflowRunQuery> }
   | { kind: "workflow.run"; id: string }
@@ -265,23 +267,44 @@ export class ApplicationData {
       evidence: this.evidence(value),
     };
   }
-  private readiness(id: string) {
-    const rows = this.db.prepare(`SELECT p.id AS taskId,p.work_revision AS currentWorkRevision,p.status,
+  private acceptanceSnapshots(values: z.infer<typeof task>[]) {
+    const result = new Map<string, {readiness:evidence.TaskReadiness;evidence:evidence.TaskGateSummary}>();
+    if (!values.length) return result;
+    const ids = values.map(value => value.id);
+    const placeholders = ids.map(() => "?").join(",");
+    const dependencies = this.db.prepare(`SELECT d.task_id AS ownerId,p.id AS taskId,p.work_revision AS currentWorkRevision,p.status,
       (SELECT max(work_revision) FROM completions WHERE task_id=p.id) AS acceptedWorkRevision
-      FROM task_dependencies d JOIN tasks p ON p.id=d.prerequisite_id WHERE d.task_id=? ORDER BY p.id`).all(id) as Parameters<typeof deriveReadiness>[0];
-    return deriveReadiness(rows);
+      FROM task_dependencies d JOIN tasks p ON p.id=d.prerequisite_id WHERE d.task_id IN (${placeholders}) ORDER BY d.task_id,p.id`).all(...ids) as (Parameters<typeof deriveReadiness>[0][number] & {ownerId:string})[];
+    const currentArtifactJoin = "a.task_id=t.id AND a.work_revision=t.work_revision AND a.rework_round=t.rework_round";
+    const artifacts = this.db.prepare(`SELECT a.* FROM tasks t JOIN task_artifacts a ON ${currentArtifactJoin} WHERE t.id IN (${placeholders})`).all(...ids) as Row[];
+    const currentArtifacts = new Map(artifacts.map(row => { const value=evidence.artifactEvidence.parse(serialize(row));return [value.taskId,value]; }));
+    const gateQuery = (purpose: "review" | "verification") => `SELECT t.id AS owner_id,t.${purpose}_required AS required,'${purpose}' AS gate,
+      EXISTS(SELECT 1 FROM gate_decisions d WHERE d.task_id=t.id AND d.work_revision=t.work_revision AND d.artifact_ref=a.artifact_ref AND d.rework_round=t.rework_round AND d.purpose='${purpose}' AND d.decision='approved') AS approved,
+      EXISTS(SELECT 1 FROM gate_decisions d WHERE d.task_id=t.id AND d.work_revision=t.work_revision AND d.artifact_ref=a.artifact_ref AND d.rework_round=t.rework_round AND d.purpose='${purpose}' AND d.decision='changes_requested') AS changes_requested,g.*
+      FROM tasks t LEFT JOIN task_artifacts a ON ${currentArtifactJoin}
+      LEFT JOIN gate_decisions g ON g.id=(SELECT id FROM gate_decisions WHERE task_id=t.id AND work_revision=t.work_revision AND artifact_ref=a.artifact_ref AND rework_round=t.rework_round AND purpose='${purpose}' ORDER BY created_at DESC,id DESC LIMIT 1)
+      WHERE t.id IN (${placeholders})`;
+    const decisions = this.db.prepare(gateQuery("review")+" UNION ALL "+gateQuery("verification")).all(...ids,...ids) as Row[];
+    const gates = new Map<string,z.infer<typeof evidence.gateSummary>>();
+    for (const row of decisions) {
+      const {ownerId,required,gate,approved,changesRequested,...fact} = serialize(row);
+      gates.set(ownerId+":"+gate,{required:!!required,approved:!!approved,changesRequested:!!changesRequested,latestDecision:fact.id ? evidence.gateDecision.parse(fact) : null});
+    }
+    const implementations = this.db.prepare(`SELECT t.id,r.state,r.work_revision FROM tasks t LEFT JOIN runs r ON r.registration_order=(SELECT max(registration_order) FROM runs WHERE task_id=t.id AND purpose='implementation') WHERE t.id IN (${placeholders})`).all(...ids) as {id:string;state:string|null;work_revision:number|null}[];
+    const latest = new Map(implementations.map(row => [row.id,row]));
+    const prerequisites = new Map<string,Parameters<typeof deriveReadiness>[0]>();
+    for (const {ownerId,...fact} of dependencies) prerequisites.set(ownerId,[...(prerequisites.get(ownerId) ?? []),fact]);
+    for (const value of values) {
+      const implementation=latest.get(value.id)!;
+      result.set(value.id,{readiness:deriveReadiness(prerequisites.get(value.id) ?? []),evidence:{currentArtifact:currentArtifacts.get(value.id) ?? null,review:gates.get(value.id+":review")!,verification:gates.get(value.id+":verification")!,implementationCurrent:implementation.state === null || implementation.state === "succeeded" && implementation.work_revision === value.workRevision}});
+    }
+    return result;
   }
-  private evidence(value: z.infer<typeof task>): evidence.TaskGateSummary {
-    const artifact = this.db.prepare("SELECT * FROM task_artifacts WHERE task_id=? AND work_revision=? AND rework_round=? ORDER BY created_at DESC,id DESC LIMIT 1").get(value.id,value.workRevision,value.reworkRound) as Row | undefined;
-    const currentArtifact = artifact ? evidence.artifactEvidence.parse(serialize(artifact)) : null;
-    const gate = (purpose: "review" | "verification", required: boolean) => {
-      const args = [value.id,value.workRevision,currentArtifact?.artifactRef ?? null,value.reworkRound,purpose];
-      const rows = this.db.prepare("SELECT decision,count(*) AS n FROM gate_decisions WHERE task_id=? AND work_revision=? AND artifact_ref=? AND rework_round=? AND purpose=? GROUP BY decision").all(...args) as {decision:string;n:number}[];
-      const latest = this.db.prepare("SELECT * FROM gate_decisions WHERE task_id=? AND work_revision=? AND artifact_ref=? AND rework_round=? AND purpose=? ORDER BY created_at DESC,id DESC LIMIT 1").get(...args) as Row | undefined;
-      return { required, approved: rows.some(row => row.decision === "approved"), changesRequested: rows.some(row => row.decision === "changes_requested"), latestDecision: latest ? evidence.gateDecision.parse(serialize(latest)) : null };
-    };
-    const latest = this.db.prepare("SELECT id,state,work_revision AS workRevision FROM runs WHERE task_id=? AND purpose='implementation' ORDER BY registration_order DESC LIMIT 1").get(value.id) as TaskFacts["latestImplementation"];
-    return { currentArtifact, review: gate("review",value.reviewRequired), verification: gate("verification",value.verificationRequired), implementationCurrent: !latest || latest.state === "succeeded" && latest.workRevision === value.workRevision };
+  private readiness(id: string) {
+    return this.acceptanceSnapshots([task.parse(this.one("tasks",id))]).get(id)!.readiness;
+  }
+  private evidence(value: z.infer<typeof task>) {
+    return this.acceptanceSnapshots([value]).get(value.id)!.evidence;
   }
   private artifact(value: z.infer<typeof task>, artifactRef: string, displayUrl: string | undefined, runId: string | null, actor: "operator" | "reporter", now: number) {
     const fact = { id:randomUUID(), taskId:value.id, runId, workRevision:value.workRevision, artifactRef, reworkRound:value.reworkRound, displayUrl:displayUrl ?? null, actor, createdAt:new Date(now).toISOString() };
@@ -496,7 +519,7 @@ export class ApplicationData {
           const nextTask = decideRegistration(input, taskValue, active, now);
           if (taskValue && input.purpose === "implementation") {
             const readiness = this.readiness(taskValue.id);
-            if (!readiness.ready) throw new Conflict("dependencies_not_ready",undefined,{blockedPrerequisiteIds:readiness.blockedPrerequisiteIds});
+            if (!readiness.ready) throw new Conflict("dependencies_not_ready",undefined,{blockedPrerequisiteIds:readiness.blockedPrerequisiteIds,prerequisites:readiness.prerequisites});
           }
           let captured: evidence.ReviewTuple | null = null;
           if (taskValue && (input.purpose === "review" || input.purpose === "verification")) {
@@ -1105,7 +1128,7 @@ export class ApplicationData {
       clauses.push("instr(lower(title),lower(?))>0");
       params.push(filters.q);
     }
-    return this.page(
+    const page = this.page(
       "tasks",
       clauses.join(" AND ") || "1",
       params,
@@ -1114,6 +1137,8 @@ export class ApplicationData {
       limit,
       cursor,
     );
+    const summaries=this.acceptanceSnapshots(page.items.map(value=>task.parse(value)));
+    return {...page,items:page.items.map(value=>({...value,...summaries.get(value.id as string)!}))};
   }
   private history(
     id: string,
@@ -1246,9 +1271,9 @@ export class ApplicationData {
       if (query.kind === "task.readiness") {
         const value = this.one("tasks",query.id);
         data = this.readiness(value.id as string);
-      } else if (query.kind === "task.evidence") {
+      } else if (query.kind === "task.evidence" || query.kind === "task.decisions" || query.kind === "task.reworks") {
         const value = this.one("tasks",query.id);
-        data = this.page("task_artifacts","task_id=?",[value.id],"task.evidence",{taskId:value.id},query.input.limit,query.input.cursor);
+        data = this.page(query.kind === "task.evidence" ? "task_artifacts" : query.kind === "task.decisions" ? "gate_decisions" : "task_reworks","task_id=?",[value.id],query.kind,{taskId:value.id},query.input.limit,query.input.cursor);
       } else if (query.kind === "workflow.run.summary") { const value=this.workflowRun(query.id);data={...value,freshness:workflowFreshness(value,now)}; }
       else if (query.kind === "workflow.run") data = this.workflowRunDetail(query.id, now);
       else if (query.kind === "workflow.runs") {

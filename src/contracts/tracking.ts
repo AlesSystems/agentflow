@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { envelope, pageQuery, inputUuid, timestamp, uuid, safeUrl } from "./common";
 import { observedRun, agent, runQuery, eventRecord } from "./observations";
-import { task } from "./tasks";
+import { task, taskSnapshot } from "./tasks";
 import { list } from "./responses";
 export const runSummary = observedRun.extend({
   agentName: z.string(), agentSource: z.string(), projectName: z.string(), taskTitle: z.string().nullable(),
   message: z.string().nullable(), evidenceUrl: safeUrl.nullable(),
 });
-export const trackedTask = task.extend({ latestAttempt: runSummary.nullable() });
+export const trackedTask = taskSnapshot.extend({ latestAttempt: runSummary.nullable() });
 export const trackingTasksResponse = envelope(list(trackedTask));
 export const trackingBoardResponse = envelope(z.strictObject({ columns: z.array(z.strictObject({ status: task.shape.status, ...list(trackedTask).shape })) }));
 export const trackingRunsResponse = envelope(list(runSummary));

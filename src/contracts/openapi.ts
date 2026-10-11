@@ -2,6 +2,7 @@ import { taskRegistrationExample } from "./examples";
 import { taskRegistrationResponse } from "./task-registration";
 import { foundationSchemas } from "./foundation";
 import { z } from "zod";
+import { prerequisite } from "./evidence";
 import { endpoints } from "./routes";
 import { uuid, version, changeCursor } from "./common";
 import {
@@ -20,6 +21,7 @@ export const errorSchema = z.strictObject({
         currentVersion: version.optional(),
         expectedSequence: version.optional(),
         blockedPrerequisiteIds: z.array(uuid).max(20).optional(),
+        prerequisites: z.array(prerequisite).max(20).optional(),
       })
       .optional(),
   }),

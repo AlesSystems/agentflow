@@ -58,6 +58,7 @@ export const task = z.strictObject({
   updatedAt: timestamp,
   completedAt: timestamp.nullable(),
 });
+export const taskSnapshot = task.extend({readiness,evidence:taskEvidence});
 export const completeInput = z.strictObject({
   expectedVersion: version,
   evidenceNote: requiredText(4000),

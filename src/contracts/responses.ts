@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { envelope, status } from "./common";
 import { project } from "./projects";
-import { task, taskDetailV1, comment, completion } from "./tasks";
+import { task, taskSnapshot, taskDetailV1, comment, completion } from "./tasks";
 import { settings } from "./settings";
 import { overview } from "./overview";
 export const list = <T extends z.ZodType>(item: T) =>
@@ -12,7 +12,7 @@ export const list = <T extends z.ZodType>(item: T) =>
   });
 export const projectsResponse = envelope(list(project));
 export const projectResponse = envelope(project);
-export const tasksResponse = envelope(list(task));
+export const tasksResponse = envelope(list(taskSnapshot));
 export const taskResponse = envelope(task);
 export const taskDetailResponse = envelope(taskDetailV1);
 export const commentsResponse = envelope(list(comment));
@@ -22,6 +22,6 @@ export const settingsResponse = envelope(settings);
 export const overviewResponse = envelope(overview);
 export const boardResponse = envelope(
   z.strictObject({
-    columns: z.array(z.strictObject({ status, ...list(task).shape })),
+    columns: z.array(z.strictObject({ status, ...list(taskSnapshot).shape })),
   }),
 );

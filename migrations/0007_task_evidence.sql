@@ -17,6 +17,7 @@ CREATE TABLE task_artifacts (
  rework_round INTEGER NOT NULL CHECK(rework_round>=0), actor TEXT NOT NULL CHECK(actor IN ('operator','reporter')),
  display_url TEXT, created_at INTEGER NOT NULL
 );
+CREATE UNIQUE INDEX task_artifacts_tuple ON task_artifacts(task_id,work_revision,rework_round);
 CREATE INDEX task_artifacts_current ON task_artifacts(task_id,work_revision,rework_round,created_at,id);
 CREATE TABLE gate_decisions (
  id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES tasks(id), run_id TEXT NOT NULL REFERENCES runs(id),

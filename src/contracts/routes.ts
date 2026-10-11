@@ -104,6 +104,8 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  defineQuery({ id:"listGateDecisions",method:"GET",path:"/tasks/{id}/decisions",access:"read",input:evidence.evidenceQuery,response:evidence.decisionsResponse,status:200,query:(input,id)=>({kind:"task.decisions",id,input}) }),
+  defineQuery({ id:"listReworks",method:"GET",path:"/tasks/{id}/reworks",access:"read",input:evidence.evidenceQuery,response:evidence.reworksResponse,status:200,query:(input,id)=>({kind:"task.reworks",id,input}) }),
   defineCommand({ id:"replaceDependencies", method:"PUT", path:"/tasks/{id}/dependencies", access:"human", input:evidence.dependenciesInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.dependencies",id,input}) }),
   defineCommand({ id:"editReviewPolicy", method:"PATCH", path:"/tasks/{id}/review-policy", access:"human", input:evidence.reviewPolicyInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.review-policy",id,input}) }),
   defineCommand({ id:"publishArtifact", method:"POST", path:"/tasks/{id}/artifact", access:"human", input:evidence.artifactInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.artifact",id,input}) }),

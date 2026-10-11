@@ -235,3 +235,15 @@ and one quiet performance invocation. CLI timings include real process startup
 and native work through EXIT, with complete output drain awaited afterward. They
 use their documented delivery/kill bounds and relative comparison, not the HTTP
 query's 250 ms absolute budget. Graph controls never execute these commands.
+
+## W02 reported evidence
+
+The existing `run register` and `report` commands use the shared optional evidence
+fields. Review/verification registration supplies all three of `workRevision`,
+`artifactRef`, and `reworkRound` when its policy requires evidence, or when the
+producer intends to report a decision. `run.succeeded` payloads may publish an
+implementation `artifactRef` plus optional inert `displayUrl`, or a review/
+verification `decision` plus bounded `evidenceNote`. They remain ordinary durable
+outbox reports with original IDs, bytes, digests and sequences. Legacy optional
+review bodies remain valid. The CLI has no dependency, policy, artifact-edit,
+rework or completion command. Those actions require the browser role.
