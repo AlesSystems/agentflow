@@ -653,3 +653,27 @@ Remaining: exact final candidate/evidence review, coordinator verification,
 guarded PR/normal matching-head merge, archive-before-cleanup and only then W02.
 Package completion boxes remain open until reviewed integration. No tag or
 complete-v1 claim is made.
+
+
+## Verified W01 integration and cleanup
+
+[PR #11](https://github.com/AlesSystems/agentflow/pull/11) merged at
+2026-10-11 07:47:26 UTC. Exact reviewed head
+`4e527a4b1fc31200eeda45a72a67d214b4b064ea` has the same tree as merge
+`e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. Root read complete independent
+Standards and Spec reports, verified no blockers, exact GitHub head/base and
+normal matching-head integration, and confirmed candidate ancestry plus clean
+primary fast-forward. Report hashes and guarded cleanup qualifications are in
+[the W01 receipt](implementation/W01.md#integration-and-cleanup-on-2026-10-11).
+
+All 254,437 private archive members and 1,057 critical files passed independent
+streaming verification before exact identity-guarded removal of the owned
+temporary root at 08:33:46 UTC. The archive remains private. Original and
+quarantine roots are absent; the completed owned branch is removed locally and
+remotely. Primary and reusable managed checkout are clean at the merge. No
+operator data, skills, external pins, or global caches changed. Historical runtime
+results retain their original sources and qualifications.
+
+W01 completion boxes are closed. Next is the [W02 implementation plan](superpowers/plans/2026-10-11-w02-dependencies.md),
+then exact-plan Astra medium approval before its first source change. W03a–W04
+and source release remain open. No tag or complete-v1 claim is made.

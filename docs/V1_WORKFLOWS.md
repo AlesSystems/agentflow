@@ -1,10 +1,10 @@
 # v1 workflows and evidence
 
-Status: design contract, pending implementation and validation. On 2026-10-09 the
-operator requested all phases in order for one future implementation run. This
-file proposes the bounded Phase 3 choices within that scope; it does not claim
-these details were individually approved, implemented, or tested. The current
-change is documentation only. [PLAN.md](../PLAN.md) and
+Status: active Phase 3 contract. W01 is integrated through PR #11, with qualified
+verification recorded in [its receipt](implementation/W01.md). W02 is planning
+only and requires Astra medium approval before source implementation. W03a–W04
+remain unimplemented and unvalidated. The operator activated the ordered v1 run
+on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
 
 W01 follows the Phase 2 tracking foundation. W02 follows W01. Execute W03a,

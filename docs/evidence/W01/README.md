@@ -21,5 +21,6 @@ new dependency notice texts under [notices/](notices/).
 unchanged development findings. These are not legal/security completeness claims.
 
 See [the implementation receipt](../../implementation/W01.md) for actual command
-exits, qualified suite compositions, source attribution and remaining final
-integration review. W01 is not merged and no release is declared here.
+exits, qualified suite compositions, source attribution, and verified PR #11
+integration/cleanup. W01 is integrated; complete-v1 validation and release remain
+open. The historical acceptance JSON retains its original measured-source state.
