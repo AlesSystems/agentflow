@@ -218,9 +218,13 @@ async function nativeIdentity(
 }
 const mode = process.argv[2];
 assert(
-  ["--prepare", "--control", "--control-changed", "--acceptance"].includes(
-    mode,
-  ),
+  [
+    "--prepare",
+    "--control",
+    "--control-changed",
+    "--control-failure",
+    "--acceptance",
+  ].includes(mode),
   "explicit W01 preparation/control/acceptance mode required",
 );
 const preparedRoot = process.env.AGENTFLOW_W01_PREPARED_ROOT;
@@ -246,7 +250,8 @@ if (mode === "--prepare") {
   );
 } else {
   const acceptance = mode === "--acceptance",
-    changedControl = mode === "--control-changed";
+    changedControl = mode === "--control-changed",
+    failureControl = mode === "--control-failure";
   if (acceptance)
     assert.equal(
       process.env.AGENTFLOW_W01_QUIET_RELEASE,
@@ -330,7 +335,7 @@ if (mode === "--prepare") {
     receipt,
     async (safeSave) => {
       for (let index = 1; index <= repetitions; index++) {
-        if (!changedControl) {
+        if (!changedControl && !failureControl) {
           const nativeErrors = proofErrors((error) =>
             receipt.failures.push(
               error instanceof Error ? error.message : "native stage failure",
@@ -367,16 +372,17 @@ if (mode === "--prepare") {
           );
           nativeErrors.throwFirst();
         }
-        await legacyCompare(
-          index,
-          prepared,
-          root,
-          samples,
-          acceptance,
-          receipt,
-          safeSave,
-        );
-        if (!changedControl)
+        if (!failureControl)
+          await legacyCompare(
+            index,
+            prepared,
+            root,
+            samples,
+            acceptance,
+            receipt,
+            safeSave,
+          );
+        if (!changedControl && !failureControl)
           await workflowQueries(
             index,
             prepared.workflows[index - 1],
@@ -394,6 +400,7 @@ if (mode === "--prepare") {
           acceptance,
           receipt,
           safeSave,
+          failureControl,
         );
       }
       const visible = receipt.visibility as {

@@ -324,6 +324,7 @@ export async function visibilityScenario(
   acceptance: boolean,
   receipt: { visibility: unknown[]; failures: string[] },
   save: () => void,
+  controlFault = false,
 ) {
   const dir = join(root, `workflow-visible-${index}`);
   cpSync(fixture.dir, dir, { recursive: true });
@@ -377,6 +378,7 @@ export async function visibilityScenario(
     views: {} as ReturnType<typeof viewDistributions>,
     database: null as ReturnType<typeof database> | null,
     failure: "",
+    cleanup: { browser: false, proxy: false, server: false },
     qualification:
       "Selected workflow is registered and its101-event initial producer prefix is delivered through actual CLI before samples, preserving durable local sequence authority. Finite real CLI dispatch through exact two-frame visible/hit-tested node evidence in two independent browser contexts, desktop1440/graph and narrow375/list. Controller performance clock measures both endpoints; no server/browser clock subtraction. Process startup is included. Not sustained/burst or whole-v1 proof.",
   };
@@ -565,6 +567,7 @@ export async function visibilityScenario(
         }),
       ).toBeVisible();
     }
+    if (controlFault) throw new Error("W01_CONTROL_BEFORE_SAMPLES");
     for (let ordinal = 0; ordinal < reports; ordinal++) {
       const nodeId = fixture.nodeIds[10 + ordinal];
       for (const page of pages) {
@@ -710,9 +713,19 @@ export async function visibilityScenario(
       );
     });
     errors.save(save, "visible before cleanup");
-    await errors.attempt("visible browser", async () => browser?.close());
-    await errors.attempt("visible proxy", async () => proxy?.close());
-    await errors.attempt("visible server", async () => server?.stop());
+    await errors.attempt("visible browser", async () => {
+      await browserOwner?.close();
+      result.cleanup.browser = true;
+      if (controlFault) throw new Error("W01_CONTROL_BROWSER_CLEANUP_ERROR");
+    });
+    await errors.attempt("visible proxy", async () => {
+      await proxy?.close();
+      result.cleanup.proxy = true;
+    });
+    await errors.attempt("visible server", async () => {
+      await server?.stop();
+      result.cleanup.server = true;
+    });
     if (!result.database)
       await errors.attempt("visible partial database", async () => {
         result.database = database(dir, fixture.workflowRunId);
