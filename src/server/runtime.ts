@@ -1,3 +1,4 @@
+import { GithubCoordinator } from "../integrations/github/coordinator";
 import type { openOwnedStore } from "../db";
 import type { RuntimeConfig } from "./config";
 import { HttpError, validateEnvelope } from "./security";
@@ -7,15 +8,17 @@ type Runtime = {
   config: RuntimeConfig;
   owned: Owned;
   identity: object;
+  github: GithubCoordinator;
 };
 const key = Symbol.for("agentflow.live-runtime");
 const globalRuntime = globalThis as typeof globalThis & {
   [key]: Runtime | undefined;
 };
-export function publishRuntime(config: RuntimeConfig, owned: Owned) {
+export function publishRuntime(config: RuntimeConfig, owned: Owned, github=new GithubCoordinator(owned.store,config.githubTokenFile)) {
   if (globalRuntime[key]) throw new Error("RUNTIME_ALREADY_OWNED");
   globalRuntime[key] = {
     kind: "ready",
+    github,
     config,
     owned,
     identity: Object.freeze({}),
@@ -38,7 +41,7 @@ export function guard(headers: Headers) {
 }
 export function beginClosing() {
   const state = globalRuntime[key];
-  if (state) state.kind = "closing";
+  if (state) {state.kind = "closing";state.github.beginClosing();}
 }
 export function clearRuntime() {
   delete globalRuntime[key];

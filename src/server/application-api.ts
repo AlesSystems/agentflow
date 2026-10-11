@@ -64,17 +64,13 @@ export async function applicationApi(request: Request) {
     )
       throw new HttpError(422, "validation_failed");
     if (parsed.action.kind === "command" && parsed.action.command.kind === "workflow.run.event" && parsed.action.command.input.workflowRunId !== id) throw new HttpError(422, "validation_failed");
-    const reply =
-      parsed.action.kind === "command"
-        ? state.owned.store.command(parsed.action.command, {
-            principal: state.principal.id,
-            method: request.method,
-            path,
-            key: request.headers.get("idempotency-key")?.toLowerCase() ?? "",
-            digest: canonicalDigest(original),
-            now: Date.now(),
-          })
-        : state.owned.store.snapshot(parsed.action.query, Date.now());
+    const context={principal:state.principal.id,method:request.method,path,key:request.headers.get("idempotency-key")?.toLowerCase() ?? "",digest:canonicalDigest(original),now:Date.now()};
+    const action=parsed.action;
+    const reply = action.kind === "command"
+      ? action.command.kind === "github.refresh" ? await state.github.refresh(action.command.input,context)
+        : action.command.kind === "github.repositories" ? state.github.repositories(action.command.input,context)
+        : state.owned.store.command(action.command,context)
+      : action.query.kind === "github" ? state.github.snapshot(action.query.input) : state.owned.store.snapshot(action.query,Date.now());
     const taskReply = endpoint.taskCreationReply;
     const minimal = taskReply && taskCreationPreference(request.headers.get("Prefer"));
     const response = json(minimal ? taskReply.project(reply.body) : reply.body, reply.status, {

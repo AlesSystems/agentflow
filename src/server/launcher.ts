@@ -1,3 +1,4 @@
+import { GithubCoordinator } from "../integrations/github/coordinator";
 import { createServer, type IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
 import { Readable } from "node:stream";
@@ -21,6 +22,7 @@ import {
 type LifecycleHooks = {
   beforeDispatch?: (request: IncomingMessage) => Promise<void>;
   beforeStoreClose?: () => Promise<void>;
+  githubTransport?: typeof fetch;
 };
 export async function startRuntime(
   config: RuntimeConfig,
@@ -33,6 +35,7 @@ export async function startRuntime(
   const owned = await openOwnedStore(config.dataDir);
   let app: Awaited<ReturnType<(typeof import("next"))["default"]>> | undefined;
   let server: ReturnType<typeof createServer> | undefined;
+  const github=new GithubCoordinator(owned.store,config.githubTokenFile,hooks.githubTransport);
   const mutationBudget = new MutationBudget();
   const streams = new ChangeStreams(owned.store, owned.credentials);
   const sockets = new Set<Socket>();
@@ -41,6 +44,7 @@ export async function startRuntime(
   async function shutdown() {
     if (shutdownPromise) return shutdownPromise;
     beginClosing();
+    github.beginClosing();
     streams.close();
     shutdownPromise = (async () => {
       if (server) {
@@ -55,6 +59,7 @@ export async function startRuntime(
         clearTimeout(timer);
       }
       await Promise.allSettled([...requests]);
+      await github.close();
       await owned.store.drain();
       await app?.close();
       await hooks.beforeStoreClose?.();
@@ -72,7 +77,7 @@ export async function startRuntime(
       port: config.port,
     });
     await app.prepare();
-    publishRuntime(config, owned);
+    publishRuntime(config, owned, github);
     const handler = app.getRequestHandler();
     async function dispatch(
       request: IncomingMessage,
