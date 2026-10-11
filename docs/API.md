@@ -394,3 +394,25 @@ changes task acceptance or linked run lifecycle. Human-only
 to active silence over 60 seconds and records interrupted without refreshing the
 last report time or controlling any external process. Project archive rejects
 active workflow attempts as well as task attempts.
+
+### Bounded task-create reply preference
+
+`POST /tasks` optionally accepts the single preference `Prefer: return=minimal`.
+The preference name is case-insensitive; its value `minimal` is case-sensitive.
+Surrounding spaces/tabs and spaces/tabs around `=` are accepted. Unsupported,
+malformed, duplicate or conflicting forms return the existing full task receipt.
+Other endpoints retain their existing representations.
+
+The compact envelope preserves the original committed status, snapshotCursor and
+body generation. Its strict data contains `kind: "task"`, canonical task/project
+UUIDs, nullable parentTaskId/assignedAgentId and original version/workRevision 1.
+It is a deterministic projection of the stored full creation result; its JSON is
+not byte-equal to the stored full receipt. Preference is absent from the mutation
+key/digest, and projection performs no current task read or new write. Exact POST
+retry retains original creation evidence after edits, archive, restart or a restore
+that retains the receipt. Normal task GET continues to return current detail.
+
+Successful task creation replies keep no-store and append `Prefer` to Vary for
+both representations. Only compact replies acknowledge
+`Preference-Applied: return=minimal`. The current generation response header retains
+its existing meaning, including a historical body replay after restore.

@@ -1,4 +1,5 @@
 import "server-only";
+import { taskCreationPreference } from "../contracts/task-registration";
 import { uuid } from "../contracts/common";
 import { canonicalDigest } from "../domain/request-digest";
 import { matchEndpoint, validResourceId } from "../contracts/routes";
@@ -74,7 +75,14 @@ export async function applicationApi(request: Request) {
             now: Date.now(),
           })
         : state.owned.store.snapshot(parsed.action.query, Date.now());
-    return json(reply.body, reply.status, { "AgentFlow-Generation": generation! });
+    const taskReply = endpoint.taskCreationReply;
+    const minimal = taskReply && taskCreationPreference(request.headers.get("Prefer"));
+    const response = json(minimal ? taskReply.project(reply.body) : reply.body, reply.status, {
+      "AgentFlow-Generation": generation!,
+      ...(minimal ? { "Preference-Applied": "return=minimal" } : {}),
+    });
+    if (taskReply) response.headers.append("Vary", "Prefer");
+    return response;
   } catch (error) {
     return failure(error, generation);
   }

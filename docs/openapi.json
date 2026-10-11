@@ -14522,6 +14522,16 @@
         "parameters": [
           {
             "in": "header",
+            "name": "Prefer",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "return=minimal",
+            "description": "Task create only. Single return=minimal preference accepts case-insensitive name and surrounding/equal-sign spaces or tabs; the value minimal is case-sensitive. Unsupported, malformed, duplicate or conflicting forms return the full receipt. Compact data is a pure view of the original receipt, with original status/cursor/body generation and current generation header."
+          },
+          {
+            "in": "header",
             "name": "Idempotency-Key",
             "required": true,
             "schema": {
@@ -14666,6 +14676,20 @@
           "201": {
             "description": "Committed result",
             "headers": {
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Prefer",
+                "description": "Full and minimal task creation representations vary on Prefer; existing Vary values remain."
+              },
+              "Preference-Applied": {
+                "schema": {
+                  "type": "string",
+                  "const": "return=minimal"
+                },
+                "description": "Present only for the compact task creation representation."
+              },
               "AgentFlow-Generation": {
                 "description": "Current database generation, including exact retries.",
                 "schema": {
@@ -14677,232 +14701,336 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
+                  "anyOf": [
+                    {
                       "type": "object",
                       "properties": {
-                        "title": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 200
-                        },
-                        "description": {
-                          "type": "string",
-                          "maxLength": 20000
-                        },
-                        "acceptanceCriteria": {
-                          "type": "string",
-                          "maxLength": 8000
-                        },
-                        "priority": {
-                          "type": "string",
-                          "enum": [
-                            "low",
-                            "normal",
-                            "high",
-                            "urgent"
-                          ]
-                        },
-                        "tags": {
-                          "maxItems": 20,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 40
-                          }
-                        },
-                        "assignedAgentId": {
-                          "anyOf": [
-                            {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
                               "type": "string",
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "targetRole": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "orchestrator",
-                                "implementation",
-                                "reviewer",
-                                "verifier"
-                              ]
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "parentTaskId": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "branch": {
-                          "anyOf": [
-                            {
-                              "type": "string",
+                              "minLength": 1,
                               "maxLength": 200
                             },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "pullRequestUrl": {
-                          "anyOf": [
-                            {
+                            "description": {
                               "type": "string",
-                              "maxLength": 2000,
-                              "format": "uri"
+                              "maxLength": 20000
                             },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "blockedReason": {
-                          "anyOf": [
-                            {
+                            "acceptanceCriteria": {
                               "type": "string",
-                              "maxLength": 4000
+                              "maxLength": 8000
                             },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "projectId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "backlog",
-                            "in_progress",
-                            "review",
-                            "completed"
-                          ]
-                        },
-                        "version": {
-                          "type": "integer",
-                          "exclusiveMinimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "workRevision": {
-                          "type": "integer",
-                          "exclusiveMinimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                        },
-                        "completedAt": {
-                          "anyOf": [
-                            {
+                            "priority": {
+                              "type": "string",
+                              "enum": [
+                                "low",
+                                "normal",
+                                "high",
+                                "urgent"
+                              ]
+                            },
+                            "tags": {
+                              "maxItems": 20,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 40
+                              }
+                            },
+                            "assignedAgentId": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "targetRole": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "orchestrator",
+                                    "implementation",
+                                    "reviewer",
+                                    "verifier"
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "parentTaskId": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "branch": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 200
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "pullRequestUrl": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 2000,
+                                  "format": "uri"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "blockedReason": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 4000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "projectId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "backlog",
+                                "in_progress",
+                                "review",
+                                "completed"
+                              ]
+                            },
+                            "version": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "workRevision": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "createdAt": {
                               "type": "string",
                               "format": "date-time",
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                             },
-                            {
-                              "type": "null"
+                            "updatedAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "completedAt": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             }
-                          ]
+                          },
+                          "required": [
+                            "title",
+                            "description",
+                            "acceptanceCriteria",
+                            "priority",
+                            "tags",
+                            "assignedAgentId",
+                            "targetRole",
+                            "parentTaskId",
+                            "branch",
+                            "pullRequestUrl",
+                            "blockedReason",
+                            "id",
+                            "projectId",
+                            "status",
+                            "version",
+                            "workRevision",
+                            "createdAt",
+                            "updatedAt",
+                            "completedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "snapshotCursor": {
+                          "type": "string",
+                          "pattern": "^(0|[1-9][0-9]{0,18})$"
+                        },
+                        "generation": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                         }
                       },
                       "required": [
-                        "title",
-                        "description",
-                        "acceptanceCriteria",
-                        "priority",
-                        "tags",
-                        "assignedAgentId",
-                        "targetRole",
-                        "parentTaskId",
-                        "branch",
-                        "pullRequestUrl",
-                        "blockedReason",
-                        "id",
-                        "projectId",
-                        "status",
-                        "version",
-                        "workRevision",
-                        "createdAt",
-                        "updatedAt",
-                        "completedAt"
+                        "data",
+                        "snapshotCursor",
+                        "generation"
                       ],
                       "additionalProperties": false
                     },
-                    "snapshotCursor": {
-                      "type": "string",
-                      "pattern": "^(0|[1-9][0-9]{0,18})$"
-                    },
-                    "generation": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "task"
+                            },
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "projectId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "parentTaskId": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "assignedAgentId": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "version": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "workRevision": {
+                              "type": "number",
+                              "const": 1
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "id",
+                            "projectId",
+                            "parentTaskId",
+                            "assignedAgentId",
+                            "version",
+                            "workRevision"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "snapshotCursor": {
+                          "type": "string",
+                          "pattern": "^(0|[1-9][0-9]{0,18})$"
+                        },
+                        "generation": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "snapshotCursor",
+                        "generation"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "data": {
+                        "id": "10000000-0000-4000-8000-000000000002",
+                        "projectId": "10000000-0000-4000-8000-000000000001",
+                        "parentTaskId": null,
+                        "title": "Synthetic task",
+                        "description": "",
+                        "acceptanceCriteria": "",
+                        "status": "backlog",
+                        "priority": "normal",
+                        "tags": [],
+                        "assignedAgentId": null,
+                        "targetRole": null,
+                        "branch": null,
+                        "pullRequestUrl": null,
+                        "blockedReason": null,
+                        "version": 1,
+                        "workRevision": 1,
+                        "createdAt": "2026-10-09T00:00:00.000Z",
+                        "updatedAt": "2026-10-09T00:00:00.000Z",
+                        "completedAt": null
+                      },
+                      "snapshotCursor": "0",
+                      "generation": "10000000-0000-4000-8000-000000000004"
                     }
                   },
-                  "required": [
-                    "data",
-                    "snapshotCursor",
-                    "generation"
-                  ],
-                  "additionalProperties": false
-                },
-                "example": {
-                  "data": {
-                    "id": "10000000-0000-4000-8000-000000000002",
-                    "projectId": "10000000-0000-4000-8000-000000000001",
-                    "parentTaskId": null,
-                    "title": "Synthetic task",
-                    "description": "",
-                    "acceptanceCriteria": "",
-                    "status": "backlog",
-                    "priority": "normal",
-                    "tags": [],
-                    "assignedAgentId": null,
-                    "targetRole": null,
-                    "branch": null,
-                    "pullRequestUrl": null,
-                    "blockedReason": null,
-                    "version": 1,
-                    "workRevision": 1,
-                    "createdAt": "2026-10-09T00:00:00.000Z",
-                    "updatedAt": "2026-10-09T00:00:00.000Z",
-                    "completedAt": null
-                  },
-                  "snapshotCursor": "0",
-                  "generation": "10000000-0000-4000-8000-000000000004"
+                  "minimal": {
+                    "value": {
+                      "data": {
+                        "kind": "task",
+                        "id": "10000000-0000-4000-8000-000000000002",
+                        "projectId": "10000000-0000-4000-8000-000000000001",
+                        "parentTaskId": null,
+                        "assignedAgentId": null,
+                        "version": 1,
+                        "workRevision": 1
+                      },
+                      "snapshotCursor": "0",
+                      "generation": "10000000-0000-4000-8000-000000000004"
+                    }
+                  }
                 }
               }
             }
@@ -18422,6 +18550,87 @@
       }
     },
     "schemas": {
+      "TaskRegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "task"
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "projectId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "parentTaskId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "assignedAgentId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "workRevision": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "kind",
+              "id",
+              "projectId",
+              "parentTaskId",
+              "assignedAgentId",
+              "version",
+              "workRevision"
+            ],
+            "additionalProperties": false
+          },
+          "snapshotCursor": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,18})$"
+          },
+          "generation": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "data",
+          "snapshotCursor",
+          "generation"
+        ],
+        "additionalProperties": false
+      },
       "TaskDetailV1": {
         "type": "object",
         "properties": {

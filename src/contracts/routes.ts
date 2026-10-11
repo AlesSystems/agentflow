@@ -1,3 +1,5 @@
+import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
+import type { SnapshotBody } from "../db/application";
 import { z } from "zod";
 import { streamQuery, changeNotice } from "./stream";
 import { pageQuery, uuid } from "./common";
@@ -42,6 +44,7 @@ type EndpointBase = {
   response: z.ZodType;
   status: number;
   eventIdentity?: boolean;
+  taskCreationReply?: { response: z.ZodType; project: (body: SnapshotBody) => SnapshotBody };
   description?: string;
 };
 export type EndpointAction =
@@ -288,6 +291,7 @@ export const endpoints: Endpoint[] = [
   }),
   defineCommand({
     id: "createTask",
+    taskCreationReply: { response: taskRegistrationResponse, project: projectTaskRegistration },
     method: "POST",
     path: "/tasks",
     access: "report",

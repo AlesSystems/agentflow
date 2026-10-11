@@ -4,6 +4,7 @@ import { uuid } from "../contracts/common";
 import { projectCreate } from "../contracts/projects";
 import { taskCreate } from "../contracts/tasks";
 import { agentCreate, agentResponse, eventInput, eventResponse, runRegister, runResponse } from "../contracts/observations";
+import { taskRegistrationResponse } from "../contracts/task-registration";
 import * as workflows from "../contracts/workflows";
 import { projectResponse, taskResponse } from "../contracts/responses";
 import { CliError, cliConfig, deadline, readJson, type CliConfig } from "./config";
@@ -21,6 +22,7 @@ const commands = {
 const registrationResponses = {"/projects":projectResponse,"/tasks":taskResponse,"/agents":agentResponse,"/runs":runResponse};
 type RegistrationResponse = { data: { id: string; projectId?: string; parentTaskId?: string | null; assignedAgentId?: string | null; version?: number; workRevision?: number | null; workflowId?: string; planRevisionId?: string; revision?: number }; snapshotCursor: string; generation: string };
 function registrationResponse(path: string): z.ZodType<RegistrationResponse> {
+  if(path === "/tasks")return z.union([taskRegistrationResponse,taskResponse]);
   if(path === "/workflows")return workflows.workflowResponse;
   if(path === "/workflow-runs")return workflows.workflowRunResponse;
   if(path.startsWith("/workflows/")&&registrationInput(path))return workflows.revisionAcknowledgementResponse;
@@ -35,9 +37,14 @@ async function turn(job: Job,outbox: Outbox,config: CliConfig,end: number,before
   if (job.kind === "registration") {
     const record = job.record;
     await beforeAttempt?.();
-    const reply = await request(config,record.path,registrationResponse(record.path),end,record.body,record.key);
+    const reply = await request(config,record.path,registrationResponse(record.path),end,record.body,record.key,record.path === "/tasks" ? "return=minimal" : undefined);
     if (reply.kind !== "delivered") return reply;
     const data=reply.data.data;
+    if(record.path === "/tasks") {
+      const input=taskCreate.parse(record.body);
+      const same=(actual: string | null | undefined, expected: string | null | undefined)=>actual?.toLowerCase() === (expected?.toLowerCase() ?? null) || actual === null && expected == null;
+      if(data.projectId?.toLowerCase() !== input.projectId || !same(data.parentTaskId,input.parentTaskId) || !same(data.assignedAgentId,input.assignedAgentId) || data.version !== 1 || data.workRevision !== 1)return {kind:"blocked" as const,code:"registration_identity_mismatch"};
+    }
     if(typeof record.body.id === "string" && data.id.toLowerCase() !== record.body.id.toLowerCase()) return {kind:"blocked" as const,code:"registration_identity_mismatch"};
     if(record.path.startsWith("/workflows/") && data.workflowId !== record.path.split("/")[2])return {kind:"blocked" as const,code:"registration_identity_mismatch"};
     if(record.path === "/workflow-runs" && (data.workflowId !== String(record.body.workflowId).toLowerCase() || data.planRevisionId !== String(record.body.planRevisionId).toLowerCase()))return {kind:"blocked" as const,code:"registration_identity_mismatch"};
