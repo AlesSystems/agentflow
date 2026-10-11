@@ -33,3 +33,22 @@ it("startup records interrupted receipts without outbound retry",async()=>{
  const coordinator=new GithubCoordinator(owned.store,undefined,async()=>{calls++;throw Error("unexpected");});
  try{expect((await coordinator.refresh(request,c)).body.data).toMatchObject({outcome:"interrupted",error:"interrupted"});expect(calls).toBe(0);}finally{await coordinator.close();owned.close();}
 });
+it("preserves Retry-After across saves, disconnect and scope replacement while replay and expiry remain usable",async()=>{
+ const dir=mkdtempSync(join(realpathSync(tmpdir()),"w03a-rate-settings-")),file=join(dir,"token.json");writeFileSync(file,JSON.stringify({token:"SYNTHETIC"}),{mode:0o600});
+ const owned=await openOwnedStore(join(dir,"data"));let calls=0;
+ const server=createServer((_req,res)=>{calls++;if(calls===1){res.writeHead(429,{"Retry-After":"60"});res.end();}else res.end("[]");});await new Promise<void>(resolve=>server.listen(0,"127.0.0.1",resolve));
+ const port=(server.address() as {port:number}).port,transport:typeof fetch=(url,init)=>fetch(String(url).replace("https://api.github.com",`http://127.0.0.1:${port}`),init),coordinator=new GithubCoordinator(owned.store,file,transport);
+ try{
+  const save=(expectedVersion:number,enabled:boolean,repositories:string[])=>{const input={expectedVersion,enabled,repositories};return coordinator.repositories(input,{...context(input),method:"PUT",path:"/api/v1/connections/github/repositories"});};
+  save(1,true,["a/b"]);const request={expectedVersion:2,repository:"a/b",page:1} as const,c=context(request),receipt=await coordinator.refresh(request,c);
+  expect(receipt.body.data).toMatchObject({outcome:"failed",error:"rate_limited"});expect(calls).toBe(1);
+  const connection=()=> (coordinator.snapshot({limit:1}).body.data as {connection:{retryNotBefore:string|null}}).connection;
+  const deadline=connection().retryNotBefore!;expect(Date.parse(deadline)).toBeGreaterThan(c.now);
+  const blocked=async(version:number,repository="a/b")=>{const input={expectedVersion:version,repository,page:1} as const;await expect(coordinator.refresh(input,{...context(input),now:c.now+1})).rejects.toThrow("github_rate_limited");expect(connection().retryNotBefore).toBe(deadline);expect(calls).toBe(1);expect(await coordinator.refresh(request,c)).toEqual(receipt);};
+  save(2,true,["a/b"]);await blocked(3);
+  save(3,false,[]);expect(await coordinator.refresh(request,c)).toEqual(receipt);expect(connection().retryNotBefore).toBe(deadline);
+  save(4,true,["a/b"]);await blocked(5);
+  save(5,true,["c/d"]);await blocked(6,"c/d");
+  const expired={expectedVersion:6,repository:"c/d",page:1} as const;expect((await coordinator.refresh(expired,{...context(expired),now:Date.parse(deadline)+1})).body.data).toMatchObject({outcome:"fetched"});expect(calls).toBe(2);expect(connection().retryNotBefore).toBeNull();expect(await coordinator.refresh(request,c)).toEqual(receipt);expect(calls).toBe(2);
+ }finally{await coordinator.close();await new Promise<void>(resolve=>{server.close(()=>resolve());server.closeAllConnections();});owned.close();}
+});
