@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. P07 is next; W01 through W04 have not started.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. P07 validation passed and awaits final independent review and integration; W01 through W04 have not started.
 
 ## Package state
 
@@ -20,7 +20,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P04 | Agent ingestion | Integrated | Candidate `9887c4124277269d24329d51f2b0ff3b197ff278`; merge `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`, PR #7 | [Receipt](implementation/P04.md), [verification](evidence/P04/verification.json) |
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
-| P07 | Phase 2 checkpoint | Not started | — | — |
+| P07 | Phase 2 checkpoint | Validation passed; final review/integration pending | Executable `2b27403a797dcb3c7a640b14a0b104ac611d154a`; docs/public candidate `9c5bc701a7ff9fda6961de9d54a7e0c23bfd83c3` | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Not started | — | — |
 | W02 | Dependencies/review/rework | Not started | — | — |
 | W03a | GitHub PR observation | Not started | — | — |
@@ -436,3 +436,73 @@ Next: plan P07's Phase 2 checkpoint, obtain Astra medium approval, then execute
 isolated-install, combined-load observer sampling, recovery/auth/keyboard/license
 and full relevant validation under the execution policy. P07 is not a v0.1 release;
 continue through W01–W04 before the final independently reviewed v1 source release.
+
+
+## Current P07 handoff
+
+All current verification passed at executable source
+`2b27403a797dcb3c7a640b14a0b104ac611d154a`: 153 unit tests in 32 files,
+396 integration tests in 63 files, and 34 actual Chrome journeys. Full lint,
+types (`--incremental false`), OpenAPI and diff checks passed. The final
+`9c5bc701a7ff9fda6961de9d54a7e0c23bfd83c3` delta is documentation and public
+synthetic evidence only. Coordinator documentation updates precede independent
+Standards and Spec review of the exact integration candidate.
+
+Astra medium approved the original P07 plan and the bounded measurement and
+warm-accounting repair plans. The final repair plan SHA-256 is
+`78c28dd784956130671550d0e1649d0599414df7200d941a42ae6cfadcb1a966`;
+its approval is `1232c041cf9badb54b16b5f02c17124a96cbca6c3ad30f390ab8e57e2a4205bf`.
+Independent shipping/helper readiness approval at `2b27403` is
+`c94d981cd7192fa3b77de11d51e982d2397811fc933823e3872212af058afec6`.
+The shipping change moves initialized outbox accounting behind its existing
+native publication lease. Cold bootstrap, ownership, quotas, durable preservation,
+sequence allocation and delivery contracts retain focused regression coverage.
+An independently controlled filesystem/native-lock race supplied a real ENOENT
+counterexample. It does not establish the cause of an earlier aggregate test
+failure whose six individual outputs were unavailable. New concurrent tests
+retain every actual child return before asserting.
+
+Historical application measurements belong to `534140b`: three full load scenarios
+with 21,000 timed events, 384 confirmed browser targets and no missing/wrong/late
+targets or strict missed slots. Sustained HTTP p95 was 21.65–22.02 ms; worst
+visible p95 was 528.20 ms. Three native comparisons retained 4,200 measured
+samples plus 420 warmups; worst p95 was 1.947 ms and worst positive change
+10.302%, below the 20% budget. After 100 connection cycles, server heap changed
++0.728%, stream leases returned to baseline and shutdown resources reached zero.
+Applicability to current application code is proven by 87 unchanged application/
+build inputs, 417 exact retained assets and a checked import graph excluding the
+changed CLI module. These are attributed application measurements, not a current
+execution of the whole earlier campaign.
+
+The changed CLI was measured separately at `2b27403` through three fresh
+1,000-report fixtures. Startup-inclusive flush walls were 92,815.614, 92,462.684
+and 92,634.664 ms, all below 120,000 ms. Root reconciled 3,000 unique original
+queue bodies, full HTTP acknowledgements, API, SQLite, stdout and sequence
+watermarks, with zero pending/missing/duplicate originals. The 32 exact HTTP 200
+replays are separate. Setup time is excluded and disclosed. No relative CLI
+speedup is claimed.
+
+Root matched the final freeze, 416 tracked files in both sources, 52,889 new
+regular-file hashes, 55,119 descendant identities/modes and all five historical
+inventories. Three intentional FIFO fixtures were classified without reading
+them. Original ignored outputs were restored with their bytes, modes and inode
+identities; the previously absent review output subtree remains absent. Main
+assets, native addon and installed tool hashes match; post-audit scoped lsof
+was empty. Root inspected both published screenshots and verified the whitelist
+receipt. Private full evidence stays outside tracked data; public files contain
+synthetic identities and summaries. Root's final verification receipt SHA-256 is
+`8ffafba91d1c919c753149636e727226488d6a4cd3d1e5d15ea5ada999cda05b`.
+
+The fresh installation began at `9727bf9` with no node_modules or build output
+and reused the global npm cache. Named host: macOS 27.0 build 26A428, arm64,
+Node 24.15.0, npm 11.12.1 and Chrome 154.0.8037.99. Retained initial production
+assets qualify the unchanged application; the changed CLI executes current tsx
+source. There is no pristine-OS or Linux claim. Browser accept/reopen scenarios
+exercise synthetic human-role commands, not actual human attestations. Burst
+visibility has four samples per tab/scenario, so nearest-rank p95 equals maximum.
+Decoded UTF-8 response text is distinct from transport bytes. Dependency notice
+completeness and dev-tool audit limitations remain in the receipt.
+
+Next: independent Standards and Spec review of the coordinator's exact candidate,
+then guarded PR/normal merge, owned artifact cleanup and W01 planning/Astra medium
+approval. P07 remains unchecked until integration; no v1 tag/release is created here.
