@@ -6,7 +6,7 @@ import { expect,it } from "vitest";
 import { launch,pair } from "../fixtures/server";
 import { readinessResponse } from "../../src/contracts/evidence";
 
-it("atomically replaces a diamond and serializes real opposing-edge and prerequisite races",async()=>{
+for(const prerequisiteFirst of [false,true])it(`atomically replaces a diamond and serializes real races (prerequisite first ${prerequisiteFirst})`,async()=>{
  const server=await launch();const cookie=await pair(server);
  const traces:unknown[]=[];
  const call=async(path:string,input?:unknown,method=input?"POST":"GET",human=false,key=randomUUID())=>{const response=await fetch(server.url+"/api/v1"+path,{method,headers:{...(human?{Cookie:cookie,Origin:server.url}:{Authorization:"Bearer "+server.credentials().reporterToken}),"Content-Type":"application/json","Idempotency-Key":key},...(input?{body:JSON.stringify(input)}:{})});traces.push({path,method,key,input,status:response.status,body:await response.clone().json()});return response;};
@@ -14,7 +14,7 @@ it("atomically replaces a diamond and serializes real opposing-edge and prerequi
  const current=async(id:string)=>(await json("/tasks/"+id)).data.task;
  const deps=async(id:string,prerequisiteIds:string[])=>call("/tasks/"+id+"/dependencies",{expectedVersion:(await current(id)).version,prerequisiteIds},"PUT",true);
  const accept=async(id:string)=>{await json("/tasks/"+id,{expectedVersion:(await current(id)).version,status:"review"},"PATCH");return call("/tasks/"+id+"/complete",{expectedVersion:(await current(id)).version,evidenceNote:"Synthetic browser-role acceptance"},"POST",true);};
- const reopen=async(id:string)=>call("/tasks/"+id+"/reopen",{expectedVersion:(await current(id)).version,reason:"Synthetic race"},"POST",true);
+
  const db=new Database(join(server.dir,"agentflow.sqlite"),{readonly:true});
  try{
   const projectId=(await json("/projects",{name:"Synthetic W02 HTTP"})).data.id;
@@ -48,7 +48,10 @@ it("atomically replaces a diamond and serializes real opposing-edge and prerequi
   const opposing=await Promise.all([deps(x,[y]),deps(y,[x])]);expect(opposing.map(r=>r.status).sort()).toEqual([200,409]);expect(db.prepare("SELECT count(*) n FROM task_dependencies WHERE task_id IN (?,?)").get(x,y)).toEqual({n:1});
   const input={...registration,id:randomUUID(),expectedTaskVersion:(await current(a)).version};
   const regKey=randomUUID();
-  const [reg,opened]=await Promise.all([call("/runs",input,"POST",false,regKey),reopen(b)]);expect(opened.status).toBe(200);expect([201,409]).toContain(reg.status);
+  const reopenInput={expectedVersion:(await current(b)).version,reason:"Synthetic race"};
+  const operations=[()=>call("/runs",input,"POST",false,regKey),()=>call("/tasks/"+b+"/reopen",reopenInput,"POST",true)];
+  const replies=await Promise.all((prerequisiteFirst?[operations[1],operations[0]]:operations).map(operation=>operation()));
+  const [reg,opened]=prerequisiteFirst?[replies[1],replies[0]]:replies;expect(opened.status).toBe(200);expect([201,409]).toContain(reg.status);
   expect((await json("/tasks/"+a+"/readiness")).data).toMatchObject({ready:false,blockedPrerequisiteIds:[b]});
   const regBody=await reg.clone().json(),openedBody=await opened.clone().json();
   const reopenCursor=(db.prepare("SELECT cursor FROM changes WHERE entity_type='task' AND entity_id=? AND kind='reopen'").get(b) as {cursor:number}).cursor;
@@ -63,7 +66,10 @@ it("atomically replaces a diamond and serializes real opposing-edge and prerequi
   const [p,q]=await Promise.all([create(),create()]);expect((await accept(p)).status).toBe(201);expect((await deps(q,[p])).status).toBe(200);await json("/tasks/"+q,{expectedVersion:(await current(q)).version,status:"review"},"PATCH");
   const completion={expectedVersion:(await current(q)).version,evidenceNote:"Synthetic race acceptance"};
   const completeKey=randomUUID();
-  const [done,unaccepted]=await Promise.all([call("/tasks/"+q+"/complete",completion,"POST",true,completeKey),reopen(p)]);expect(unaccepted.status).toBe(200);expect([201,409]).toContain(done.status);
+  const reopenP={expectedVersion:(await current(p)).version,reason:"Synthetic race"};
+  const completionOperations=[()=>call("/tasks/"+q+"/complete",completion,"POST",true,completeKey),()=>call("/tasks/"+p+"/reopen",reopenP,"POST",true)];
+  const completionReplies=await Promise.all((prerequisiteFirst?[completionOperations[1],completionOperations[0]]:completionOperations).map(operation=>operation()));
+  const [done,unaccepted]=prerequisiteFirst?[completionReplies[1],completionReplies[0]]:completionReplies;expect(unaccepted.status).toBe(200);expect([201,409]).toContain(done.status);
   expect((await json("/tasks/"+q+"/readiness")).data.ready).toBe(false);expect(db.prepare("SELECT count(*) n FROM completions WHERE task_id=?").get(q)).toEqual({n:done.status===201?1:0});
   const doneBody=await done.clone().json(),unacceptedBody=await unaccepted.clone().json();
   if(done.status===201){expect(BigInt(doneBody.snapshotCursor)).toBeLessThan(BigInt(unacceptedBody.snapshotCursor));const completedCursor=(db.prepare("SELECT cursor FROM changes WHERE entity_type='task' AND entity_id=? AND kind='complete'").get(q) as {cursor:number}).cursor;const prerequisiteCursor=(db.prepare("SELECT cursor FROM changes WHERE entity_type='task' AND entity_id=? AND kind='reopen'").get(p) as {cursor:number}).cursor;expect(completedCursor).toBeLessThan(prerequisiteCursor);}
@@ -71,5 +77,5 @@ it("atomically replaces a diamond and serializes real opposing-edge and prerequi
   traces.push({raceOrder:{regBody,openedBody,doneBody,unacceptedBody}});
   console.info(JSON.stringify({syntheticRace:{registrationStatus:reg.status,completionStatus:done.status,registrationId:input.id,dependentTaskId:q,readiness:(await json("/tasks/"+q+"/readiness")).data}}));
   for(const [suffix,method,body] of [["dependencies","PUT",{expectedVersion:1,prerequisiteIds:[]}],["review-policy","PATCH",{expectedVersion:1,reviewRequired:false,verificationRequired:false}],["artifact","POST",{expectedVersion:1,artifactRef:"x"}],["rework","POST",{expectedVersion:1,reason:"x"}],["complete","POST",{expectedVersion:1,evidenceNote:"x"}]] as const)expect((await call("/tasks/"+a+"/"+suffix,body,method)).status).toBe(403);
- }finally{if(process.env.AGENTFLOW_W02_EVIDENCE_DIR)writeFileSync(join(process.env.AGENTFLOW_W02_EVIDENCE_DIR,"http-transcript.json"),JSON.stringify({dir:server.dir,traces},null,2),{mode:0o600});db.close();await server.stop();}
+ }finally{if(process.env.AGENTFLOW_W02_EVIDENCE_DIR)writeFileSync(join(process.env.AGENTFLOW_W02_EVIDENCE_DIR,`http-transcript-${prerequisiteFirst}.json`),JSON.stringify({dir:server.dir,traces},null,2),{mode:0o600});db.close();await server.stop();}
 },30000);

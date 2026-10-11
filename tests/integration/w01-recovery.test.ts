@@ -42,5 +42,5 @@ it("rolls the additive workflow migration back and upgrades the P07 schema atomi
  await expect(openOwnedStore(dir, [...prefix, { ...original, sql, sha256: createHash("sha256").update(sql).digest("hex") }])).rejects.toThrow();
  const db = new Database(join(dir, "agentflow.sqlite"), { readonly: true });
  try { expect(db.prepare("SELECT name FROM sqlite_schema WHERE name LIKE 'workflow%'").all()).toEqual([]); expect(db.prepare("SELECT count(*) AS n FROM migration_history").get()).toEqual({ n: 6 }); } finally { db.close(); }
- const upgraded = await openOwnedStore(dir); try { expect(upgraded.store.integrity()).toEqual({ integrity: "ok", foreignKeys: [] }); expect(upgraded.store.metadata().schemaVersion).toBe(7); } finally { upgraded.close(); }
+ const upgraded = await openOwnedStore(dir); try { expect(upgraded.store.integrity()).toEqual({ integrity: "ok", foreignKeys: [] }); expect(upgraded.store.metadata().schemaVersion).toBe(migrations.length); } finally { upgraded.close(); }
 });
