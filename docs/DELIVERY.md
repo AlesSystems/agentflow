@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. W01 implementation and verification are ready for final integration review; it has not merged. W02–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W02 final verification is active; W03a–W04 remain unstarted.
 
 ## Package state
 
@@ -21,8 +21,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
-| W01 | Reported workflow graph | Ready for final integration review | Executable `7eb85f3ab9ccb93405e283541e86501fa5f19260`; merge pending | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
-| W02 | Dependencies/review/rework | Not started | — | — |
+| W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
+| W02 | Dependencies/review/rework | Final verification active | Helper/source `de24f611ac4db630d2ec1b732b786a53db32acc8`; timing and integration pending | [Receipt](implementation/W02.md) |
 | W03a | GitHub PR observation | Not started | — | — |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
@@ -725,3 +725,40 @@ The [task checklist](superpowers/plans/2026-10-11-w02-dependencies.md) closes Ta
 Next is Task 5 final executable suites and measurement-helper controls/preparation.
 Real timings require a frozen-input quiet release from the coordinator. All W02
 package boxes, W03a–W04, PR integration and source release remain open.
+
+## W02 final preparation gate
+
+Source/helper candidate `de24f611ac4db630d2ec1b732b786a53db32acc8` passed scoped
+independent Standards and Spec closures after actual controls reproduced and
+repaired measurement method, original CLI ledger, current-version, generation,
+visible-value, denominator, failed-request retention, deadline, private-copy and
+minimal/full receipt comparison defects. These are helper progression approvals;
+actual timing and final package review remain open. See [the receipt](implementation/W02.md#w02-task-5-preparation-and-source-qualification).
+
+The original unit run passed 182/38 before later helper changes, followed by 11
+current helper cases. Integration retains its original 469-pass/5-fail result and
+affected 42+1 repairs covering 474 distinct cases; it is not a retrospectively
+passing whole invocation. Chrome passed 61 with no skips at `a767c7b`; six current
+W02/control journeys passed against the fresh production head. Final lint, types
+and OpenAPI passed. Historical input and failure qualifications remain explicit.
+
+Fresh W01 base and W02 head installs/builds use the pinned runtime and their own
+locks/addons. The head application build was made at `f49d030`; later helper-only
+commits preserve all application/lock/addon bytes. Host qualification is macOS
+27.0 build26A428, arm64/Apple M4 Pro, Node24.15.0/npm11.12.1, Chrome154.0.8037.99;
+this is a fresh checkout on that host, not a pristine-OS or Linux result.
+
+Preparation and nonacceptance control passed with separate source-correct
+1000-task/10000-event seeds and the head-only workflow/diamond/gate fixture.
+The coordinator independently verified 825 compiled files, application/helper/
+native/runtime hashes, 15 unchanged frozen data files, seed counts/integrity/FKs,
+53 receipt hashes and source qualifications, raw control receipts/spools/SQLite
+joins, and twelve literal-value/two-frame/route/tuple confirmations. Control keeps
+48 not-run slots in its 60 denominator; it supplies no performance budget pass.
+The full declaration has 10230 operation samples, three interleaved repetitions,
+100 measured plus ten warmups per group, and all 60 visibility slots.
+
+Next: final frozen-input quiet release, one real campaign, metric/regression
+decisions, exact final candidate reviews, normal matching-head PR merge and
+archive-before-owned-cleanup. All W02 completion, W03a–W04 and source release boxes
+remain open. No timing, merge, or complete-v1 result is claimed here.
