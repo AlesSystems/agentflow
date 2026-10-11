@@ -702,3 +702,26 @@ Tasks 1–3 are closed in the [W02 task checklist](superpowers/plans/2026-10-11-
 Next is Task 4 UI under the same approved plan, followed by final browser/suite/
 performance/exact-review gates. All W02 package completion boxes, W03a–W04 and
 source release remain open. No W02 PR or merge is recorded at this stage.
+
+
+## W02 UI progression
+
+Task 4 passed independent Standards/Spec at exact
+`8f1e46bc7f1005b47333188d0f153672248035f1` and coordinator source/data verification.
+The [receipt](implementation/W02.md#verified-ui-progression-and-command-ownership-repairs)
+records two reproduced command-ownership discard defects and their narrow guards,
+actual body/key/receipt joins, current-versus-historical Graph/List facts, two-context
+rework/acceptance, dirty/reprepare/lost-response recovery, keyboard/375/native200
+checks, valid captures, and source-stage qualifications. Native captures preserve
+actual zoom; earlier cropped/protocol-failed images remain invalid historical evidence.
+Two self-inspection batches per surface are complete, with no further style polishing.
+
+The coordinator read both complete reports, verified hashes, matched all 514 source
+blobs and 46 indexed receipts, and inspected actual SQLite retries. Metadata, comment
+and completion preserve original keys and bodies; no duplicate comment/completion
+is stored. Synthetic acceptance remains distinct from human attestation.
+
+The [task checklist](superpowers/plans/2026-10-11-w02-dependencies.md) closes Task 4.
+Next is Task 5 final executable suites and measurement-helper controls/preparation.
+Real timings require a frozen-input quiet release from the coordinator. All W02
+package boxes, W03a–W04, PR integration and source release remain open.
