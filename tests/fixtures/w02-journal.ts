@@ -1,4 +1,6 @@
-import { ordinaryBoundary } from "./p07-ordinary";
+import { proofErrors } from "./p07-proof-errors";
+import { failureFact } from "./p07-warm-error";
+import type { ordinaryBoundary } from "./p07-ordinary";
 import assert from "node:assert/strict";
 import { openSync,writeSync,fsyncSync,closeSync,lstatSync } from "node:fs";
 import { join } from "node:path";
@@ -12,4 +14,13 @@ export function captureJournal(root:string,header:unknown,io:{write:(fd:number,b
  return {path,save,checkpoint(fact:unknown,write:()=>void){let primary:unknown;try{save(fact,"checkpoint","campaign");}catch(error){primary=error;}try{write();}catch(error){if(primary instanceof Error)Object.assign(primary,{aggregatePersistenceFailure:String(error)});else primary??=error;}if(primary!==undefined)throw primary;},close(){if(!closed){closed=true;closeSync(fd);}},ordinal:()=>ordinal};
 }
 
-export async function journalBoundary(result:Parameters<typeof ordinaryBoundary>[0]&{acceptance:boolean},work:Parameters<typeof ordinaryBoundary>[1],journal:ReturnType<typeof captureJournal>,snapshot:()=>unknown,write:()=>void,summary:()=>void,exitFailure:()=>void){return ordinaryBoundary(result,work,()=>journal.checkpoint(snapshot(),write),summary,exitFailure);}
+export async function journalBoundary(result:Parameters<typeof ordinaryBoundary>[0]&{acceptance:boolean},work:Parameters<typeof ordinaryBoundary>[1],journal:ReturnType<typeof captureJournal>,snapshot:()=>unknown,write:()=>void,summary:()=>void,exitFailure:()=>void){
+ const errors=proofErrors(error=>{result.acceptance=false;const message=failureFact(error).message;if(!result.failures.includes(message))result.failures.push(message);});result.failureFacts=errors.facts;
+ function checkpoint(critical=true){const prior=errors.failed();
+  try{journal.save(snapshot(),"checkpoint","campaign");}catch(error){errors.facts.persistence="Journal missing or incomplete; campaign invalid";errors.capture("journal checkpoint",error);}
+  try{write();}catch(error){errors.facts.persistence=(errors.facts.persistence?errors.facts.persistence+"; ":"")+"aggregate missing or earlier snapshot";errors.capture("aggregate checkpoint",error);}
+  if(critical&&!prior&&errors.failed())errors.throwFirst();
+ }
+ try{checkpoint();await work(checkpoint);}catch(error){errors.capture("W02 work",error);}
+ finally{result.finishedAt=new Date().toISOString();result.cleanup="Owned teardown attempted; partial errors retained and synthetic roots preserved";checkpoint(false);if(errors.failed())exitFailure();try{summary();}catch(error){errors.capture("W02 summary",error);}if(errors.failed())exitFailure();errors.throwFirst();}
+}
