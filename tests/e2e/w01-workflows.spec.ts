@@ -948,6 +948,31 @@ test("distinct historical node attempts remain reachable after a missing-run obs
         page.getByText("Linked attempt Unknown", { exact: true }),
       ).toBeVisible();
     }
+    const historicalTask = page
+      .locator(".workflow-evidence li")
+      .filter({ hasText: `Report ${f.implementationReport.eventId}` })
+      .getByRole("link", { name: "Open historical task", exact: true });
+    await expect(historicalTask).toHaveAttribute(
+      "href",
+      new RegExp(`/tasks/${f.taskId}\\?`),
+    );
+    await historicalTask.click();
+    await expect(
+      page.getByRole("heading", { name: "Task details", exact: true }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        async (id) =>
+          (await (await fetch(`/api/v1/tasks/${id}`)).json()).data.task.id,
+        f.taskId,
+      ),
+    ).toBe(f.taskId);
+    await page
+      .getByRole("link", { name: "Back to workflow", exact: true })
+      .click();
+    await expect(
+      page.locator(`button[data-node-id="${f.implementationNodeId}"]`),
+    ).toBeFocused();
   } finally {
     await server.stop();
   }
@@ -1042,6 +1067,161 @@ test("plan-only task nodes expose Unknown evidence and safe return without a fab
     await expect(
       page.getByRole("link", { name: "Back to workflow", exact: true }),
     ).toHaveCount(0);
+  } finally {
+    await server.stop();
+  }
+});
+
+test("desktop graph pointer edits stay disabled while keyboard zoom and evidence remain usable under reduced motion", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server);
+    await pairPage(page, server);
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(f.url);
+    const node = page.locator(
+      `.react-flow__node[data-id="${f.verificationNodeId}"]`,
+    );
+    await expect(node).toBeVisible();
+    await expect(node).toHaveAttribute("role", "group");
+    await expect(node).toHaveAttribute("aria-roledescription", "node");
+    await expect(node).toHaveAttribute("tabindex", "0");
+    await expect(node).toHaveAttribute("aria-label", /Verify the change/);
+    const transform = await node.getAttribute("style"),
+      box = await node.boundingBox();
+    if (!box) throw new Error("visible node bounds required");
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      box.x + box.width / 2 + 80,
+      box.y + box.height / 2 + 50,
+      { steps: 8 },
+    );
+    await page.mouse.up();
+    expect(await node.getAttribute("style")).toBe(transform);
+    await page.getByRole("button", { name: "Fit View", exact: true }).click();
+    const handles = page.locator(".react-flow__handle"),
+      source = handles.first(),
+      target = handles.last();
+    const from = await source.boundingBox(),
+      to = await target.boundingBox();
+    if (!from || !to) throw new Error("rendered graph handle bounds required");
+    const edges = await page.locator(".react-flow__edge").count();
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+      steps: 8,
+    });
+    await page.mouse.up();
+    await expect(page.locator(".react-flow__edge")).toHaveCount(edges);
+    await expect(page.locator(".react-flow__connection")).toHaveCount(0);
+    await expect(page.locator(".react-flow__edgeupdater")).toHaveCount(0);
+    await expect(page.locator(".react-flow__controls-interactive")).toHaveCount(
+      0,
+    );
+    const viewport = page.locator(".react-flow__viewport");
+    const zoom = page.getByRole("button", { name: "Zoom In", exact: true });
+    await page.evaluate(() => {
+      const facts: unknown[] = [];
+      Object.assign(window, { w01ZoomFacts: facts });
+      for (const type of ["keydown", "keyup", "click"])
+        document.addEventListener(type, (event) => {
+          const target = event.target as HTMLElement;
+          facts.push({
+            type,
+            key: event instanceof KeyboardEvent ? event.key : null,
+            prevented: event.defaultPrevented,
+            label: target.getAttribute("aria-label"),
+            tag: target.tagName,
+            connected: target.isConnected,
+            disabled:
+              target instanceof HTMLButtonElement ? target.disabled : null,
+            focused: target === document.activeElement,
+            viewport: document
+              .querySelector(".react-flow__viewport")
+              ?.getAttribute("style"),
+          });
+        });
+    });
+    await zoom.evaluate((button) => {
+      const facts = (window as unknown as { w01ZoomFacts: unknown[] })
+        .w01ZoomFacts;
+      new MutationObserver(() =>
+        facts.push({
+          type: "buttonMutation",
+          disabled: (button as HTMLButtonElement).disabled,
+          connected: button.isConnected,
+          focused: button === document.activeElement,
+          viewport: document
+            .querySelector(".react-flow__viewport")
+            ?.getAttribute("style"),
+        }),
+      ).observe(button, { attributes: true });
+    });
+    await expect(zoom).toBeEnabled();
+    await zoom.focus();
+    await expect(zoom).toBeFocused();
+    const before = await viewport.getAttribute("style");
+    await page.keyboard.down("Space");
+    await expect
+      .poll(() => zoom.evaluate((button) => button.matches(":active")))
+      .toBe(true);
+    await page.keyboard.up("Space");
+    console.log(
+      JSON.stringify(
+        await page.evaluate(() => ({
+          facts: (window as unknown as { w01ZoomFacts: unknown[] })
+            .w01ZoomFacts,
+          active: document.activeElement?.getAttribute("aria-label"),
+          viewport: document
+            .querySelector(".react-flow__viewport")
+            ?.getAttribute("style"),
+        })),
+      ),
+    );
+    await expect(zoom).toBeFocused();
+    if (!before) throw new Error("graph viewport transform required");
+    await expect(viewport).not.toHaveAttribute("style", before);
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("button", { name: "Zoom Out", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("button", { name: "Fit View", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Enter");
+    await node.focus();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Delete");
+    await expect(page.locator(".react-flow__node")).toHaveCount(3);
+    const evidence = page.getByRole("region", { name: "Node evidence" });
+    await evidence
+      .getByRole("button", { name: "Back to selected plan node", exact: true })
+      .focus();
+    await page.keyboard.press("Tab");
+    await expect(
+      evidence.getByRole("link", { name: "Open linked task", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      evidence.getByRole("link", {
+        name: "Open reported attempt",
+        exact: true,
+      }),
+    ).toBeFocused();
+    expect(
+      await page.evaluate(() => ({
+        reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
+        graphAnimations:
+          document
+            .querySelector(".workflow-graph")
+            ?.getAnimations({ subtree: true }).length ?? 0,
+      })),
+    ).toEqual({ reduced: true, graphAnimations: 0 });
   } finally {
     await server.stop();
   }
