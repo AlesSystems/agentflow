@@ -19,6 +19,7 @@ export const errorSchema = z.strictObject({
       .strictObject({
         currentVersion: version.optional(),
         expectedSequence: version.optional(),
+        blockedPrerequisiteIds: z.array(uuid).max(20).optional(),
       })
       .optional(),
   }),

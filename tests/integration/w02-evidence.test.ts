@@ -6,6 +6,7 @@ import { expect, it } from "vitest";
 import { openOwnedStore } from "../../src/db";
 import { canonicalDigest } from "../../src/domain/request-digest";
 import type { ApplicationCommand } from "../../src/db/application";
+import { eventInput } from "../../src/contracts/observations";
 import type { Task } from "../../src/contracts/tasks";
 
 it("keeps required negatives sticky, invalidates evidence on rework, and replays original commands", async () => {
@@ -22,7 +23,7 @@ it("keeps required negatives sticky, invalidates evidence on rework, and replays
       const task = get(id); const runId = randomUUID();
       send({ kind: "run.register", input: { id: runId, projectId, agentId, taskId: id, purpose: "review", expectedTaskVersion: task.version, workRevision: task.workRevision, artifactRef: "synthetic:A", reworkRound: task.reworkRound } });
       for (const [sequence, type, payload] of [[1, "run.started", {}], [2, "run.succeeded", { summary: "reviewed", decision, evidenceNote: "Synthetic review" }]] as const)
-        send({ kind: "run.event", id: runId, input: { schemaVersion: 1, eventId: randomUUID(), runId, sequence, occurredAt: new Date().toISOString(), type, payload } });
+        send({ kind: "run.event", id: runId, input: eventInput.parse({ schemaVersion: 1, eventId: randomUUID(), runId, sequence, occurredAt: new Date().toISOString(), type, payload }) });
     };
     gate("changes_requested"); gate("approved");
     send({ kind: "task.patch", id, input: { expectedVersion: get(id).version, status: "review" } });

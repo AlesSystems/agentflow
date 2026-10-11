@@ -28,10 +28,14 @@ const task = {
   blockedReason: null,
   version: 1,
   workRevision: 1,
+  reviewRequired: false, verificationRequired: false, reworkRound: 0,
   createdAt: time,
   updatedAt: time,
   completedAt: null,
 };
+const readiness = {ready:true,prerequisites:[],blockedPrerequisiteIds:[]};
+const gate = {required:false,approved:false,changesRequested:false,latestDecision:null};
+const evidence = {currentArtifact:null,review:gate,verification:gate,implementationCurrent:true};
 const comment = {
   id: factId,
   taskId,
@@ -102,7 +106,7 @@ export const responseExamples: Record<string, unknown> = {
   listTasks: snapshot(list(task)),
   createTask: snapshot(task),
   getTask: snapshot({
-    task,
+    task, readiness, evidence,
     currentCompletion: null,
     latestRun: null,
     history: {
@@ -138,7 +142,7 @@ export const responseExamples: Record<string, unknown> = {
 };
 export const detailContinuationExample = {
   data: {
-    task,
+    task, readiness, evidence,
     currentCompletion: null,
     latestRun: null,
     history: {
@@ -173,6 +177,7 @@ const observedRun = {
   purpose: "implementation",
   model: null,
   workRevision: 2,
+  artifactRef:null, reworkRound:null,
   state: "queued",
   lastSequence: 0,
   lastReceivedAt: time,
@@ -266,3 +271,6 @@ Object.assign(requestExamples, { registerWorkflowRun: { id: workflowRunId, workf
 Object.assign(responseExamples, { registerWorkflowRun: snapshot(workflowRunExample), listWorkflowRuns: snapshot(list(workflowRunExample)), getWorkflowRun: snapshot(workflowRunExample), getWorkflowRunSnapshot: snapshot({ ...workflowRunExample, closure: null, nodes: [{ nodeId, label: "Implementation", taskId, observation: null, linkedAttempt: null }] }), ingestWorkflowEvent: snapshot({ eventId: factId, workflowRunId, acceptedSequence: 1, receivedAt: time }), listWorkflowEvents: snapshot(list({ ...workflowEventExample, receivedAt: time })), listWorkflowNodeObservations: snapshot(list(workflowNodeExample)), closeWorkflowRun: snapshot({ ...workflowRunExample, state: "interrupted", version: 2, endedAt: time, freshness: { stale: false, reporting: "terminal" } }) });
 
 export const taskRegistrationExample = snapshot({kind:"task",id:taskId,projectId,parentTaskId:null,assignedAgentId:null,version:1,workRevision:1});
+
+Object.assign(requestExamples, { replaceDependencies:{expectedVersion:1,prerequisiteIds:[]},editReviewPolicy:{expectedVersion:1,reviewRequired:true,verificationRequired:false},publishArtifact:{expectedVersion:1,artifactRef:"synthetic:commit"},requestRework:{expectedVersion:1,reason:"Synthetic changes requested"},getReadiness:{},listArtifacts:{} });
+Object.assign(responseExamples, { replaceDependencies:snapshot({...task,version:2}),editReviewPolicy:snapshot({...task,version:2,reviewRequired:true}),publishArtifact:snapshot({...task,version:2}),requestRework:snapshot({...task,version:2,workRevision:2,reworkRound:1}),getReadiness:snapshot(readiness),listArtifacts:snapshot({items:[],total:0,nextCursor:null}) });

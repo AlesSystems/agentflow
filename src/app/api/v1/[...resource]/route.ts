@@ -5,3 +5,5 @@ export const GET = applicationApi;
 export const HEAD = applicationApi;
 export const POST = applicationApi;
 export const PATCH = applicationApi;
+
+export const PUT = applicationApi;

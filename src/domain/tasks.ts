@@ -1,3 +1,5 @@
+import type { TaskReadiness, TaskGateSummary } from "../contracts/evidence";
+import { assertAcceptanceEvidence } from "../workflows/reviews";
 import type { Task } from "../contracts/tasks";
 const conflictTag = Symbol.for("agentflow.domain-conflict");
 export class Conflict extends Error {
@@ -5,7 +7,7 @@ export class Conflict extends Error {
   constructor(
     readonly code: string,
     readonly currentVersion?: number,
-    readonly details?: { expectedSequence: number },
+    readonly details?: { expectedSequence?: number; blockedPrerequisiteIds?: string[] },
   ) {
     super(code);
   }
@@ -20,6 +22,8 @@ export type TaskFacts = {
   };
   hasImplementationHistory: boolean;
   ancestorIds: string[];
+  readiness?: TaskReadiness;
+  evidence?: TaskGateSummary;
 };
 export type TaskCommand =
   | {
@@ -101,6 +105,8 @@ export function decideTask(
         latest.workRevision !== task.workRevision)
     )
       throw new Conflict("implementation_not_current");
+    if (facts.readiness && !facts.readiness.ready) throw new Conflict("dependencies_not_ready",undefined,{blockedPrerequisiteIds:facts.readiness.blockedPrerequisiteIds});
+    if (facts.evidence) assertAcceptanceEvidence(facts.evidence);
     return {
       task: {
         ...next,
