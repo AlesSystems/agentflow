@@ -1,7 +1,7 @@
 {
   "package": "W03a",
-  "disposition": "Qualified verification accepted with one scoped relative-budget exception; final package review and integration remain open",
-  "executionSource": "3484cb4a20cd0070efdb1aa5c195043a9559d025",
+  "disposition": "Repaired-source qualified verification accepted with its new source/run-specific exception; final package review/integration/new archive remain open",
+  "executionSource": "1931221636894cd5840e98a4f83d4a13bdb85b1c",
   "baselineSource": "1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361",
   "approvedPlanOriginalSHA256": "d09e19625ef1251f75082728a8e8eba8eb45e82c667f4bd5e54e64331a8cded5",
   "runtime": {
@@ -17,15 +17,22 @@
     "qualification": "Fresh locked checkout on the existing named host, not pristine OS or Linux"
   },
   "sourceQualification": {
-    "fullSuiteSource": "60827b85f55390b8f86958b64b37509685904913",
-    "productionBuildSource": "60827b85f55390b8f86958b64b37509685904913",
-    "productionInputsUnchanged": 108,
-    "measuredSourceFiles": 550,
+    "retainedFullSuiteSource": "60827b85f55390b8f86958b64b37509685904913",
+    "productionInputCount": 108,
+    "changedProductionInputsFromHistorical": [
+      "src/db/github.ts"
+    ],
+    "productionDelta": "Remove retry_not_before reset from repository settings UPDATE only",
+    "buildInputAttribution": "Build preceded final test/docs amendments; actual dirty input brackets qualify production bytes matching193122, not a fabricated clean-final-HEAD build",
+    "measuredSourceFiles": 556,
     "currentCompiledFiles": 442,
+    "currentBuildManifestSHA256": "993a93edbada181bcc36a2c364d70c05c0285470beca2df117b7bf0bbae2e68f",
+    "currentBuildId": "4Vb1NNuhxLbtEfGR4huj6",
+    "historicalBuildId": "A6km8karM3FbUPTSCwp0r",
     "baselineCompiledFiles": 439,
-    "currentBuildId": "A6km8karM3FbUPTSCwp0r",
     "baselineBuildId": "tZJdt3l5Gcdo073Ck0Erq",
-    "ownLockedInstallBuildAndNativeForBothSources": true
+    "ownFreshLockedInstallBuildAndNative": true,
+    "helperAndCompanionUnchanged": true
   },
   "checks": {
     "unit": {
@@ -52,7 +59,7 @@
       "exit": 0,
       "acceptance": false
     },
-    "integrationComposedUnique": 506,
+    "integrationComposedUnique": 507,
     "freshWholeIntegrationAllPass": false,
     "focusedConsumerRepeats": {
       "passed": 8,
@@ -78,6 +85,46 @@
       "streamFailures": 2,
       "remainingFailures": 6,
       "remainingPassed": 2
+    },
+    "rateRepair": {
+      "newIntegrationContracts": 1,
+      "originalRed": {
+        "passed": 2,
+        "failed": 1,
+        "exit": 1
+      },
+      "affectedMixedOriginal": {
+        "passed": 16,
+        "failed": 1,
+        "tests": 17,
+        "exit": 1,
+        "failure": "Missing fresh production build for HTTP fixture"
+      },
+      "postBuildHttp": {
+        "passed": 1,
+        "exit": 0,
+        "closesAffectedSetupFailure": true
+      },
+      "affectedComposedDistinct": 17,
+      "durableCoordinatorGreen": {
+        "passed": 3,
+        "exit": 0,
+        "countedAdditional": false,
+        "rerunReason": "New public/durable deadline and SQL assertions"
+      },
+      "chromeAmendedExistingCase": {
+        "passed": 1,
+        "exit": 0,
+        "countedAdditional": false
+      },
+      "typesExit": 0,
+      "affectedLintExit": 0,
+      "directOpenapiExit": 0,
+      "buildExit": 0,
+      "nativeExit": 0,
+      "nativeABI": 137,
+      "sqliteVersion": "3.53.4",
+      "qualification": "Retained201unit/72Chrome and original496integration+10helper cases stay source-qualified; current507integration adds only the new rate case, no fresh whole-suite pass"
     }
   },
   "fixture": {
@@ -96,6 +143,115 @@
     "backupRestoreGenerationRestartVerified": true
   },
   "measurement": {
+    "invocations": 1,
+    "originalExit": 1,
+    "originalAggregateValid": false,
+    "originalFiles": 1005,
+    "captured": 990,
+    "warmup": 90,
+    "measured": 900,
+    "groups": 9,
+    "warmupPerGroup": 10,
+    "measuredPerGroup": 100,
+    "settingsOrder": [
+      "base/head",
+      "head/base",
+      "base/head"
+    ],
+    "absoluteP95BudgetMs": 250,
+    "absoluteBudgetStrictlyPassedEveryGroup": true,
+    "missingFailedUnconfirmedDuplicateInvalid": 0,
+    "outbound": 0,
+    "gracefulServices": 9,
+    "compiledStableFiles": 442,
+    "limits": "Finite local reads only, no W04 throughput, concurrent browser latency, cold-start, remote GitHub or other-host claim",
+    "source": "1931221636894cd5840e98a4f83d4a13bdb85b1c",
+    "run": "repaired-source quiet-run02",
+    "durationSeconds": 5.402974708005786,
+    "originalBudgetFailures": [
+      "settings-regression-2"
+    ],
+    "sourceStableFiles": 556,
+    "comparisons": [
+      {
+        "round": 1,
+        "baseP95Ms": 0.8383750000000418,
+        "headP95Ms": 0.8487079999999878,
+        "cacheP95Ms": 1.2474160000001575,
+        "regressionPercent": 1.232503354697534
+      },
+      {
+        "round": 2,
+        "baseP95Ms": 0.7689580000001115,
+        "headP95Ms": 1.0273339999998825,
+        "cacheP95Ms": 1.0794999999998254,
+        "regressionPercent": 33.60079484181626
+      },
+      {
+        "round": 3,
+        "baseP95Ms": 0.8694590000000062,
+        "headP95Ms": 0.9450410000004013,
+        "cacheP95Ms": 1.0423339999997552,
+        "regressionPercent": 8.692991848999721
+      }
+    ],
+    "exception": {
+      "disposition": "APPROVED_EXCEPTION",
+      "onlyFailure": "settings-regression-2",
+      "absoluteDeltaMs": 0.258375999999771,
+      "cause": "Unknown; no causal profiling or noise conclusion",
+      "standingWaiver": false,
+      "sameSourceResample": false,
+      "historicalExceptionInherited": false,
+      "privateDecisionPinSHA256": "828fe2ec796b4727b655a249fb8ac79141243e125fcbcce9db5d61f21804114a"
+    }
+  },
+  "privateOriginalPins": {
+    "qualification": "Integrity references to retained private originals, not public access to reports/raw artifacts",
+    "reconciliationSHA256": "f0d0465f038146cda48419ec20d4c2989697c4942b9c485a0790b7f9fa1373b3",
+    "independentDataAuditSHA256": "16bc20b19c8e976d015171889264522156350f4b0c8cfc3e243c1f31030dfe48",
+    "rootNumericalAuditSHA256": "18e4361b253bf196f270815acf4c321c86ed3f57d44577fb8a2655840881d587",
+    "rootAcceptanceSHA256": "473f3c3caa9097fc5e6cb777cf026d046dddc83bb3a78d9b7e80b84483855a0c"
+  },
+  "images": [
+    {
+      "file": "settings-desktop.png",
+      "sha256": "acdc5137f6d98f108f491d7f04d590d956a2df6ac5c77ad169b0bb2963502759",
+      "bytes": 228061,
+      "width": 1280,
+      "height": 2410
+    },
+    {
+      "file": "settings-narrow.png",
+      "sha256": "b6b48f85e2dd35f7a4430bf9b9bbd894fb6261ce44219fe5db3c9ba7b2235b38",
+      "bytes": 201678,
+      "width": 375,
+      "height": 2982
+    },
+    {
+      "file": "task-desktop.png",
+      "sha256": "768ab4fa4e860e2787764c476222b5351fa85094f7184e0e826519869f68d614",
+      "bytes": 241682,
+      "width": 1440,
+      "height": 2986
+    },
+    {
+      "file": "task-narrow.png",
+      "sha256": "cbb1fcfd3c29f4b649ff0427f907f1b950a12b4030a2833ad83674600f45988c",
+      "bytes": 213078,
+      "width": 375,
+      "height": 3584
+    }
+  ],
+  "limitations": [
+    "Optional authorized live GitHub verification unexecuted; delivery credentials were not repurposed",
+    "Synthetic browser-role acceptance is not a human attestation",
+    "Historical backend raw compiled output was overwritten by UI; only its original source/manifest/log qualification remains",
+    "Earlier global npm cache effects lack a before-census; no untouched-global-cache or complete rollback claim",
+    "Original UI03 461 compiled files remain in an exact private archive; current fresh compiled count is 442",
+    "Final package reviews, integration and guarded cleanup remain open; original/new private archives verified, W03b throughW04 unstarted"
+  ],
+  "historicalMeasurement": {
     "invocations": 1,
     "durationSeconds": 6.038758583017625,
     "originalExit": 1,
@@ -154,51 +310,54 @@
       "resampled": false,
       "privateDecisionPinSHA256": "635876d2721a2384265605fdf4afa4b711f416e543010027ecab540b7e35bd1c"
     },
-    "limits": "Finite local reads only, no W04 throughput, concurrent browser latency, cold-start, remote GitHub or other-host claim"
+    "limits": "Finite local reads only, no W04 throughput, concurrent browser latency, cold-start, remote GitHub or other-host claim",
+    "source": "3484cb4a20cd0070efdb1aa5c195043a9559d025"
   },
-  "privateOriginalPins": {
+  "historicalSourceQualification": {
+    "fullSuiteSource": "60827b85f55390b8f86958b64b37509685904913",
+    "productionBuildSource": "60827b85f55390b8f86958b64b37509685904913",
+    "productionInputsUnchanged": 108,
+    "measuredSourceFiles": 550,
+    "currentCompiledFiles": 442,
+    "baselineCompiledFiles": 439,
+    "currentBuildId": "A6km8karM3FbUPTSCwp0r",
+    "baselineBuildId": "tZJdt3l5Gcdo073Ck0Erq",
+    "ownLockedInstallBuildAndNativeForBothSources": true
+  },
+  "historicalPrivateOriginalPins": {
     "qualification": "Integrity references to retained private originals; reports and raw artifacts are not published here",
     "reconciliationSHA256": "00bc68b95220928c0082cd14386f23af835530764a5759e50d7d9ad7eaedaa4e",
     "independentDataAuditSHA256": "88d41e1fb5e49017731dc3ff4c26493b210395f1018b506308e5627c7fc83fe1",
     "rootNumericalAuditSHA256": "57f64d2d1d17e7c0b7e84c88caa74ae606e44a5c1fc3407bd027ead3ee57ba14",
     "rootAcceptanceSHA256": "60a11a506c43003058f302b5c66a0eff83bbeb1a5839c8c1a0ff39c19d80c4e8"
   },
-  "images": [
-    {
-      "file": "settings-desktop.png",
-      "sha256": "acdc5137f6d98f108f491d7f04d590d956a2df6ac5c77ad169b0bb2963502759",
-      "bytes": 228061,
-      "width": 1280,
-      "height": 2410
-    },
-    {
-      "file": "settings-narrow.png",
-      "sha256": "b6b48f85e2dd35f7a4430bf9b9bbd894fb6261ce44219fe5db3c9ba7b2235b38",
-      "bytes": 201678,
-      "width": 375,
-      "height": 2982
-    },
-    {
-      "file": "task-desktop.png",
-      "sha256": "768ab4fa4e860e2787764c476222b5351fa85094f7184e0e826519869f68d614",
-      "bytes": 241682,
-      "width": 1440,
-      "height": 2986
-    },
-    {
-      "file": "task-narrow.png",
-      "sha256": "cbb1fcfd3c29f4b649ff0427f907f1b950a12b4030a2833ad83674600f45988c",
-      "bytes": 213078,
-      "width": 375,
-      "height": 3584
-    }
-  ],
-  "limitations": [
-    "Optional authorized live GitHub verification unexecuted; delivery credentials were not repurposed",
-    "Synthetic browser-role acceptance is not a human attestation",
-    "Historical backend raw compiled output was overwritten by UI; only its original source/manifest/log qualification remains",
-    "Earlier global npm cache effects lack a before-census; no untouched-global-cache or complete rollback claim",
-    "Original UI03 461 compiled files remain in an exact private archive; current fresh compiled count is 442",
-    "Package review, integration and archival/guarded cleanup remain open; W03b through W04 unstarted"
-  ]
+  "invocationAccounting": {
+    "measuredSourceRuns": 2,
+    "repairedSourceLauncherSetupFailures": 1,
+    "distinctRecordedInvocations": 3,
+    "qualification": "One measured run at3484 and one at changed193122; not repeated sampling of the same source. Repaired quiet-run01 setup failed before capture, separate from run02."
+  },
+  "repairedLauncherSetupFailure": {
+    "source": "1931221636894cd5840e98a4f83d4a13bdb85b1c",
+    "run": "repaired-source quiet-run01",
+    "originalExit": 1,
+    "durationSeconds": 0.9056636659661308,
+    "cause": "Root precreated capture directory; helper rejected it before declarations, responder, services or samples",
+    "samples": 0,
+    "aggregateExists": false,
+    "percentilesExist": false,
+    "setupRerouteDisposition": "APPROVED_SETUP_REROUTE",
+    "privateFailurePinSHA256": "aad5b8ba4d16a87d611d38e94eb62bac48d2f7f5938786f6bc0259abfccd866a",
+    "privateReroutePinSHA256": "a2057818b7a5d776f9a81311320550528f0100e41dd6a354a1a9aa8b3a2e24a6"
+  },
+  "archives": {
+    "historicalOwnedArchiveSHA256": "120a0c094f7616698af36ddf0d4ff8baa0681ee593e4eb65d3c1239a536443ad",
+    "historicalProbeArchiveSHA256": "87cca4d1cda9f3f0c40126136dec23975149fee4297bcca8685de442e68eed4e",
+    "historicalRootStreamVerified": true,
+    "newRepairRootArchiveComplete": true,
+    "originalRootsHeld": true,
+    "guardedCleanupComplete": false,
+    "newRepairRootEntries": 40229,
+    "privateRootArchiveVerificationSHA256": "31ffb2974f6a04fb4b3b7519426a892122a6e24360da50a8f827a1b33185634b"
+  }
 }

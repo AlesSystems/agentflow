@@ -23,7 +23,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
 | W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
-| W03a | GitHub PR observation | Qualified verification accepted with scoped exception; final review/integration/archive open | Executable `3484cb4a20cd0070efdb1aa5c195043a9559d025` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
+| W03a | GitHub PR observation | Qualified verification accepted with scoped exception; final review/integration/archive open | Executable `1931221636894cd5840e98a4f83d4a13bdb85b1c` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
 | W04 | Full v1 validation/release | Not started | — | — |
@@ -848,3 +848,36 @@ its execution checklist now records the qualified stages. Final exact-candidate
 Standards/Spec review, Root public audit, scoped PR creation/attachment, normal
 matching-head merge and private archive-before-guarded-cleanup remain open.
 PLAN package boxes stay unchecked. W03b has not started; v1 is not complete.
+
+
+## W03a repaired-source qualification accepted
+
+Root accepted `1931221636894cd5840e98a4f83d4a13bdb85b1c` after the Spec rate-gate
+repair, exact readiness, independent actual-run data/source audit and a new Astra
+exception. Repository Save/disconnect/re-enable/scope changes retain active
+Retry-After; one SQL reset was removed. Fresh affected 17 cases compose 16 original
+passes with 1 post-build HTTP pass; the missing-build setup failure stays retained.
+The strengthened durable 3 repeat and amended existing Chrome 1 are qualified
+repeats, not added totals. Current composed integration 507 is 496+10+1; broader
+unit 201/39, Chrome 72 and original integration failures/repairs remain historical.
+Fresh types/lint/direct OpenAPI/build/native pass. Current 442 compiled files use
+new build ID `4Vb1NNuhxLbtEfGR4huj6`, not historical hashes. Only 1 of 108 production
+inputs changed; actual build input/dirty qualification precedes later test/docs.
+
+Keep three distinct records: historical 3484 measured exit 1/validfalse with its
+round 3 +24.912740% exception; repaired 193122 launcher setup exit 1 in 0.905663666 seconds
+before declarations/services/samples and no aggregate/percentiles, explicitly
+approved setup reroute; repaired 193122 actual run02 exit 1/validfalse in 5.402974708 seconds
+with new round 2 +33.600795%/0.258376 ms exception. All three current comparisons are
+positive; cause unknown, no noise assertion or same-source resampling. Every
+current group p95<250 ms, maximum 1.247416 ms. All 990 originals/90 warmups/900 measured,
+9 graceful services, zero outbound, six unchanged protected fact pairs and expected
+session 4/7 writes are independently reconciled. Old exception is not inherited,
+and neither exception relaxes W04 or future-source gates.
+
+[Receipt](implementation/W03a.md) and [public allowlisted reduction](evidence/W03a/acceptance.json)
+separate both measured sources, setup failure, build and coverage qualifications.
+Old main/probe and the new repair-root archives are private and Root stream-verified.
+Exact final whole-package Standards/Spec, public audit, normal PR attachment/merge
+and guarded cleanup remain open. PLAN package boxes remain unchecked; W03b and
+v1 completion remain unclaimed.
