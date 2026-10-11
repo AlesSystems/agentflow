@@ -362,11 +362,11 @@ export class ApplicationData {
           if (value.status === "completed") throw new Conflict("task_completed");
           let next = {...value, version:value.version+1, updatedAt:time};
           if (command.kind === "task.dependencies") {
-            const ids = command.input.prerequisiteIds;
+            const prerequisites = command.input.prerequisiteIds.map(id => task.parse(this.one("tasks",id)));
+            const ids = prerequisites.map(prerequisite => prerequisite.id);
             if (new Set(ids).size !== ids.length) throw new Conflict("dependency_duplicate");
-            for (const id of ids) {
-              if (id === value.id) throw new Conflict("dependency_self");
-              const prerequisite = task.parse(this.one("tasks",id));
+            for (const prerequisite of prerequisites) {
+              if (prerequisite.id === value.id) throw new Conflict("dependency_self");
               if (prerequisite.projectId !== value.projectId) throw new Conflict("dependency_project_mismatch");
               this.activeProject(prerequisite.projectId);
             }
