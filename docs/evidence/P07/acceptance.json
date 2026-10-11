@@ -1080,5 +1080,62 @@
     "Synthetic browser acceptance is not actual human attestation",
     "No new application load/native/resource measurement or extra performance campaign in current verification",
     "No P07 release/tag or complete v1 claim; final Standards/Spec / integration / owned cleanup / W01 remain required"
-  ]
+  ],
+  "defaultUnitPortability": {
+    "finding": "Original final Standards/Spec shared P2: default qualification tests depended on private historical build/ancestry and generic negative failures",
+    "executableSource": "05af7932868438659e1be12f68c00d76582bed4b",
+    "actualRED": {
+      "source": "740869af215458d4d599b952ba0a0806fe492c0d",
+      "failed": 1,
+      "passed": 3,
+      "files": 2,
+      "reason": "ENOENT scandir .next; original generic negatives remained passed"
+    },
+    "currentFullUnit": {
+      "passed": 156,
+      "files": 32,
+      "seconds": 3.51,
+      "buildAbsent": true,
+      "privateOriginalSHA256": "bc5357206478d1a4ea4d1cf947d4b010636cfdaef3a6952003848fdea406cb98"
+    },
+    "specificHermeticCases": {
+      "passed": 7,
+      "files": 2,
+      "boundaries": [
+        "valid synthetic facts",
+        "application difference",
+        "application input equality",
+        "reviewed CLI hash",
+        "asset count",
+        "asset hash",
+        "CLI reachability"
+      ],
+      "qualification": "Pure fixed-policy cases require no filesystem, historical build or Git ancestry; fixture constants are policy-test data, not historical identity proof"
+    },
+    "cloneDrift": {
+      "focusedPassed": 7,
+      "changedInput": "synthetic launcher comment in disposable clone only",
+      "realGuardRejection": "retained_application_difference",
+      "buildAbsent": true,
+      "committedOrSynchronized": false
+    },
+    "retainedQualification": {
+      "actualReadOnlyCalls": 1,
+      "bindingAssets": 417,
+      "unchangedInputs": 87,
+      "resolvedModules": 67,
+      "applicationServerRoots": 28,
+      "bindingComparisonSHA256": "49ea9ec2d4855e174b48526550d51893c9499ecac5b963667fbe9e3c19cf4701",
+      "qualification": "Actual Git/files/CLI/assets/import graph acquired; fixed policy applied with no passing overrides or missing-fact defaults; real unresolved/nonliteral/CSS checks retained"
+    },
+    "staticChecks": {
+      "fullTypesIncrementalFalse": 0,
+      "fullLint": 0,
+      "OpenAPI": 0,
+      "diff": 0
+    },
+    "dependencies": "New full-history local clone with no .next; disclosed symlink reuse of pinned existing dependencies, no installation/build claim",
+    "carryForward": "Application/CLI/migration/package/integration/browser and measurement-stage inputs byte-identical to recorded executions. Integration396/Chrome34 remain attributed to2b; application performance534 and repaired CLI2b are not rerun or relabeled. Qualification fixture/unit provenance legitimately changes.",
+    "reviewState": "Both original final reviewers must rereview exact repaired candidate before integration; P07 remains open"
+  }
 }
