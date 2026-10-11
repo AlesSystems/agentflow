@@ -56,3 +56,22 @@ it("rejects invalid credential JSON, UTF-8, unknown keys and excessive sizes wit
  const file=credential();let calls=0;const http=await fixture((req,res)=>{calls++;res.end("{}");});
  try{for(const contents of ["{bad",Buffer.from([0xff]),JSON.stringify({token:"SYNTHETIC",path:"forbidden"}),"x".repeat(4097),JSON.stringify({token:"has whitespace"})]){writeFileSync(file.path,contents);expect(await new GithubAdapter(file.path,http.transport).observe({expectedVersion:2,repository:"a/b",number:9},new AbortController().signal)).toMatchObject({error:"credential_repair"});}expect(calls).toBe(0);}finally{await http.close();}
 });
+it("keeps valid rows when unused pagination exceeds the local cap, and bounds only emitted next hints",async()=>{
+ const file=credential();let link='';const wires:string[]=[];
+ const target=(page:string,origin="https://api.github.com",query="state=all&per_page=20&sort=created")=>`${origin}/repos/a/b/pulls?${query}&page=${page}`;
+ const http=await fixture((req,res)=>{wires.push(req.url!);res.setHeader("Link",link);res.end(JSON.stringify([metadata]));});
+ try{
+  const adapter=new GithubAdapter(file.path,http.transport);
+  for(const last of ["1001","1000000000000000000000000000000"]){
+   link=`<${target("2")}>; rel="next", <${target(last)}>; rel="last"`;
+   expect(await adapter.observe({expectedVersion:2,repository:"a/b",page:1},new AbortController().signal)).toMatchObject({outcome:"fetched",items:[{number:9}],nextPage:2});
+  }
+  link=`<${target("1001")}>; rel="next", <${target("1001")}>; rel="last"`;
+  expect(await adapter.observe({expectedVersion:2,repository:"a/b",page:1000},new AbortController().signal)).toMatchObject({outcome:"fetched",items:[{number:9}],nextPage:null});
+  for(const malicious of [target("1001","https://evil.test"),target("1001","https://api.github.com","state=closed&per_page=20&sort=created")]){
+   link=`<${target("2")}>; rel="next", <${malicious}>; rel="last"`;
+   expect(await adapter.observe({expectedVersion:2,repository:"a/b",page:1},new AbortController().signal)).toMatchObject({outcome:"failed",error:"invalid_payload",items:[]});
+  }
+  expect(wires).toHaveLength(5);expect(wires.filter(value=>value.endsWith("page=1"))).toHaveLength(4);expect(wires[2]).toContain("page=1000");
+ }finally{await http.close();}
+});
