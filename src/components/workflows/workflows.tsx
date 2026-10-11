@@ -345,6 +345,16 @@ function PlanEvidence({
   setView: (v: string) => void;
   context: URLSearchParams;
 } & NodeFocus) {
+  const selected = plan.nodes.find((n) => n.id === nodeId);
+  function returnToPlan() {
+    document
+      .querySelector<HTMLElement>(
+        view === "graph"
+          ? `.react-flow__node[data-id="${nodeId}"]`
+          : `button[data-node-id="${nodeId}"]`,
+      )
+      ?.focus();
+  }
   return runId ? (
     <ReportedPlan
       {...{
@@ -377,6 +387,34 @@ function PlanEvidence({
         }}
         statuses={new Map()}
       />
+      {selected && (
+        <section
+          className="workflow-evidence"
+          data-workflow-id={context.get("workflowId")}
+          data-plan-revision-id={context.get("revisionId")}
+          data-node-id={selected.id}
+          aria-label="Node evidence"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              returnToPlan();
+            }
+          }}
+        >
+          <button onClick={returnToPlan}>Back to selected plan node</button>
+          <h2>{selected.label}</h2>
+          <p>No node observation received.</p>
+          <p>Skill Unknown</p>
+          {selected.taskId && (
+            <Link
+              href={`/projects/${projectId}/tasks/${selected.taskId}?workflowReturn=${encodeURIComponent(context.toString())}`}
+            >
+              Open linked task
+            </Link>
+          )}
+          <p>Linked attempt Unknown</p>
+        </section>
+      )}
     </>
   );
 }

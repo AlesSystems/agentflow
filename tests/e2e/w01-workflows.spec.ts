@@ -809,7 +809,12 @@ test("graph Space selects evidence and Escape restores the selected node", async
       `.react-flow__node[data-id="${f.implementationNodeId}"]`,
     );
     await expect(node).toBeVisible();
-    expect(await node.evaluate(element=>({width:(element as HTMLElement).offsetWidth,height:(element as HTMLElement).offsetHeight}))).toEqual({width:230,height:104});
+    expect(
+      await node.evaluate((element) => ({
+        width: (element as HTMLElement).offsetWidth,
+        height: (element as HTMLElement).offsetHeight,
+      })),
+    ).toEqual({ width: 230, height: 104 });
     await page.evaluate(() => {
       const events: unknown[] = [];
       Object.assign(window, { w01FocusProbe: events });
@@ -943,6 +948,100 @@ test("distinct historical node attempts remain reachable after a missing-run obs
         page.getByText("Linked attempt Unknown", { exact: true }),
       ).toBeVisible();
     }
+  } finally {
+    await server.stop();
+  }
+});
+test("plan-only task nodes expose Unknown evidence and safe return without a fabricated attempt", async ({
+  page,
+}) => {
+  const server = await launch();
+  try {
+    const f = await reportedWorkflow(server),
+      nodeId = crypto.randomUUID(),
+      revisionId = await f.register(
+        ["register", "workflow-revision", "--workflow", f.workflowId],
+        {
+          id: crypto.randomUUID(),
+          expectedWorkflowVersion: 2,
+          nodes: [
+            {
+              id: nodeId,
+              label: "Planned work before a report",
+              taskId: f.taskId,
+            },
+          ],
+          edges: [],
+        },
+      );
+    await pairPage(page, server);
+    for (const view of ["graph", "list"]) {
+      await page.goto(
+        server.url +
+          `/projects/${f.projectId}/workflows?workflowId=${f.workflowId}&revisionId=${revisionId}&nodeId=${nodeId}&view=${view}`,
+      );
+      await expect(
+        page.getByRole("heading", {
+          name: "Planned work before a report",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("No node observation received.", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Skill Unknown", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Linked attempt Unknown", { exact: true }),
+      ).toBeVisible();
+      expect(
+        await page
+          .locator(".workflow-evidence")
+          .getAttribute("data-workflow-run-id"),
+      ).toBeNull();
+      expect(page.url()).not.toContain("workflowRunId=");
+      await page
+        .getByRole("link", { name: "Open linked task", exact: true })
+        .click();
+      const task = await page.evaluate(
+        async (id) =>
+          (await (await fetch(`/api/v1/tasks/${id}`)).json()).data.task,
+        f.taskId,
+      );
+      expect(task.id).toBe(f.taskId);
+      await page
+        .getByRole("link", { name: "Back to workflow", exact: true })
+        .click();
+      const selected =
+        view === "graph"
+          ? page.locator(`.react-flow__node[data-id="${nodeId}"]`)
+          : page.locator(`button[data-node-id="${nodeId}"]`);
+      await expect(selected).toBeFocused();
+      expect(page.url()).not.toContain("workflowRunId=");
+      await expect(
+        page.getByText("Skill Unknown", { exact: true }),
+      ).toBeVisible();
+    }
+    const invalidContext = new URLSearchParams({
+      workflowId: f.workflowId,
+      revisionId,
+      nodeId,
+      workflowRunId: "not-a-uuid",
+    });
+    await page.goto(
+      server.url +
+        `/projects/${f.projectId}/tasks/${f.taskId}?workflowReturn=${encodeURIComponent(invalidContext.toString())}`,
+    );
+    await expect(
+      page.getByRole("heading", {
+        name: "Task details",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Back to workflow", exact: true }),
+    ).toHaveCount(0);
   } finally {
     await server.stop();
   }
