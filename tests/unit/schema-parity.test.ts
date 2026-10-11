@@ -118,3 +118,11 @@ it("mirrors workflow plan checks in the additive migration", async () => {
     expect(config.checks.map(c => normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(migration.slice(start, end)).map(normalize).sort());
   }
 });
+it("mirrors workflow attempt, event, history and allocator checks", async () => {
+ const { workflowOrderAllocator, workflowRuns, workflowRunRegistrations, workflowEvents, workflowNodeObservations, workflowClosures } = await import("../../src/db/schema");
+ const migration = readFileSync("migrations/0006_workflows.sql", "utf8"); const dialect = new SQLiteSyncDialect();
+ for (const table of [workflowOrderAllocator, workflowRuns, workflowRunRegistrations, workflowEvents, workflowNodeObservations, workflowClosures]) {
+  const config = getTableConfig(table), start = migration.indexOf("CREATE TABLE " + config.name + " (");
+  expect(config.checks.map(c => normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(migration.slice(start, migration.indexOf(";", start))).map(normalize).sort());
+ }
+});
