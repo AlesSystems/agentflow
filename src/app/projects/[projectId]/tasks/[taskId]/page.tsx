@@ -7,6 +7,7 @@ import {
 import { Workspace } from "../../../../../client/provider";
 import { Shell, NeedsPairing } from "../../../../../components/shell";
 import { TaskPage } from "../../../../../components/tasks/page";
+import { WorkflowReturn } from "../../../../../components/workflows/return";
 export const dynamic = "force-dynamic";
 export default async function Page({
   params,
@@ -16,7 +17,8 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { projectId, taskId } = await params;
-  const parsed = boardQuery.safeParse({ ...(await searchParams), limit: 50 });
+  const raw = await searchParams;
+  const parsed = boardQuery.safeParse({ ...raw, limit: 50 });
   const filters = new URLSearchParams();
   if (parsed.success)
     for (const [key, value] of Object.entries(parsed.data)) {
@@ -39,6 +41,7 @@ export default async function Page({
   return data ? (
     <Workspace {...data}>
       <Shell>
+        <WorkflowReturn projectId={projectId} value={raw.workflowReturn}/>
         <TaskPage
           projectId={projectId}
           taskId={taskId}

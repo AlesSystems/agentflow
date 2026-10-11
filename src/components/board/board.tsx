@@ -209,6 +209,7 @@ export function Board({
           <Link className="metadata" href="/projects">
             Projects
           </Link>
+          <nav aria-label="Project views"><Link href={`/projects/${projectId}`} aria-current="page">Board</Link> · <Link href={`/projects/${projectId}/workflows`}>Workflows</Link></nav>
           <h1>{project.data?.data.name ?? "Work board"}</h1>
         </div>
         <button

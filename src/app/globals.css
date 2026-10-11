@@ -778,3 +778,23 @@ dd {
 .attempt-title { text-align: left; }
 @media (max-width: 700px) { .report-facts { grid-template-columns: minmax(0, 1fr); gap: 4px; } .report-facts dd { margin-bottom: 12px; } }
 .run-detail h3, .task-card .metadata { overflow-wrap: anywhere; }
+
+.workflow-view { display: flex; gap: .5rem; margin-top: 1.5rem; }
+.workflow-graph { height: 440px; border: 1px solid var(--border, #b9b4a7); margin: 1rem 0 2rem; }
+.workflow-graph .react-flow__node { background: var(--paper, #fffdf5); color: var(--ink, #292923); width: 230px; border: 1px solid #777467; border-radius: 8px; padding: 16px; }
+.workflow-graph .react-flow__node.selected { outline: 3px solid #2b5339; }
+.workflow-graph .react-flow__controls-button { width: 44px; height: 44px; }
+.workflow-node-list { list-style: none; padding: 0; }
+.workflow-node-list button { width: 100%; text-align: left; min-height: 44px; margin-bottom: .5rem; }
+.workflow-evidence { border-top: 1px solid #b9b4a7; padding-top: 1.5rem; margin-top: 2rem; overflow-wrap: anywhere; }
+.workflow-evidence h2 { margin-top: 0; }
+.workflow-view button { min-height: 44px; }
+.workflow-evidence button { min-height: 44px; }
+.workflow-page button,
+.workflow-page select,
+.workflow-page textarea { min-height: 44px; }
+.workflow-page a,
+nav[aria-label="Project views"] a { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; }
+.workflow-node-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.workflow-node-list button { overflow-wrap: anywhere; white-space: normal; }
+.workflow-page { overflow-wrap: anywhere; }
