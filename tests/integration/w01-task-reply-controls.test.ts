@@ -5,6 +5,8 @@ import { expect,it } from "vitest";
 import { launch } from "../fixtures/server";
 import { cliFixture } from "../fixtures/p06-cli";
 import { publicProxy } from "../fixtures/p06-proxy";
+import { taskResponse } from "../../src/contracts/responses";
+import { taskRegistrationResponse } from "../../src/contracts/task-registration";
 for(const control of["wrong-kind","invalid-id","wrong-project","wrong-parent","wrong-agent","wrong-version","unknown-field","missing-applied","oversized"])it(`retains original task registration on ${control} metadata and repairs exact retry`,async()=>{
  const server=await launch();let wrong=true;
  const create=async(path:string,input:unknown)=>{const response=await fetch(server.url+"/api/v1"+path,{method:"POST",headers:{Authorization:"Bearer "+server.credentials().reporterToken,"Content-Type":"application/json","Idempotency-Key":randomUUID()},body:JSON.stringify(input)});expect(response.status).toBe(201);return(await response.json()).data.id as string;};
@@ -24,14 +26,26 @@ for(const control of["wrong-kind","invalid-id","wrong-project","wrong-parent","w
 });
 it("replays a lost compact task acknowledgement and supports strict legacy full fallback",async()=>{
  const server=await launch();let drop=true,legacy=false;
- const proxy=await publicProxy(server,(req,_bytes,reply)=>{
+ const fullReplies:{status:number;raw:string;applied:string|null;key:string;input:unknown;originalId:string}[]=[];
+ const proxy=await publicProxy(server,async(req,bytes,reply):Promise<Awaited<ReturnType<Parameters<typeof publicProxy>[1]>>>=>{
   if(!reply||req.url!=="/api/v1/tasks"||req.method!=="POST")return;
-  if(drop)return{drop:true};if(legacy)return;
+  if(drop)return{drop:true};if(legacy){
+   expect(req.headers.prefer).toBe("return=minimal");
+   const response=await fetch(server.url+req.url,{method:"POST",headers:{Authorization:String(req.headers.authorization),"Content-Type":"application/json","Idempotency-Key":String(req.headers["idempotency-key"])},body:bytes.toString()});
+   const raw=await response.text(),applied=response.headers.get("Preference-Applied");
+   fullReplies.push({status:response.status,raw,applied,key:String(req.headers["idempotency-key"]),input:JSON.parse(bytes.toString()),originalId:JSON.parse(reply.body.toString()).data.id});
+   return{status:response.status,headers:{"AgentFlow-Generation":response.headers.get("AgentFlow-Generation")!},body:raw};
+  }
   const full=JSON.parse(reply.body.toString()),task=full.data;return{status:reply.status,headers:{"AgentFlow-Generation":reply.generation!,"Preference-Applied":"return=minimal"},body:JSON.stringify({...full,data:{kind:"task",id:task.id,projectId:task.projectId,parentTaskId:task.parentTaskId,assignedAgentId:task.assignedAgentId,version:1,workRevision:1}})};
  });
  try{
   const f=cliFixture({...server,port:proxy.port}),p=await f.cli(["project","create","--file",f.file({name:"Synthetic lost compact reply"}),"--idempotency-key",randomUUID()]);expect(p.code).toBe(0);const projectId=JSON.parse(p.stdout).id,key=randomUUID(),body={projectId,title:"Original lost task"};expect((await f.cli(["task","create","--file",f.file(body),"--idempotency-key",key])).code).toBe(2);
   const path=join(f.env.AGENTFLOW_OUTBOX_DIR,`registration-${key}.json`),bytes=readFileSync(path);expect(JSON.parse(bytes.toString()).body).toEqual(body);drop=false;expect((await f.cli(["flush"])).code).toBe(0);
-  legacy=true;expect((await f.cli(["task","create","--file",f.file({projectId,title:"Legacy full fallback"}),"--idempotency-key",randomUUID()])).code).toBe(0);
+  legacy=true;const legacyKey=randomUUID(),legacyBody={projectId,title:"Legacy full fallback"};
+  const result=await f.cli(["task","create","--file",f.file(legacyBody),"--idempotency-key",legacyKey]);expect(result.code).toBe(0);
+  expect(fullReplies).toHaveLength(1);expect(fullReplies[0]).toMatchObject({status:201,applied:null,key:legacyKey,input:legacyBody});
+  const full=JSON.parse(fullReplies[0].raw);expect(taskResponse.safeParse(full).success).toBe(true);expect(taskRegistrationResponse.safeParse(full).success).toBe(false);
+  expect(full.data).toMatchObject({...legacyBody,parentTaskId:null,assignedAgentId:null,version:1,workRevision:1});expect(full.data.id).toBe(fullReplies[0].originalId);expect(JSON.parse(result.stdout).id).toBe(full.data.id);
+  expect(readdirSync(f.env.AGENTFLOW_OUTBOX_DIR).filter(n=>n.startsWith("registration-"))).toEqual([]);
  }finally{await proxy.close();await server.stop();}
 },30000);
