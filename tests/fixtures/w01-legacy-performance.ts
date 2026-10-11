@@ -26,32 +26,65 @@ export async function invokeCli(
   source: string,
   args: string[],
   env: Record<string, string>,
+  entry = "src/cli/main.ts",
 ) {
   const dispatchMs = performance.now();
-  const child = spawn(
-    process.execPath,
-    ["--import", "tsx", "src/cli/main.ts", ...args],
-    {
-      cwd: source,
-      env: { ...process.env, ...env, FORCE_COLOR: undefined },
-      stdio: ["ignore", "pipe", "pipe"],
-    },
-  );
+  const child = spawn(process.execPath, ["--import", "tsx", entry, ...args], {
+    cwd: source,
+    env: { ...process.env, ...env, FORCE_COLOR: undefined },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   let stdout = "",
-    stderr = "";
+    stderr = "",
+    exitMs: number | null = null,
+    exitCode: number | null = null,
+    signal: string | null = null,
+    timedOut = false,
+    forcedDrain = false;
+  const errors: ReturnType<typeof failureFact>[] = [];
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
   child.stdout.on("data", (chunk) => (stdout += chunk));
   child.stderr.on("data", (chunk) => (stderr += chunk));
-  const timer = setTimeout(() => child.kill("SIGKILL"), 20000);
-  const code = await new Promise<number | null>((resolve, reject) => {
-    child.once("error", reject);
-    child.once("exit", resolve);
-  }).finally(() => clearTimeout(timer));
-  const completedMs = performance.now();
+  for (const stream of [child.stdout, child.stderr])
+    stream.on("error", (error) => errors.push(failureFact(error)));
+  child.once("error", (error) => errors.push(failureFact(error)));
+  child.once("exit", (code, reason) => {
+    exitMs = performance.now();
+    exitCode = code;
+    signal = reason;
+  });
+  let drainTimer: ReturnType<typeof setTimeout> | undefined;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    child.kill("SIGKILL");
+    drainTimer = setTimeout(() => {
+      forcedDrain = true;
+      child.stdout.destroy();
+      child.stderr.destroy();
+    }, 1000);
+  }, 20000);
+  const closeCode = await new Promise<number | null>((resolve) =>
+    child.once("close", resolve),
+  ).finally(() => {
+    clearTimeout(timer);
+    clearTimeout(drainTimer);
+  });
+  const drainedMs = performance.now(),
+    completedMs = exitMs ?? drainedMs;
   return {
     dispatchMs,
     completedMs,
+    exitMs,
+    drainedMs,
     elapsedMs: completedMs - dispatchMs,
-    code,
+    elapsedEndpoint: exitMs === null ? "no-exit/drain" : "exit",
+    code: timedOut || forcedDrain || errors.length ? null : closeCode,
+    exitCode,
+    signal,
+    timedOut,
+    forcedDrain,
+    errors,
     stdout,
     stderr,
   };
