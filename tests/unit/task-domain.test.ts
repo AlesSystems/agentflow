@@ -18,6 +18,7 @@ const task: Task = {
   blockedReason: null,
   version: 3,
   workRevision: 2,
+  reviewRequired: false, verificationRequired: false, reworkRound: 0,
   createdAt: "2026-10-09T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   completedAt: null,

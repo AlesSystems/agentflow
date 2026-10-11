@@ -1,3 +1,6 @@
+import * as evidence from "../contracts/evidence";
+import { validateDependencies, deriveReadiness } from "../workflows/dependencies";
+import { sameTuple } from "../workflows/reviews";
 import * as workflows from "../contracts/workflows";
 import { validateWorkflowPlan, decideWorkflowEvent, workflowFreshness } from "../domain/workflows";
 import type Database from "better-sqlite3";
@@ -52,6 +55,10 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | { kind: "task.dependencies"; id: string; input: z.infer<typeof evidence.dependenciesInput> }
+  | { kind: "task.review-policy"; id: string; input: z.infer<typeof evidence.reviewPolicyInput> }
+  | { kind: "task.artifact"; id: string; input: z.infer<typeof evidence.artifactInput> }
+  | { kind: "task.rework"; id: string; input: z.infer<typeof evidence.reworkInput> }
   | { kind: "workflow.run.register"; input: z.infer<typeof workflows.workflowRunRegister> }
   | { kind: "workflow.run.event"; id: string; input: workflows.WorkflowEventInput }
   | { kind: "workflow.run.close"; id: string; input: z.infer<typeof workflows.workflowClose> }
@@ -71,6 +78,11 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | { kind: "workflow.readiness"; id: string; revisionId: string }
+  | { kind: "task.readiness"; id: string }
+  | { kind: "task.decisions"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
+  | { kind: "task.reworks"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
+  | { kind: "task.evidence"; id: string; input: z.infer<typeof evidence.evidenceQuery> }
   | { kind: "workflow.runs"; input: z.infer<typeof workflows.workflowRunQuery> }
   | { kind: "workflow.run"; id: string }
   | { kind: "workflow.run.summary"; id: string }
@@ -125,6 +137,7 @@ function serialize(row: Row): Row {
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
       camel(key),
+      ["review_required", "verification_required"].includes(key) ? !!value :
       ["tags", "nodes", "edges"].includes(key)
         ? JSON.parse(value as string)
         : key.endsWith("_at") && value !== null
@@ -137,6 +150,7 @@ function persisted(record: Row): Row {
   return Object.fromEntries(
     Object.entries(record).map(([key, value]) => [
       snake(key),
+      ["reviewRequired", "verificationRequired"].includes(key) ? Number(value) :
       ["tags", "nodes", "edges"].includes(key)
         ? JSON.stringify(value)
         : key.endsWith("At") && value !== null
@@ -250,7 +264,54 @@ export class ApplicationData {
       latestImplementation: latest ?? null,
       hasImplementationHistory: !!latest,
       ancestorIds: ancestors,
+      readiness: this.readiness(value.id),
+      evidence: this.evidence(value),
     };
+  }
+  private acceptanceSnapshots(values: z.infer<typeof task>[]) {
+    const result = new Map<string, {readiness:evidence.TaskReadiness;evidence:evidence.TaskGateSummary}>();
+    if (!values.length) return result;
+    const ids = values.map(value => value.id);
+    const placeholders = ids.map(() => "?").join(",");
+    const dependencies = this.db.prepare(`SELECT d.task_id AS ownerId,p.id AS taskId,p.work_revision AS currentWorkRevision,p.status,
+      (SELECT max(work_revision) FROM completions WHERE task_id=p.id) AS acceptedWorkRevision
+      FROM task_dependencies d JOIN tasks p ON p.id=d.prerequisite_id WHERE d.task_id IN (${placeholders}) ORDER BY d.task_id,p.id`).all(...ids) as (Parameters<typeof deriveReadiness>[0][number] & {ownerId:string})[];
+    const currentArtifactJoin = "a.task_id=t.id AND a.work_revision=t.work_revision AND a.rework_round=t.rework_round";
+    const artifacts = this.db.prepare(`SELECT a.* FROM tasks t JOIN task_artifacts a ON ${currentArtifactJoin} WHERE t.id IN (${placeholders})`).all(...ids) as Row[];
+    const currentArtifacts = new Map(artifacts.map(row => { const value=evidence.artifactEvidence.parse(serialize(row));return [value.taskId,value]; }));
+    const gateQuery = (purpose: "review" | "verification") => `SELECT t.id AS owner_id,t.${purpose}_required AS required,'${purpose}' AS gate,
+      EXISTS(SELECT 1 FROM gate_decisions d WHERE d.task_id=t.id AND d.work_revision=t.work_revision AND d.artifact_ref=a.artifact_ref AND d.rework_round=t.rework_round AND d.purpose='${purpose}' AND d.decision='approved') AS approved,
+      EXISTS(SELECT 1 FROM gate_decisions d WHERE d.task_id=t.id AND d.work_revision=t.work_revision AND d.artifact_ref=a.artifact_ref AND d.rework_round=t.rework_round AND d.purpose='${purpose}' AND d.decision='changes_requested') AS changes_requested,g.*
+      FROM tasks t LEFT JOIN task_artifacts a ON ${currentArtifactJoin}
+      LEFT JOIN gate_decisions g ON g.id=(SELECT id FROM gate_decisions WHERE task_id=t.id AND work_revision=t.work_revision AND artifact_ref=a.artifact_ref AND rework_round=t.rework_round AND purpose='${purpose}' ORDER BY created_at DESC,id DESC LIMIT 1)
+      WHERE t.id IN (${placeholders})`;
+    const decisions = this.db.prepare(gateQuery("review")+" UNION ALL "+gateQuery("verification")).all(...ids,...ids) as Row[];
+    const gates = new Map<string,z.infer<typeof evidence.gateSummary>>();
+    for (const row of decisions) {
+      const {ownerId,required,gate,approved,changesRequested,...fact} = serialize(row);
+      gates.set(ownerId+":"+gate,{required:!!required,approved:!!approved,changesRequested:!!changesRequested,latestDecision:fact.id ? evidence.gateDecision.parse(fact) : null});
+    }
+    const implementations = this.db.prepare(`SELECT t.id,r.state,r.work_revision FROM tasks t LEFT JOIN runs r ON r.registration_order=(SELECT max(registration_order) FROM runs WHERE task_id=t.id AND purpose='implementation') WHERE t.id IN (${placeholders})`).all(...ids) as {id:string;state:string|null;work_revision:number|null}[];
+    const latest = new Map(implementations.map(row => [row.id,row]));
+    const prerequisites = new Map<string,Parameters<typeof deriveReadiness>[0]>();
+    for (const {ownerId,...fact} of dependencies) prerequisites.set(ownerId,[...(prerequisites.get(ownerId) ?? []),fact]);
+    for (const value of values) {
+      const implementation=latest.get(value.id)!;
+      result.set(value.id,{readiness:deriveReadiness(prerequisites.get(value.id) ?? []),evidence:{currentArtifact:currentArtifacts.get(value.id) ?? null,review:gates.get(value.id+":review")!,verification:gates.get(value.id+":verification")!,implementationCurrent:implementation.state === null || implementation.state === "succeeded" && implementation.work_revision === value.workRevision}});
+    }
+    return result;
+  }
+  private readiness(id: string) {
+    return this.acceptanceSnapshots([task.parse(this.one("tasks",id))]).get(id)!.readiness;
+  }
+  private evidence(value: z.infer<typeof task>) {
+    return this.acceptanceSnapshots([value]).get(value.id)!.evidence;
+  }
+  private artifact(value: z.infer<typeof task>, artifactRef: string, displayUrl: string | undefined, runId: string | null, actor: "operator" | "reporter", now: number) {
+    const fact = { id:randomUUID(), taskId:value.id, runId, workRevision:value.workRevision, artifactRef, reworkRound:value.reworkRound, displayUrl:displayUrl ?? null, actor, createdAt:new Date(now).toISOString() };
+    this.insert("task_artifacts",fact);
+    this.change("task",value.id,value.projectId,"artifact_published",now);
+    return fact;
   }
   command(
     command: ApplicationCommand,
@@ -261,6 +322,10 @@ export class ApplicationData {
         const { principal, method, path, key, digest, now } = context;
         if (
           [
+            "task.dependencies",
+            "task.review-policy",
+            "task.artifact",
+            "task.rework",
             "task.complete",
             "task.reopen",
             "settings.patch",
@@ -290,7 +355,45 @@ export class ApplicationData {
         const time = new Date(now).toISOString();
         let data: unknown;
         let status = 200;
-        if (command.kind === "workflow.run.register") {
+        if (command.kind === "task.dependencies" || command.kind === "task.review-policy" || command.kind === "task.artifact" || command.kind === "task.rework") {
+          const value = task.parse(this.one("tasks",command.id));
+          this.activeProject(value.projectId);
+          if (value.version !== command.input.expectedVersion) throw new Conflict("version_conflict",value.version);
+          if (this.facts(value,[]).activeRun) throw new Conflict("active_run");
+          if (value.status === "completed") throw new Conflict("task_completed");
+          let next = {...value, version:value.version+1, updatedAt:time};
+          if (command.kind === "task.dependencies") {
+            const prerequisites = command.input.prerequisiteIds.map(id => task.parse(this.one("tasks",id)));
+            const ids = prerequisites.map(prerequisite => prerequisite.id);
+            if (new Set(ids).size !== ids.length) throw new Conflict("dependency_duplicate");
+            for (const prerequisite of prerequisites) {
+              if (prerequisite.id === value.id) throw new Conflict("dependency_self");
+              if (prerequisite.projectId !== value.projectId) throw new Conflict("dependency_project_mismatch");
+              this.activeProject(prerequisite.projectId);
+            }
+            const edges = this.db.prepare("SELECT task_id,prerequisite_id FROM task_dependencies WHERE project_id=? AND task_id<>?").all(value.projectId,value.id) as {task_id:string;prerequisite_id:string}[];
+            validateDependencies([...edges.map(row => [row.task_id,row.prerequisite_id] as const),...ids.map(id => [value.id,id] as const)]);
+            this.db.prepare("DELETE FROM task_dependencies WHERE task_id=?").run(value.id);
+            for (const id of ids) this.db.prepare("INSERT INTO task_dependencies VALUES(?,?,?)").run(value.id,id,value.projectId);
+          } else if (command.kind === "task.review-policy") {
+            next = {...next,reviewRequired:command.input.reviewRequired,verificationRequired:command.input.verificationRequired};
+          } else if (command.kind === "task.rework") {
+            if (value.status !== "review") throw new Conflict("task_not_review");
+            next = {...next,status:"backlog",workRevision:value.workRevision+1,reworkRound:value.reworkRound+1};
+            this.insert("task_reworks",{id:randomUUID(),taskId:value.id,workRevision:next.workRevision,reworkRound:next.reworkRound,reason:command.input.reason,actor:"operator",createdAt:time});
+          } else {
+            const current = this.evidence(value).currentArtifact;
+            if (current && current.artifactRef !== command.input.artifactRef) next = {...next,workRevision:value.workRevision+1};
+            if (!current || current.artifactRef !== command.input.artifactRef) {
+              const latest = this.facts(value,[]).latestImplementation;
+              if (!current && latest && (latest.state !== "succeeded" || latest.workRevision !== value.workRevision)) throw new Conflict("implementation_not_current");
+              this.artifact(next,command.input.artifactRef,command.input.displayUrl,null,"operator",now);
+            }
+          }
+          this.update("tasks",next);
+          this.change("task",value.id,value.projectId,command.kind,now);
+          data = next;
+        } else if (command.kind === "workflow.run.register") {
           const requested = command.input;
           const existing = this.find("workflow_runs", requested.id);
           if (existing) {
@@ -415,6 +518,20 @@ export class ApplicationData {
             )
             .get(input.taskId ?? null);
           const nextTask = decideRegistration(input, taskValue, active, now);
+          if (taskValue && input.purpose === "implementation") {
+            const readiness = this.readiness(taskValue.id);
+            if (!readiness.ready) throw new Conflict("dependencies_not_ready",undefined,{blockedPrerequisiteIds:readiness.blockedPrerequisiteIds,prerequisites:readiness.prerequisites});
+          }
+          let captured: evidence.ReviewTuple | null = null;
+          if (taskValue && (input.purpose === "review" || input.purpose === "verification")) {
+            const required = input.purpose === "review" ? taskValue.reviewRequired : taskValue.verificationRequired;
+            const current = this.evidence(taskValue).currentArtifact;
+            if (input.artifactRef !== undefined) {
+              const requestedTuple = evidence.reviewTuple.parse({workRevision:input.workRevision,artifactRef:input.artifactRef,reworkRound:input.reworkRound});
+              if (!sameTuple(requestedTuple,current)) throw new Conflict("review_tuple_obsolete");
+              captured = current;
+            } else if (required) throw new Conflict("review_tuple_required");
+          }
           if (nextTask) {
             this.update("tasks", nextTask);
             this.change(
@@ -433,6 +550,8 @@ export class ApplicationData {
             purpose: input.purpose,
             model: input.model ?? null,
             workRevision: nextTask?.workRevision ?? null,
+            artifactRef: captured?.artifactRef ?? null,
+            reworkRound: captured?.reworkRound ?? null,
             state: "queued",
             lastSequence: 0,
             lastReceivedAt: time,
@@ -553,6 +672,9 @@ export class ApplicationData {
             status: "backlog",
             version: 1,
             workRevision: 1,
+            reviewRequired: false,
+            verificationRequired: false,
+            reworkRound: 0,
             createdAt: time,
             updatedAt: time,
             completedAt: null,
@@ -760,6 +882,17 @@ export class ApplicationData {
       ? task.parse(this.one("tasks", value.taskId))
       : null;
     const decision = decideEvent(value, input, taskValue, context.now);
+    if (input.type === "run.succeeded") {
+      const payload = input.payload;
+      if (payload.artifactRef !== undefined && value.purpose !== "implementation") throw new Conflict("artifact_purpose_invalid");
+      if (payload.decision !== undefined && !["review","verification"].includes(value.purpose)) throw new Conflict("decision_purpose_invalid");
+      const required = taskValue && (value.purpose === "review" ? taskValue.reviewRequired : value.purpose === "verification" ? taskValue.verificationRequired : false);
+      if (required && payload.decision === undefined) throw new Conflict("decision_required");
+      if (required || payload.decision !== undefined) {
+        const tuple = value.artifactRef !== null && value.workRevision !== null && value.reworkRound !== null ? {workRevision:value.workRevision,artifactRef:value.artifactRef,reworkRound:value.reworkRound} : null;
+        if (!taskValue || !sameTuple(tuple,this.evidence(taskValue).currentArtifact)) throw new Conflict("review_tuple_obsolete");
+      }
+    }
     this.update("runs", decision.run);
     if (decision.task) {
       this.update("tasks", decision.task);
@@ -799,6 +932,13 @@ export class ApplicationData {
         Date.parse(input.occurredAt),
         context.now,
       );
+    if (input.type === "run.succeeded" && taskValue) {
+      if (input.payload.artifactRef !== undefined) this.artifact(taskValue,input.payload.artifactRef,input.payload.displayUrl,value.id,"reporter",context.now);
+      if (input.payload.decision !== undefined) {
+        this.insert("gate_decisions",{id:randomUUID(),taskId:taskValue.id,runId:value.id,eventId:input.eventId,workRevision:value.workRevision,artifactRef:value.artifactRef,reworkRound:value.reworkRound,purpose:value.purpose,decision:input.payload.decision,evidenceNote:input.payload.evidenceNote,createdAt:receivedAt});
+        this.change("task",taskValue.id,taskValue.projectId,"gate_decision",context.now);
+      }
+    }
     return { status: 201, body };
   }
   private workflowRevision(id: string) {
@@ -989,7 +1129,7 @@ export class ApplicationData {
       clauses.push("instr(lower(title),lower(?))>0");
       params.push(filters.q);
     }
-    return this.page(
+    const page = this.page(
       "tasks",
       clauses.join(" AND ") || "1",
       params,
@@ -998,6 +1138,8 @@ export class ApplicationData {
       limit,
       cursor,
     );
+    const summaries=this.acceptanceSnapshots(page.items.map(value=>task.parse(value)));
+    return {...page,items:page.items.map(value=>({...value,...summaries.get(value.id as string)!}))};
   }
   private history(
     id: string,
@@ -1127,7 +1269,23 @@ export class ApplicationData {
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "workflow.run.summary") { const value=this.workflowRun(query.id);data={...value,freshness:workflowFreshness(value,now)}; }
+      if (query.kind === "workflow.readiness") {
+        const workflow=this.one("workflows",query.id), revision=this.workflowRevision(query.revisionId);
+        if (revision.workflowId !== workflow.id) throw new Conflict("resource_not_found");
+        const ids=[...new Set(revision.nodes.flatMap(node=>node.taskId ? [node.taskId.toLowerCase()] : []))];
+        const rows=ids.length ? this.db.prepare(`SELECT * FROM tasks WHERE id COLLATE NOCASE IN (${ids.map(()=>"?").join(",")}) LIMIT 101`).all(...ids) as Row[] : [];
+        if (rows.length !== ids.length) throw new Conflict("identity_ambiguous");
+        const values=rows.map(row=>task.parse(serialize(row)));
+        if (new Set(values.map(value=>value.id.toLowerCase())).size !== values.length) throw new Conflict("identity_ambiguous");
+        const summaries=this.acceptanceSnapshots(values);
+        data={workflowId:workflow.id,revisionId:revision.id,tasks:values.map(value=>({...value,...summaries.get(value.id)!}))};
+      } else if (query.kind === "task.readiness") {
+        const value = this.one("tasks",query.id);
+        data = this.readiness(value.id as string);
+      } else if (query.kind === "task.evidence" || query.kind === "task.decisions" || query.kind === "task.reworks") {
+        const value = this.one("tasks",query.id);
+        data = this.page(query.kind === "task.evidence" ? "task_artifacts" : query.kind === "task.decisions" ? "gate_decisions" : "task_reworks","task_id=?",[value.id],query.kind,{taskId:value.id},query.input.limit,query.input.cursor);
+      } else if (query.kind === "workflow.run.summary") { const value=this.workflowRun(query.id);data={...value,freshness:workflowFreshness(value,now)}; }
       else if (query.kind === "workflow.run") data = this.workflowRunDetail(query.id, now);
       else if (query.kind === "workflow.runs") {
         this.one("workflows", query.input.workflowId);
@@ -1319,13 +1477,15 @@ export class ApplicationData {
           .get(value.id, value.workRevision) as Row | undefined;
         const latest = this.db
           .prepare(
-            "SELECT id,project_id,agent_id,task_id,purpose,model,work_revision,state,last_sequence,last_received_at,started_at,ended_at,version,created_at FROM runs WHERE task_id=? ORDER BY registration_order DESC LIMIT 1",
+            "SELECT id,project_id,agent_id,task_id,purpose,model,work_revision,artifact_ref,rework_round,state,last_sequence,last_received_at,started_at,ended_at,version,created_at FROM runs WHERE task_id=? ORDER BY registration_order DESC LIMIT 1",
           )
           .get(value.id) as Row | undefined;
         const { history, historyLimit, completionCursor, reopenCursor } =
           query.input;
         data = {
           task: value,
+          readiness: this.readiness(value.id),
+          evidence: this.evidence(value),
           currentCompletion:
             value.status === "completed" && accepted
               ? serialize(accepted)

@@ -429,3 +429,44 @@ The [W01 implementation receipt](implementation/W01.md) and
 [synthetic acceptance summary](evidence/W01/acceptance.json) record the exact
 measured source, original ACK/database joins, suite composition and remaining
 integration gate. They introduce no additional route or execution authority.
+
+## W02 task acceptance evidence
+
+Browser-only commands use `expectedVersion` and `Idempotency-Key`. `PUT
+/tasks/{id}/dependencies` replaces `prerequisiteIds` (at most 20 same-project,
+canonical UUIDs) atomically. `PATCH /tasks/{id}/review-policy` sets both
+`reviewRequired` and `verificationRequired`; both default false. Dependency and
+policy edits reject active attempts. `POST /tasks/{id}/artifact` publishes
+`artifactRef` (1–2000 characters) and optional `displayUrl` (inert display text).
+Repeating a current reference preserves revision; replacement advances revision.
+`POST /tasks/{id}/rework` requires Review and a bounded reason, returns Backlog,
+and advances revision and round once. All four commands reject reporter access
+before receipt lookup. Exact authorized retries return unchanged original receipts.
+
+Authenticated `GET /tasks/{id}/readiness` returns `ready`, at most 20
+`prerequisites` with current/accepted revisions and reason, and blocked IDs.
+Registration and completion return `409 dependencies_not_ready` with these bounded
+facts. Current task detail and task/board lists include current readiness and gate
+summaries; list reads batch current facts. Historical artifacts, decisions and
+rework reasons are independently paged through `/tasks/{id}/artifacts`,
+`/tasks/{id}/decisions`, and `/tasks/{id}/reworks` (default 50, maximum 100;
+stable receipt-time/ID order, generation-bound cursors).
+
+Review/verification registration may include the all-or-none tuple
+`{workRevision, artifactRef, reworkRound}`. It is mandatory only under the relevant
+required policy. The store captures the matching current tuple. Success may
+report `decision` (`approved` or `changes_requested`) and `evidenceNote` (1–4000
+characters); explicit decisions always require a matching captured tuple. Required
+gates require both fields. Optional legacy `{summary, evidenceUrl?}` success stays
+execution evidence. Implementation success may publish `artifactRef` and optional
+`displayUrl`. Decisions cannot be reported by implementation or planning attempts.
+No report completes a task. Required current negatives remain blocking even after
+another approval for the same tuple. Existing implementation-current, Review,
+no-active-attempt and human-acceptance conditions remain in force.
+
+`GET /workflows/{id}/revisions/{revisionId}/readiness` provides one authenticated,
+generation/cursor-bound current snapshot for the distinct linked tasks in that
+immutable revision (maximum 100). It includes their task, prerequisite and gate
+facts through batched reads. Unlinked nodes create no task entry. The selected
+revision and reported observations remain immutable; this separate snapshot also
+works before any workflow attempt and during historical selection.

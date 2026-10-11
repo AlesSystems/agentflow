@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reviewTuple, artifactRef } from "./evidence";
 import {
   envelope,
   pageQuery,
@@ -42,11 +43,12 @@ export const runRegister = z
     purpose: run.shape.purpose,
     model: requiredText(200).optional(),
     expectedTaskVersion: version.optional(),
+    ...reviewTuple.partial().shape,
   })
   .refine((v) =>
-    v.taskId
+    (v.workRevision === undefined && v.artifactRef === undefined && v.reworkRound === undefined || v.taskId !== undefined && ["review", "verification"].includes(v.purpose) && v.workRevision !== undefined && v.artifactRef !== undefined && v.reworkRound !== undefined) && (v.taskId
       ? v.expectedTaskVersion !== undefined
-      : v.purpose === "planning" && v.expectedTaskVersion === undefined,
+      : v.purpose === "planning" && v.expectedTaskVersion === undefined),
   );
 export const runQuery = z.strictObject({
   ...pageQuery,
@@ -108,7 +110,11 @@ export const eventInput = z.discriminatedUnion("type", [
     payload: z.strictObject({
       summary: requiredText(4000),
       evidenceUrl: safeUrl.optional(),
-    }),
+      artifactRef: artifactRef.optional(),
+      displayUrl: safeUrl.optional(),
+      decision: z.enum(["approved", "changes_requested"]).optional(),
+      evidenceNote: requiredText(4000).optional(),
+    }).refine(v => (v.decision === undefined) === (v.evidenceNote === undefined) && (!v.displayUrl || v.artifactRef !== undefined)),
   }),
   z.strictObject({
     ...eventBase,

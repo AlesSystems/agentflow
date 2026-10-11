@@ -128,3 +128,15 @@ Source identities:
 historical tracking studies. No blanket WCAG 2.2 AA compliance is claimed. Shared
 schema feedback and the small title-button target remain limitations to assess
 rather than canonize. PRODUCT.md now records the implemented package boundary.
+
+## W02 candidate extension
+
+The same TaskDetail owner now retains version-bound prerequisite, policy, artifact
+and rework drafts across refresh/failure. Exact retry preserves bytes/key; explicit
+refresh/reprepare loads authoritative facts before a new reviewed request.
+Current acceptance requirements remain beside acceptance, with reported approval,
+required sticky negatives, prerequisite revisions and the current-implementation
+blocker. Artifact display URLs are escaped inert text. Bounded artifact/decision/
+rework history marks obsolete tuples. Native disclosure keeps policy controls
+secondary. Semantic headings preserve the incumbent type sizes. These are source
+candidate behaviors; independent UI review and package acceptance remain open.

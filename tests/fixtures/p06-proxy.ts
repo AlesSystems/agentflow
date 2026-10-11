@@ -10,7 +10,7 @@ type Decision =
       headers?: Record<string, string>;
       truncate?: boolean;
     };
-type Reply = { status: number; body: Buffer; generation: string | null };
+export type Reply = { status: number; body: Buffer; generation: string | null; retryAfter:string|null; headers:Record<string,string> };
 export async function publicProxy(
   server: Pick<Awaited<ReturnType<typeof launch>>, "url">,
   decide: (
@@ -18,7 +18,7 @@ export async function publicProxy(
     body: Buffer,
     reply?: Reply,
   ) => Promise<Decision | undefined> | Decision | undefined,
-  bounds?: { httpMs: number; closeMs: number },
+  bounds?: { httpMs: number; closeMs: number; onFailure?:(request:IncomingMessage,error:unknown,reply?:Reply)=>void },
 ) {
   const port = await freePort(),
     controllers = new Set<AbortController>(),
@@ -83,6 +83,8 @@ export async function publicProxy(
           status: response.status,
           body: Buffer.alloc(0),
           generation: response.headers.get("agentflow-generation"),
+          retryAfter: response.headers.get("retry-after"),
+          headers:Object.fromEntries(response.headers),
         };
         if (bounds && response.body) {
           const reader = response.body.getReader(),
@@ -125,6 +127,7 @@ export async function publicProxy(
           bodyBase64: reply?.body.toString("base64") ?? "",
           error: failureFact(error),
         });
+        bounds?.onFailure?.(req,error,reply);
         res.destroy();
       } finally {
         clearTimeout(timer);

@@ -88,6 +88,9 @@ export const tasks = sqliteTable(
     blockedReason: text("blocked_reason"),
     version: integer("version").notNull(),
     workRevision: integer("work_revision").notNull(),
+    reviewRequired: integer("review_required", {mode:"boolean"}).notNull().default(false),
+    verificationRequired: integer("verification_required", {mode:"boolean"}).notNull().default(false),
+    reworkRound: integer("rework_round").notNull().default(0),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
     completedAt: integer("completed_at"),
@@ -137,6 +140,8 @@ export const runs = sqliteTable(
     purpose: text("purpose").notNull(),
     model: text("model"),
     workRevision: integer("work_revision"),
+    artifactRef: text("artifact_ref"),
+    reworkRound: integer("rework_round"),
     state: text("state").notNull(),
     lastSequence: integer("last_sequence").notNull(),
     lastReceivedAt: integer("last_received_at").notNull(),
@@ -369,3 +374,16 @@ export const workflowEvents = sqliteTable("workflow_events", {
 }, t => [uniqueIndex("workflow_events_sequence").on(t.workflowRunId, t.sequence), check("workflow_events_sequence", sql`${t.sequence} BETWEEN 1 AND 9007199254740991`), check("workflow_events_type", sql`${t.type} IN ('workflow.started','workflow.node.reported','workflow.heartbeat','workflow.succeeded','workflow.failed','workflow.cancelled')`), check("workflow_events_body", sql`json_valid(${t.body})`), check("workflow_events_acknowledgement", sql`json_valid(${t.acknowledgement})`)]);
 export const workflowNodeObservations = sqliteTable("workflow_node_observations", { id: text("id").primaryKey().notNull().references(() => workflowEvents.eventId), workflowRunId: text("workflow_run_id").notNull().references(() => workflowRuns.id), nodeId: text("node_id").notNull(), runId: text("run_id").references(() => runs.id), sequence: integer("sequence").notNull(), createdAt: integer("created_at").notNull(), body: text("body").notNull() }, t => [uniqueIndex("workflow_node_sequence").on(t.workflowRunId, t.sequence), index("workflow_node_history").on(t.workflowRunId, t.nodeId, t.sequence), check("workflow_node_body", sql`json_valid(${t.body})`)]);
 export const workflowClosures = sqliteTable("workflow_closures", { id: text("id").primaryKey().notNull(), workflowRunId: text("workflow_run_id").notNull().references(() => workflowRuns.id), reason: text("reason").notNull(), actor: text("actor").notNull(), createdAt: integer("created_at").notNull() }, t => [uniqueIndex("workflow_closures_run").on(t.workflowRunId), check("workflow_closure_actor", sql`${t.actor}='operator'`)]);
+
+export const taskDependencies = sqliteTable("task_dependencies", {
+  taskId: text("task_id").notNull(), prerequisiteId: text("prerequisite_id").notNull(), projectId: text("project_id").notNull(),
+}, t => [primaryKey({columns:[t.taskId,t.prerequisiteId]}), foreignKey({columns:[t.taskId,t.projectId],foreignColumns:[tasks.id,tasks.projectId]}), foreignKey({columns:[t.prerequisiteId,t.projectId],foreignColumns:[tasks.id,tasks.projectId]}), check("task_dependencies_self",sql`${t.taskId}<>${t.prerequisiteId}`), index("task_dependencies_project").on(t.projectId,t.taskId), index("task_dependencies_prerequisite").on(t.prerequisiteId,t.taskId)]);
+export const taskArtifacts = sqliteTable("task_artifacts", {
+  id:text("id").primaryKey(), taskId:text("task_id").notNull().references(()=>tasks.id), runId:text("run_id").references(()=>runs.id), workRevision:integer("work_revision").notNull(), artifactRef:text("artifact_ref").notNull(), reworkRound:integer("rework_round").notNull(), actor:text("actor").notNull(), displayUrl:text("display_url"), createdAt:integer("created_at").notNull(),
+}, t => [check("task_artifacts_revision",sql`${t.workRevision}>0`),check("task_artifacts_ref",sql`length(${t.artifactRef}) BETWEEN 1 AND 2000`),check("task_artifacts_round",sql`${t.reworkRound}>=0`),check("task_artifacts_actor",sql`${t.actor} IN ('operator','reporter')`),uniqueIndex("task_artifacts_tuple").on(t.taskId,t.workRevision,t.reworkRound),index("task_artifacts_current").on(t.taskId,t.workRevision,t.reworkRound,t.createdAt,t.id)]);
+export const gateDecisions = sqliteTable("gate_decisions", {
+  id:text("id").primaryKey(), taskId:text("task_id").notNull().references(()=>tasks.id),runId:text("run_id").notNull().references(()=>runs.id),eventId:text("event_id").notNull().unique().references(()=>runEvents.eventId),workRevision:integer("work_revision").notNull(),artifactRef:text("artifact_ref").notNull(),reworkRound:integer("rework_round").notNull(),purpose:text("purpose").notNull(),decision:text("decision").notNull(),evidenceNote:text("evidence_note").notNull(),createdAt:integer("created_at").notNull(),
+}, t=> [check("gate_decisions_revision",sql`${t.workRevision}>0`),check("gate_decisions_ref",sql`length(${t.artifactRef}) BETWEEN 1 AND 2000`),check("gate_decisions_round",sql`${t.reworkRound}>=0`),check("gate_decisions_purpose",sql`${t.purpose} IN ('review','verification')`),check("gate_decisions_decision",sql`${t.decision} IN ('approved','changes_requested')`),check("gate_decisions_note",sql`length(${t.evidenceNote}) BETWEEN 1 AND 4000`),index("gate_decisions_current").on(t.taskId,t.workRevision,t.artifactRef,t.reworkRound,t.purpose,t.decision,t.createdAt,t.id)]);
+export const taskReworks = sqliteTable("task_reworks", {
+ id:text("id").primaryKey(),taskId:text("task_id").notNull().references(()=>tasks.id),workRevision:integer("work_revision").notNull(),reworkRound:integer("rework_round").notNull(),reason:text("reason").notNull(),actor:text("actor").notNull(),createdAt:integer("created_at").notNull(),
+},t=> [check("task_reworks_revision",sql`${t.workRevision}>0`),check("task_reworks_round",sql`${t.reworkRound}>0`),check("task_reworks_reason",sql`length(${t.reason}) BETWEEN 1 AND 4000`),check("task_reworks_actor",sql`${t.actor}='operator'`),index("task_reworks_history").on(t.taskId,t.createdAt,t.id)]);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { taskSnapshot } from "./tasks";
 import { envelope, inputUuid, pageQuery, requiredText, timestamp, uuid, version } from "./common";
 import { observedRun, freshness } from "./observations";
 export const workflowCreate = z.strictObject({ id: inputUuid, projectId: inputUuid, name: requiredText(200) });
@@ -47,3 +48,5 @@ export const workflowEventsResponse = envelope(list(workflowEventRecord));
 export type WorkflowPlan = z.infer<typeof workflowPlan>;
 export type WorkflowRunFacts = z.infer<typeof workflowRun>;
 export type WorkflowEventInput = z.infer<typeof workflowEventInput>;
+
+export const workflowReadinessResponse = envelope(z.strictObject({workflowId:uuid,revisionId:uuid,tasks:z.array(taskSnapshot).max(100)}));

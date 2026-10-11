@@ -1,4 +1,6 @@
 "use client";
+import { AcceptanceFacts, ReportedEvidenceHistory } from "./evidence";
+import { dependenciesInput, reviewPolicyInput, artifactInput, reworkInput } from "../../contracts/evidence";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace, useRead, QueryFeedback } from "../../client/provider";
@@ -23,6 +25,8 @@ import { ApiError, StaleSnapshot } from "../../client/api";
 import { Attempts } from "../tracking";
 import { TaskFields } from "./fields";
 import { StatusMenu, statusLabel } from "../ui/menu";
+type EvidenceKind = "dependencies" | "policy" | "artifact" | "rework";
+type CommandKind = "edit" | "action" | "comment" | "move" | EvidenceKind;
 type DetailProps = {
   id: string;
   archived: boolean;
@@ -52,9 +56,14 @@ export function TaskDetail({
     ),
     [command, setCommand] = useState<{
       request: FrozenCommand;
-      kind: "edit" | "action" | "comment" | "move";
+      kind: CommandKind;
     } | null>(null),
     [busy, setBusy] = useState(false);
+  const [dependenciesDraft,setDependenciesDraft]=useState<{version:number;text:string}|null>(null);
+  const [policyDraft,setPolicyDraft]=useState<{version:number;reviewRequired:boolean;verificationRequired:boolean}|null>(null);
+  const [artifactDraft,setArtifactDraft]=useState<{version:number;artifactRef:string;displayUrl:string}|null>(null);
+  const [reworkDraft,setReworkDraft]=useState<{version:number;reason:string}|null>(null);
+  const evidenceDirty=!!(dependenciesDraft||policyDraft||artifactDraft||reworkDraft);
   const [commentsCursor, setCommentsCursor] = useState<string | null>(null),
     [comments, setComments] = useState<
       NonNullable<ReturnType<typeof useComments>["data"]>["data"]["items"]
@@ -100,7 +109,7 @@ export function TaskDetail({
     commentNote ||
     evidenceNote ||
     evidenceUrl ||
-    reopenReason
+    reopenReason || evidenceDirty
   );
   const frozen = busy || draft?.phase === "submitting";
   useEffect(
@@ -128,17 +137,19 @@ export function TaskDetail({
   }, [dirty, notesDirty]);
   async function send(
     request: FrozenCommand,
-    kind: "edit" | "action" | "comment" | "move",
+    kind: CommandKind,
   ) {
+    const exactRetry=command?.request === request;
+    if(command && !exactRetry){setNotice("Resolve the pending request with exact retry or explicit refresh and reprepare before saving another command. Your drafts are retained.");return false;}
     if (
-      kind === "action" &&
+      !exactRetry && kind === "action" &&
       request.path.endsWith("/complete") &&
       task?.status !== "review"
     ) {
       setNotice("Move to Review first. Your evidence note is retained.");
       return false;
     }
-    if ((kind === "action" || kind === "move") && draft) {
+    if (!exactRetry && (kind === "action" || kind === "move") && (draft || evidenceDirty)) {
       setNotice(
         "Save or discard the task field draft before changing its lifecycle. Your notes are retained.",
       );
@@ -155,6 +166,10 @@ export function TaskDetail({
       const fresh = await api.read(path, taskDetailResponse);
       onStatus?.(fresh.data.task);
       if (kind === "edit") setDraft(null);
+      if (kind === "dependencies") setDependenciesDraft(null);
+      if (kind === "policy") setPolicyDraft(null);
+      if (kind === "artifact") setArtifactDraft(null);
+      if (kind === "rework") setReworkDraft(null);
       setCommand(null);
       if (kind === "comment") setCommentNote("");
       if (kind === "action") {
@@ -218,6 +233,23 @@ export function TaskDetail({
       setBusy(false);
     }
   }
+  async function prepareEvidence(kind: EvidenceKind) {
+    setBusy(true);
+    try {
+      const fresh=await api.read(path,taskDetailResponse);
+      cache.setQueryData([api.generation,path],fresh);
+      const version=fresh.data.task.version;
+      if(kind === "dependencies")setDependenciesDraft(d=>d&&({...d,version}));
+      if(kind === "policy")setPolicyDraft(d=>d&&({...d,version}));
+      if(kind === "artifact")setArtifactDraft(d=>d&&({...d,version}));
+      if(kind === "rework")setReworkDraft(d=>d&&({...d,version}));
+      setCommand(null);
+      setNotice(`Prepared against current version ${version}. Inspect your retained draft before saving a new request.`);
+    }catch{setNotice("Could not refresh. Your draft and original request are retained.");}finally{setBusy(false);}
+  }
+  const activeAttempt=!!data?.latestRun && ["queued","running"].includes(data.latestRun.state);
+  const evidenceDisabled=archived||task?.status === "completed"||activeAttempt||busy||!!draft||!!command;
+  const acceptanceBlocked=!!data && (!data.readiness.ready||!data.evidence.implementationCurrent||[data.evidence.review,data.evidence.verification].some(gate=>gate.required&&(!data.evidence.currentArtifact||gate.changesRequested||!gate.approved)));
   async function move(status: Task["status"]) {
     if (!task) return;
     const intent = moveIntent(task.status, status);
@@ -295,7 +327,7 @@ export function TaskDetail({
           </div>
           {draft?.phase === "conflict" && (
             <section className="conflict" aria-label="Version conflict">
-              <h3>Current saved task</h3>
+              <h2 className="task-section-heading">Current saved task</h2>
               <dl>
                 <dt>Title</dt>
                 <dd>{draft.current.title}</dd>
@@ -350,7 +382,7 @@ export function TaskDetail({
           <div className="actions">
             <StatusMenu
               task={task}
-              disabled={archived || dirty || busy}
+              disabled={archived || dirty || evidenceDirty || busy}
               onMove={(status) => void move(status)}
             />
             {task.status === "completed" && !archived && (
@@ -419,7 +451,7 @@ export function TaskDetail({
                     onClick={() => {
                       if (confirm("Discard unsaved task changes?")) {
                         setDraft(null);
-                        setCommand(null);
+                        if (command?.kind === "edit") setCommand(null);
                       }
                     }}
                   >
@@ -434,13 +466,46 @@ export function TaskDetail({
               Retry exact request
             </button>
           )}
+          {action!=="accept"&&<AcceptanceFacts headingLevel={2} task={task} readiness={data.readiness} evidence={data.evidence}/>}
+          <section className="task-evidence-controls" aria-label="Dependencies and review policy">
+            <h2 className="task-section-heading">Prerequisites and reported evidence</h2>
+            {activeAttempt&&<p className="notice">A queued or running registered attempt holds this task record. Policy and evidence edits require no active attempt.</p>}
+            <p className="metadata">These gates govern registration and human acceptance. They do not control external execution.</p>
+            <details className="evidence-editor"><summary>Edit prerequisites and review evidence</summary>
+            <form onSubmit={event=>{event.preventDefault();if(!dependenciesDraft)return;const parsed=dependenciesInput.safeParse({expectedVersion:dependenciesDraft.version,prerequisiteIds:dependenciesDraft.text.split(/[\s,]+/).filter(Boolean)});if(!parsed.success){setNotice("Enter at most 20 distinct prerequisite task UUIDs.");return;}void send(freezeCommand(`${path}/dependencies`,"PUT",parsed.data),"dependencies");}}>
+              <label>Prerequisite task IDs<textarea disabled={evidenceDisabled} value={dependenciesDraft?.text ?? data.readiness.prerequisites.map(p=>p.taskId).join("\n")} onChange={event=>setDependenciesDraft({version:dependenciesDraft?.version ?? task.version,text:event.target.value})}/></label>
+              <p className="metadata">One task UUID per line. Parent grouping and workflow edges are independent.</p>
+              <button disabled={evidenceDisabled||!dependenciesDraft}>Save prerequisites</button>
+            </form>
+            <form onSubmit={event=>{event.preventDefault();if(!policyDraft)return;void send(freezeCommand(`${path}/review-policy`,"PATCH",reviewPolicyInput.parse({expectedVersion:policyDraft.version,reviewRequired:policyDraft.reviewRequired,verificationRequired:policyDraft.verificationRequired})),"policy");}}>
+              <label className="checkbox-label"><input type="checkbox" disabled={evidenceDisabled} checked={policyDraft?.reviewRequired ?? task.reviewRequired} onChange={event=>setPolicyDraft({version:policyDraft?.version ?? task.version,reviewRequired:event.target.checked,verificationRequired:policyDraft?.verificationRequired ?? task.verificationRequired})}/>Require reported review</label>
+              <label className="checkbox-label"><input type="checkbox" disabled={evidenceDisabled} checked={policyDraft?.verificationRequired ?? task.verificationRequired} onChange={event=>setPolicyDraft({version:policyDraft?.version ?? task.version,reviewRequired:policyDraft?.reviewRequired ?? task.reviewRequired,verificationRequired:event.target.checked})}/>Require reported verification</label>
+              <button disabled={evidenceDisabled||!policyDraft}>Save review policy</button>
+            </form>
+            <form onSubmit={event=>{event.preventDefault();if(!artifactDraft)return;const parsed=artifactInput.safeParse({expectedVersion:artifactDraft.version,artifactRef:artifactDraft.artifactRef,...(artifactDraft.displayUrl ? {displayUrl:artifactDraft.displayUrl} : {})});if(!parsed.success){setNotice("Enter a nonempty artifact reference and valid optional display URL.");return;}void send(freezeCommand(`${path}/artifact`,"POST",parsed.data),"artifact");}}>
+              <label>Artifact reference<input disabled={evidenceDisabled} maxLength={2000} value={artifactDraft?.artifactRef ?? data.evidence.currentArtifact?.artifactRef ?? ""} onChange={event=>setArtifactDraft({version:artifactDraft?.version ?? task.version,artifactRef:event.target.value,displayUrl:artifactDraft?.displayUrl ?? data.evidence.currentArtifact?.displayUrl ?? ""})}/></label>
+              <label>Artifact display URL (inert text)<input disabled={evidenceDisabled} maxLength={2000} value={artifactDraft?.displayUrl ?? data.evidence.currentArtifact?.displayUrl ?? ""} onChange={event=>setArtifactDraft({version:artifactDraft?.version ?? task.version,artifactRef:artifactDraft?.artifactRef ?? data.evidence.currentArtifact?.artifactRef ?? "",displayUrl:event.target.value})}/></label>
+              <p className="metadata">Replacing a current reference advances revision and needs fresh evidence. Contents are not fetched or verified.</p>
+              <button disabled={evidenceDisabled||!artifactDraft}>Publish artifact reference</button>
+            </form>
+            <form onSubmit={event=>{event.preventDefault();if(!reworkDraft)return;const parsed=reworkInput.safeParse({expectedVersion:reworkDraft.version,reason:reworkDraft.reason});if(!parsed.success){setNotice("Enter a reason for rework.");return;}void send(freezeCommand(`${path}/rework`,"POST",parsed.data),"rework");}}>
+              <label>Reason for rework<textarea disabled={evidenceDisabled||task.status!=="review"} required maxLength={4000} value={reworkDraft?.reason ?? ""} onChange={event=>setReworkDraft({version:reworkDraft?.version ?? task.version,reason:event.target.value})}/></label>
+              <button disabled={evidenceDisabled||task.status!=="review"||!reworkDraft}>Return to Backlog for rework</button>
+            </form>
+            {evidenceDirty && <button disabled={busy} onClick={()=>{if(confirm("Discard unsaved prerequisite and evidence drafts?")){setDependenciesDraft(null);setPolicyDraft(null);setArtifactDraft(null);setReworkDraft(null);if(command && ["dependencies","policy","artifact","rework"].includes(command.kind))setCommand(null);}}}>Discard evidence drafts</button>}
+            {command && ["dependencies","policy","artifact","rework"].includes(command.kind) && <button disabled={busy} onClick={()=>void prepareEvidence(command.kind as EvidenceKind)}>Refresh and prepare new request</button>}
+            </details>
+          </section>
+          <ReportedEvidenceHistory id={id} task={task} currentArtifact={data.evidence.currentArtifact?.artifactRef ?? null}/>
+          {command?.kind === "action" && !busy && <button onClick={async()=>{setBusy(true);try{const fresh=await api.read(path,taskDetailResponse);cache.setQueryData([api.generation,path],fresh);setCommand(null);setNotice(`Prepared against current version ${fresh.data.task.version}. Inspect your retained acceptance note before saving.`);}catch{setNotice("Could not refresh. Your original request and note are retained.");}finally{setBusy(false);}}}>Refresh and prepare acceptance request</button>}
           {action && (
             <section className="acceptance">
-              <h3>
+              <h2 className="task-section-heading">
                 {action === "accept" ? "Human acceptance" : "Reopen this task"}
-              </h3>
+              </h2>
               {action === "accept" && (
                 <>
+                  <AcceptanceFacts task={task} readiness={data.readiness} evidence={data.evidence}/>
                   <p>
                     Read the acceptance criteria and evidence for revision{" "}
                     {task.workRevision}.
@@ -542,8 +607,8 @@ export function TaskDetail({
                   disabled={
                     busy ||
                     archived ||
-                    dirty ||
-                    (action === "accept" && task.status !== "review")
+                    dirty || evidenceDirty ||
+                    (action === "accept" && (task.status !== "review" || acceptanceBlocked))
                   }
                 >
                   {action === "accept"
@@ -568,7 +633,7 @@ export function TaskDetail({
           )}
           {data.currentCompletion && (
             <section className="acceptance">
-              <h3 className="accepted-stamp">Human accepted</h3>
+              <h2 className="accepted-stamp">Human accepted</h2>
               <p>
                 Revision {data.currentCompletion.workRevision} ·{" "}
                 {new Date(data.currentCompletion.acceptedAt).toLocaleString()}
@@ -599,12 +664,12 @@ export function TaskDetail({
             </p>
           )}
           <section className="comments">
-            <h3>
+            <h2 className="task-section-heading">
               Comments{" "}
               <span className="count">
                 {commentQuery.data?.data.total ?? ""}
               </span>
-            </h3>
+            </h2>
             <QueryFeedback
               error={commentQuery.error}
               loading={commentQuery.isPending}
@@ -672,7 +737,7 @@ export function TaskDetail({
             )}
           </section>
           <section>
-            <h3>Acceptance history</h3>
+            <h2 className="task-section-heading">Acceptance history</h2>
             {[
               ...(data.history.completions?.items ?? []),
               ...history.completion,
@@ -700,7 +765,7 @@ export function TaskDetail({
                 Load more acceptances
               </button>
             )}
-            <h3>Reopen history</h3>
+            <h2 className="task-section-heading">Reopen history</h2>
             {[...(data.history.reopens?.items ?? []), ...history.reopen].map(
               (item) => (
                 <article className="history-entry" key={item.id}>

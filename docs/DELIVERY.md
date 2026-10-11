@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: seven packages passed acceptance, independent review, coordinator verification
+Status: P01–P07 and W01 passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. W01 implementation and verification are ready for final integration review; it has not merged. W02–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. W02 Task5 metric/data evidence is accepted; final review and integration remain open. W03a–W04 remain unstarted.
 
 ## Package state
 
@@ -21,8 +21,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P05 | Live tracking | Integrated | Candidate `aa28e949ba0d7147fec2e481ec37423521dbe570`; merge `787865132d89a9b03f613942f64945887bc13f95`, PR #8 | [Receipt](implementation/P05.md), [summary](evidence/P05/summary.json) |
 | P06 | CLI hooks | Integrated | Candidate `e568f6fe84cc3c62ebb26dbb22092673d23f07ce`; merge `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`, PR #9 | [Receipt](implementation/P06.md), [synthetic evidence](implementation/evidence/P06/README.md), [integration](#verified-p06-integration) |
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
-| W01 | Reported workflow graph | Ready for final integration review | Executable `7eb85f3ab9ccb93405e283541e86501fa5f19260`; merge pending | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
-| W02 | Dependencies/review/rework | Not started | — | — |
+| W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
+| W02 | Dependencies/review/rework | Task 5 metric/data gate accepted; final review open | Executable `8b76bed7eab2ebe35630cb366e4a2b257970bb9a`; unmerged | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
 | W03a | GitHub PR observation | Not started | — | — |
 | W03b | Export/retention | Not started | — | — |
 | W03c | Usage summaries | Not started | — | — |
@@ -653,3 +653,144 @@ Remaining: exact final candidate/evidence review, coordinator verification,
 guarded PR/normal matching-head merge, archive-before-cleanup and only then W02.
 Package completion boxes remain open until reviewed integration. No tag or
 complete-v1 claim is made.
+
+
+## Verified W01 integration and cleanup
+
+[PR #11](https://github.com/AlesSystems/agentflow/pull/11) merged at
+2026-10-11 07:47:26 UTC. Exact reviewed head
+`4e527a4b1fc31200eeda45a72a67d214b4b064ea` has the same tree as merge
+`e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. Root read complete independent
+Standards and Spec reports, verified no blockers, exact GitHub head/base and
+normal matching-head integration, and confirmed candidate ancestry plus clean
+primary fast-forward. Report hashes and guarded cleanup qualifications are in
+[the W01 receipt](implementation/W01.md#integration-and-cleanup-on-2026-10-11).
+
+All 254,437 private archive members and 1,057 critical files passed independent
+streaming verification before exact identity-guarded removal of the owned
+temporary root at 08:33:46 UTC. The archive remains private. Original and
+quarantine roots are absent; the completed owned branch is removed locally and
+remotely. Primary and reusable managed checkout are clean at the merge. No
+operator data, skills, external pins, or global caches changed. Historical runtime
+results retain their original sources and qualifications.
+
+W01 completion boxes are closed. Next is the [W02 implementation plan](superpowers/plans/2026-10-11-w02-dependencies.md),
+then exact-plan Astra medium approval before its first source change. W03a–W04
+and source release remain open. No tag or complete-v1 claim is made.
+
+
+## W02 backend and CLI progression
+
+Exact-plan Astra medium approval preceded implementation. Approved plan SHA256
+is `1d9ff305efa848b8a01e51d3cfb5377a3bdb9f506cf0dd1202d6776c6a9da0df`; its
+review report hash and complete source lineage are in [the W02 receipt](implementation/W02.md).
+Backend/CLI checkpoint `fc02721e8497ccea2d9ced93b766d0b277624c63` passed independent
+Standards and Spec progression review and coordinator verification. Two reproduced
+findings were repaired: actual stored UUID identity for dependency writes and
+safe actionable CLI conflict diagnostics. No source blocker remains at this gate.
+
+Actual checks include 177 unit tests at clean application candidate `1d539da`,
+qualified upgrade/repair/race checks, three clean CLI cases at `2fba0d5`, and
+Store/SQLite current-evidence recovery and archived receipt checks. The coordinator
+verified recorded input attribution, actual retained rows and pending bytes. Prior
+failed commands, pre-commit attribution, overwritten failed scenario JSON, and
+unbracketed private helper hashes remain explicit limitations. Synthetic operator
+fixtures are not human attestations. No historical check is relabeled as a run at
+the later documentation checkpoint.
+
+Tasks 1–3 are closed in the [W02 task checklist](superpowers/plans/2026-10-11-w02-dependencies.md).
+Next is Task 4 UI under the same approved plan, followed by final browser/suite/
+performance/exact-review gates. All W02 package completion boxes, W03a–W04 and
+source release remain open. No W02 PR or merge is recorded at this stage.
+
+
+## W02 UI progression
+
+Task 4 passed independent Standards/Spec at exact
+`8f1e46bc7f1005b47333188d0f153672248035f1` and coordinator source/data verification.
+The [receipt](implementation/W02.md#verified-ui-progression-and-command-ownership-repairs)
+records two reproduced command-ownership discard defects and their narrow guards,
+actual body/key/receipt joins, current-versus-historical Graph/List facts, two-context
+rework/acceptance, dirty/reprepare/lost-response recovery, keyboard/375/native200
+checks, valid captures, and source-stage qualifications. Native captures preserve
+actual zoom; earlier cropped/protocol-failed images remain invalid historical evidence.
+Two self-inspection batches per surface are complete, with no further style polishing.
+
+The coordinator read both complete reports, verified hashes, matched all 514 source
+blobs and 46 indexed receipts, and inspected actual SQLite retries. Metadata, comment
+and completion preserve original keys and bodies; no duplicate comment/completion
+is stored. Synthetic acceptance remains distinct from human attestation.
+
+The [task checklist](superpowers/plans/2026-10-11-w02-dependencies.md) closes Task 4.
+Next is Task 5 final executable suites and measurement-helper controls/preparation.
+Real timings require a frozen-input quiet release from the coordinator. All W02
+package boxes, W03a–W04, PR integration and source release remain open.
+
+## W02 final preparation gate
+
+Source/helper candidate `de24f611ac4db630d2ec1b732b786a53db32acc8` passed scoped
+independent Standards and Spec closures after actual controls reproduced and
+repaired measurement method, original CLI ledger, current-version, generation,
+visible-value, denominator, failed-request retention, deadline, private-copy and
+minimal/full receipt comparison defects. These are helper progression approvals;
+actual timing and final package review remain open. See [the receipt](implementation/W02.md#w02-task-5-preparation-and-source-qualification).
+
+The original unit run passed 182/38 before later helper changes, followed by 11
+current helper cases. Integration retains its original 469-pass/5-fail result and
+affected 42+1 repairs covering 474 distinct cases; it is not a retrospectively
+passing whole invocation. Chrome passed 61 with no skips at `a767c7b`; six current
+W02/control journeys passed against the fresh production head. Final lint, types
+and OpenAPI passed. Historical input and failure qualifications remain explicit.
+
+Fresh W01 base and W02 head installs/builds use the pinned runtime and their own
+locks/addons. The head application build was made at `f49d030`; later helper-only
+commits preserve all application/lock/addon bytes. Host qualification is macOS
+27.0 build26A428, arm64/Apple M4 Pro, Node24.15.0/npm11.12.1, Chrome154.0.8037.99;
+this is a fresh checkout on that host, not a pristine-OS or Linux result.
+
+Preparation and nonacceptance control passed with separate source-correct
+1000-task/10000-event seeds and the head-only workflow/diamond/gate fixture.
+The coordinator independently verified 825 compiled files, application/helper/
+native/runtime hashes, 15 unchanged frozen data files, seed counts/integrity/FKs,
+53 receipt hashes and source qualifications, raw control receipts/spools/SQLite
+joins, and twelve literal-value/two-frame/route/tuple confirmations. Control keeps
+48 not-run slots in its 60 denominator; it supplies no performance budget pass.
+The full declaration has 10230 operation samples, three interleaved repetitions,
+100 measured plus ten warmups per group, and all 60 visibility slots.
+
+Next: final frozen-input quiet release, one real campaign, metric/regression
+decisions, exact final candidate reviews, normal matching-head PR merge and
+archive-before-owned-cleanup. All W02 completion, W03a–W04 and source release boxes
+remain open. No timing, merge, or complete-v1 result is claimed here.
+
+
+## W02 Task 5 metric and data gate accepted
+
+The coordinator accepted the one released journal-protocol quiet campaign at clean
+`8b76bed7eab2ebe35630cb366e4a2b257970bb9a`, after independent raw/SQL, journal,
+numerical and input-provenance audits. All 10,230 declared samples are present
+(930 warmups, 9,300 measured), with 16,830 setup records and 60 strict current-value
+confirmations. Missing/unconfirmed/wrong/duplicate/hidden/late/failed and cleanup
+counts are zero. Worst existing relative p95 is +16.383%; no >20% Astra exception
+is required. Maximum head existing/new HTTP group p95 is 8.535/9.611 ms, CLI group
+p95 655.902 ms, and overall visible p95 735.862 ms. Maximum scenario/view p95 is
+782.684 ms. All 3,366 ordinary native full-drain clocks are <=5 seconds.
+
+Fifteen deliberate queued setup invocations take roughly 5.1 seconds before the
+measured visibility clock, exit 2 after synthetic 503s, and retain the separate
+20-second hard bound. They are not five-second CLI metric passes. Serial 15 ms
+cooldown is outside sample clocks; W04 still owns integrated combined-load and
+unrestricted throughput proof. The [public synthetic summary](evidence/W02/acceptance.json)
+and [receipt](implementation/W02.md#accepted-w02-task-5-metric-and-data-gate) preserve
+all group/view reductions, original failure and source/build qualifications.
+
+Current full unit passes 199/38 at clean `8b76bed`. The historical whole integration
+and Chrome invocations retain their original sources and honest composed repair
+coverage. Quiet01/02 remain failed; quiet02's cause remains unproven. Final head
+installation/build is actual `8d44b0d` with unchanged application/lock/addon/compiled
+bytes through `8b`; documentation does not claim a new build or whole-suite rerun.
+
+Task 5 measurement/evidence preparation is complete. Remaining gates are Root's
+public-allowlist/documentation verification, fresh exact-candidate full-W02
+Standards/Spec review, guarded PR/normal merge and archive-before-cleanup. W02 is
+unmerged; package completion, W03a–W04 and source release remain open.

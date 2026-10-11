@@ -126,3 +126,14 @@ it("mirrors workflow attempt, event, history and allocator checks", async () => 
   expect(config.checks.map(c => normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(migration.slice(start, migration.indexOf(";", start))).map(normalize).sort());
  }
 });
+
+it("mirrors W02 evidence constraints and indexed immutable tuples",async()=>{
+ const {taskDependencies,taskArtifacts,gateDecisions,taskReworks}=await import("../../src/db/schema");
+ const migration=readFileSync("migrations/0007_task_evidence.sql","utf8"),dialect=new SQLiteSyncDialect();
+ for(const table of [taskDependencies,taskArtifacts,gateDecisions,taskReworks]){
+  const config=getTableConfig(table),start=migration.indexOf("CREATE TABLE "+config.name+" (");
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(config.checks.map(c=>normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(migration.slice(start,migration.indexOf(";",start))).map(normalize).sort());
+ }
+ expect(getTableConfig(taskArtifacts).indexes.some(i=>i.config.name==="task_artifacts_tuple"&&i.config.unique)).toBe(true);
+});

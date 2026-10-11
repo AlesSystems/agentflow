@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07 are integrated through PRs #4–#10. W01 implementation and qualified verification are ready for final integration review; [its receipt](docs/implementation/W01.md) records the measured executable and remaining gate. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07 and W01 are integrated through PRs #4–#11. W02 implementation and qualified verification are ready for final exact-candidate review and integration; [its receipt](docs/implementation/W02.md) records the measured executable, evidence, and remaining gate. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -150,23 +150,24 @@ planned and executable contracts stay aligned. All scopes below are required.
 
 ### W01. Observe a reported workflow
 
-Implementation/evidence work is complete in the
-[task checklist](docs/superpowers/plans/2026-10-11-w01-workflows.md), including one
-independently audited quiet measurement at `7eb85f3`. These package completion
-boxes stay open for final exact-candidate review and verified integration. W01
-has not merged; W02 has not started.
+Integrated through [PR #11](https://github.com/AlesSystems/agentflow/pull/11)
+at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, after exact-candidate review
+and the independently audited quiet measurement at `7eb85f3`. Owned evidence
+archival and guarded cleanup are complete. The [task checklist](docs/superpowers/plans/2026-10-11-w01-workflows.md)
+and [receipt](docs/implementation/W01.md) retain source qualifications. W02 has an Astra-approved plan and verified implementation. Its final
+exact-candidate review and integration remain open.
 
 Depends on P07. Proposed files: `src/workflows/`, `src/db/schema/workflows.ts`,
 `src/app/api/v1/workflows/`, `src/app/projects/[projectId]/workflows/`,
 `src/components/workflows/`, and workflow CLI/reporting integration tests.
 
-- [ ] Define immutable plan revisions, workflow attempts, reported nodes/links,
+- [x] Define immutable plan revisions, workflow attempts, reported nodes/links,
   sequence/idempotency rules, and optional skill provenance as specified.
-- [ ] Implement real ingestion/storage/CLI paths before the read-only graph/list.
-- [ ] Add project Work board / Workflows navigation and node-to-evidence detail.
-- [ ] Test missing reports, duplicates, gaps, cross-project references, plan revision
+- [x] Implement real ingestion/storage/CLI paths before the read-only graph/list.
+- [x] Add project Work board / Workflows navigation and node-to-evidence detail.
+- [x] Test missing reports, duplicates, gaps, cross-project references, plan revision
   changes, stale reports, and offline reconnect against real persistence.
-- [ ] Verify keyboard node selection, list parity, reduced motion, 375 px and 200%
+- [x] Verify keyboard node selection, list parity, reduced motion, 375 px and 200%
   zoom, with screenshots and actual producer-to-visible evidence.
 
 Pass when a synthetic external producer reports a branching workflow through the

@@ -18,6 +18,7 @@ const run: Run = {
   purpose: "planning",
   model: null,
   workRevision: null,
+  artifactRef: null, reworkRound: null,
   state: "queued",
   lastSequence: 0,
   lastReceivedAt: "1970-01-01T00:00:01.000Z",

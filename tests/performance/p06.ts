@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -177,6 +178,7 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
       const dir=join(root,`comparison-${index}-${label}`); cpSync(seedDir,dir,{recursive:true});
       servers[label]=await launch({dir,cwd:label==="base"?baseSource:process.cwd(),port:await freePort()});
     }
+    const baselineResponses=await import(pathToFileURL(join(baseSource,"src/contracts/responses.ts")).href);
     const reads: Record<string,{path:string;schema:z.ZodType}> = {tasks:{path:`/tasks?projectId=${seed.projectId}&limit=50`,schema:tasksResponse}, detail:{path:`/tasks/${seed.tasks[0]}`,schema:taskDetailResponse}, board:{path:`/projects/${seed.projectId}/board`,schema:boardResponse}, overview:{path:"/overview?timezone=UTC",schema:overviewResponse}, tracking:{path:`/tracking/runs?projectId=${seed.projectId}&limit=50`,schema:trackingRunsResponse}, events:{path:`/runs/${seed.historic[0]}/events?limit=50`,schema:eventsResponse}};
     for (let ordinal = 0; ordinal < counts.samples+10; ordinal++) {
       const producer=ordinal%counts.producers, sequence=Math.floor(ordinal/counts.producers)+1;
@@ -190,7 +192,7 @@ async function compare(index: number, baseSource: string, seed: Awaited<ReturnTy
           result.requests.push({label,operation,ordinal,warmup:ordinal<10,status:reply.status,ms,...(operation==="ingestion"?{eventId:body.eventId,digest:canonicalDigest(body)}:{})});
           if(reply.status===429)result.limited429++;else if(!reply.ok)result.errors++;
           assert.equal(reply.status,operation==="ingestion"?201:200,"native operation rejected; retain failed raw sample");
-          (operation==="ingestion"?eventResponse:reads[operation].schema).parse(raw);
+          (operation==="ingestion"?eventResponse:label==="base"&&["tasks","detail","board","overview"].includes(operation)?baselineResponses[{tasks:"tasksResponse",detail:"taskDetailResponse",board:"boardResponse",overview:"overviewResponse"}[operation] as string]:reads[operation].schema).parse(raw);
           if(ordinal>=10)operations[operation][label].push(ms);
         }
       }

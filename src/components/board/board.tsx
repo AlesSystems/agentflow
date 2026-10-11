@@ -16,6 +16,7 @@ import {
 import { trackingBoardResponse as boardResponse, trackingTasksResponse as tasksResponse, trackedTask } from "../../contracts/tracking";
 import { ReportingLabel } from "../tracking";
 import type { z } from "zod";
+import { acceptanceLabel } from "../tasks/evidence";
 import { taskCreate, type Task } from "../../contracts/tasks";
 import type { DraftFields } from "../../client/drafts";
 import {
@@ -574,6 +575,7 @@ function Card({
         <span className={`priority ${task.priority}`}>{task.priority}</span>
         {task.targetRole && <span>{task.targetRole}</span>}
       </div>
+      <p className="metadata">{acceptanceLabel(task)}</p>
       <p className="metadata">{task.latestAttempt ? <><ReportingLabel run={task.latestAttempt} /><br />{task.latestAttempt.agentName} · {task.latestAttempt.model ?? "Model not reported"}</> : "No registered attempts"}</p>
       {task.assignedAgentId && (
         <p className="metadata break-word">Assigned {task.assignedAgentId}</p>

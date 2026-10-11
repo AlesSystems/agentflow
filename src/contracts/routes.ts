@@ -31,13 +31,14 @@ import {
   overviewResponse,
 } from "./responses";
 import * as workflows from "./workflows";
+import * as evidence from "./evidence";
 import * as observations from "./observations";
 import * as tracking from "./tracking";
 export const emptyQuery = z.strictObject({});
 const commentsQuery = z.strictObject(pageQuery);
 type EndpointBase = {
   id: string;
-  method: "GET" | "POST" | "PATCH";
+  method: "GET" | "POST" | "PATCH" | "PUT";
   path: string;
   access: "read" | "report" | "human";
   input: z.ZodType;
@@ -103,6 +104,15 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  defineQuery({id:"getWorkflowReadiness",method:"GET",path:"/workflows/{id}/revisions/{revisionId}/readiness",access:"read",input:emptyQuery,response:workflows.workflowReadinessResponse,status:200,query:(_,id,params)=>({kind:"workflow.readiness",id,revisionId:params.revisionId})}),
+  defineQuery({ id:"listGateDecisions",method:"GET",path:"/tasks/{id}/decisions",access:"read",input:evidence.evidenceQuery,response:evidence.decisionsResponse,status:200,query:(input,id)=>({kind:"task.decisions",id,input}) }),
+  defineQuery({ id:"listReworks",method:"GET",path:"/tasks/{id}/reworks",access:"read",input:evidence.evidenceQuery,response:evidence.reworksResponse,status:200,query:(input,id)=>({kind:"task.reworks",id,input}) }),
+  defineCommand({ id:"replaceDependencies", method:"PUT", path:"/tasks/{id}/dependencies", access:"human", input:evidence.dependenciesInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.dependencies",id,input}) }),
+  defineCommand({ id:"editReviewPolicy", method:"PATCH", path:"/tasks/{id}/review-policy", access:"human", input:evidence.reviewPolicyInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.review-policy",id,input}) }),
+  defineCommand({ id:"publishArtifact", method:"POST", path:"/tasks/{id}/artifact", access:"human", input:evidence.artifactInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.artifact",id,input}) }),
+  defineCommand({ id:"requestRework", method:"POST", path:"/tasks/{id}/rework", access:"human", input:evidence.reworkInput, response:taskResponse, status:200, command:(input,id) => ({kind:"task.rework",id,input}) }),
+  defineQuery({ id:"getReadiness", method:"GET", path:"/tasks/{id}/readiness", access:"read", input:emptyQuery, response:evidence.readinessResponse, status:200, query:(_,id) => ({kind:"task.readiness",id}) }),
+  defineQuery({ id:"listArtifacts", method:"GET", path:"/tasks/{id}/artifacts", access:"read", input:evidence.evidenceQuery, response:evidence.evidenceResponse, status:200, query:(input,id) => ({kind:"task.evidence",id,input}) }),
   defineQuery({ id: "getWorkflowRunSnapshot", method: "GET", path: "/workflow-runs/{id}/snapshot", access: "read", input: emptyQuery, response: workflows.workflowRunDetailResponse, status: 200, query: (_, id) => ({ kind: "workflow.run", id }) }),
   defineCommand({ id: "registerWorkflowRun", method: "POST", path: "/workflow-runs", access: "report", input: workflows.workflowRunRegister, response: workflows.workflowRunResponse, status: 201, command: input => ({ kind: "workflow.run.register", input }) }),
   defineQuery({ id: "listWorkflowRuns", method: "GET", path: "/workflow-runs", access: "read", input: workflows.workflowRunQuery, response: workflows.workflowRunsResponse, status: 200, query: input => ({ kind: "workflow.runs", input }) }),

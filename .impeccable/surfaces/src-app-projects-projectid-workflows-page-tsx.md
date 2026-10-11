@@ -66,3 +66,13 @@ selected Work board world, seed 73cf6fb7. Node selection and zoom carry interact
 there are no graph-editing affordances or decorative motion.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+## W02 candidate extension
+
+One batched current linked-task snapshot serves plan-only and historical selections.
+The Graph and List retain reported state and add a separate written readiness
+label, exposed as an accessible description. Nodes preserve 230×104 geometry.
+Selected evidence shows current revision/round/artifact/gates separately from the
+immutable plan and observations. Existing tracking, selection and return-focus
+owners remain in place. The selected paper/ink/system-type world is unchanged;
+source/capture review and final package gates remain open.

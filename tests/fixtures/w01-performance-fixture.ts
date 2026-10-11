@@ -132,10 +132,15 @@ function schema(dir: string) {
 export async function workflowFixture(
   dir: string,
   seed: LegacySeed,
+  sender?: (server:Awaited<ReturnType<typeof boundedLaunch>>,path:string,input:unknown)=>Promise<Record<string,unknown>>,
 ): Promise<WorkflowFixture> {
   const server = await boundedLaunch({ dir });
   try {
-    async function post(path: string, input: unknown) {
+    async function post(path: string, input: unknown):Promise<Record<string,unknown>> {
+      if(sender)return sender(server,path,input);
+      return postUnpaced(path,input);
+    }
+    async function postUnpaced(path:string,input:unknown) {
       const response = await boundedFetch(server.url + "/api/v1" + path, {
         method: "POST",
         headers: {

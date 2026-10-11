@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readiness, taskEvidence } from "./evidence";
 import {
   actor,
   manualStatus,
@@ -50,10 +51,14 @@ export const task = z.strictObject({
   status,
   version,
   workRevision: version,
+  reviewRequired: z.boolean().default(false),
+  verificationRequired: z.boolean().default(false),
+  reworkRound: z.number().int().nonnegative().default(0),
   createdAt: timestamp,
   updatedAt: timestamp,
   completedAt: timestamp.nullable(),
 });
+export const taskSnapshot = task.extend({readiness,evidence:taskEvidence});
 export const completeInput = z.strictObject({
   expectedVersion: version,
   evidenceNote: requiredText(4000),
@@ -135,6 +140,8 @@ export const run = z.strictObject({
   purpose: z.enum(["planning", "implementation", "review", "verification"]),
   model: z.string().nullable(),
   workRevision: version.nullable(),
+  artifactRef: z.string().max(2000).nullable().default(null),
+  reworkRound: z.number().int().nonnegative().nullable().default(null),
   state: z.enum([
     "queued",
     "running",
@@ -152,6 +159,8 @@ export const run = z.strictObject({
 });
 export const taskDetailV1 = z.strictObject({
   task,
+  readiness,
+  evidence: taskEvidence,
   currentCompletion: completion.nullable(),
   latestRun: run.nullable(),
   history: z.strictObject({
@@ -161,3 +170,5 @@ export const taskDetailV1 = z.strictObject({
   }),
 });
 export type Task = z.infer<typeof task>;
+
+export type TaskSnapshot = z.infer<typeof taskSnapshot>;

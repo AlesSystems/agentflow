@@ -279,3 +279,26 @@ injected-sync-failure controls prove ordering/failure/retry behavior; they are n
 physical power-loss or remote-adoption process-crash guarantees. The mixed-kind
 100 MiB boundary fixture is logical quota evidence, not a successful 100 MiB
 producer lifecycle. No new persistence, transport or external scheduler is added.
+
+## W02 durable dependencies and evidence
+
+Migration 0007 preserves migrations 0000–0006 and defaults task policies false,
+round zero, and captured run evidence null. Separate relational prerequisites use
+same-project composite foreign keys; parentage and workflow edges never create
+dependencies. Replacement validates the resulting whole project DAG inside the
+existing immediate command transaction. Readiness is direct human completion at
+the prerequisite's current revision. New implementation registration and human
+completion recheck it inside that transaction; existing reports and manual moves
+remain available after prerequisites become blocked.
+
+Artifacts, explicit gate decisions and rework facts are immutable indexed tables.
+A current artifact is unique per task/revision/round. Run tuples are immutable.
+Current summaries use bounded batched projection reads with indexed existence
+checks for approvals and sticky negatives, separate from paged historical facts.
+`TaskFacts` feeds the existing `decideTask` completion path. Latest implementation
+still uses immutable registration order and must succeed at the current revision.
+Artifact replacement cannot retarget an old implementation or approval. Only
+explicit rework advances round. Reopen, work text, implementation registration and
+artifact replacement invalidate applicability by revision rather than deleting facts.
+Original command/event/run-registration receipts stay byte-for-byte historical;
+current strict readers and legacy receipt consumers are distinct compatibility seams.

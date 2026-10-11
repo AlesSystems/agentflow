@@ -49,7 +49,7 @@ export async function readBoundedText(
 export function boundedProxy(
   server: Parameters<typeof publicProxy>[0],
   decide: Parameters<typeof publicProxy>[1],
-  bounds = { httpMs: 10000, closeMs: 5000 },
+  bounds: NonNullable<Parameters<typeof publicProxy>[2]> = { httpMs: 10000, closeMs: 5000 },
 ) {
   return publicProxy(server, decide, bounds);
 }
