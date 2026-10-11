@@ -69,7 +69,6 @@ it("compares the unchanged extracted baseline against only its validated public 
       (headReply.body.data as { latestRun: unknown }).latestRun,
     ).not.toHaveProperty("registrationOrder");
     expect(baseReply.body.data).not.toEqual(headReply.body.data);
-    // The old source stays unchanged; separately exercise the known private additive field.
     expect(comparableSnapshot(query,{...baseReply.body,data:{...baseReply.body.data,latestRun:{...baseReply.body.data.latestRun,registrationOrder:1}}})).toEqual(comparableSnapshot(query,baseReply.body));
     expect(comparableSnapshot(query, baseReply.body)).toEqual(
       comparableSnapshot(query, headReply.body),
