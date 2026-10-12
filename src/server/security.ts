@@ -146,7 +146,7 @@ export function publicError(error: unknown) {
   if (isConflict(error))
     return {
       status:
-        error.code === "resource_not_found"
+        error.code === "preview_limit" ? 429 : error.code === "resource_not_found"
           ? 404
           : error.code === "human_required"
             ? 403

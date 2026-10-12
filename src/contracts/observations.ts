@@ -136,7 +136,7 @@ export const acknowledgement = z.strictObject({
   acceptedSequence: version,
   receivedAt: timestamp,
 });
-export const eventRecord = z.union(
+export const intactEventRecord = z.union(
   eventInput.options.map((option) =>
     option.extend({
       eventId: uuid,
@@ -146,6 +146,8 @@ export const eventRecord = z.union(
     }),
   ),
 );
+export const prunedEventRecord=z.strictObject({schemaVersion:z.literal(1),eventId:uuid,runId:uuid,sequence:z.number().int().positive().max(Number.MAX_SAFE_INTEGER),type:z.enum(["run.progress","run.heartbeat"]),occurredAt:timestamp,receivedAt:timestamp,payload:z.null(),payloadPrunedAt:timestamp});
+export const eventRecord=z.union([intactEventRecord,prunedEventRecord]);
 const list = <S extends z.ZodType>(item: S) =>
   z.strictObject({
     items: z.array(item),

@@ -284,3 +284,16 @@ Object.assign(responseExamples,{getWorkflowReadiness:snapshot({workflowId,revisi
 const githubConnectionExample={enabled:false,repositories:[],version:1,lastAttemptedAt:null,lastFetchedAt:null,lastError:null,retryNotBefore:null,credential:"unavailable",busy:false};
 Object.assign(requestExamples,{getGithubConnection:{},replaceGithubRepositories:{expectedVersion:1,enabled:true,repositories:["synthetic/example"]},refreshGithub:{expectedVersion:2,repository:"synthetic/example",page:1}});
 Object.assign(responseExamples,{getGithubConnection:snapshot({connection:githubConnectionExample,items:[],total:0,nextCursor:null,lookupAttempt:null}),replaceGithubRepositories:snapshot({...githubConnectionExample,enabled:true,repositories:["synthetic/example"],version:2}),refreshGithub:snapshot({repository:"synthetic/example",page:1,number:null,outcome:"failed",error:"credential_unavailable",attemptedAt:time,fetchedAt:null,nextPage:null,count:0})});
+
+const exportCounts={project:1,task:0,agent:0,comment:0,completion:0,reopen:0,dependency:0,artifact:0,decision:0,rework:0,runClosure:0,workflowClosure:0};
+export const historyExportExamples=[
+  {kind:"manifest",schemaVersion:1,generation:"10000000-0000-4000-8000-000000000004",snapshotCursor:"0",createdAt:time,content:["tasks"],counts:exportCounts},
+  {kind:"project",data:{id:project.id,name:project.name,archivedAt:project.archivedAt,version:project.version,createdAt:project.createdAt,updatedAt:project.updatedAt}},
+  {kind:"complete",schemaVersion:1,counts:exportCounts},
+];
+Object.assign(requestExamples,{exportHistory:{content:"tasks",generation:"10000000-0000-4000-8000-000000000004"}});
+Object.assign(responseExamples,{exportHistory:historyExportExamples[0]});
+
+const retentionPreviewExample={previewId:"10000000-0000-4000-8000-000000000010",cutoff:time,expiresAt:time,expectedGeneration:"10000000-0000-4000-8000-000000000004",expectedVersion:1,candidateDigest:"a".repeat(64),counts:{eventPayloads:0,changes:0},hasMore:{eventPayloads:false,changes:false}};
+Object.assign(requestExamples,{previewRetention:{cutoff:time},pruneRetention:{previewId:retentionPreviewExample.previewId,expectedGeneration:retentionPreviewExample.expectedGeneration,expectedVersion:1,candidateDigest:retentionPreviewExample.candidateDigest}});
+Object.assign(responseExamples,{previewRetention:snapshot(retentionPreviewExample),pruneRetention:snapshot({previewId:retentionPreviewExample.previewId,applied:{eventPayloads:0,changes:0},prunedAt:time,priorGeneration:retentionPreviewExample.expectedGeneration,generation:"10000000-0000-4000-8000-000000000011",retentionVersion:2,displayBodyBytesRemoved:0})});

@@ -105,6 +105,12 @@ export function validateMigrationSql(sql: string): void {
       i++;
       continue;
     }
+    if (is("DROP") && input[i+1]?.word && input[i+1].value === "TRIGGER") {
+      take("DROP");take("TRIGGER");
+      take("RUN_EVENTS_NO_UPDATE");
+      if(input[i]?.value!==";")reject();
+      i++;continue;
+    }
     let header = i;
     if (input[header]?.value === "CREATE" && input[header].word) {
       header++;

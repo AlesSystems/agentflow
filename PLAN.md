@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, and W02 are integrated through PRs #4–#12. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03a is the next implementation package. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, and W03a are integrated through PRs #4–#13. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b has an approved exact plan, implemented history contracts, and accepted qualification/campaign evidence. Its latest client-only generation repair is verified by focused native browser checks; independent re-review, integration, and guarded cleanup remain pending. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -198,14 +198,22 @@ cancel execution in the external harness.
 
 ### W03a. Observe GitHub PR metadata
 
+Integrated through [PR #13](https://github.com/AlesSystems/agentflow/pull/13),
+reviewed head `8f63d231ff63d8b77c51573fad9790be8ac78c9d` and merge
+`76fe748a3d642f8a5a6ea738af47a3bb640070d3`. Independent whole-package
+Standards and Spec reviews approved with zero findings. Private archival and
+guarded cleanup are complete. [Its receipt](docs/implementation/W03a.md) retains
+source-specific failures and exceptions. Optional live GitHub verification was
+unexecuted; the implemented deterministic fixture gate passed.
+
 Depends on W02. Proposed files: `src/integrations/github/`, local credential
 handling, integration settings, PR-detail components, and adapter contract tests.
 
-- [ ] Implement opt-in read-only access scoped to operator-selected repositories.
+- [x] Implement opt-in read-only access scoped to operator-selected repositories.
   Verify current official API/permission requirements before pinning the adapter.
-- [ ] Record source/update time, stale/offline state, disconnect, authentication
+- [x] Record source/update time, stale/offline state, disconnect, authentication
   recovery, rate limiting, and missing/deleted PR behavior.
-- [ ] Test adapter boundaries using a deterministic local server and a real read-only
+- [x] Test adapter boundaries using a deterministic local server and a real read-only
   smoke check when an authorized repository/credential is available.
 
 Pass when supported PR metadata refreshes without remote mutations, credentials

@@ -515,3 +515,69 @@ claim a live authorized credential check.
 adapter/credential fixtures, original failure repairs, source attribution and the
 exact finite-run performance exception. Local reads remain browser-only and never
 perform remote refresh. Optional live GitHub verification was not executed.
+
+### Selected history export
+
+`GET /export?content=tasks,attempts,workflows,github&generation=<current generation>`
+requires a paired browser session. Select one or more groups in the displayed order.
+Duplicate, unknown, unordered, or extra query fields return `400`. A stale generation
+returns `409`. Reporter and pairing bearer credentials cannot download history.
+
+The response is a local JSON Lines attachment with `Cache-Control: no-store`.
+Its first line is a version-1 manifest with generation, snapshot cursor, creation
+time, selected groups, and per-record counts. Its final `complete` line repeats
+those counts. A download without that line is incomplete. An interruption requires
+a new export because v1 has no resume or import endpoint.
+
+The service creates an integrity-checked isolated SQLite snapshot before it streams
+at most 100 records per batch. Concurrent application writes do not enter that copy.
+The installation admits two concurrent exports, bounds pending encoded output to
+1 MiB, and closes stalled output after five seconds. Temporary snapshots are removed
+after completion, abort, and shutdown when their ownership remains verifiable.
+
+Selected projections exclude sessions, transport receipts, credentials, connection
+secrets, configured filesystem secret paths, and project repository paths. User text
+and opaque artifact references remain content and can contain private information.
+A download is not a recovery backup and does not guarantee that authored text contains
+no secrets. GitHub observations are included only when you select their group.
+
+### Explicit history retention
+
+`POST /retention/preview` and `POST /retention/prune` require a paired browser,
+JSON, same-origin mutation checks, and an idempotency key. Actor authorization
+precedes receipt lookup, including exact retries. Preview accepts only
+`{cutoff}` as a UTC timestamp ending in `Z`, at or before the request time. It
+returns `previewId`, `cutoff`, `expiresAt`, `expectedGeneration`,
+`expectedVersion`, `candidateDigest`, per-kind `counts`, and per-kind `hasMore`.
+Each preview promises at most 1,000 eligible task-event payloads and 1,000 old
+change rows. Additional tranches require another preview. An unused preview
+expires after five minutes; at most 20 unexpired unused previews may be issued.
+An exact preview retry returns the original receipt, including after expiry.
+
+Prune accepts exactly `{previewId,expectedGeneration,expectedVersion,candidateDigest}`.
+An expired or missing preview returns `preview_expired`; changed state or
+eligibility returns `preview_changed`. A different concurrent prune key returns
+`retention_busy`. A completed, integrity-checked private recovery backup precedes
+the final atomic guard. Cancellation, backup failure, or a failed final guard
+creates no prune receipt. Completed recovery backups remain local even when
+finalization fails. No backup path appears in the response.
+
+Prune returns `previewId`, `applied`, `prunedAt`, `priorGeneration`, `generation`,
+`retentionVersion`, and `displayBodyBytesRemoved`. It atomically removes the
+bounded obsolete display bodies and changes, increments the retention version,
+and publishes one new generic invalidation under a new generation. Sessions
+remain valid. Original ACKs and request receipts retain their original bodies;
+exact prune retries make no additional backup or mutation. The response header
+carries the current generation even when a receipt body has an earlier one.
+Removed display bytes are not a promise of reclaimed SQLite or WAL disk space.
+
+Eligible unreferenced terminal-run `run.progress` and `run.heartbeat` records
+remain visible with their original identity, sequence, type, occurrence and
+receipt timestamps. Their read-only stub has `payload:null` and a nonnull
+`payloadPrunedAt`. A tracking summary whose latest message was pruned adds
+`messagePrunedAt` and returns `message:null`. Intact event shapes and accepted event inputs are unchanged.
+
+
+[W03b qualified verification](implementation/W03b.md) records the selected-download,
+protected-retention, retry, generation, browser, and outbox contracts. Its single
+finite campaign passed; final whole-package review and integration remain pending.

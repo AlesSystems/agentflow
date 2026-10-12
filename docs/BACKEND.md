@@ -324,3 +324,30 @@ The optional protected credential file stays outside checkout/SQLite/receipts/
 backups and is read only after explicit authorized admission. See the
 [API](API.md#w03a-local-github-observations), [workflow contract](V1_WORKFLOWS.md#w03a-optional-read-only-github-pr-metadata)
 and [qualified implementation receipt](implementation/W03a.md).
+
+Migration 0009 preserves the original migration checksums and adds nullable
+`run_events.payload_pruned_at`, independent retention state, immutable preview
+contents, and consumed-preview facts. Its replacement event-update trigger
+permits only the first exact `json_set(body,'$.payload',NULL)` transition while
+preserving identity, digest, ACK and timestamps with null-safe comparisons.
+Event deletion, replacement, restoration and repeat marking remain forbidden.
+Only progress and heartbeat payloads of terminal runs qualify. A completion,
+artifact, gate decision or workflow node observation referring to any part of
+the run protects its whole history; every workflow event payload is retained.
+Received time must precede the chosen cutoff. The newest change row and the
+change allocator are retained, and the new invalidation advances beyond the
+pre-prune high-water cursor. Generation renewal here preserves sessions;
+restore continues to revoke them. Retain-all remains the default.
+
+History export reads selected DTO projections from an isolated, integrity-checked
+SQLite copy. Its manifest counts and terminal completion counts refer to that copy,
+even when the live application advances. Sessions, credentials, request receipts,
+and configured secret paths are outside those projections. Opaque references and
+authored text remain selected content. A temporary export copy cannot replace the
+local recovery backup that precedes prune.
+
+
+[W03b qualification](implementation/W03b.md) includes independent stopped-copy SQL
+inspection after thirty synthetic prunes and their recovery backups. Original
+event identities, digests, ACKs, protected records, and request receipts remained
+unchanged. That finite evidence does not replace W04 load or release validation.

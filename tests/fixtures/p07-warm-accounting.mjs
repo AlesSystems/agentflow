@@ -19,7 +19,9 @@ const errorFacts=e=>({name:e?.name??null,code:e?.code??null,message:e?.message??
 const original={readdir:fs.readdirSync,lstat:fs.lstatSync,request:http.request,exec:Database.prototype.exec};
 let publisher,returned,first,reader,fired=false;
 const snapshot=()=>{const files=[];function walk(p){for(const n of original.readdir.call(fs,p)){const q=join(p,n),s=original.lstat.call(fs,q);if(s.isDirectory())walk(q);else{const b=fs.readFileSync(q);files.push({path:q,uid:s.uid,dev:s.dev,inode:s.ino,mode:s.mode&511,nlink:s.nlink,size:s.size,sha256:createHash('sha256').update(b).digest('hex'),base64:b.length<200000?b.toString('base64'):null});}}}walk(outbox);return files;};
-createFile(join(root,'attempt.json'),JSON.stringify({allowed:1,used:1,source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()}));
+const headGitSource=process.env.AGENTFLOW_TEST_HEAD_GIT_SOURCE??process.cwd(),headSha=execFileSync('git',['rev-parse','HEAD'],{cwd:headGitSource,encoding:'utf8'}).trim();
+if(process.env.AGENTFLOW_TEST_HEAD_GIT_SOURCE){assert.equal(headSha,process.env.AGENTFLOW_TEST_HEAD_SHA,'explicit candidate Git SHA required');assert.deepEqual(fs.readFileSync('src/cli/outbox.ts'),execFileSync('git',['show','HEAD:src/cli/outbox.ts'],{cwd:headGitSource,maxBuffer:1024*1024}),'executed outbox source differs from candidate Git blob');}
+createFile(join(root,'attempt.json'),JSON.stringify({allowed:1,used:1,source:headSha,headGitSource,executedSource:process.cwd()}));
 try {
  const runId=randomUUID(),eventId=randomUUID(),generation=randomUUID(),runDir=join(outbox,runId),pub=join(outbox,'publication.sqlite');
  const body=eventInput.parse({schemaVersion:1,eventId,runId,sequence:1,type:'run.started',occurredAt:new Date().toISOString(),payload:{}});

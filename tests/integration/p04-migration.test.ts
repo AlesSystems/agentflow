@@ -94,7 +94,7 @@ it("enforces append-only registration, event and human closure facts in effectiv
       "{}",
     );
     db.prepare(
-      "INSERT INTO run_events VALUES(?,?,1,'run.started','digest','{}','{}',0,0)",
+      "INSERT INTO run_events(event_id,run_id,sequence,type,digest,body,acknowledgement,occurred_at,received_at) VALUES(?,?,1,'run.started','digest','{\"payload\":{}}','{}',0,0)",
     ).run(e, r);
     db.prepare(
       "INSERT INTO run_closures VALUES(?,?,'Synthetic','operator',0)",

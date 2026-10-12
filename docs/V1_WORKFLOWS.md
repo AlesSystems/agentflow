@@ -4,9 +4,11 @@ Status: active Phase 3 contract. W01 and W02 are integrated through PRs #11–#1
 with source-qualified verification, review, integration and cleanup recorded in
 [the W01 receipt](implementation/W01.md) and [the W02 receipt](implementation/W02.md).
 W03a implementation and qualified verification are accepted with one scoped
-relative-budget exception; final package review/integration/archive remain open.
+relative-budget exception. Whole-package review, PR #13 integration, private
+archival, and guarded cleanup are complete.
 [Its receipt](implementation/W03a.md) preserves original failures and qualifications.
-W03b–W04 remain unstarted.
+W03b qualification and one official campaign are accepted. Final whole-package
+review, integration, and guarded cleanup remain pending. W03c and W04 remain unstarted.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
@@ -243,11 +245,13 @@ subscriptions with reset and require full snapshots. Keep sessions valid here
 cursors fail cleanly. Retry receipts keep historical metadata with the current
 response generation header. CLI outbox sequences remain compatible because all
 event identity/receipt ledgers survive. Disk savings can be modest; report them.
-Proposed routes: `GET /export`, `POST /retention/preview`, `POST /retention/prune`.
-Planned files: export/retention queries and commands, schema/migrations, Settings
-controls, real SQLite/API/browser recovery tests. Pass with aborted export,
-concurrent writes, expired previews, protected evidence, pre-prune exact retry,
-gap/conflict detection after prune, two-tab reset, restart, and backup/restore.
+Implemented routes: `GET /export`, `POST /retention/preview`, `POST /retention/prune`.
+The implementation includes snapshot projections, migration 0009, Settings controls,
+and real SQLite, API, browser, and outbox recovery tests.
+[Qualified verification](implementation/W03b.md) records aborted export, concurrent
+writes, expired previews, protected evidence, exact retries, outbox recovery,
+two-tab reset, restart, and backup/restore. Its finite performance campaign is
+accepted; final review and integration remain open.
 
 ## W03c. Reported usage and optional estimates
 

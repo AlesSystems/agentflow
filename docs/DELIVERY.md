@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: P01–P07, W01, and W02 passed acceptance, independent review, coordinator verification
+Status: P01–P07, W01, W02, and W03a passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. Final package review/integration/archive remain open; W03b–W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. The latest client-only generation repair has focused verification and Root-accepted functional proof pending independent source re-review. Final whole-package review, PR integration, and guarded cleanup remain pending; W03c and W04 remain unstarted.
 
 ## Package state
 
@@ -23,8 +23,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | P07 | Phase 2 checkpoint | Integrated | Candidate `b680468166d7716008d433ba6c8d6a12ee4a9838`; merge `dd26c4b00867e7680c3baf0cf2be39b60502aecf`, PR #10 | [Receipt](implementation/P07.md), [synthetic evidence](evidence/P07/acceptance.json) |
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
 | W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
-| W03a | GitHub PR observation | Qualified verification accepted with scoped exception; final review/integration/archive open | Executable `1931221636894cd5840e98a4f83d4a13bdb85b1c` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
-| W03b | Export/retention | Not started | — | — |
+| W03a | GitHub PR observation | Integrated; guarded cleanup complete; qualified measured exception retained | Reviewed `8f63d231ff63d8b77c51573fad9790be8ac78c9d`; merge `76fe748a3d642f8a5a6ea738af47a3bb640070d3`, PR #13; executable `1931221` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
+| W03b | Export/retention | Qualification/campaign accepted; client functional proof accepted, scoped source re-review and integration/cleanup pending | Measured `caab7b2f880be2f7086465ea00bcf223c220d4e2`; client repair `74e0187` | [Receipt](implementation/W03b.md), [allowlisted summary](evidence/W03b/acceptance.json) |
 | W03c | Usage summaries | Not started | — | — |
 | W04 | Full v1 validation/release | Not started | — | — |
 
@@ -881,3 +881,108 @@ Old main/probe and the new repair-root archives are private and Root stream-veri
 Exact final whole-package Standards/Spec, public audit, normal PR attachment/merge
 and guarded cleanup remain open. PLAN package boxes remain unchecked; W03b and
 v1 completion remain unclaimed.
+
+## Verified W03a integration and cleanup
+
+This later closure supersedes the open integration gates in the preceding
+preintegration snapshots. It does not replace their source or numerical results.
+
+[PR #13](https://github.com/AlesSystems/agentflow/pull/13) merged normally at
+`2026-10-11T22:52:31Z`, using `--merge --match-head-commit` against reviewed
+`8f63d231ff63d8b77c51573fad9790be8ac78c9d`. Merge
+`76fe748a3d642f8a5a6ea738af47a3bb640070d3` has the same tree
+`3b77fd7766b8753e8b76a218cc0c39e7638ca9c6`, and the reviewed head is its ancestor.
+Both final whole-package review axes approved with zero actionable findings.
+The private Standards report has SHA256
+`5c878212b2a82e5f0ef630e718c07944cb9e631d616ff3c51c28ed6a1b70afd8`;
+the Spec report has SHA256
+`c0611ea44e2d3a8858e7f53d361abafd272f2f06ebceb2599c81c350b00a61fb`.
+No admin, force, or protection bypass was used. No GitHub checks were configured;
+the local proof and independent review gates governed integration.
+
+Root verified original private archives for the main, probe, and rate environments
+across 324,942, 9, and 40,229 entries respectively. Guarded deletion checked actual
+original types, basic metadata, and SHA256 before removing the three owned roots
+and their quarantines. All six paths are absent, with zero permission repairs.
+Private archives retain byte, type, hardlink, symlink, FIFO, stat, and nanosecond
+metadata evidence. They exclude extended attributes, ACLs, and physical sparse
+allocation. The completed owned local and remote branch is removed. The managed
+and primary checkouts were retained clean at the merge. No global cache, skill,
+or operator-data cleanup occurred. Early global npm effects without a before-census
+remain an unresolved historical qualification.
+
+The private Root integration receipt has SHA256
+`ca98501500623bdf29c5bf614e19d3b147f683852343ff433f27462e0506c371`.
+The private Root cleanup receipt has SHA256
+`b617207de8c8fc90bc45163e3609a080d4ae62754eecb7226857f8138d9b7e0c`.
+Both original receipts were read in full and rehashed for this closure. Frozen
+public acceptance JSON and appearance images remain unchanged. Optional live
+GitHub verification remains unexecuted. W03a package boxes are complete. W03b
+planning and its Astra medium approval precede implementation; W03c and W04
+remain unstarted, and no v1 release is claimed.
+
+
+## W03b qualification accepted, integration pending
+
+Root accepted Tasks 1–4, exact helper readiness, and one frozen quiet campaign at
+`caab7b2f880be2f7086465ea00bcf223c220d4e2`. The
+[receipt](implementation/W03b.md) and [allowlisted evidence](evidence/W03b/README.md)
+record source qualifications, finite measurements, and unchanged approved captures.
+
+Verification retains 217 unit passes, original integration 537/547 with ten focused
+repairs, and 81 Chrome cases. Full types, lint, OpenAPI, and build passed; the final
+qualification-only cohort repair has focused RED/GREEN plus type/lint evidence.
+This does not claim a fresh whole-head integration aggregate. The native version
+is SQLite 3.53.4. Runtime recovery is prospective; the prior npm file loss has an
+unknown cause. Generated nested-probe and inherited browser outputs, joined child
+stream limitation, and the existing build warning remain qualified in the receipt.
+
+Independent reduction verified 2,130 operation requests, zero missing/failed,
+900 paired comparisons from 1,800 measured reads, thirty complete exports, thirty
+confirmed prunes, and thirty recovery backups. Maximum existing-read p95 was
+4.686792 ms and maximum positive relative change was 12.051343%; no >20% exception
+was required. Preview measured/JIT/warmup cohorts each have ten rows per campaign.
+Export/prune backup I/O is reported separately. Copied SQL audits checked protected
+facts, original receipts, 600 marked payloads, and cursor/generation recovery.
+All 42 services closed; head diagnostics retained two destroyed socket entries
+while leases, requests, and active sockets were zero.
+
+Private Root qualification acceptance has SHA256
+`cc3103d28f7e246242b07b6359de65f2f618597528e195865ae125a456cc9c04`.
+Independent reduction, copied-SQL, and source/timing audits are bound by the public
+summary's hashes. Original raw evidence and earlier receipts remain unchanged.
+The four public images are unchanged approved captures, with capture masks and
+`a080211` appearance versus `e958a11` focus qualification stated explicitly.
+
+Next gate is whole-package Standards and Spec review of the final candidate, then
+matching-head PR integration and guarded archival/cleanup. W03b boxes remain open.
+W03c, W04 sustained load, optional live GitHub verification, and v1 release remain
+unexecuted. No measured source, build, fixture, or private proof was changed for
+this documentation stage.
+
+
+### Prospective W03b client qualification, re-review pending
+
+Test `90418f2` and client-only fix `74e0187` address final Spec's successful-export
+generation-header recovery gap. The new own bundle `xbj9fOu1kF9q4vKyZx-z9` has
+453 compiled files; two native and eight affected browser cases, types, lint, and
+the sole changed build passed. Exact qualified dependencies were copied into a
+new owned root without an install. The authoritative 113-input base qualification
+includes corrected generated `next-env.d.ts`; original measured artifacts remain
+unchanged. The receipt separates old measurement from this prospective client build.
+
+Ancillary feedback-focus assertions failed twice and the foreground hypothesis was
+disproved. Correct visible feedback/current snapshots/no old download/explicit retry
+and cleanup are verified, but no new feedback focus behavior or pass is claimed.
+Existing Confirm/Cancel disappearance and outside-draft focus contracts passed
+separately. Setup/diagnostic failures and original streams remain retained.
+No new image, detector, appearance, full-suite, or performance campaign ran.
+
+The original caab campaign still supplies unchanged API/DB/native backend evidence.
+This client repair has no new performance claim. Root independently accepted the functional proof with audit SHA256
+`2e521eaa374fcff4b286f96760fa9ce3659686691d7e9222929e29119d83b330`.
+Final scoped Spec/Standards source re-review of P2 plus current-status/prerequisite
+P3 documentation remains pending, followed by whole-package acceptance, integration, and cleanup.
+W03b boxes stay open. Four approved image bytes and their a080/e958 provenance
+remain unchanged. README now identifies mandatory historical integration inputs;
+W04 contributor/release setup verification is still pending.

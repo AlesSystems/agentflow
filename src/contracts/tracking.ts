@@ -5,7 +5,7 @@ import { task, taskSnapshot } from "./tasks";
 import { list } from "./responses";
 export const runSummary = observedRun.extend({
   agentName: z.string(), agentSource: z.string(), projectName: z.string(), taskTitle: z.string().nullable(),
-  message: z.string().nullable(), evidenceUrl: safeUrl.nullable(),
+  message: z.string().nullable(), evidenceUrl: safeUrl.nullable(), messagePrunedAt: timestamp.optional(),
 });
 export const trackedTask = taskSnapshot.extend({ latestAttempt: runSummary.nullable() });
 export const trackingTasksResponse = envelope(list(trackedTask));

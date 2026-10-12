@@ -40,7 +40,7 @@ upgrade("upgrades an actual stopped W01 producer fixture without rewriting old A
   await server.stop();await cli(base,["run","register","--file",f.file(pending),"--idempotency-key",pendingKey],2);
   const pendingName=readdirSync(f.env.AGENTFLOW_OUTBOX_DIR).find(name=>name===`registration-${pendingKey}.json`)!;const pendingOriginal=readFileSync(join(f.env.AGENTFLOW_OUTBOX_DIR,pendingName),"utf8");transcript.push({pendingOriginal});
   server=await launch({dir:server.dir,port:server.port});cookie=await pair(server);
-  const after=snapshot();expect(after).toEqual(old);
+  const after=snapshot();const projectedEvents=(after.events as Record<string,unknown>[]).map(row=>{expect(row.payload_pruned_at).toBe(null);return Object.fromEntries(Object.keys((old.events as Record<string,unknown>[])[0]).map(key=>[key,row[key]]));});expect({...after,events:projectedEvents}).toEqual(old);
   const detail=await current(taskId);expect(detail).toMatchObject({task:{reviewRequired:false,verificationRequired:false,reworkRound:0},evidence:{currentArtifact:null,review:{approved:false},verification:{approved:false},implementationCurrent:true}});
   expect(await call("/tasks",taskBody,"POST",false,taskKey)).toEqual(taskReceipt);
   expect(JSON.parse(await cli(process.cwd(),["task","create","--file",f.file(taskBody),"--idempotency-key",taskKey])).id).toBe(taskId);
@@ -49,7 +49,7 @@ upgrade("upgrades an actual stopped W01 producer fixture without rewriting old A
   expect(await call("/tasks/"+manual+"/complete",completeBody,"POST",true,completeKey)).toEqual(completionReceipt);
   await cli(process.cwd(),["flush"]);expect(readdirSync(f.env.AGENTFLOW_OUTBOX_DIR).includes(pendingName)).toBe(false);
   const db=new Database(join(server.dir,"agentflow.sqlite"),{readonly:true});try{
-   expect(db.prepare("SELECT count(*) n FROM runs WHERE id=?").get(pending.id)).toEqual({n:1});expect(db.prepare("SELECT count(*) n FROM gate_decisions").get()).toEqual({n:0});expect(db.prepare("SELECT count(*) n FROM task_artifacts").get()).toEqual({n:0});expect(db.prepare("SELECT artifact_ref,rework_round FROM runs WHERE id=?").get(review.id)).toEqual({artifact_ref:null,rework_round:null});expect(db.prepare("SELECT schema_version FROM instance_metadata").get()).toEqual({schema_version:9});
+   expect(db.prepare("SELECT count(*) n FROM runs WHERE id=?").get(pending.id)).toEqual({n:1});expect(db.prepare("SELECT count(*) n FROM gate_decisions").get()).toEqual({n:0});expect(db.prepare("SELECT count(*) n FROM task_artifacts").get()).toEqual({n:0});expect(db.prepare("SELECT artifact_ref,rework_round FROM runs WHERE id=?").get(review.id)).toEqual({artifact_ref:null,rework_round:null});expect(db.prepare("SELECT schema_version FROM instance_metadata").get()).toEqual({schema_version:10});
    for(const row of old.registrations as {run_id:string;body:string}[])expect((db.prepare("SELECT body FROM run_registrations WHERE run_id=?").get(row.run_id) as {body:string}).body).toBe(row.body);
    transcript.push({legacyRows:old,upgraded:snapshot()});
   }finally{db.close();}

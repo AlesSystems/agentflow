@@ -7,6 +7,7 @@ import { settingsPatch } from "../contracts/settings";
 import { freezeCommand } from "../client/commands";
 import { ApiError } from "../client/api";
 import { GithubSettings } from "./github";
+import { HistorySettings } from "./history";
 import SignOut from "../app/sign-out";
 export function Settings() {
   const query = useRead("/settings", settingsResponse);
@@ -104,6 +105,7 @@ export function Settings() {
           </section>
         </>
       )}
+      <HistorySettings />
     </>
   );
 }

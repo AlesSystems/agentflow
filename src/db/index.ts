@@ -1,3 +1,5 @@
+import { HistoryData, openHistoryExportSnapshot } from "./history";
+import type { HistoryExportInput, RetentionPreviewInput, RetentionPruneInput } from "../contracts/history";
 import { GithubData, type GithubIntent } from "./github";
 import type { GithubRepositoriesInput, GithubRefreshInput, GithubQuery, GithubOutcome } from "../contracts/github";
 import { changeCursor } from "../contracts/common";
@@ -43,6 +45,7 @@ export const migrations: Migration[] = [
   "0006_workflows",
   "0007_task_evidence",
   "0008_github",
+  "0009_history",
 ].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),
@@ -80,6 +83,10 @@ export class Store {
       throw error;
     }
   }
+  historyPreview(input:RetentionPreviewInput,context:CommandContext){return new HistoryData(this.db).preview(input,context);}
+  historyReplayPrune(input:RetentionPruneInput,context:CommandContext){return new HistoryData(this.db).replayPrune(input,context);}
+  historyAdmitPrune(input:RetentionPruneInput,context:CommandContext){return new HistoryData(this.db).admitPrune(input,context);}
+  historyCommitPrune(admission:import("./history").PruneAdmission,now:number){return new HistoryData(this.db).commitPrune(admission,now);}
   githubRepositories(input:GithubRepositoriesInput,context:CommandContext){return new GithubData(this.db).repositories(input,context);}
   githubSnapshot(input:GithubQuery,now=Date.now(),credential:"configured"|"unavailable"|"repair"="unavailable",busy=false){return new GithubData(this.db).snapshot(input,now,credential,busy);}
   githubAdmit(input:GithubRefreshInput,context:CommandContext,busy:boolean){return new GithubData(this.db).admit(input,context,busy);}
@@ -240,8 +247,13 @@ export class Store {
       })
       .immediate();
   }
-  backup(destination: string) {
-    const pending = this.writeBackup(destination).finally(() =>
+  async prepareHistoryExport(destination:string,input:HistoryExportInput,signal:AbortSignal) {
+    await this.backup(destination,signal);
+    signal.throwIfAborted();
+    return openHistoryExportSnapshot(destination,input,Date.now());
+  }
+  backup(destination: string, signal?:AbortSignal) {
+    const pending = this.writeBackup(destination,signal).finally(() =>
       this.work.delete(pending),
     );
     this.work.add(pending);
@@ -250,12 +262,14 @@ export class Store {
   async drain() {
     await Promise.allSettled([...this.work]);
   }
-  private async writeBackup(destination: string) {
+  private async writeBackup(destination: string,signal?:AbortSignal) {
+    signal?.throwIfAborted();
     destination = privateDestination(destination, this.appRoot);
     secureDirectory(join(destination, ".."));
     validateFile(destination);
     createFile(destination);
-    await this.db.backup(destination);
+    await this.db.backup(destination, signal ? {progress:()=>{signal.throwIfAborted();return 100;}} : undefined);
+    signal?.throwIfAborted();
     const backup = new Database(destination, { readonly: true });
     try {
       if (
