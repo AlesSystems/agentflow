@@ -18,3 +18,9 @@ it("joined proof rejects incomplete actual-boundary evidence", () => {
     { ...complete, audit: { stopped: false, copied: false, foreignKeys: [{ violation: true }] } },
   ]) expect(() => validateJourney(witness)).toThrow();
 });
+
+it("one joined compiled production CLI HTTP two-browser journey persists across prune and restart", async () => {
+  const { joinedJourney } = await import("../fixtures/w04-journey");
+  const result = await joinedJourney("integration");
+  expect(result.witness.tabs.map(tab => tab.nodeRunId)).toEqual([result.witness.tabs[0].nodeRunId, result.witness.tabs[0].nodeRunId]);
+}, 300000);
