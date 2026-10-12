@@ -13,8 +13,8 @@ it("exports_one_copy_with_exact_selected_counts", async () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-encoding")).toBe(null);
     const lines = (await response.text()).trim().split("\n").map(line => JSON.parse(line));
-    expect(lines[0]).toMatchObject({kind:"manifest",schemaVersion:1,generation:foundation.generation,content:["tasks"]});
-    expect(lines.at(-1)).toEqual({kind:"complete",schemaVersion:1,counts:lines[0].counts});
+    expect(lines[0]).toMatchObject({kind:"manifest",schemaVersion:2,generation:foundation.generation,content:["tasks"]});
+    expect(lines.at(-1)).toEqual({kind:"complete",schemaVersion:2,counts:lines[0].counts});
     const records = lines.slice(1,-1);
     for (const [kind,count] of Object.entries(lines[0].counts)) expect(records.filter(row=>row.kind===kind)).toHaveLength(count as number);
     expect(records.find(row=>row.kind==="project").data.name).toBe("Synthetic history");

@@ -287,9 +287,9 @@ Object.assign(responseExamples,{getGithubConnection:snapshot({connection:githubC
 
 const exportCounts={project:1,task:0,agent:0,comment:0,completion:0,reopen:0,dependency:0,artifact:0,decision:0,rework:0,runClosure:0,workflowClosure:0};
 export const historyExportExamples=[
-  {kind:"manifest",schemaVersion:1,generation:"10000000-0000-4000-8000-000000000004",snapshotCursor:"0",createdAt:time,content:["tasks"],counts:exportCounts},
+  {kind:"manifest",schemaVersion:2,generation:"10000000-0000-4000-8000-000000000004",snapshotCursor:"0",createdAt:time,content:["tasks"],counts:exportCounts},
   {kind:"project",data:{id:project.id,name:project.name,archivedAt:project.archivedAt,version:project.version,createdAt:project.createdAt,updatedAt:project.updatedAt}},
-  {kind:"complete",schemaVersion:1,counts:exportCounts},
+  {kind:"complete",schemaVersion:2,counts:exportCounts},
 ];
 Object.assign(requestExamples,{exportHistory:{content:"tasks",generation:"10000000-0000-4000-8000-000000000004"}});
 Object.assign(responseExamples,{exportHistory:historyExportExamples[0]});
@@ -297,3 +297,7 @@ Object.assign(responseExamples,{exportHistory:historyExportExamples[0]});
 const retentionPreviewExample={previewId:"10000000-0000-4000-8000-000000000010",cutoff:time,expiresAt:time,expectedGeneration:"10000000-0000-4000-8000-000000000004",expectedVersion:1,candidateDigest:"a".repeat(64),counts:{eventPayloads:0,changes:0},hasMore:{eventPayloads:false,changes:false}};
 Object.assign(requestExamples,{previewRetention:{cutoff:time},pruneRetention:{previewId:retentionPreviewExample.previewId,expectedGeneration:retentionPreviewExample.expectedGeneration,expectedVersion:1,candidateDigest:retentionPreviewExample.candidateDigest}});
 Object.assign(responseExamples,{previewRetention:snapshot(retentionPreviewExample),pruneRetention:snapshot({previewId:retentionPreviewExample.previewId,applied:{eventPayloads:0,changes:0},prunedAt:time,priorGeneration:retentionPreviewExample.expectedGeneration,generation:"10000000-0000-4000-8000-000000000011",retentionVersion:2,displayBodyBytesRemoved:0})});
+
+const usagePriceExample={id:factId,name:"Synthetic local quote",capturedAt:time,effectiveAt:null,createdAt:time,entries:[{source:"fixture",model:"model",currency:"USD",inputPrice:"1",outputPrice:"2"}]};
+Object.assign(requestExamples,{getUsage:{projectId,from:time,to:"2026-10-10T00:00:00.000Z"},listUsagePrices:{},createUsagePriceSnapshot:{id:factId,name:usagePriceExample.name,capturedAt:time,entries:usagePriceExample.entries}});
+Object.assign(responseExamples,{getUsage:snapshot({projectId,from:time,to:"2026-10-10T00:00:00.000Z",source:null,model:null,eligibleRuns:0,runsWithReports:0,runsWithoutReports:0,filteredReportCount:0,filteredRunsWithReports:0,knownInputTokens:"0",knownOutputTokens:"0",knownTotalTokens:"0",unknownInputReports:0,unknownOutputReports:0,unknownTotalReports:0,groups:[],totalGroups:0,groupsTruncated:false,runDetails:[],totalRuns:0,nextCursor:null,estimate:null}),listUsagePrices:snapshot({items:[usagePriceExample],total:1,nextCursor:null}),createUsagePriceSnapshot:snapshot(usagePriceExample)});

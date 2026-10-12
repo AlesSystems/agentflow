@@ -142,3 +142,7 @@ it("mirrors usage ledger checks and widened event types",async()=>{
  expect(getTableConfig(usageMeasurements).checks.map(c=>normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(sql.slice(start,sql.indexOf(";",start))).map(normalize).sort());
  const config=getTableConfig(runEvents),type=config.checks.find(c=>c.name==="run_events_type")!;expect(normalize(dialect.sqlToQuery(type.value).sql)).toContain("'run.usage'");
 });
+it("mirrors additive immutable price table CHECK expressions",async()=>{
+ const {usagePriceSnapshots,usagePriceEntries}=await import("../../src/db/schema"),migration=readFileSync("migrations/0011_usage_prices.sql","utf8"),dialect=new SQLiteSyncDialect();
+ for(const table of [usagePriceSnapshots,usagePriceEntries]){const config=getTableConfig(table),start=migration.indexOf("CREATE TABLE "+config.name+" ("),end=migration.indexOf("\n);",start);expect(start).toBeGreaterThanOrEqual(0);expect(config.checks.map(c=>normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(migration.slice(start,end)).map(normalize).sort());}
+});

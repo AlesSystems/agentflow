@@ -1,3 +1,4 @@
+import * as usage from "./usage";
 import { historyExportQuery, historyLine, retentionPreviewInput, retentionPruneInput, retentionPreviewResponse, retentionPruneResponse } from "./history";
 import * as github from "./github";
 import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
@@ -107,6 +108,9 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  defineQuery({id:"getUsage",method:"GET",path:"/usage",access:"read",input:usage.usageQuery,response:usage.usageResponse,status:200,query:input=>({kind:"usage",input})}),
+  defineQuery({id:"listUsagePrices",method:"GET",path:"/usage/price-snapshots",access:"read",input:usage.priceSnapshotsQuery,response:usage.priceSnapshotsResponse,status:200,query:input=>({kind:"usage.prices",input})}),
+  defineCommand({id:"createUsagePriceSnapshot",method:"POST",path:"/usage/price-snapshots",access:"human",input:usage.priceSnapshotCreate,response:usage.priceSnapshotResponse,status:201,command:input=>({kind:"usage.price.create",input})}),
   defineCommand({id:"previewRetention",method:"POST",path:"/retention/preview",access:"human",input:retentionPreviewInput,response:retentionPreviewResponse,status:200,command:input=>({kind:"retention.preview",input})}),
   defineCommand({id:"pruneRetention",method:"POST",path:"/retention/prune",access:"human",input:retentionPruneInput,response:retentionPruneResponse,status:200,command:input=>({kind:"retention.prune",input})}),
   {id:"exportHistory",method:"GET",path:"/export",access:"human",input:historyExportQuery,response:historyLine,status:200,kind:"export",description:"Selected business history from one completed private snapshot. Omitted groups and cross-group references are intentionally incomplete; this is not a restorable backup. Missing completion means interrupted download. No continuation or resume."},

@@ -1,3 +1,4 @@
+import type { UsageQuery, PriceSnapshotCreate, PageQuery } from "../contracts/usage";
 import { UsageData } from "./usage";
 import type { RetentionPreviewInput, RetentionPruneInput } from "../contracts/history";
 import { HistoryData } from "./history";
@@ -60,6 +61,7 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | {kind:"usage.price.create";input:PriceSnapshotCreate}
   | {kind:"retention.preview";input:RetentionPreviewInput}
   | {kind:"retention.prune";input:RetentionPruneInput}
   | {kind:"github.repositories";input:GithubRepositoriesInput}
@@ -87,6 +89,8 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | {kind:"usage";input:UsageQuery}
+  | {kind:"usage.prices";input:PageQuery}
   | {kind:"github";input:GithubQuery}
   | { kind: "workflow.readiness"; id: string; revisionId: string }
   | { kind: "task.readiness"; id: string }
@@ -327,6 +331,7 @@ export class ApplicationData {
     command: ApplicationCommand,
     context: CommandContext,
   ): CommittedReply {
+    if(command.kind==="usage.price.create")return new UsageData(this.db).createPriceSnapshot(command.input,context);
     if(command.kind==="retention.preview")return new HistoryData(this.db).preview(command.input,context);
     if(command.kind==="retention.prune")throw new Conflict("retention_coordinator_required");
     if(command.kind==="github.repositories")return new GithubData(this.db).repositories(command.input,context);
@@ -1290,7 +1295,9 @@ export class ApplicationData {
     if(query.kind==="github")return new GithubData(this.db).snapshot(query.input,now);
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "workflow.readiness") {
+      if(query.kind==="usage") data=new UsageData(this.db).snapshot(query.input,now);
+      else if(query.kind==="usage.prices") data=new UsageData(this.db).priceSnapshots(query.input);
+      else if (query.kind === "workflow.readiness") {
         const workflow=this.one("workflows",query.id), revision=this.workflowRevision(query.revisionId);
         if (revision.workflowId !== workflow.id) throw new Conflict("resource_not_found");
         const ids=[...new Set(revision.nodes.flatMap(node=>node.taskId ? [node.taskId.toLowerCase()] : []))];

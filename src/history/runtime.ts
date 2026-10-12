@@ -123,7 +123,7 @@ export class HistoryRuntime {
       response.flushHeaders();
       await write(snapshot.manifest);
       for(;;){check();const batch=snapshot.nextBatch();if(!batch.length)break;for(const record of batch)await write(record);await yieldTurn();}
-      await write({kind:"complete",schemaVersion:1,counts:snapshot.manifest.counts});
+      await write({kind:"complete",schemaVersion:snapshot.manifest.schemaVersion,counts:snapshot.manifest.counts});
       await new Promise<void>((resolve,reject)=> {
         let settled=false;
         const settle=(error?:Error)=> {

@@ -1,3 +1,4 @@
+import { usageMeasurement,usagePriceSnapshot } from "./usage";
 import { z } from "zod";
 import { changeCursor, timestamp, uuid, version, envelope } from "./common";
 import { project } from "./projects";
@@ -31,21 +32,21 @@ export const historyProjections = {
   dependency:z.strictObject({taskId:uuid,prerequisiteId:uuid,projectId:uuid}),
   artifact:artifactEvidence, decision:gateDecision, rework:reworkEvidence,
   runClosure:z.strictObject({...closure,runId:uuid}), workflowClosure:z.strictObject({...closure,workflowRunId:uuid}),
-  run, runEvent:historyEventRecord, workflow, revision:planRevision, workflowRun, workflowEvent:workflowEventRecord, nodeObservation,
+  run, runEvent:historyEventRecord, usageMeasurement, usagePriceSnapshot, workflow, revision:planRevision, workflowRun, workflowEvent:workflowEventRecord, nodeObservation,
   connection:githubConnection.omit({credential:true,busy:true}),
   pullRequest:githubPullRequest.omit({stale:true,headChanged:true}),
   lookupAttempt:z.strictObject({repository:githubRepository,number:z.number().int().positive(),attemptedAt:timestamp,error:githubError.nullable()}),
 };
 export const historyGroups = {
   tasks:["project","task","agent","comment","completion","reopen","dependency","artifact","decision","rework","runClosure","workflowClosure"],
-  attempts:["run","runEvent"], workflows:["workflow","revision","workflowRun","workflowEvent","nodeObservation"], github:["connection","pullRequest","lookupAttempt"],
+  attempts:["run","runEvent","usageMeasurement","usagePriceSnapshot"], workflows:["workflow","revision","workflowRun","workflowEvent","nodeObservation"], github:["connection","pullRequest","lookupAttempt"],
 } as const satisfies Record<HistoryContent,readonly (keyof typeof historyProjections)[]>;
 export type HistoryRecordKind = keyof typeof historyProjections;
 export type HistoryRecord = {[K in HistoryRecordKind]:{kind:K;data:z.infer<(typeof historyProjections)[K]>}}[HistoryRecordKind];
 export const historyRecord = z.union(Object.entries(historyProjections).map(([kind,data]) => z.strictObject({kind:z.literal(kind),data})));
 export const historyCounts = z.object(Object.fromEntries(Object.keys(historyProjections).map(kind=>[kind,z.number().int().nonnegative()]))).partial().strict();
-export const historyManifest = z.strictObject({kind:z.literal("manifest"),schemaVersion:z.literal(1),generation:uuid,snapshotCursor:changeCursor,createdAt:timestamp,content:historyExportInput.shape.content,counts:historyCounts}).refine(value=>{const expected=value.content.flatMap(group=>[...historyGroups[group]]);return Object.keys(value.counts).length===expected.length && expected.every(kind=>Object.hasOwn(value.counts,kind));});
-export const historyComplete = z.strictObject({kind:z.literal("complete"),schemaVersion:z.literal(1),counts:historyCounts});
+export const historyManifest = z.strictObject({kind:z.literal("manifest"),schemaVersion:z.literal(2),generation:uuid,snapshotCursor:changeCursor,createdAt:timestamp,content:historyExportInput.shape.content,counts:historyCounts}).refine(value=>{const expected=value.content.flatMap(group=>[...historyGroups[group]]);return Object.keys(value.counts).length===expected.length && expected.every(kind=>Object.hasOwn(value.counts,kind));});
+export const historyComplete = z.strictObject({kind:z.literal("complete"),schemaVersion:z.literal(2),counts:historyCounts});
 export const historyLine = z.union([historyManifest,historyRecord,historyComplete]);
 export type HistoryManifest = z.infer<typeof historyManifest>;
 export type HistoryExportSnapshot = {manifest:HistoryManifest;nextBatch():HistoryRecord[];close():void};
@@ -60,3 +61,7 @@ export const retentionPreviewResponse=envelope(retentionPreview);
 export const retentionPruneResponse=envelope(retentionPrune);
 export type RetentionPreviewInput=z.infer<typeof retentionPreviewInput>;
 export type RetentionPruneInput=z.infer<typeof retentionPruneInput>;
+
+export const historyManifestV1=z.strictObject({...historyManifest.shape,schemaVersion:z.literal(1),counts:historyCounts.omit({usageMeasurement:true,usagePriceSnapshot:true})}).refine(value=>{const expected=value.content.flatMap(group=>historyGroups[group].filter(kind=>kind!=="usageMeasurement"&&kind!=="usagePriceSnapshot"));return Object.keys(value.counts).length===expected.length&&expected.every(kind=>Object.hasOwn(value.counts,kind));});
+export const historyCompleteV1=historyComplete.extend({schemaVersion:z.literal(1),counts:historyCounts.omit({usageMeasurement:true,usagePriceSnapshot:true})});
+export const historyRecordV1=z.union(Object.entries(historyProjections).filter(([kind])=>kind!=="usageMeasurement"&&kind!=="usagePriceSnapshot").map(([kind,data])=>z.strictObject({kind:z.literal(kind),data})));

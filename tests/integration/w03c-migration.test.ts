@@ -59,10 +59,10 @@ async function oldFixture(){
  const before=facts(db),schema=db.prepare("SELECT type,name,tbl_name,sql FROM sqlite_schema ORDER BY name").all();db.close();return {dir,before,schema};
 }
 it("rebuild_preserves_pruned_events_and_gate_fks",async()=>{
- const {dir,before}=await oldFixture();const owned=await openOwnedStore(dir);const db=new Database(join(dir,"agentflow.sqlite"));try{expect(facts(db)).toEqual(before);expect(owned.store.pragmas().foreign_keys).toBe(1);expect(owned.store.integrity().integrity).toBe("ok");expect(owned.store.metadata().schemaVersion).toBe(11);}finally{db.close();owned.close();}
+ const {dir,before}=await oldFixture();const owned=await openOwnedStore(dir);const db=new Database(join(dir,"agentflow.sqlite"));try{expect(facts(db)).toEqual(before);expect(owned.store.pragmas().foreign_keys).toBe(1);expect(owned.store.integrity().integrity).toBe("ok");expect(owned.store.metadata().schemaVersion).toBe(12);}finally{db.close();owned.close();}
 });
 it.each(["copy","drop"])("failed_rebuild_rolls_back_and_reenables_fks after %s",async(stage)=>{
- const {dir,before,schema}=await oldFixture();expect(migrations).toHaveLength(11);
+ const {dir,before,schema}=await oldFixture();expect(migrations).toHaveLength(12);
  const migration=migrations[10],needle=stage==="copy"?"DROP TABLE run_events;":"ALTER TABLE run_events_new RENAME TO run_events;";
  const sql=migration.sql.replace(needle,"INSERT INTO missing_w03c_fault VALUES(1);"+needle);expect(sql).not.toBe(migration.sql);
  const owner=acquireInstance(dir),store=new Store(owner);try{
@@ -156,6 +156,6 @@ it("restores a completed failed-rebuild backup with renewed generation and uncha
  try{await expect(store.migrate([...migrations.slice(0,10),{...migration,sql,sha256:createHash("sha256").update(sql).digest("hex")}])).rejects.toThrow("missing_restore_fault");}finally{store.close();owner.release();}
  const backup=join(dir,"backups",readdirSync(join(dir,"backups")).find(x=>x.endsWith(".sqlite"))!);
  const backupDir=directory();copyFileSync(backup,join(backupDir,"agentflow.sqlite"));expect(snapshotUpgrade(backupDir).integrity).toBe("ok");
- const result=await restore(dir,backup);expect(result.generation).not.toBe(oldGeneration);const owned=await openOwnedStore(dir);try{expect(owned.store.metadata()).toMatchObject({generation:result.generation,schemaVersion:11});expect(owned.store.sessionCount()).toBe(0);expect(owned.store.pragmas().foreign_keys).toBe(1);}finally{owned.close();}
+ const result=await restore(dir,backup);expect(result.generation).not.toBe(oldGeneration);const owned=await openOwnedStore(dir);try{expect(owned.store.metadata()).toMatchObject({generation:result.generation,schemaVersion:12});expect(owned.store.sessionCount()).toBe(0);expect(owned.store.pragmas().foreign_keys).toBe(1);}finally{owned.close();}
  const restored=snapshotUpgrade(dir);for(const [table,rows] of Object.entries(before))expect(restored.rows[table]).toEqual((rows as Record<string,unknown>[]).map(({rowid,...value})=>{void rowid;return value;}));
 });
