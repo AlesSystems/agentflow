@@ -1,0 +1,500 @@
+{
+  "schemaVersion": 1,
+  "package": "W03b",
+  "status": "qualification-accepted; final-review-integration-cleanup-pending",
+  "source": {
+    "baselineCommit": "76fe748a3d642f8a5a6ea738af47a3bb640070d3",
+    "measuredCommit": "caab7b2f880be2f7086465ea00bcf223c220d4e2",
+    "broadBrowserAndBuildCommit": "06e8e1132cf7188d5396262fea07772b2c23c75c",
+    "buildId": "ZhFxCm6Zoflhxew6pt39a",
+    "shippingInputsMatched": 113,
+    "finalInstrumentationDeltaQualified": true
+  },
+  "host": {
+    "os": "macOS",
+    "version": "27.0",
+    "build": "26A428",
+    "architecture": "arm64",
+    "node": "24.15.0",
+    "npm": "11.12.1",
+    "sqlite": "3.53.4",
+    "browser": "Chrome 154.0.8037.99"
+  },
+  "verification": {
+    "unit": {
+      "commit": "90b5d0adbcd4bbceb0fa01bbd88203208bdad09e",
+      "files": 41,
+      "passed": 217
+    },
+    "integration": {
+      "commit": "90b5d0adbcd4bbceb0fa01bbd88203208bdad09e",
+      "total": 547,
+      "originalPassed": 537,
+      "originalFailed": 10,
+      "focusedRepairsPassed": 10,
+      "qualification": "Composed retained aggregate and focused repairs; not a fresh whole-head pass."
+    },
+    "browser": {
+      "passed": 81
+    },
+    "typecheckExit": 0,
+    "lintExit": 0,
+    "openapiCheckExit": 0,
+    "buildExit": 0,
+    "buildWarning": "Existing dynamic filesystem tracing warning retained."
+  },
+  "campaign": {
+    "officialRuns": 1,
+    "fixtureTasks": 20,
+    "fixtureTerminalRuns": 20,
+    "fixtureEvents": 60,
+    "stoppedFixtures": 38,
+    "operationRequests": 2130,
+    "missing": 0,
+    "failed": 0,
+    "existingRequestsIncludingWarmups": 1980,
+    "measuredExistingHTTPReads": 1800,
+    "pairedComparisons": 900,
+    "newRequestsIncludingWarmupsAndJitPreviews": 150,
+    "absoluteCampaigns": 3,
+    "mainNewOperationMeasuredSamplesPerCampaign": 10,
+    "previewWarmupsPerCampaign": 10,
+    "jitPrunePreviewsPerCampaign": 10,
+    "metricsRoundedToDecimalPlaces": 6
+  },
+  "budget": {
+    "snapshotP95StrictBelowMs": 250,
+    "maximumExistingReadP95Ms": 4.686792,
+    "maximumPositiveRegressionPercent": 12.051343,
+    "regressionsAbove20Percent": 0,
+    "astraRegressionExceptionRequired": false
+  },
+  "existingReadP95": [
+    {
+      "group": "tasks",
+      "round": 1,
+      "baseP95Ms": 3.90875,
+      "headP95Ms": 3.395541,
+      "regressionPercent": -13.129747
+    },
+    {
+      "group": "tasks",
+      "round": 2,
+      "baseP95Ms": 3.23625,
+      "headP95Ms": 3.567459,
+      "regressionPercent": 10.234345
+    },
+    {
+      "group": "tasks",
+      "round": 3,
+      "baseP95Ms": 3.238917,
+      "headP95Ms": 3.62925,
+      "regressionPercent": 12.051343
+    },
+    {
+      "group": "events",
+      "round": 1,
+      "baseP95Ms": 4.383583,
+      "headP95Ms": 3.934125,
+      "regressionPercent": -10.253211
+    },
+    {
+      "group": "events",
+      "round": 2,
+      "baseP95Ms": 4.686792,
+      "headP95Ms": 3.99025,
+      "regressionPercent": -14.861807
+    },
+    {
+      "group": "events",
+      "round": 3,
+      "baseP95Ms": 4.35775,
+      "headP95Ms": 3.753666,
+      "regressionPercent": -13.862291
+    },
+    {
+      "group": "activity",
+      "round": 1,
+      "baseP95Ms": 3.347625,
+      "headP95Ms": 3.338083,
+      "regressionPercent": -0.285038
+    },
+    {
+      "group": "activity",
+      "round": 2,
+      "baseP95Ms": 3.296792,
+      "headP95Ms": 3.109458,
+      "regressionPercent": -5.682312
+    },
+    {
+      "group": "activity",
+      "round": 3,
+      "baseP95Ms": 3.298125,
+      "headP95Ms": 3.643833,
+      "regressionPercent": 10.481956
+    }
+  ],
+  "absoluteHTTP": [
+    {
+      "group": "preview",
+      "round": 1,
+      "count": 10,
+      "p95Ms": 2.954833,
+      "maxMs": 2.954833
+    },
+    {
+      "group": "export",
+      "round": 1,
+      "count": 10,
+      "p95Ms": 22.957292,
+      "maxMs": 22.957292
+    },
+    {
+      "group": "prune-preview",
+      "round": 1,
+      "count": 10,
+      "p95Ms": 7.544917,
+      "maxMs": 7.544917
+    },
+    {
+      "group": "prune",
+      "round": 1,
+      "count": 10,
+      "p95Ms": 19.713625,
+      "maxMs": 19.713625
+    },
+    {
+      "group": "preview",
+      "round": 2,
+      "count": 10,
+      "p95Ms": 2.815791,
+      "maxMs": 2.815791
+    },
+    {
+      "group": "export",
+      "round": 2,
+      "count": 10,
+      "p95Ms": 23.896375,
+      "maxMs": 23.896375
+    },
+    {
+      "group": "prune-preview",
+      "round": 2,
+      "count": 10,
+      "p95Ms": 7.236792,
+      "maxMs": 7.236792
+    },
+    {
+      "group": "prune",
+      "round": 2,
+      "count": 10,
+      "p95Ms": 18.720042,
+      "maxMs": 18.720042
+    },
+    {
+      "group": "preview",
+      "round": 3,
+      "count": 10,
+      "p95Ms": 2.74675,
+      "maxMs": 2.74675
+    },
+    {
+      "group": "export",
+      "round": 3,
+      "count": 10,
+      "p95Ms": 22.549875,
+      "maxMs": 22.549875
+    },
+    {
+      "group": "prune-preview",
+      "round": 3,
+      "count": 10,
+      "p95Ms": 7.480709,
+      "maxMs": 7.480709
+    },
+    {
+      "group": "prune",
+      "round": 3,
+      "count": 10,
+      "p95Ms": 18.8755,
+      "maxMs": 18.8755
+    }
+  ],
+  "previewTransactionCohorts": [
+    {
+      "round": 1,
+      "cohort": "measured-preview",
+      "count": 10,
+      "p95Ms": 1.582958,
+      "maxMs": 1.582958
+    },
+    {
+      "round": 1,
+      "cohort": "jit-preview",
+      "count": 10,
+      "p95Ms": 1.884833,
+      "maxMs": 1.884833
+    },
+    {
+      "round": 1,
+      "cohort": "warmup-preview",
+      "count": 10,
+      "p95Ms": 1.817625,
+      "maxMs": 1.817625
+    },
+    {
+      "round": 2,
+      "cohort": "measured-preview",
+      "count": 10,
+      "p95Ms": 1.340583,
+      "maxMs": 1.340583
+    },
+    {
+      "round": 2,
+      "cohort": "jit-preview",
+      "count": 10,
+      "p95Ms": 1.895416,
+      "maxMs": 1.895416
+    },
+    {
+      "round": 2,
+      "cohort": "warmup-preview",
+      "count": 10,
+      "p95Ms": 2.076084,
+      "maxMs": 2.076084
+    },
+    {
+      "round": 3,
+      "cohort": "measured-preview",
+      "count": 10,
+      "p95Ms": 1.30275,
+      "maxMs": 1.30275
+    },
+    {
+      "round": 3,
+      "cohort": "jit-preview",
+      "count": 10,
+      "p95Ms": 2.096709,
+      "maxMs": 2.096709
+    },
+    {
+      "round": 3,
+      "cohort": "warmup-preview",
+      "count": 10,
+      "p95Ms": 1.895291,
+      "maxMs": 1.895291
+    }
+  ],
+  "otherTimings": [
+    {
+      "round": 1,
+      "kind": "exportPreparationTiming",
+      "count": 10,
+      "p95Ms": 2.947666,
+      "maxMs": 2.947666
+    },
+    {
+      "round": 1,
+      "kind": "exportBatchTiming",
+      "count": 70,
+      "p95Ms": 0.759375,
+      "maxMs": 1.696667
+    },
+    {
+      "round": 1,
+      "kind": "transactionTiming",
+      "count": 10,
+      "p95Ms": 3.172667,
+      "maxMs": 3.172667
+    },
+    {
+      "round": 2,
+      "kind": "exportPreparationTiming",
+      "count": 10,
+      "p95Ms": 3.015708,
+      "maxMs": 3.015708
+    },
+    {
+      "round": 2,
+      "kind": "exportBatchTiming",
+      "count": 70,
+      "p95Ms": 0.574541,
+      "maxMs": 1.727334
+    },
+    {
+      "round": 2,
+      "kind": "transactionTiming",
+      "count": 10,
+      "p95Ms": 3.165583,
+      "maxMs": 3.165583
+    },
+    {
+      "round": 3,
+      "kind": "exportPreparationTiming",
+      "count": 10,
+      "p95Ms": 2.821333,
+      "maxMs": 2.821333
+    },
+    {
+      "round": 3,
+      "kind": "exportBatchTiming",
+      "count": 70,
+      "p95Ms": 0.571833,
+      "maxMs": 1.674917
+    },
+    {
+      "round": 3,
+      "kind": "transactionTiming",
+      "count": 10,
+      "p95Ms": 3.326083,
+      "maxMs": 3.326083
+    }
+  ],
+  "backupIOByOperation": [
+    {
+      "round": 1,
+      "operation": "export",
+      "count": 10,
+      "p95Ms": 10.824542,
+      "maxMs": 10.824542
+    },
+    {
+      "round": 1,
+      "operation": "prune",
+      "count": 10,
+      "p95Ms": 13.157083,
+      "maxMs": 13.157083
+    },
+    {
+      "round": 2,
+      "operation": "export",
+      "count": 10,
+      "p95Ms": 11.713917,
+      "maxMs": 11.713917
+    },
+    {
+      "round": 2,
+      "operation": "prune",
+      "count": 10,
+      "p95Ms": 11.967709,
+      "maxMs": 11.967709
+    },
+    {
+      "round": 3,
+      "operation": "export",
+      "count": 10,
+      "p95Ms": 12.016625,
+      "maxMs": 12.016625
+    },
+    {
+      "round": 3,
+      "operation": "prune",
+      "count": 10,
+      "p95Ms": 11.937459,
+      "maxMs": 11.937459
+    }
+  ],
+  "export": {
+    "complete": 30,
+    "bytesEach": 40322,
+    "countsEach": {
+      "project": 1,
+      "task": 20,
+      "agent": 1,
+      "comment": 0,
+      "completion": 0,
+      "reopen": 0,
+      "dependency": 0,
+      "artifact": 0,
+      "decision": 0,
+      "rework": 0,
+      "runClosure": 0,
+      "workflowClosure": 0,
+      "run": 20,
+      "runEvent": 60,
+      "workflow": 0,
+      "revision": 0,
+      "workflowRun": 0,
+      "workflowEvent": 0,
+      "nodeObservation": 0,
+      "connection": 1,
+      "pullRequest": 0,
+      "lookupAttempt": 0
+    },
+    "peakNativePendingBytes": 18040
+  },
+  "prune": {
+    "confirmed": 30,
+    "recoveryBackups": 30,
+    "backupsIntegrityAndForeignKeysPassed": 30,
+    "payloadMarkers": 600,
+    "removedChangesPerPrune": 221,
+    "retainedPriorMaximumCursor": 222,
+    "newChangeCursorAndAllocator": 223,
+    "generationAndRetentionVersionRenewalsPerPrune": 1,
+    "originalIdentitiesDigestsAcknowledgementsAndReceiptsPreserved": true
+  },
+  "shutdown": {
+    "closedServices": 42,
+    "headDiagnosticRecords": 39,
+    "leases": 0,
+    "requests": 0,
+    "activeSockets": 0,
+    "destroyedSocketSetEntriesPerHeadRecord": 2,
+    "remainingExportCopies": 0
+  },
+  "qualifications": [
+    "Finite synthetic fixture; no arbitrary-history or W04 sustained-load claim.",
+    "Export preparation residual includes scheduling, logging, integrity, counts, and opening overhead; not pure SQL timing.",
+    "Warmup preview transactions are diagnostics; measured and JIT cohorts are independently budgeted.",
+    "Synthetic paired-session authority fixtures are not personal human attestations.",
+    "Original setup/repair failures retained; no official resample.",
+    "Unexplained npm runtime loss repaired prospectively from a qualified owned runtime; no pristine OS or Linux claim.",
+    "Inherited nested streaming probe reused the same owned dependencies and its own build; legacy child log joins streams and captures at exit.",
+    "Optional live GitHub verification remains unexecuted.",
+    "Structured credential exclusion does not guarantee authored export text is secret-free.",
+    "Final whole-package reviews, matching-head integration, and guarded cleanup remain pending."
+  ],
+  "images": [
+    {
+      "file": "settings-desktop.png",
+      "sha256": "ded010a11f47aaee16a42b32113d22fa06b7772c32f7022ba1be69f4b3a4fcb5",
+      "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
+      "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
+      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "privacy": "Data Location masked during capture."
+    },
+    {
+      "file": "settings-narrow.png",
+      "sha256": "7f113a9448e7ec994a6dc05d4b0d8bb5c86a08c3fd942d3ac1d0c23ecaa933ba",
+      "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
+      "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
+      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "privacy": "Data Location masked during capture."
+    },
+    {
+      "file": "history-native-200.png",
+      "sha256": "5e3b4e13e718f406db4f6fdfa5fcf099fb9a59fe53db2fdc136f10e95d3febde",
+      "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
+      "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
+      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "privacy": "Captured region excludes Data Location."
+    },
+    {
+      "file": "export-unavailable.png",
+      "sha256": "4726c6f19495e80a4204a5154dd3caa960249b4b19a699e502c42cf33b959acb",
+      "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
+      "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
+      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "privacy": "Data Location masked during capture."
+    }
+  ],
+  "evidenceSHA256": {
+    "qualificationAcceptance": "cc3103d28f7e246242b07b6359de65f2f618597528e195865ae125a456cc9c04",
+    "campaign": "cec9831749372e88bc138a23b66a686536ed08a5bbc3155f778221734ebd362e",
+    "journal": "24a7d116fef811fffebd75c8997e65ea9dd6c9ce4286b24d650adea1bdb56b36",
+    "independentReduction": "9ff5ee89c02bc0db0aa85b190e194d77c9c55b6e59d7db57c4ddebd785462ee5",
+    "independentPostSQL": "0de593a3678e5e354ec2ded7e9653fc64ea9623fa383b552c7bf3783e16fb7ff",
+    "independentSourceTiming": "5def5fcd885e32564bbc585ac5515005ce3410498d6d72c024d35b3be09c75ca"
+  }
+}

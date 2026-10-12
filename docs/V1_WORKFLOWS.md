@@ -7,8 +7,8 @@ W03a implementation and qualified verification are accepted with one scoped
 relative-budget exception. Whole-package review, PR #13 integration, private
 archival, and guarded cleanup are complete.
 [Its receipt](implementation/W03a.md) preserves original failures and qualifications.
-W03b has exact-plan approval and accepted Tasks 1–4. Executable qualification,
-quiet measurement, final review, and integration remain open. W03c and W04 remain unstarted.
+W03b qualification and one official campaign are accepted. Final whole-package
+review, integration, and guarded cleanup remain pending. W03c and W04 remain unstarted.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
@@ -247,9 +247,11 @@ response generation header. CLI outbox sequences remain compatible because all
 event identity/receipt ledgers survive. Disk savings can be modest; report them.
 Implemented routes: `GET /export`, `POST /retention/preview`, `POST /retention/prune`.
 The implementation includes snapshot projections, migration 0009, Settings controls,
-and real SQLite, API, browser, and outbox recovery tests. Qualification must prove aborted export,
-concurrent writes, expired previews, protected evidence, pre-prune exact retry,
-gap/conflict detection after prune, two-tab reset, restart, and backup/restore.
+and real SQLite, API, browser, and outbox recovery tests.
+[Qualified verification](implementation/W03b.md) records aborted export, concurrent
+writes, expired previews, protected evidence, exact retries, outbox recovery,
+two-tab reset, restart, and backup/restore. Its finite performance campaign is
+accepted; final review and integration remain open.
 
 ## W03c. Reported usage and optional estimates
 

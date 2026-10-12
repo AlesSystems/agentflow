@@ -544,7 +544,8 @@ no secrets. GitHub observations are included only when you select their group.
 ### Explicit history retention
 
 `POST /retention/preview` and `POST /retention/prune` require a paired browser,
-JSON, same-origin mutation checks, and an idempotency key. Preview accepts only
+JSON, same-origin mutation checks, and an idempotency key. Actor authorization
+precedes receipt lookup, including exact retries. Preview accepts only
 `{cutoff}` as a UTC timestamp ending in `Z`, at or before the request time. It
 returns `previewId`, `cutoff`, `expiresAt`, `expectedGeneration`,
 `expectedVersion`, `candidateDigest`, per-kind `counts`, and per-kind `hasMore`.
@@ -575,3 +576,8 @@ remain visible with their original identity, sequence, type, occurrence and
 receipt timestamps. Their read-only stub has `payload:null` and a nonnull
 `payloadPrunedAt`. A tracking summary whose latest message was pruned adds
 `messagePrunedAt` and returns `message:null`. Intact event shapes and accepted event inputs are unchanged.
+
+
+[W03b qualified verification](implementation/W03b.md) records the selected-download,
+protected-retention, retry, generation, browser, and outbox contracts. Its single
+finite campaign passed; final whole-package review and integration remain pending.

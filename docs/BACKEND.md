@@ -345,3 +345,9 @@ even when the live application advances. Sessions, credentials, request receipts
 and configured secret paths are outside those projections. Opaque references and
 authored text remain selected content. A temporary export copy cannot replace the
 local recovery backup that precedes prune.
+
+
+[W03b qualification](implementation/W03b.md) includes independent stopped-copy SQL
+inspection after thirty synthetic prunes and their recovery backups. Original
+event identities, digests, ACKs, protected records, and request receipts remained
+unchanged. That finite evidence does not replace W04 load or release validation.
