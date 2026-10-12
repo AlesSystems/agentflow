@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { test, expect } from "@playwright/test";
 import { launch } from "../fixtures/server";
 import { pairPage, command } from "../fixtures/p03";
-test("successful native export header recovers Workspace before any copied result is used", async ({ page, browser }) => {
+for (const recovered of [false, true]) test(`successful native export header requires recovery (${recovered ? "already current" : "delayed SSE"})`, async ({ page, browser }) => {
   test.setTimeout(40000);
   let releaseSse!: () => void;
   const sse = new Promise<void>(resolve => { releaseSse = resolve; });
@@ -14,7 +14,7 @@ test("successful native export header recovers Workspace before any copied resul
   page.on("download", download => { downloads.push(download.suggestedFilename()); });
   page.on("response", response => { if (response.url().endsWith("/api/v1/settings")) snapshots.push({ status: response.status(), generation: response.headers()["agentflow-generation"] }); });
   try {
-    await pairPage(page, server); await pairPage(second, server); await page.goto(server.url + "/settings");
+    await pairPage(page, server); await pairPage(second, server); await page.bringToFront(); await page.goto(server.url + "/settings");
     await expect(page.getByText(/Saved timezone:.*version 2/)).toBeVisible();
     await command(second, "/projects", { name: "Synthetic copied history one" }); await command(second, "/projects", { name: "Synthetic copied history two" });
     const cutoff = new Date(Date.now() - 1).toISOString();
@@ -27,8 +27,13 @@ test("successful native export header recovers Workspace before any copied resul
     const prepared = await command(second, "/retention/preview", { cutoff: new Date(Date.now() - 1).toISOString() }), value = prepared.body.data;
     const pruned = await command(second, "/retention/prune", { previewId: value.previewId, expectedGeneration: value.expectedGeneration, expectedVersion: value.expectedVersion, candidateDigest: value.candidateDigest });
     expect(pruned.status).toBe(200); expect(pruned.body.generation).not.toBe(copied.manifest.generation);
+    if (recovered) {
+      await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+      await expect(page.getByRole("button", { name: "Confirm prune", exact: true })).toHaveCount(0);
+      await expect.poll(() => snapshots.some(s => (s as { generation: string }).generation === pruned.body.generation)).toBe(true);
+    }
     server.child.stdin!.write("release\n");
-    await expect(page.getByText("Workspace changed. Download again using the current workspace. Your content selection is retained.", { exact: true })).toBeFocused();
+    await expect(page.getByText("Workspace changed. Download again using the current workspace. Your content selection is retained.", { exact: true })).toBeVisible();
     expect(downloads).toEqual([]);
     await expect(page.getByRole("button", { name: "Confirm prune", exact: true })).toHaveCount(0);
     await expect(page.getByLabel("UTC cutoff", { exact: true })).toHaveValue(cutoff); await expect(page.getByLabel("Tasks and protected facts", { exact: true })).toBeChecked();
@@ -42,7 +47,8 @@ test("successful native export header recovers Workspace before any copied resul
     expect(events().find(e => e.event === "diagnostics")).toMatchObject({ readersClosed: 2, exports: [] });
   } finally {
     server.child.stdin!.write("release\n"); releaseSse();
-    if (process.env.W03B_EXPORT_REPAIR_PROOF_DIR) writeFileSync(join(process.env.W03B_EXPORT_REPAIR_PROOF_DIR, "native-browser.json"), JSON.stringify({ scopes: "synthetic native completed-copy/prune interleaving; browser SSE transport held; actual server header/body writer", downloads, snapshots, events: events(), dataDir: server.dir }, null, 2), { mode: 0o600 });
+    const focus = await page.evaluate(() => ({ active: document.activeElement?.tagName, text: document.activeElement?.textContent?.slice(0, 160), visibility: document.visibilityState }));
+    if (process.env.W03B_EXPORT_REPAIR_PROOF_DIR) writeFileSync(join(process.env.W03B_EXPORT_REPAIR_PROOF_DIR, `native-browser-${recovered ? "current" : "delayed"}.json`), JSON.stringify({ scopes: "synthetic native completed-copy/prune interleaving; browser SSE transport held; actual server header/body writer", recovered, downloads, snapshots, focus, events: events(), dataDir: server.dir }, null, 2), { mode: 0o600 });
     await other.close(); await server.stop();
   }
 });

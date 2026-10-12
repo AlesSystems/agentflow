@@ -80,9 +80,13 @@ export function HistorySettings() {
     setBusy("export"); setNotice(null);
     try {
       const response = await fetch(`/api/v1/export?${new URLSearchParams({ content: content.join(","), generation })}`, { cache: "no-store" });
+      if (response.headers.get("AgentFlow-Generation") && response.headers.get("AgentFlow-Generation") !== generation) {
+        await response.body?.cancel();
+        await api.read("/settings", settingsResponse);
+        throw new StaleSnapshot();
+      }
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        if (response.headers.get("AgentFlow-Generation") && response.headers.get("AgentFlow-Generation") !== generation) await api.read("/settings", settingsResponse);
         throw new ApiError(response.status, body?.error?.code ?? "export_unavailable");
       }
       const text = await response.text(), lines = text.trimEnd().split("\n");
