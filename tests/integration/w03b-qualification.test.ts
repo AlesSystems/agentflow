@@ -26,7 +26,7 @@ for(const control of ["backup","integrity","stale candidate","transaction"] as c
 
 import { qualifiedService } from "../fixtures/w03a-qualification";
 import { boundedFetch,readBoundedText } from "../fixtures/w01-runtime";
-import { validateRecovery } from "../fixtures/w03b-qualification";
+import { validateRecovery,bindTimings } from "../fixtures/w03b-qualification";
 import assert from "node:assert/strict";
 for(const defect of ["missing visible reset","lost receipt"] as const)it(`invalidates actual ${defect} protocol observation without losing denominator`,async()=>{
  const services:unknown[]=[];
@@ -62,5 +62,8 @@ it("captures export preparation residual and batch work separately from complete
  const stdout=(services[0] as {stdout:string}).stdout;
  const records=stdout.split("\n").filter(line=>line.startsWith("{")).map(line=>JSON.parse(line));
  const preparations=records.filter(row=>row.kind==="exportPreparationTiming"),batches=records.filter(row=>row.kind==="exportBatchTiming");
- expect(preparations).toHaveLength(1);expect(preparations[0]).toMatchObject({backupMs:expect.any(Number),totalMs:expect.any(Number),residualMs:expect.any(Number)});expect(preparations[0].residualMs).toBeGreaterThanOrEqual(0);expect(batches).toHaveLength(1);expect(batches[0]).toMatchObject({rows:0,ms:expect.any(Number)});retainControl("export-timing-separation",{services,records});
+ expect(preparations).toHaveLength(1);expect(preparations[0]).toMatchObject({backupMs:expect.any(Number),totalMs:expect.any(Number),residualMs:expect.any(Number)});expect(preparations[0].residualMs).toBeGreaterThanOrEqual(0);expect(batches).toHaveLength(1);expect(batches[0]).toMatchObject({rows:0,ms:expect.any(Number)});
+ const requests=[{id:"control-export",path:"/api/v1/export?content=attempts",key:null}];const bound=bindTimings(records,requests,"actual-service-original.json");expect(bound.map(row=>row.requestId)).toEqual(["control-export","control-export","control-export"]);
+ for(const [name,invalid] of [["missing service timing",records.filter(row=>row.kind!=="exportPreparationTiming")],["mismatched batch cardinality",records.map(row=>row.kind==="exportBatchTiming"?{...row,batch:3}:row)]] as const){const result=await qualifyRequests([{id:"stream",warmup:false},{id:"later",warmup:false}],async()=>{bindTimings([...invalid],requests,"actual-service-original.json");return {status:200,generation:randomUUID(),text:"{}",dispatchMs:0,drainedMs:1,elapsedMs:1};});expect(result.acceptance).toBe(false);expect(result.expected).toBe(2);expect(result.attempted).toBe(1);expect(result.failed).toEqual(["stream"]);expect(result.missing).toEqual(["later"]);retainControl(name,{originalRecords:records,injectedRecords:invalid,...result});}
+ retainControl("export-timing-separation",{services,records});
 });

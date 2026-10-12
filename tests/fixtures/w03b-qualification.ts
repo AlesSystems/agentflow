@@ -42,3 +42,21 @@ export function runtimePins(root:string){
  const walk=(dir:string,prefix="")=>{for(const name of readdirSync(dir).sort()){const path=join(dir,name),key=prefix+name,stat=lstatSync(path);files[key]={dev:stat.dev,ino:stat.ino,uid:stat.uid,mode:stat.mode&0o777,size:stat.size,...(stat.isFile()?{sha256:createHash("sha256").update(readFileSync(path)).digest("hex")}:stat.isSymbolicLink()?{link:readlinkSync(path)}:{})};if(stat.isDirectory())walk(path,key+"/");}};
  walk(root);const stat=lstatSync(root);return {root,identity:{dev:stat.dev,ino:stat.ino,uid:stat.uid,mode:stat.mode&0o777},files};
 }
+
+export function bindTimings(records:Record<string,unknown>[],requests:Record<string,unknown>[],outputPath:string):Record<string,unknown>[]{
+ const exports=requests.filter(row=>String(row.path).startsWith("/api/v1/export")),previews=requests.filter(row=>String(row.path).endsWith("/retention/preview")),prunes=requests.filter(row=>String(row.path).endsWith("/retention/prune"));
+ const timings=records.filter(row=>String(row.kind).endsWith("Timing"));
+ const expected={exportPreparationTiming:exports.length,previewTransactionTiming:previews.length,transactionTiming:prunes.length,backupTiming:exports.length+prunes.length};
+ for(const [kind,count] of Object.entries(expected))assert.equal(timings.filter(row=>row.kind===kind).length,count,"missing or mismatched timing cardinality "+kind);
+ for(let ordinal=1;ordinal<=exports.length;ordinal++){
+  assert.equal(timings.filter(row=>row.kind==="exportPreparationTiming"&&row.ordinal===ordinal).length,1,"missing export preparation identity");
+  const batches=timings.filter(row=>row.kind==="exportBatchTiming"&&row.ordinal===ordinal);assert(batches.length,"missing export batch stream");
+  assert.deepEqual(batches.map(row=>row.batch),batches.map((_,i)=>i+1),"mismatched batch cardinality");assert.equal(batches.at(-1)!.rows,0,"missing terminal batch");assert(batches.every((row,i)=>Number.isInteger(row.rows)&&Number(row.rows)>=0&&Number(row.rows)<=100&&(i===batches.length-1||Number(row.rows)>0)),"invalid batch rows");
+ }
+ return timings.map(row=>{
+  assert(Object.hasOwn(expected,String(row.kind))||row.kind==="exportBatchTiming","unknown timing kind");
+  const ms=Number(row.kind==="exportPreparationTiming"?row.residualMs:row.ms);assert(Number.isFinite(ms)&&ms>=0,"invalid timing value");
+  const request=row.key?requests.find(request=>request.key===row.key):row.ordinal?exports[Number(row.ordinal)-1]:row.kind==="backupTiming"?prunes[0]??exports[timings.filter(record=>record.kind==="exportPreparationTiming").findIndex(record=>record.destination===row.destination)]:undefined;
+  assert(request,"timing missing original request identity");return {...row,requestId:request!.id,serviceOutputPath:outputPath};
+ });
+}
