@@ -11,14 +11,14 @@ export const usagePayload = z.strictObject({
     billingBasis: z.enum(["input_output_only", "unrepresented"]).nullable().optional().transform(value => value ?? null),
 });
 export type UsagePayload = z.infer<typeof usagePayload>;
-import { envelope, pageQuery, uuid } from "./common";
+import { envelope, pageQuery, uuid, inputUuid } from "./common";
 const utc = timestamp.refine(value => value.endsWith("Z") && Number.isFinite(Date.parse(value)));
 const integerText = z.string().regex(/^(0|[1-9][0-9]*)$/);
-export const usageQuery = z.strictObject({ projectId: uuid, from: utc, to: utc, source: requiredText(200).optional(), model: requiredText(200).optional(), priceSnapshotId: uuid.optional(), ...pageQuery }).refine(value => { const duration = Date.parse(value.to) - Date.parse(value.from); return duration > 0 && duration <= 31 * 86400000; });
+export const usageQuery = z.strictObject({ projectId: inputUuid, from: utc, to: utc, source: requiredText(200).optional(), model: requiredText(200).optional(), priceSnapshotId: inputUuid.optional(), ...pageQuery }).refine(value => { const duration = Date.parse(value.to) - Date.parse(value.from); return duration > 0 && duration <= 31 * 86400000; });
 export const priceDecimal = z.string().regex(/^(0|[1-9][0-9]{0,11})(\.[0-9]{1,12})?$/);
 export const priceEntry = z.strictObject({ source: requiredText(200), model: requiredText(200), currency: z.string().regex(/^[A-Z]{3}$/), inputPrice: priceDecimal.nullable(), outputPrice: priceDecimal.nullable() });
-export const priceSnapshotCreate = z.strictObject({ id: uuid, name: requiredText(200), capturedAt: utc, effectiveAt: utc.nullable().optional().transform(value => value ?? null), entries: z.array(priceEntry).min(1).max(20).refine(values => new Set(values.map(v => JSON.stringify([v.source, v.model]))).size === values.length) });
-export const usagePriceSnapshot = priceSnapshotCreate.extend({ createdAt: timestamp });
+export const priceSnapshotCreate = z.strictObject({ id: inputUuid, name: requiredText(200), capturedAt: utc, effectiveAt: utc.nullable().optional().transform(value => value ?? null), entries: z.array(priceEntry).min(1).max(20).refine(values => new Set(values.map(v => JSON.stringify([v.source, v.model]))).size === values.length) });
+export const usagePriceSnapshot = priceSnapshotCreate.extend({ id:uuid,createdAt: timestamp });
 export const usageMeasurement = z.strictObject({ runId: uuid, usageId: requiredText(200), source: requiredText(200), model: requiredText(200), measuredAt: timestamp, firstReceivedAt: timestamp, inputTokens: count, outputTokens: count, billingBasis: z.enum(["input_output_only", "unrepresented"]).nullable(), totalTokens: integerText.nullable() });
 const totals = { knownInputTokens: integerText, knownOutputTokens: integerText, knownTotalTokens: integerText, unknownInputReports: z.number().int().nonnegative(), unknownOutputReports: z.number().int().nonnegative(), unknownTotalReports: z.number().int().nonnegative() };
 export const usageEstimate = z.strictObject({ snapshot: usagePriceSnapshot, includedReports: z.number().int().nonnegative(), excludedUnknownCounts: z.number().int().nonnegative(), excludedUnsupportedBasis: z.number().int().nonnegative(), excludedMissingPrice: z.number().int().nonnegative(), currencies: z.array(z.strictObject({ currency: priceEntry.shape.currency, amount: z.string().regex(/^(0|[1-9][0-9]*)(\.[0-9]{1,18})?$/) })).max(20) });

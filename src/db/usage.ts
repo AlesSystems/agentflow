@@ -25,8 +25,14 @@ export class UsageData {
         };
         return { data, generation, snapshotCursor: cursor };
     }
+    private reference(table:"projects"|"usage_price_snapshots",id:string):string|undefined {
+        const rows=this.db.prepare(`SELECT id FROM ${table} WHERE id=? COLLATE NOCASE LIMIT 2`).all(id) as {id:string}[];
+        if(rows.length>1)throw new Conflict("identity_ambiguous");
+        return rows[0]?.id;
+    }
     private price(id: string): UsagePriceSnapshot {
-        const row = this.db.prepare("SELECT * FROM usage_price_snapshots WHERE id=?").get(id) as {
+        const storedId=this.reference("usage_price_snapshots",id);
+        const row = this.db.prepare("SELECT * FROM usage_price_snapshots WHERE id=?").get(storedId??id) as {
             id: string;
             name: string;
             captured_at: number;
@@ -35,7 +41,7 @@ export class UsageData {
         } | undefined;
         if (!row)
             throw new Conflict("resource_not_found");
-        const entries = this.db.prepare("SELECT source,model,currency,input_price AS inputPrice,output_price AS outputPrice FROM usage_price_entries WHERE snapshot_id=? ORDER BY source,model LIMIT 21").all(id);
+        const entries = this.db.prepare("SELECT source,model,currency,input_price AS inputPrice,output_price AS outputPrice FROM usage_price_entries WHERE snapshot_id=? ORDER BY source,model LIMIT 21").all(row.id);
         return usagePriceSnapshot.parse({ id: row.id, name: row.name, capturedAt: iso(row.captured_at), effectiveAt: iso(row.effective_at), createdAt: iso(row.created_at), entries });
     }
     createPriceSnapshot(input: PriceSnapshotCreate, context: CommandContext): CommittedReply {
@@ -52,7 +58,7 @@ export class UsageData {
                     throw new Conflict("idempotency_conflict");
                 return { status: prior.status, body: JSON.parse(prior.body) };
             }
-            if (this.db.prepare("SELECT 1 FROM usage_price_snapshots WHERE id=?").get(input.id))
+            if (this.reference("usage_price_snapshots",input.id))
                 throw new Conflict("price_snapshot_conflict");
             this.db.prepare("INSERT INTO usage_price_snapshots VALUES(?,?,?,?,?,?)").run(input.id, input.name, Date.parse(input.capturedAt), input.effectiveAt ? Date.parse(input.effectiveAt) : null, JSON.stringify(input.entries), context.now);
             const insert = this.db.prepare("INSERT INTO usage_price_entries VALUES(?,?,?,?,?,?)");
@@ -80,12 +86,13 @@ export class UsageData {
     snapshot(input: UsageQuery, _now: number): UsageSummary {
         void _now;
         connection(this.db);
-        if (!this.db.prepare("SELECT 1 FROM projects WHERE id=?").get(input.projectId))
+        const projectId=this.reference("projects",input.projectId);
+        if (!projectId)
             throw new Conflict("resource_not_found");
         const state = this.envelope(null), { cursor, ...filters } = input, binding = { generation: state.generation, highWater: state.snapshotCursor, fingerprint: canonicalDigest({ kind: "usage", filters, order: "started_at-id-desc" }) }, bound = boundary(cursor, binding);
         const from = Date.parse(input.from), to = Date.parse(input.to), eligible = "project_id=? AND started_at IS NOT NULL AND started_at<? AND (ended_at IS NULL OR ended_at>=?)";
-        const eligibleParams = [input.projectId, to, from];
-        const report = "r.project_id=? AND u.first_received_at>=? AND u.first_received_at<?" + (input.source ? " AND u.source=?" : "") + (input.model ? " AND u.model=?" : ""), params = [input.projectId, from, to, ...(input.source ? [input.source] : []), ...(input.model ? [input.model] : [])];
+        const eligibleParams = [projectId, to, from];
+        const report = "r.project_id=? AND u.first_received_at>=? AND u.first_received_at<?" + (input.source ? " AND u.source=?" : "") + (input.model ? " AND u.model=?" : ""), params = [projectId, from, to, ...(input.source ? [input.source] : []), ...(input.model ? [input.model] : [])];
         const selected = `(SELECT u.* FROM usage_measurements u JOIN runs r ON r.id=u.run_id WHERE ${report})`;
         const totals = this.db.prepare(`SELECT ${totalsSql},count(*) AS filteredReportCount,count(DISTINCT run_id) AS filteredRunsWithReports FROM ${selected}`).get(...params) as Totals & {
             filteredReportCount: number;
@@ -123,13 +130,13 @@ export class UsageData {
         }; return { ...values, runId: row.id, taskId: row.task_id, purpose: row.purpose, reworkRound: row.rework_round, firstReceivedAt: iso(values.firstReceivedAt), lastReceivedAt: iso(values.lastReceivedAt), firstMeasuredAt: iso(values.firstMeasuredAt), lastMeasuredAt: iso(values.lastMeasuredAt) }; });
         let estimate = null;
         if (input.priceSnapshotId) {
-            const snapshot = this.price(input.priceSnapshotId), join = `FROM ${selected} u LEFT JOIN usage_price_entries p ON p.snapshot_id=? AND p.source=u.source AND p.model=u.model`, priceParams = [...params, input.priceSnapshotId];
+            const snapshot = this.price(input.priceSnapshotId), join = `FROM ${selected} u LEFT JOIN usage_price_entries p ON p.snapshot_id=? AND p.source=u.source AND p.model=u.model`, priceParams = [...params, snapshot.id];
             const unknown = "u.input_tokens IS NULL OR u.output_tokens IS NULL", known = "u.input_tokens IS NOT NULL AND u.output_tokens IS NOT NULL", basis = "u.billing_basis='input_output_only'", missing = "p.source IS NULL OR p.input_price IS NULL OR p.output_price IS NULL", complete = `${known} AND ${basis} AND NOT (${missing})`;
             const exclusions = this.db.prepare(`SELECT count(CASE WHEN ${complete} THEN 1 END) includedReports,count(CASE WHEN ${unknown} THEN 1 END) excludedUnknownCounts,count(CASE WHEN ${known} AND (u.billing_basis IS NULL OR u.billing_basis<>'input_output_only') THEN 1 END) excludedUnsupportedBasis,count(CASE WHEN ${known} AND ${basis} AND (${missing}) THEN 1 END) excludedMissingPrice ${join}`).get(...priceParams);
             const currencies = this.db.prepare(`SELECT p.currency,exact_money(CAST(u.input_tokens AS TEXT)||':'||p.input_price||':'||CAST(u.output_tokens AS TEXT)||':'||p.output_price) amount ${join} WHERE ${complete} GROUP BY p.currency ORDER BY p.currency LIMIT 20`).all(...priceParams);
             estimate = { snapshot, ...exclusions as object, currencies };
         }
-        return usageSummary.parse({ projectId: input.projectId, from: input.from, to: input.to, source: input.source ?? null, model: input.model ?? null, ...coverage, runsWithoutReports: coverage.eligibleRuns - coverage.runsWithReports, ...totals, groups, totalGroups, groupsTruncated: totalGroups > 100, runDetails, totalRuns: coverage.eligibleRuns, nextCursor: more && last ? Buffer.from(JSON.stringify({ v: 1, ...binding, time: last.started_at, id: last.id })).toString("base64url") : null, estimate });
+        return usageSummary.parse({ projectId, from: input.from, to: input.to, source: input.source ?? null, model: input.model ?? null, ...coverage, runsWithoutReports: coverage.eligibleRuns - coverage.runsWithReports, ...totals, groups, totalGroups, groupsTruncated: totalGroups > 100, runDetails, totalRuns: coverage.eligibleRuns, nextCursor: more && last ? Buffer.from(JSON.stringify({ v: 1, ...binding, time: last.started_at, id: last.id })).toString("base64url") : null, estimate });
     }
 }
 import { z } from "zod";
