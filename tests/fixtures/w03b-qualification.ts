@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { lstatSync,readFileSync,readdirSync,writeFileSync,readlinkSync } from "node:fs";
 import { join } from "node:path";
 import { historyLine,historyManifest,historyComplete } from "../../src/contracts/history";
+import { distribution } from "./p07-protocol";
 import { reconcile,type CaptureSample } from "./w03a-qualification";
 export function validateExport(text:string){
  assert(text.endsWith("\n"),"truncated JSONL");
@@ -59,4 +60,10 @@ export function bindTimings(records:Record<string,unknown>[],requests:Record<str
   const request=row.key?requests.find(request=>request.key===row.key):row.ordinal?exports[Number(row.ordinal)-1]:row.kind==="backupTiming"?prunes[0]??exports[timings.filter(record=>record.kind==="exportPreparationTiming").findIndex(record=>record.destination===row.destination)]:undefined;
   assert(request,"timing missing original request identity");return {...row,requestId:request!.id,serviceOutputPath:outputPath};
  });
+}
+
+export function reduceTimings(_declarations:{id:string;warmup:boolean}[],serviceMetrics:{fixtureId:string;records:Record<string,unknown>[]}[]){
+ const summaries=Array.from({length:3},(_,i)=>{const round=i+1;return ["previewTransactionTiming","exportPreparationTiming","exportBatchTiming","transactionTiming","backupTiming"].map(kind=>{const rows=serviceMetrics.filter(group=>group.fixtureId.startsWith(`preview-${round}`)||group.fixtureId.startsWith(`export-${round}`)||group.fixtureId.startsWith(`prune-${round}-`)).flatMap(group=>group.records).filter(row=>row.kind===kind);return {round,kind,cohort:"pooled",observed:rows.length,distribution:rows.length?distribution(rows.map(row=>Number(kind==="exportPreparationTiming"?row.residualMs:row.ms))):null};});}).flat();
+ const budgetFailures=summaries.filter(row=>["previewTransactionTiming","exportPreparationTiming","exportBatchTiming"].includes(row.kind)&&row.distribution&&row.distribution.p95Ms>=250);
+ return {summaries,budgetFailures,acceptance:!budgetFailures.length};
 }

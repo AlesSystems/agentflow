@@ -25,3 +25,21 @@ for(const control of controls)it(`invalidates actual ${control.name} capture ret
  const result=await qualifyRequests([{id:"first",warmup:false},{id:"second",warmup:false}],async()=>{await control.run();return valid();});
  retainControl(control.name,{control:control.name,...result});expect(result.acceptance).toBe(false);expect(result.expected).toBe(2);expect(result.attempted).toBe(1);expect(result.missing).toEqual(["second"]);expect(result.failed).toEqual(["first"]);expect(result.samples[0].failure).toEqual(expect.any(String));
 });
+
+import { reduceTimings } from "../fixtures/w03b-qualification";
+import { distribution } from "../fixtures/p07-protocol";
+it("rejects one slow measured preview that fast warmups and JIT previews would hide",()=>{
+ const declarations:{id:string;warmup:boolean}[]=[],metrics:{fixtureId:string;records:Record<string,unknown>[]}[]=[];
+ for(let round=1;round<=3;round++){
+  const preview:Record<string,unknown>[]=[];
+  for(let index=0;index<20;index++){const id=`preview-${round}-${index}`;declarations.push({id,warmup:index<10});preview.push({kind:"previewTransactionTiming",requestId:id,ms:round===1&&index===10?300:1});}
+  metrics.push({fixtureId:`preview-${round}`,records:preview});
+  for(let index=0;index<10;index++){const id=`prune-preview-${round}-${index}`;declarations.push({id,warmup:false});metrics.push({fixtureId:`prune-${round}-${index+1}`,records:[{kind:"previewTransactionTiming",requestId:id,ms:1}]});}
+ }
+ expect(distribution(metrics.filter(group=>group.fixtureId.startsWith("preview-1")||group.fixtureId.startsWith("prune-1-")).flatMap(group=>group.records).map(row=>Number(row.ms))).p95Ms).toBe(1);
+ const result=reduceTimings(declarations,metrics);
+ expect(result.acceptance).toBe(false);
+ expect(result.budgetFailures).toContainEqual(expect.objectContaining({round:1,kind:"previewTransactionTiming",cohort:"measured-preview",observed:10,distribution:expect.objectContaining({p95Ms:300})}));
+ expect(result.summaries.filter(row=>row.kind==="previewTransactionTiming"&&row.round===1).map(row=>({cohort:row.cohort,count:row.observed}))).toEqual([{cohort:"measured-preview",count:10},{cohort:"jit-preview",count:10},{cohort:"warmup-preview",count:10}]);
+ retainControl("preview-timing-cohort",{declarations,metrics,result});
+});
