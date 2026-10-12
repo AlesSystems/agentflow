@@ -26,17 +26,24 @@ export function HistorySettings() {
     setNotice({ text, error });
     requestAnimationFrame(() => feedback.current?.focus());
   }
-  function failure(error: unknown, operation: string) {
+  function failure(error: unknown, operation: "preview history" | "prune history" | "export history") {
     if (error instanceof ApiError && error.status === 401) pair();
     if (!navigator.onLine) return "Local browser is offline. Your cutoff and content selection are retained.";
-    if (error instanceof StaleSnapshot) return "Workspace changed. Your drafts are retained. Retry the exact prune request to learn its recorded outcome.";
+    if (error instanceof StaleSnapshot) {
+      if (operation === "export history") return "Workspace changed. Download again using the current workspace. Your content selection is retained.";
+      return operation === "prune history" ? "Workspace changed. Your drafts are retained. Retry the exact prune request to learn its recorded outcome." : "Workspace changed. Prepare another preview. Your cutoff is retained.";
+    }
     if (error instanceof ApiError) {
       if (error.code === "preview_expired" || error.code === "preview_changed") return "Preview expired or history changed. Prepare another preview before confirming.";
       if (error.code === "preview_limit") return "Too many prepared previews. Wait for earlier previews to expire, then prepare another preview. Your cutoff is retained.";
       if (error.status === 401 || error.status === 403) return "Pair this browser with operator authority to continue. Your drafts are retained.";
-      if (error.status === 503 || error.code.includes("busy")) return operation === "prune history" ? "Local storage is busy or the safety backup is unavailable. Check local storage, then retry the exact request. Your drafts are retained." : "Local storage is busy or unavailable. Prepare another preview when storage is available. Your cutoff is retained.";
+      if (error.status === 503 || error.code.includes("busy")) {
+        if (operation === "export history") return "Local storage is busy or unavailable. Retry the selected download. Your content selection is retained.";
+        return operation === "prune history" ? "Local storage is busy or the safety backup is unavailable. Check local storage, then retry the exact request. Your drafts are retained." : "Local storage is busy or unavailable. Prepare another preview when storage is available. Your cutoff is retained.";
+      }
       return `Could not ${operation}: ${error.message}. Your drafts are retained.`;
     }
+    if (operation === "export history") return "Export did not complete. No complete history file was downloaded. Retry the download.";
     return operation === "prune history" ? "Response is uncertain. Retry the exact prune request with its original key and body, or explicitly prepare another preview." : "Preview response is uncertain. Prepare another preview. Your cutoff is retained.";
   }
   async function prepare() {
