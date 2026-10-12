@@ -53,3 +53,14 @@ it("launches the baseline with its explicitly qualified historical Node executab
  await qualifiedService({nodeExecutable},services,async server=>{expect(server.child.spawnfile).toBe(nodeExecutable);});
  expect(services[0]).toMatchObject({nodeExecutable,exitCode:0,signalCode:null,closed:true});
 });
+it("captures export preparation residual and batch work separately from completed transfer",async()=>{
+ const services:unknown[]=[];
+ await qualifiedService({entry:"tests/fixtures/w03b-measure-server.ts"},services,async(server,cookie)=>{
+  const snapshot=await boundedFetch(server.url+"/api/v1/foundation",{headers:{Cookie:cookie}}),generation=(await snapshot.json()).generation;
+  const response=await boundedFetch(server.url+`/api/v1/export?content=attempts&generation=${generation}`,{headers:{Cookie:cookie}});expect(response.status).toBe(200);expect((await readBoundedText(response)).trim().split("\n").map(line=>JSON.parse(line).kind)).toEqual(["manifest","complete"]);
+ });
+ const stdout=(services[0] as {stdout:string}).stdout;
+ const records=stdout.split("\n").filter(line=>line.startsWith("{")).map(line=>JSON.parse(line));
+ const preparations=records.filter(row=>row.kind==="exportPreparationTiming"),batches=records.filter(row=>row.kind==="exportBatchTiming");
+ expect(preparations).toHaveLength(1);expect(preparations[0]).toMatchObject({backupMs:expect.any(Number),totalMs:expect.any(Number),residualMs:expect.any(Number)});expect(preparations[0].residualMs).toBeGreaterThanOrEqual(0);expect(batches).toHaveLength(1);expect(batches[0]).toMatchObject({rows:0,ms:expect.any(Number)});retainControl("export-timing-separation",{services,records});
+});
