@@ -67,3 +67,21 @@ it("publishes normalized event occurrence strings and generation headers on iden
     ).toBeDefined();
   }
 });
+it("documents the optional absent run tuple without weakening old fields or nested observed runs", () => {
+  const doc = openapiDocument();
+  let observed = 0;
+  const walk = (value: unknown) => {
+    if (!value || typeof value !== "object") return;
+    const node = value as { properties?: Record<string, unknown>; required?: string[]; additionalProperties?: boolean };
+    if (node.properties?.artifactRef && node.properties?.reworkRound && node.properties?.lastSequence && node.properties?.purpose) {
+      expect(node.required).not.toContain("artifactRef");
+      expect(node.required).not.toContain("reworkRound");
+      expect(node.required).toEqual(expect.arrayContaining(["id", "projectId", "agentId", "purpose", "lastSequence", "version"]));
+      expect(node.additionalProperties).toBe(false);
+      observed++;
+    }
+    for (const child of Object.values(value)) walk(child);
+  };
+  walk(doc);
+  expect(observed).toBeGreaterThan(10);
+});
