@@ -1,0 +1,426 @@
+{
+  "status": "DECLARED_PROTOCOL_ONLY",
+  "officialSamples": 0,
+  "declaredRequests": 3810,
+  "groups": [
+    {
+      "id": "tasks-base-legacy-1",
+      "operation": "tasks",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "events-base-legacy-1",
+      "operation": "events",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "activity-base-legacy-1",
+      "operation": "activity",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "progress.ingest-base-legacy-1",
+      "operation": "progress.ingest",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "export-base-legacy-1",
+      "operation": "export",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "tasks-head-legacy-1",
+      "operation": "tasks",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "events-head-legacy-1",
+      "operation": "events",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "activity-head-legacy-1",
+      "operation": "activity",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "progress.ingest-head-legacy-1",
+      "operation": "progress.ingest",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "export-head-legacy-1",
+      "operation": "export",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "usage.query-head-query-1",
+      "operation": "usage.query",
+      "source": "head",
+      "cohort": "query",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "usage.ingest-head-unique-1",
+      "operation": "usage.ingest",
+      "source": "head",
+      "cohort": "unique",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "usage.ingest-head-duplicate-1",
+      "operation": "usage.ingest",
+      "source": "head",
+      "cohort": "duplicate",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "price.create-head-price-1",
+      "operation": "price.create",
+      "source": "head",
+      "cohort": "price",
+      "repetition": 1,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "tasks-base-legacy-2",
+      "operation": "tasks",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "events-base-legacy-2",
+      "operation": "events",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "activity-base-legacy-2",
+      "operation": "activity",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "progress.ingest-base-legacy-2",
+      "operation": "progress.ingest",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "export-base-legacy-2",
+      "operation": "export",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "tasks-head-legacy-2",
+      "operation": "tasks",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "events-head-legacy-2",
+      "operation": "events",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "activity-head-legacy-2",
+      "operation": "activity",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "progress.ingest-head-legacy-2",
+      "operation": "progress.ingest",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "export-head-legacy-2",
+      "operation": "export",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "usage.query-head-query-2",
+      "operation": "usage.query",
+      "source": "head",
+      "cohort": "query",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "usage.ingest-head-unique-2",
+      "operation": "usage.ingest",
+      "source": "head",
+      "cohort": "unique",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "usage.ingest-head-duplicate-2",
+      "operation": "usage.ingest",
+      "source": "head",
+      "cohort": "duplicate",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "price.create-head-price-2",
+      "operation": "price.create",
+      "source": "head",
+      "cohort": "price",
+      "repetition": 2,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "tasks-base-legacy-3",
+      "operation": "tasks",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "events-base-legacy-3",
+      "operation": "events",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "activity-base-legacy-3",
+      "operation": "activity",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "progress.ingest-base-legacy-3",
+      "operation": "progress.ingest",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "export-base-legacy-3",
+      "operation": "export",
+      "source": "base",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "tasks-head-legacy-3",
+      "operation": "tasks",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "events-head-legacy-3",
+      "operation": "events",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "activity-head-legacy-3",
+      "operation": "activity",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "progress.ingest-head-legacy-3",
+      "operation": "progress.ingest",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "export-head-legacy-3",
+      "operation": "export",
+      "source": "head",
+      "cohort": "legacy",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 10
+    },
+    {
+      "id": "usage.query-head-query-3",
+      "operation": "usage.query",
+      "source": "head",
+      "cohort": "query",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "usage.ingest-head-unique-3",
+      "operation": "usage.ingest",
+      "source": "head",
+      "cohort": "unique",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "usage.ingest-head-duplicate-3",
+      "operation": "usage.ingest",
+      "source": "head",
+      "cohort": "duplicate",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 100
+    },
+    {
+      "id": "price.create-head-price-3",
+      "operation": "price.create",
+      "source": "head",
+      "cohort": "price",
+      "repetition": 3,
+      "warmups": 10,
+      "measured": 10
+    }
+  ],
+  "expectedStoppedFixtures": 18,
+  "sourcePins": {
+    "shipping": "8fdff6c5fa63e0945b2bc7bfc2478a67d56dad15",
+    "baseline": "6611e8e4ed8ec61d57be689a7cfd82ee75b9275e",
+    "controls": "b00f5b6"
+  },
+  "helperHashes": {
+    "tests/fixtures/w03c-campaign.ts": "df15890f7664241578fffd04609c09d970e8f1be58e0b818558e6e1b0efe0555",
+    "tests/fixtures/w03c-measure-server.ts": "a8f191b130494b00bd5bb73e180eecc794770a3c31d1d4007005253ac29630a8",
+    "tests/performance/w03c.ts": "a2eb5d71e3cbc3164cabeaa9386cb16e453200c48730b0ec16a02aae5f0f7cfc"
+  },
+  "verification": {
+    "fullUnit": {
+      "passed": 252,
+      "files": 44
+    },
+    "fullIntegration": {
+      "passed": 587,
+      "failed": 5,
+      "skipped": 1,
+      "filesPassed": 102,
+      "filesFailed": 4,
+      "compositionRequired": true
+    },
+    "scopedRegistry": {
+      "passed": 19
+    },
+    "scopedPrerequisites": {
+      "passed": 4,
+      "files": 3
+    },
+    "fullBrowser": {
+      "passed": 90,
+      "skipped": 2
+    },
+    "focusedControls": {
+      "unitPassed": 29,
+      "nativePassed": 4
+    }
+  },
+  "gate": "Independent stopped-readiness review and explicit Root quiet release remain required."
+}
