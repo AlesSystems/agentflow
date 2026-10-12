@@ -10,6 +10,25 @@ import { pairPage, command } from "../fixtures/p03";
 import { reportedWorkflow } from "../fixtures/w01-producer";
 const proof = process.env.W03B_TASK4_PROOF_DIR;
 test.use({ actionTimeout: 10000, navigationTimeout: 15000 });
+
+test("unavailable export names download recovery and retains selected content", async ({ page }) => {
+  const server = await launch();
+  try {
+    await pairPage(page, server); await page.goto(server.url + "/settings");
+    await page.getByLabel("Tasks and protected facts", { exact: true }).check();
+    await page.getByLabel("Workflow history", { exact: true }).check();
+    await page.route("**/api/v1/export?**", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: { code: "unavailable" } }) }));
+    await press(page, "Download selected history");
+    await expect(page.getByText("Local storage is busy or unavailable. Retry the selected download. Your content selection is retained.", { exact: true })).toBeFocused();
+    await expect(page.getByLabel("Tasks and protected facts", { exact: true })).toBeChecked();
+    await expect(page.getByLabel("Workflow history", { exact: true })).toBeChecked();
+    await capture(page, "export-unavailable");
+    await page.unroute("**/api/v1/export?**");
+    const downloaded = page.waitForEvent("download"); await press(page, "Download selected history");
+    expect(await (await downloaded).failure()).toBeNull();
+    await expect(page.getByText(/Complete selected history downloaded/)).toBeVisible();
+  } finally { await server.stop(); }
+});
 const read = (page: Page, path: string) => page.evaluate(async path => (await (await fetch("/api/v1" + path)).json()), path);
 async function press(page: Page, name: string) { await page.getByRole("button", { name, exact: true }).focus(); await page.keyboard.press("Enter"); }
 async function preview(page: Page, cutoff: string) {
