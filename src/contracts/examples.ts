@@ -293,3 +293,7 @@ export const historyExportExamples=[
 ];
 Object.assign(requestExamples,{exportHistory:{content:"tasks",generation:"10000000-0000-4000-8000-000000000004"}});
 Object.assign(responseExamples,{exportHistory:historyExportExamples[0]});
+
+const retentionPreviewExample={previewId:"10000000-0000-4000-8000-000000000010",cutoff:time,expiresAt:time,expectedGeneration:"10000000-0000-4000-8000-000000000004",expectedVersion:1,candidateDigest:"a".repeat(64),counts:{eventPayloads:0,changes:0},hasMore:{eventPayloads:false,changes:false}};
+Object.assign(requestExamples,{previewRetention:{cutoff:time},pruneRetention:{previewId:retentionPreviewExample.previewId,expectedGeneration:retentionPreviewExample.expectedGeneration,expectedVersion:1,candidateDigest:retentionPreviewExample.candidateDigest}});
+Object.assign(responseExamples,{previewRetention:snapshot(retentionPreviewExample),pruneRetention:snapshot({previewId:retentionPreviewExample.previewId,applied:{eventPayloads:0,changes:0},prunedAt:time,priorGeneration:retentionPreviewExample.expectedGeneration,generation:"10000000-0000-4000-8000-000000000011",retentionVersion:2,displayBodyBytesRemoved:0})});

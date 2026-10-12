@@ -73,3 +73,88 @@ export function openHistoryExportSnapshot(path:string,input:HistoryExportInput,c
     },close(){if(!closed){closed=true;db.close();}}};
   }catch(error){db.close();throw error;}
 }
+
+import { randomUUID } from "node:crypto";
+import { canonicalDigest } from "../domain/request-digest";
+import { Conflict } from "../domain/tasks";
+import type { CommandContext, CommittedReply, SnapshotBody } from "./application";
+import { retentionPreviewInput, retentionPruneInput, type RetentionPreviewInput, type RetentionPruneInput } from "../contracts/history";
+export type PruneAdmission={input:RetentionPruneInput;context:CommandContext};
+type Candidates={events:{event_id:string;run_id:string;sequence:number;digest:string;type:string;received_at:number}[];changes:{cursor:string;received_at:number;entity_type:string;entity_id:string;project_id:string|null;kind:string}[];hasMore:{eventPayloads:boolean;changes:boolean};highWater:string};
+type Preview={id:string;principal:string;cutoff:number;expires_at:number;generation:string;version:number;digest:string;candidates:string;issued_at:number};
+export class HistoryData {
+ constructor(private readonly db:Database.Database) {}
+ private body(data:unknown):SnapshotBody {
+  const {generation}=this.db.prepare("SELECT generation FROM instance_metadata WHERE singleton=1").get() as {generation:string};
+  const {cursor}=this.db.prepare("SELECT CAST(coalesce(max(cursor),0) AS TEXT) AS cursor FROM changes").get() as {cursor:string};
+  return {data,generation,snapshotCursor:cursor};
+ }
+ private version(){return (this.db.prepare("SELECT version FROM retention_state WHERE singleton=1").get() as {version:number}).version;}
+ private human(context:CommandContext){if(context.principal!=="operator")throw new Conflict("human_required");}
+ private replay(context:CommandContext):CommittedReply|undefined {
+  this.human(context);
+  const row=this.db.prepare("SELECT digest,status,body FROM receipts WHERE principal=? AND method=? AND path=? AND key=?").get(context.principal,context.method,context.path,context.key) as {digest:string;status:number;body:string}|undefined;
+  if(!row)return;
+  if(row.digest!==context.digest)throw new Conflict("idempotency_conflict");
+  return {status:row.status,body:JSON.parse(row.body)};
+ }
+ private receipt(context:CommandContext,reply:CommittedReply){this.db.prepare("INSERT INTO receipts VALUES(?,?,?,?,?,?,?)").run(context.principal,context.method,context.path,context.key,context.digest,reply.status,JSON.stringify(reply.body));}
+ private candidates(cutoff:number):Candidates {
+  const events=this.db.prepare("SELECT event_id,run_id,sequence,digest,type,received_at FROM retention_eligible_events WHERE received_at<? ORDER BY received_at,event_id LIMIT 1001").all(cutoff) as Candidates["events"];
+  const changes=this.db.prepare("SELECT CAST(cursor AS TEXT) AS cursor,received_at,entity_type,entity_id,project_id,kind FROM changes WHERE received_at<? AND cursor<>(SELECT max(cursor) FROM changes) ORDER BY cursor LIMIT 1001").all(cutoff) as Candidates["changes"];
+  const hasMore={eventPayloads:events.length>1000,changes:changes.length>1000};
+  events.splice(1000);changes.splice(1000);
+  return {events,changes,hasMore,highWater:this.body(null).snapshotCursor};
+ }
+ private digest(cutoff:number,generation:string,version:number,candidates:Candidates){return canonicalDigest({cutoff,generation,version,candidates});}
+ preview(input:RetentionPreviewInput,context:CommandContext):CommittedReply {
+  this.human(context);input=retentionPreviewInput.parse(input);
+  return this.db.transaction(()=>{
+   const replay=this.replay(context);if(replay)return replay;
+   const cutoff=Date.parse(input.cutoff);if(cutoff>context.now)throw new Conflict("cutoff_invalid");
+   this.db.prepare("DELETE FROM retention_previews WHERE expires_at<=? AND NOT EXISTS(SELECT 1 FROM retention_consumptions WHERE preview_id=retention_previews.id)").run(context.now);
+   const {count}=this.db.prepare("SELECT count(*) AS count FROM retention_previews WHERE principal=? AND expires_at>? AND NOT EXISTS(SELECT 1 FROM retention_consumptions WHERE preview_id=retention_previews.id)").get(context.principal,context.now) as {count:number};
+   if(count>=20)throw new Conflict("preview_limit");
+   const generation=this.body(null).generation,version=this.version(),candidates=this.candidates(cutoff);
+   const id=randomUUID(),expires=context.now+300000,digest=this.digest(cutoff,generation,version,candidates);
+   this.db.prepare("INSERT INTO retention_previews VALUES(?,?,?,?,?,?,?,?,?)").run(id,context.principal,cutoff,expires,generation,version,digest,JSON.stringify(candidates),context.now);
+   const reply={status:200,body:this.body({previewId:id,cutoff:input.cutoff,expiresAt:new Date(expires).toISOString(),expectedGeneration:generation,expectedVersion:version,candidateDigest:digest,counts:{eventPayloads:candidates.events.length,changes:candidates.changes.length},hasMore:candidates.hasMore})};
+   this.receipt(context,reply);return reply;
+  }).immediate();
+ }
+ private guard(input:RetentionPruneInput,context:CommandContext,now:number) {
+  const row=this.db.prepare("SELECT * FROM retention_previews WHERE id=? AND principal=?").get(input.previewId,context.principal) as Preview|undefined;
+  if(!row||row.expires_at<=now)throw new Conflict("preview_expired");
+  if(this.db.prepare("SELECT 1 FROM retention_consumptions WHERE preview_id=?").get(row.id))throw new Conflict("preview_changed");
+  const generation=this.body(null).generation,version=this.version();
+  if(input.expectedGeneration!==row.generation||generation!==row.generation||input.expectedVersion!==row.version||version!==row.version||input.candidateDigest!==row.digest)throw new Conflict("preview_changed");
+  const candidates=this.candidates(row.cutoff);
+  if(this.digest(row.cutoff,generation,version,candidates)!==row.digest)throw new Conflict("preview_changed");
+  return {row,candidates};
+ }
+ admitPrune(input:RetentionPruneInput,context:CommandContext):CommittedReply|PruneAdmission {
+  this.human(context);input=retentionPruneInput.parse(input);
+  return this.db.transaction(()=>{const replay=this.replay(context);if(replay)return replay;this.guard(input,context,context.now);return {input,context};}).immediate();
+ }
+ commitPrune(admission:PruneAdmission,now:number):CommittedReply {
+  this.human(admission.context);
+  return this.db.transaction(()=>{
+   const replay=this.replay(admission.context);if(replay)return replay;
+   const {row,candidates}=this.guard(admission.input,admission.context,now);
+   let bytes=0;
+   for(const event of candidates.events){
+    const body=this.db.prepare("SELECT body,json_set(body,'$.payload',NULL) AS pruned FROM run_events WHERE event_id=?").get(event.event_id) as {body:string;pruned:string};
+    bytes+=Math.max(0,Buffer.byteLength(body.body)-Buffer.byteLength(body.pruned));
+    this.db.prepare("UPDATE run_events SET body=json_set(body,'$.payload',NULL),payload_pruned_at=? WHERE event_id=?").run(now,event.event_id);
+   }
+   for(const change of candidates.changes)this.db.prepare("DELETE FROM changes WHERE cursor=CAST(? AS INTEGER)").run(change.cursor);
+   const generation=randomUUID();
+   this.db.prepare("UPDATE instance_metadata SET generation=? WHERE singleton=1").run(generation);
+   this.db.prepare("UPDATE retention_state SET version=version+1 WHERE singleton=1").run();
+   this.db.prepare("INSERT INTO changes(entity_type,entity_id,project_id,kind,received_at) VALUES('retention','history',NULL,'pruned',?)").run(now);
+   this.db.prepare("INSERT INTO retention_consumptions VALUES(?)").run(row.id);
+   const reply={status:200,body:this.body({previewId:row.id,applied:{eventPayloads:candidates.events.length,changes:candidates.changes.length},prunedAt:new Date(now).toISOString(),priorGeneration:row.generation,generation,retentionVersion:this.version(),displayBodyBytesRemoved:bytes})};
+   this.receipt(admission.context,reply);return reply;
+  }).immediate();
+ }
+}

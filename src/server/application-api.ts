@@ -7,6 +7,7 @@ import { privateContext, json, failure } from "./next-boundary";
 import { HttpError, requireResourceMutation } from "./security";
 export async function applicationApi(request: Request) {
   let generation: string | undefined;
+  let currentGeneration:(()=>string)|undefined;
   try {
     const url = new URL(request.url);
     const matched = matchEndpoint(request.method, url.pathname);
@@ -15,6 +16,7 @@ export async function applicationApi(request: Request) {
       matched?.endpoint.access ?? "read",
       (value) => (generation = value),
     );
+    currentGeneration=()=>state.owned.store.metadata().generation;
     if (!matched) throw new HttpError(404, "resource_not_found");
     if (!Object.values(matched.params).every(validResourceId))
       throw new HttpError(422, "validation_failed");
@@ -67,19 +69,21 @@ export async function applicationApi(request: Request) {
     const context={principal:state.principal.id,method:request.method,path,key:request.headers.get("idempotency-key")?.toLowerCase() ?? "",digest:canonicalDigest(original),now:Date.now()};
     const action=parsed.action;
     const reply = action.kind === "command"
-      ? action.command.kind === "github.refresh" ? await state.github.refresh(action.command.input,context)
+      ? action.command.kind === "retention.prune" ? await state.history.prune(action.command.input,context,request.signal)
+        : action.command.kind === "retention.preview" ? state.owned.store.historyPreview(action.command.input,context)
+        : action.command.kind === "github.refresh" ? await state.github.refresh(action.command.input,context)
         : action.command.kind === "github.repositories" ? state.github.repositories(action.command.input,context)
         : state.owned.store.command(action.command,context)
       : action.query.kind === "github" ? state.github.snapshot(action.query.input) : state.owned.store.snapshot(action.query,Date.now());
     const taskReply = endpoint.taskCreationReply;
     const minimal = taskReply && taskCreationPreference(request.headers.get("Prefer"));
     const response = json(minimal ? taskReply.project(reply.body) : reply.body, reply.status, {
-      "AgentFlow-Generation": generation!,
+      "AgentFlow-Generation": currentGeneration(),
       ...(minimal ? { "Preference-Applied": "return=minimal" } : {}),
     });
     if (taskReply) response.headers.append("Vary", "Prefer");
     return response;
   } catch (error) {
-    return failure(error, generation);
+    return failure(error, currentGeneration?.() ?? generation);
   }
 }

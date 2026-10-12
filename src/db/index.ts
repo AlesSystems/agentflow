@@ -1,5 +1,5 @@
-import { openHistoryExportSnapshot } from "./history";
-import type { HistoryExportInput } from "../contracts/history";
+import { HistoryData, openHistoryExportSnapshot } from "./history";
+import type { HistoryExportInput, RetentionPreviewInput, RetentionPruneInput } from "../contracts/history";
 import { GithubData, type GithubIntent } from "./github";
 import type { GithubRepositoriesInput, GithubRefreshInput, GithubQuery, GithubOutcome } from "../contracts/github";
 import { changeCursor } from "../contracts/common";
@@ -45,6 +45,7 @@ export const migrations: Migration[] = [
   "0006_workflows",
   "0007_task_evidence",
   "0008_github",
+  "0009_history",
 ].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),
@@ -82,6 +83,9 @@ export class Store {
       throw error;
     }
   }
+  historyPreview(input:RetentionPreviewInput,context:CommandContext){return new HistoryData(this.db).preview(input,context);}
+  historyAdmitPrune(input:RetentionPruneInput,context:CommandContext){return new HistoryData(this.db).admitPrune(input,context);}
+  historyCommitPrune(admission:import("./history").PruneAdmission,now:number){return new HistoryData(this.db).commitPrune(admission,now);}
   githubRepositories(input:GithubRepositoriesInput,context:CommandContext){return new GithubData(this.db).repositories(input,context);}
   githubSnapshot(input:GithubQuery,now=Date.now(),credential:"configured"|"unavailable"|"repair"="unavailable",busy=false){return new GithubData(this.db).snapshot(input,now,credential,busy);}
   githubAdmit(input:GithubRefreshInput,context:CommandContext,busy:boolean){return new GithubData(this.db).admit(input,context,busy);}

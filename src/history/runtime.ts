@@ -3,8 +3,10 @@ import { lstatSync, mkdirSync, readdirSync, rmdirSync, unlinkSync } from "node:f
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { setImmediate as yieldTurn } from "node:timers/promises";
+import { Conflict } from "../domain/tasks";
+import type { CommandContext, CommittedReply } from "../db/application";
 import type { Store } from "../db";
-import { parseHistoryExportRequest, type HistoryExportSnapshot } from "../contracts/history";
+import { retentionPruneInput, parseHistoryExportRequest, type HistoryExportSnapshot, type RetentionPruneInput } from "../contracts/history";
 import { secureDirectory, inspectManaged } from "../server/filesystem";
 import { runtime } from "../server/runtime";
 import { authenticate, HttpError } from "../server/security";
@@ -27,6 +29,7 @@ export class HistoryRuntime {
   private closing=false;
   private readonly parent:string;
   private readonly leases=new Map<AbortController,Promise<void>>();
+  private pruneWork?:{context:CommandContext;controller:AbortController;result:Promise<CommittedReply>};
   private peakBytes=0;
   private stalledCloses=0;
   constructor(private readonly store:Store) {
@@ -36,6 +39,39 @@ export class HistoryRuntime {
   diagnostics(){return {leases:this.leases.size,peakBytes:this.peakBytes,stalledCloses:this.stalledCloses};}
   beginClosing(){this.closing=true;for(const controller of this.leases.keys())controller.abort();}
   async close(){this.beginClosing();await Promise.allSettled([...this.leases.values()]);}
+  async prune(input:RetentionPruneInput,context:CommandContext,signal:AbortSignal):Promise<CommittedReply> {
+    if(this.closing)throw new HttpError(503,"unavailable");
+    if(context.principal!=="operator")throw new Conflict("human_required");
+    input=retentionPruneInput.parse(input);
+    let work=this.pruneWork;
+    if(work) {
+      const prior=work.context;
+      if(prior.principal!==context.principal||prior.method!==context.method||prior.path!==context.path||prior.key!==context.key)throw new HttpError(409,"retention_busy");
+      if(prior.digest!==context.digest)throw new HttpError(409,"idempotency_conflict");
+    }else {
+      // Admission recovers original receipts before checking guards, with no retained transaction.
+      const admission=this.store.historyAdmitPrune(input,context);
+      if("body" in admission)return admission;
+      signal.throwIfAborted();
+      const controller=new AbortController();
+      let resolve!:()=>void;const settled=new Promise<void>(value=>{resolve=value;});
+      this.leases.set(controller,settled);
+      const result=(async()=>{
+        try {
+          controller.signal.throwIfAborted();
+          const parent=secureDirectory(join(this.store.dataDir,"backups"));
+          await this.store.backup(join(parent,"retention-"+randomUUID()+".sqlite"),controller.signal);
+          controller.signal.throwIfAborted();
+          return this.store.historyCommitPrune(admission,Date.now());
+        }finally {this.pruneWork=undefined;this.leases.delete(controller);resolve();}
+      })();
+      work={context,controller,result};this.pruneWork=work;
+    }
+    const abort=()=>work.controller.abort();
+    signal.addEventListener("abort",abort,{once:true});
+    if(signal.aborted)abort();
+    try{return await work.result;}finally{signal.removeEventListener("abort",abort);}
+  }
   async serveExport(request:IncomingMessage,response:ServerResponse,headers:Headers,url:URL):Promise<void> {
     if(this.closing)throw new HttpError(503,"unavailable");
     const state=runtime();

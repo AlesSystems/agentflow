@@ -106,6 +106,21 @@ export async function startRuntime(
           if (request.rawHeaders[i].toLowerCase() === "origin")
             validateEnvelope({ host: request.headers.host, origin: request.rawHeaders[i + 1] }, config.port);
         response.setHeader("Cache-Control", "no-store");
+        let authenticated=false;
+        const writeHead=response.writeHead;
+        response.writeHead=((...args:unknown[])=>{
+          if(authenticated) {
+            const generation=owned.store.metadata().generation;
+            response.setHeader("AgentFlow-Generation",generation);
+            const index=typeof args[1]==="string"?2:1,headers=args[index];
+            if(Array.isArray(headers)) {
+              const current:unknown[]=[];
+              for(let i=0;i<headers.length;i+=2)if(String(headers[i]).toLowerCase()!=="agentflow-generation")current.push(headers[i],headers[i+1]);
+              args[index]=[...current,"AgentFlow-Generation",generation];
+            }else if(headers && typeof headers==="object")args[index]={...Object.fromEntries(Object.entries(headers).filter(([key])=>key.toLowerCase()!=="agentflow-generation")),"AgentFlow-Generation":generation};
+          }
+          return Reflect.apply(writeHead,response,args);
+        }) as typeof response.writeHead;
         const url = new URL(request.url || "/", `http://127.0.0.1:${config.port}`);
         const pathname = url.pathname;
         const matched = matchEndpoint(request.method || "GET", pathname);
@@ -133,11 +148,10 @@ export async function startRuntime(
               (pathname === "/" || pathname === "/api/v1/session"
                 ? "human"
                 : "read"),
-            () =>
-              response.setHeader(
-                "AgentFlow-Generation",
-                owned.store.metadata().generation,
-              ),
+            () => {
+              authenticated=true;
+              response.setHeader("AgentFlow-Generation",owned.store.metadata().generation);
+            },
           );
           if (
             matched?.endpoint.kind === "command" ||

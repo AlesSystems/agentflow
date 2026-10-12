@@ -11,6 +11,442 @@
     }
   ],
   "paths": {
+    "/api/v1/retention/preview": {
+      "post": {
+        "operationId": "previewRetention",
+        "security": [
+          {
+            "browserSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cutoff": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  }
+                },
+                "required": [
+                  "cutoff"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "cutoff": "2026-10-09T00:00:00.000Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed result",
+            "headers": {
+              "AgentFlow-Generation": {
+                "description": "Current database generation, including exact retries.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "previewId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "cutoff": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "expectedGeneration": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "expectedVersion": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "candidateDigest": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "eventPayloads": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000
+                            },
+                            "changes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000
+                            }
+                          },
+                          "required": [
+                            "eventPayloads",
+                            "changes"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "hasMore": {
+                          "type": "object",
+                          "properties": {
+                            "eventPayloads": {
+                              "type": "boolean"
+                            },
+                            "changes": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "eventPayloads",
+                            "changes"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "previewId",
+                        "cutoff",
+                        "expiresAt",
+                        "expectedGeneration",
+                        "expectedVersion",
+                        "candidateDigest",
+                        "counts",
+                        "hasMore"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "snapshotCursor": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
+                    },
+                    "generation": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "snapshotCursor",
+                    "generation"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "previewId": "10000000-0000-4000-8000-000000000010",
+                    "cutoff": "2026-10-09T00:00:00.000Z",
+                    "expiresAt": "2026-10-09T00:00:00.000Z",
+                    "expectedGeneration": "10000000-0000-4000-8000-000000000004",
+                    "expectedVersion": 1,
+                    "candidateDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "counts": {
+                      "eventPayloads": 0,
+                      "changes": 0
+                    },
+                    "hasMore": {
+                      "eventPayloads": false,
+                      "changes": false
+                    }
+                  },
+                  "snapshotCursor": "0",
+                  "generation": "10000000-0000-4000-8000-000000000004"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "409": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "415": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "422": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RetryableError"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
+      }
+    },
+    "/api/v1/retention/prune": {
+      "post": {
+        "operationId": "pruneRetention",
+        "security": [
+          {
+            "browserSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "previewId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "expectedGeneration": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "candidateDigest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "previewId",
+                  "expectedGeneration",
+                  "expectedVersion",
+                  "candidateDigest"
+                ],
+                "additionalProperties": false
+              },
+              "example": {
+                "previewId": "10000000-0000-4000-8000-000000000010",
+                "expectedGeneration": "10000000-0000-4000-8000-000000000004",
+                "expectedVersion": 1,
+                "candidateDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed result",
+            "headers": {
+              "AgentFlow-Generation": {
+                "description": "Current database generation, including exact retries.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "previewId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "applied": {
+                          "type": "object",
+                          "properties": {
+                            "eventPayloads": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000
+                            },
+                            "changes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000
+                            }
+                          },
+                          "required": [
+                            "eventPayloads",
+                            "changes"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "prunedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "priorGeneration": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "generation": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "retentionVersion": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "displayBodyBytesRemoved": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "previewId",
+                        "applied",
+                        "prunedAt",
+                        "priorGeneration",
+                        "generation",
+                        "retentionVersion",
+                        "displayBodyBytesRemoved"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "snapshotCursor": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]{0,18})$"
+                    },
+                    "generation": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "snapshotCursor",
+                    "generation"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "previewId": "10000000-0000-4000-8000-000000000010",
+                    "applied": {
+                      "eventPayloads": 0,
+                      "changes": 0
+                    },
+                    "prunedAt": "2026-10-09T00:00:00.000Z",
+                    "priorGeneration": "10000000-0000-4000-8000-000000000004",
+                    "generation": "10000000-0000-4000-8000-000000000011",
+                    "retentionVersion": 2,
+                    "displayBodyBytesRemoved": 0
+                  },
+                  "snapshotCursor": "0",
+                  "generation": "10000000-0000-4000-8000-000000000004"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "409": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "415": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "422": {
+            "$ref": "#/components/responses/RequestError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RetryableError"
+          },
+          "503": {
+            "$ref": "#/components/responses/RetryableError"
+          }
+        }
+      }
+    },
     "/api/v1/export": {
       "get": {
         "operationId": "exportHistory",
@@ -13432,6 +13868,11 @@
                                     "type": "null"
                                   }
                                 ]
+                              },
+                              "messagePrunedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                               }
                             },
                             "required": [
@@ -13911,6 +14352,11 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "messagePrunedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                         }
                       },
                       "required": [
@@ -14941,6 +15387,11 @@
                                             "type": "null"
                                           }
                                         ]
+                                      },
+                                      "messagePrunedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                       }
                                     },
                                     "required": [
@@ -16170,6 +16621,11 @@
                                                   "type": "null"
                                                 }
                                               ]
+                                            },
+                                            "messagePrunedAt": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                             }
                                           },
                                           "required": [
@@ -16690,180 +17146,405 @@
                                   {
                                     "anyOf": [
                                       {
-                                        "type": "object",
-                                        "properties": {
-                                          "schemaVersion": {
-                                            "type": "number",
-                                            "const": 1
-                                          },
-                                          "eventId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "runId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "sequence": {
-                                            "type": "integer",
-                                            "exclusiveMinimum": 0,
-                                            "maximum": 9007199254740991
-                                          },
-                                          "occurredAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          },
-                                          "type": {
-                                            "type": "string",
-                                            "const": "run.started"
-                                          },
-                                          "payload": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                          },
-                                          "receivedAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          }
-                                        },
-                                        "required": [
-                                          "schemaVersion",
-                                          "eventId",
-                                          "runId",
-                                          "sequence",
-                                          "occurredAt",
-                                          "type",
-                                          "payload",
-                                          "receivedAt"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "schemaVersion": {
-                                            "type": "number",
-                                            "const": 1
-                                          },
-                                          "eventId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "runId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "sequence": {
-                                            "type": "integer",
-                                            "exclusiveMinimum": 0,
-                                            "maximum": 9007199254740991
-                                          },
-                                          "occurredAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          },
-                                          "type": {
-                                            "type": "string",
-                                            "const": "run.heartbeat"
-                                          },
-                                          "payload": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                          },
-                                          "receivedAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          }
-                                        },
-                                        "required": [
-                                          "schemaVersion",
-                                          "eventId",
-                                          "runId",
-                                          "sequence",
-                                          "occurredAt",
-                                          "type",
-                                          "payload",
-                                          "receivedAt"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "schemaVersion": {
-                                            "type": "number",
-                                            "const": 1
-                                          },
-                                          "eventId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "runId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "sequence": {
-                                            "type": "integer",
-                                            "exclusiveMinimum": 0,
-                                            "maximum": 9007199254740991
-                                          },
-                                          "occurredAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          },
-                                          "type": {
-                                            "type": "string",
-                                            "const": "run.progress"
-                                          },
-                                          "payload": {
+                                        "anyOf": [
+                                          {
                                             "type": "object",
                                             "properties": {
-                                              "message": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 4000
+                                              "schemaVersion": {
+                                                "type": "number",
+                                                "const": 1
                                               },
-                                              "percent": {
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "sequence": {
                                                 "type": "integer",
-                                                "minimum": 0,
-                                                "maximum": 100
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "occurredAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              },
+                                              "type": {
+                                                "type": "string",
+                                                "const": "run.started"
+                                              },
+                                              "payload": {
+                                                "type": "object",
+                                                "properties": {},
+                                                "additionalProperties": false
+                                              },
+                                              "receivedAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                               }
                                             },
                                             "required": [
-                                              "message"
+                                              "schemaVersion",
+                                              "eventId",
+                                              "runId",
+                                              "sequence",
+                                              "occurredAt",
+                                              "type",
+                                              "payload",
+                                              "receivedAt"
                                             ],
                                             "additionalProperties": false
                                           },
-                                          "receivedAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "schemaVersion": {
+                                                "type": "number",
+                                                "const": 1
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "sequence": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "occurredAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              },
+                                              "type": {
+                                                "type": "string",
+                                                "const": "run.heartbeat"
+                                              },
+                                              "payload": {
+                                                "type": "object",
+                                                "properties": {},
+                                                "additionalProperties": false
+                                              },
+                                              "receivedAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "schemaVersion",
+                                              "eventId",
+                                              "runId",
+                                              "sequence",
+                                              "occurredAt",
+                                              "type",
+                                              "payload",
+                                              "receivedAt"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "schemaVersion": {
+                                                "type": "number",
+                                                "const": 1
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "sequence": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "occurredAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              },
+                                              "type": {
+                                                "type": "string",
+                                                "const": "run.progress"
+                                              },
+                                              "payload": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "message": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 4000
+                                                  },
+                                                  "percent": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "maximum": 100
+                                                  }
+                                                },
+                                                "required": [
+                                                  "message"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "receivedAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "schemaVersion",
+                                              "eventId",
+                                              "runId",
+                                              "sequence",
+                                              "occurredAt",
+                                              "type",
+                                              "payload",
+                                              "receivedAt"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "schemaVersion": {
+                                                "type": "number",
+                                                "const": 1
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "sequence": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "occurredAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              },
+                                              "type": {
+                                                "type": "string",
+                                                "const": "run.succeeded"
+                                              },
+                                              "payload": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "summary": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 4000
+                                                  },
+                                                  "evidenceUrl": {
+                                                    "type": "string",
+                                                    "maxLength": 2000,
+                                                    "format": "uri"
+                                                  },
+                                                  "artifactRef": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 2000
+                                                  },
+                                                  "displayUrl": {
+                                                    "type": "string",
+                                                    "maxLength": 2000,
+                                                    "format": "uri"
+                                                  },
+                                                  "decision": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "approved",
+                                                      "changes_requested"
+                                                    ]
+                                                  },
+                                                  "evidenceNote": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 4000
+                                                  }
+                                                },
+                                                "required": [
+                                                  "summary"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "receivedAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "schemaVersion",
+                                              "eventId",
+                                              "runId",
+                                              "sequence",
+                                              "occurredAt",
+                                              "type",
+                                              "payload",
+                                              "receivedAt"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "schemaVersion": {
+                                                "type": "number",
+                                                "const": 1
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "sequence": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "occurredAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              },
+                                              "type": {
+                                                "type": "string",
+                                                "const": "run.failed"
+                                              },
+                                              "payload": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "message": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 4000
+                                                  },
+                                                  "code": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 100
+                                                  }
+                                                },
+                                                "required": [
+                                                  "message"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "receivedAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "schemaVersion",
+                                              "eventId",
+                                              "runId",
+                                              "sequence",
+                                              "occurredAt",
+                                              "type",
+                                              "payload",
+                                              "receivedAt"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "schemaVersion": {
+                                                "type": "number",
+                                                "const": 1
+                                              },
+                                              "eventId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "runId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                              },
+                                              "sequence": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "occurredAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              },
+                                              "type": {
+                                                "type": "string",
+                                                "const": "run.cancelled"
+                                              },
+                                              "payload": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "reason": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 4000
+                                                  }
+                                                },
+                                                "required": [
+                                                  "reason"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              "receivedAt": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                              }
+                                            },
+                                            "required": [
+                                              "schemaVersion",
+                                              "eventId",
+                                              "runId",
+                                              "sequence",
+                                              "occurredAt",
+                                              "type",
+                                              "payload",
+                                              "receivedAt"
+                                            ],
+                                            "additionalProperties": false
                                           }
-                                        },
-                                        "required": [
-                                          "schemaVersion",
-                                          "eventId",
-                                          "runId",
-                                          "sequence",
-                                          "occurredAt",
-                                          "type",
-                                          "payload",
-                                          "receivedAt"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -16887,57 +17568,27 @@
                                             "exclusiveMinimum": 0,
                                             "maximum": 9007199254740991
                                           },
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "run.progress",
+                                              "run.heartbeat"
+                                            ]
+                                          },
                                           "occurredAt": {
                                             "type": "string",
                                             "format": "date-time",
                                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                           },
-                                          "type": {
+                                          "receivedAt": {
                                             "type": "string",
-                                            "const": "run.succeeded"
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                           },
                                           "payload": {
-                                            "type": "object",
-                                            "properties": {
-                                              "summary": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 4000
-                                              },
-                                              "evidenceUrl": {
-                                                "type": "string",
-                                                "maxLength": 2000,
-                                                "format": "uri"
-                                              },
-                                              "artifactRef": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 2000
-                                              },
-                                              "displayUrl": {
-                                                "type": "string",
-                                                "maxLength": 2000,
-                                                "format": "uri"
-                                              },
-                                              "decision": {
-                                                "type": "string",
-                                                "enum": [
-                                                  "approved",
-                                                  "changes_requested"
-                                                ]
-                                              },
-                                              "evidenceNote": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 4000
-                                              }
-                                            },
-                                            "required": [
-                                              "summary"
-                                            ],
-                                            "additionalProperties": false
+                                            "type": "null"
                                           },
-                                          "receivedAt": {
+                                          "payloadPrunedAt": {
                                             "type": "string",
                                             "format": "date-time",
                                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
@@ -16948,141 +17599,11 @@
                                           "eventId",
                                           "runId",
                                           "sequence",
-                                          "occurredAt",
                                           "type",
-                                          "payload",
-                                          "receivedAt"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "schemaVersion": {
-                                            "type": "number",
-                                            "const": 1
-                                          },
-                                          "eventId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "runId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "sequence": {
-                                            "type": "integer",
-                                            "exclusiveMinimum": 0,
-                                            "maximum": 9007199254740991
-                                          },
-                                          "occurredAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          },
-                                          "type": {
-                                            "type": "string",
-                                            "const": "run.failed"
-                                          },
-                                          "payload": {
-                                            "type": "object",
-                                            "properties": {
-                                              "message": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 4000
-                                              },
-                                              "code": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 100
-                                              }
-                                            },
-                                            "required": [
-                                              "message"
-                                            ],
-                                            "additionalProperties": false
-                                          },
-                                          "receivedAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          }
-                                        },
-                                        "required": [
-                                          "schemaVersion",
-                                          "eventId",
-                                          "runId",
-                                          "sequence",
                                           "occurredAt",
-                                          "type",
+                                          "receivedAt",
                                           "payload",
-                                          "receivedAt"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "schemaVersion": {
-                                            "type": "number",
-                                            "const": 1
-                                          },
-                                          "eventId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "runId": {
-                                            "type": "string",
-                                            "format": "uuid",
-                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                          },
-                                          "sequence": {
-                                            "type": "integer",
-                                            "exclusiveMinimum": 0,
-                                            "maximum": 9007199254740991
-                                          },
-                                          "occurredAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          },
-                                          "type": {
-                                            "type": "string",
-                                            "const": "run.cancelled"
-                                          },
-                                          "payload": {
-                                            "type": "object",
-                                            "properties": {
-                                              "reason": {
-                                                "type": "string",
-                                                "minLength": 1,
-                                                "maxLength": 4000
-                                              }
-                                            },
-                                            "required": [
-                                              "reason"
-                                            ],
-                                            "additionalProperties": false
-                                          },
-                                          "receivedAt": {
-                                            "type": "string",
-                                            "format": "date-time",
-                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                          }
-                                        },
-                                        "required": [
-                                          "schemaVersion",
-                                          "eventId",
-                                          "runId",
-                                          "sequence",
-                                          "occurredAt",
-                                          "type",
-                                          "payload",
-                                          "receivedAt"
+                                          "payloadPrunedAt"
                                         ],
                                         "additionalProperties": false
                                       }
@@ -19761,180 +20282,405 @@
                           "items": {
                             "anyOf": [
                               {
-                                "type": "object",
-                                "properties": {
-                                  "schemaVersion": {
-                                    "type": "number",
-                                    "const": 1
-                                  },
-                                  "eventId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "runId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "sequence": {
-                                    "type": "integer",
-                                    "exclusiveMinimum": 0,
-                                    "maximum": 9007199254740991
-                                  },
-                                  "occurredAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "run.started"
-                                  },
-                                  "payload": {
-                                    "type": "object",
-                                    "properties": {},
-                                    "additionalProperties": false
-                                  },
-                                  "receivedAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  }
-                                },
-                                "required": [
-                                  "schemaVersion",
-                                  "eventId",
-                                  "runId",
-                                  "sequence",
-                                  "occurredAt",
-                                  "type",
-                                  "payload",
-                                  "receivedAt"
-                                ],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "schemaVersion": {
-                                    "type": "number",
-                                    "const": 1
-                                  },
-                                  "eventId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "runId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "sequence": {
-                                    "type": "integer",
-                                    "exclusiveMinimum": 0,
-                                    "maximum": 9007199254740991
-                                  },
-                                  "occurredAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "run.heartbeat"
-                                  },
-                                  "payload": {
-                                    "type": "object",
-                                    "properties": {},
-                                    "additionalProperties": false
-                                  },
-                                  "receivedAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  }
-                                },
-                                "required": [
-                                  "schemaVersion",
-                                  "eventId",
-                                  "runId",
-                                  "sequence",
-                                  "occurredAt",
-                                  "type",
-                                  "payload",
-                                  "receivedAt"
-                                ],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "schemaVersion": {
-                                    "type": "number",
-                                    "const": 1
-                                  },
-                                  "eventId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "runId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "sequence": {
-                                    "type": "integer",
-                                    "exclusiveMinimum": 0,
-                                    "maximum": 9007199254740991
-                                  },
-                                  "occurredAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "run.progress"
-                                  },
-                                  "payload": {
+                                "anyOf": [
+                                  {
                                     "type": "object",
                                     "properties": {
-                                      "message": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 4000
+                                      "schemaVersion": {
+                                        "type": "number",
+                                        "const": 1
                                       },
-                                      "percent": {
+                                      "eventId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "runId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "sequence": {
                                         "type": "integer",
-                                        "minimum": 0,
-                                        "maximum": 100
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "const": "run.started"
+                                      },
+                                      "payload": {
+                                        "type": "object",
+                                        "properties": {},
+                                        "additionalProperties": false
+                                      },
+                                      "receivedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                       }
                                     },
                                     "required": [
-                                      "message"
+                                      "schemaVersion",
+                                      "eventId",
+                                      "runId",
+                                      "sequence",
+                                      "occurredAt",
+                                      "type",
+                                      "payload",
+                                      "receivedAt"
                                     ],
                                     "additionalProperties": false
                                   },
-                                  "receivedAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "eventId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "runId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "const": "run.heartbeat"
+                                      },
+                                      "payload": {
+                                        "type": "object",
+                                        "properties": {},
+                                        "additionalProperties": false
+                                      },
+                                      "receivedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaVersion",
+                                      "eventId",
+                                      "runId",
+                                      "sequence",
+                                      "occurredAt",
+                                      "type",
+                                      "payload",
+                                      "receivedAt"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "eventId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "runId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "const": "run.progress"
+                                      },
+                                      "payload": {
+                                        "type": "object",
+                                        "properties": {
+                                          "message": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          },
+                                          "percent": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 100
+                                          }
+                                        },
+                                        "required": [
+                                          "message"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "receivedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaVersion",
+                                      "eventId",
+                                      "runId",
+                                      "sequence",
+                                      "occurredAt",
+                                      "type",
+                                      "payload",
+                                      "receivedAt"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "eventId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "runId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "const": "run.succeeded"
+                                      },
+                                      "payload": {
+                                        "type": "object",
+                                        "properties": {
+                                          "summary": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          },
+                                          "evidenceUrl": {
+                                            "type": "string",
+                                            "maxLength": 2000,
+                                            "format": "uri"
+                                          },
+                                          "artifactRef": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 2000
+                                          },
+                                          "displayUrl": {
+                                            "type": "string",
+                                            "maxLength": 2000,
+                                            "format": "uri"
+                                          },
+                                          "decision": {
+                                            "type": "string",
+                                            "enum": [
+                                              "approved",
+                                              "changes_requested"
+                                            ]
+                                          },
+                                          "evidenceNote": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          }
+                                        },
+                                        "required": [
+                                          "summary"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "receivedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaVersion",
+                                      "eventId",
+                                      "runId",
+                                      "sequence",
+                                      "occurredAt",
+                                      "type",
+                                      "payload",
+                                      "receivedAt"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "eventId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "runId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "const": "run.failed"
+                                      },
+                                      "payload": {
+                                        "type": "object",
+                                        "properties": {
+                                          "message": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          },
+                                          "code": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 100
+                                          }
+                                        },
+                                        "required": [
+                                          "message"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "receivedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaVersion",
+                                      "eventId",
+                                      "runId",
+                                      "sequence",
+                                      "occurredAt",
+                                      "type",
+                                      "payload",
+                                      "receivedAt"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "eventId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "runId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "occurredAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "const": "run.cancelled"
+                                      },
+                                      "payload": {
+                                        "type": "object",
+                                        "properties": {
+                                          "reason": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          }
+                                        },
+                                        "required": [
+                                          "reason"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "receivedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaVersion",
+                                      "eventId",
+                                      "runId",
+                                      "sequence",
+                                      "occurredAt",
+                                      "type",
+                                      "payload",
+                                      "receivedAt"
+                                    ],
+                                    "additionalProperties": false
                                   }
-                                },
-                                "required": [
-                                  "schemaVersion",
-                                  "eventId",
-                                  "runId",
-                                  "sequence",
-                                  "occurredAt",
-                                  "type",
-                                  "payload",
-                                  "receivedAt"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -19958,57 +20704,27 @@
                                     "exclusiveMinimum": 0,
                                     "maximum": 9007199254740991
                                   },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "run.progress",
+                                      "run.heartbeat"
+                                    ]
+                                  },
                                   "occurredAt": {
                                     "type": "string",
                                     "format": "date-time",
                                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                   },
-                                  "type": {
+                                  "receivedAt": {
                                     "type": "string",
-                                    "const": "run.succeeded"
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
                                   },
                                   "payload": {
-                                    "type": "object",
-                                    "properties": {
-                                      "summary": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 4000
-                                      },
-                                      "evidenceUrl": {
-                                        "type": "string",
-                                        "maxLength": 2000,
-                                        "format": "uri"
-                                      },
-                                      "artifactRef": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 2000
-                                      },
-                                      "displayUrl": {
-                                        "type": "string",
-                                        "maxLength": 2000,
-                                        "format": "uri"
-                                      },
-                                      "decision": {
-                                        "type": "string",
-                                        "enum": [
-                                          "approved",
-                                          "changes_requested"
-                                        ]
-                                      },
-                                      "evidenceNote": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 4000
-                                      }
-                                    },
-                                    "required": [
-                                      "summary"
-                                    ],
-                                    "additionalProperties": false
+                                    "type": "null"
                                   },
-                                  "receivedAt": {
+                                  "payloadPrunedAt": {
                                     "type": "string",
                                     "format": "date-time",
                                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
@@ -20019,141 +20735,11 @@
                                   "eventId",
                                   "runId",
                                   "sequence",
-                                  "occurredAt",
                                   "type",
-                                  "payload",
-                                  "receivedAt"
-                                ],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "schemaVersion": {
-                                    "type": "number",
-                                    "const": 1
-                                  },
-                                  "eventId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "runId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "sequence": {
-                                    "type": "integer",
-                                    "exclusiveMinimum": 0,
-                                    "maximum": 9007199254740991
-                                  },
-                                  "occurredAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "run.failed"
-                                  },
-                                  "payload": {
-                                    "type": "object",
-                                    "properties": {
-                                      "message": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 4000
-                                      },
-                                      "code": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 100
-                                      }
-                                    },
-                                    "required": [
-                                      "message"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  "receivedAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  }
-                                },
-                                "required": [
-                                  "schemaVersion",
-                                  "eventId",
-                                  "runId",
-                                  "sequence",
                                   "occurredAt",
-                                  "type",
+                                  "receivedAt",
                                   "payload",
-                                  "receivedAt"
-                                ],
-                                "additionalProperties": false
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "schemaVersion": {
-                                    "type": "number",
-                                    "const": 1
-                                  },
-                                  "eventId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "runId": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                                  },
-                                  "sequence": {
-                                    "type": "integer",
-                                    "exclusiveMinimum": 0,
-                                    "maximum": 9007199254740991
-                                  },
-                                  "occurredAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "run.cancelled"
-                                  },
-                                  "payload": {
-                                    "type": "object",
-                                    "properties": {
-                                      "reason": {
-                                        "type": "string",
-                                        "minLength": 1,
-                                        "maxLength": 4000
-                                      }
-                                    },
-                                    "required": [
-                                      "reason"
-                                    ],
-                                    "additionalProperties": false
-                                  },
-                                  "receivedAt": {
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-                                  }
-                                },
-                                "required": [
-                                  "schemaVersion",
-                                  "eventId",
-                                  "runId",
-                                  "sequence",
-                                  "occurredAt",
-                                  "type",
-                                  "payload",
-                                  "receivedAt"
+                                  "payloadPrunedAt"
                                 ],
                                 "additionalProperties": false
                               }

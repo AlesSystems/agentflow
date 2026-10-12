@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { changeCursor, timestamp, uuid } from "./common";
+import { changeCursor, timestamp, uuid, version, envelope } from "./common";
 import { project } from "./projects";
 import { task, comment, completion, reopen, run } from "./tasks";
-import { agent, eventRecord } from "./observations";
+import { agent, eventRecord, prunedEventRecord } from "./observations";
 import { artifactEvidence, gateDecision, reworkEvidence } from "./evidence";
 import { workflow, planRevision, workflowRun, workflowEventRecord, nodeObservation } from "./workflows";
 import { githubConnection, githubPullRequest, githubRepository, githubError } from "./github";
@@ -24,8 +24,8 @@ export function parseHistoryExportRequest(url: URL): HistoryExportInput {
   return historyExportInput.parse({content:query.content.split(","),generation:query.generation});
 }
 const closure = {id:uuid,reason:z.string(),actor:z.literal("operator"),createdAt:timestamp};
-export const prunedHistoryEvent = z.strictObject({schemaVersion:z.literal(1),eventId:uuid,runId:uuid,sequence:z.number().int().positive().max(Number.MAX_SAFE_INTEGER),type:z.enum(["run.progress","run.heartbeat"]),occurredAt:timestamp,receivedAt:timestamp,payload:z.null(),payloadPrunedAt:timestamp});
-export const historyEventRecord=z.union([eventRecord,prunedHistoryEvent]);
+export const prunedHistoryEvent=prunedEventRecord;
+export const historyEventRecord=eventRecord;
 export const historyProjections = {
   project:project.omit({repositoryPath:true}), task, agent, comment, completion, reopen,
   dependency:z.strictObject({taskId:uuid,prerequisiteId:uuid,projectId:uuid}),
@@ -50,3 +50,13 @@ export const historyLine = z.union([historyManifest,historyRecord,historyComplet
 export type HistoryManifest = z.infer<typeof historyManifest>;
 export type HistoryExportSnapshot = {manifest:HistoryManifest;nextBatch():HistoryRecord[];close():void};
 
+
+export const retentionPreviewInput=z.strictObject({cutoff:timestamp.refine(value=>Number.isFinite(Date.parse(value)) && value.endsWith("Z"))});
+export const retentionPruneInput=z.strictObject({previewId:uuid,expectedGeneration:uuid,expectedVersion:version,candidateDigest:z.string().regex(/^[0-9a-f]{64}$/)});
+const retentionCounts=z.strictObject({eventPayloads:z.number().int().nonnegative().max(1000),changes:z.number().int().nonnegative().max(1000)});
+export const retentionPreview=z.strictObject({previewId:uuid,cutoff:timestamp,expiresAt:timestamp,expectedGeneration:uuid,expectedVersion:version,candidateDigest:retentionPruneInput.shape.candidateDigest,counts:retentionCounts,hasMore:z.strictObject({eventPayloads:z.boolean(),changes:z.boolean()})});
+export const retentionPrune=z.strictObject({previewId:uuid,applied:retentionCounts,prunedAt:timestamp,priorGeneration:uuid,generation:uuid,retentionVersion:version,displayBodyBytesRemoved:z.number().int().nonnegative()});
+export const retentionPreviewResponse=envelope(retentionPreview);
+export const retentionPruneResponse=envelope(retentionPrune);
+export type RetentionPreviewInput=z.infer<typeof retentionPreviewInput>;
+export type RetentionPruneInput=z.infer<typeof retentionPruneInput>;

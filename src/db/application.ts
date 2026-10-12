@@ -1,3 +1,5 @@
+import type { RetentionPreviewInput, RetentionPruneInput } from "../contracts/history";
+import { HistoryData } from "./history";
 import { GithubData } from "./github";
 import type { GithubRepositoriesInput, GithubRefreshInput, GithubQuery } from "../contracts/github";
 import * as evidence from "../contracts/evidence";
@@ -57,6 +59,8 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | {kind:"retention.preview";input:RetentionPreviewInput}
+  | {kind:"retention.prune";input:RetentionPruneInput}
   | {kind:"github.repositories";input:GithubRepositoriesInput}
   | {kind:"github.refresh";input:GithubRefreshInput}
   | { kind: "task.dependencies"; id: string; input: z.infer<typeof evidence.dependenciesInput> }
@@ -322,6 +326,8 @@ export class ApplicationData {
     command: ApplicationCommand,
     context: CommandContext,
   ): CommittedReply {
+    if(command.kind==="retention.preview")return new HistoryData(this.db).preview(command.input,context);
+    if(command.kind==="retention.prune")throw new Conflict("retention_coordinator_required");
     if(command.kind==="github.repositories")return new GithubData(this.db).repositories(command.input,context);
     if(command.kind==="github.refresh")throw new Conflict("github_coordinator_required");
     return this.db
@@ -927,7 +933,7 @@ export class ApplicationData {
       receivedAt,
     });
     this.db
-      .prepare("INSERT INTO run_events VALUES(?,?,?,?,?,?,?,?,?)")
+      .prepare("INSERT INTO run_events(event_id,run_id,sequence,type,digest,body,acknowledgement,occurred_at,received_at) VALUES(?,?,?,?,?,?,?,?,?)")
       .run(
         input.eventId,
         value.id,
@@ -1237,19 +1243,24 @@ export class ApplicationData {
       },
     };
   }
+  private eventView(body:string,prunedAt:string|null) {
+    const event=JSON.parse(body);
+    return prunedAt ? {...event,payload:null,payloadPrunedAt:prunedAt} : event;
+  }
   private joinedRuns(where = "1", params: unknown[] = []) {
     return this.db.prepare(`SELECT r.*,a.display_name AS agent_name,a.source AS agent_source,p.name AS project_name,t.title AS task_title,
-      (SELECT body FROM run_events e WHERE e.run_id=r.id AND e.type<>'run.heartbeat' ORDER BY sequence DESC LIMIT 1) AS report_body
+      (SELECT body FROM run_events e WHERE e.run_id=r.id AND e.type<>'run.heartbeat' ORDER BY sequence DESC LIMIT 1) AS report_body,
+      (SELECT payload_pruned_at FROM run_events e WHERE e.run_id=r.id AND e.type<>'run.heartbeat' ORDER BY sequence DESC LIMIT 1) AS report_pruned_at
       FROM runs r JOIN agents a ON a.id=r.agent_id JOIN projects p ON p.id=r.project_id LEFT JOIN tasks t ON t.id=r.task_id WHERE ${where}`).all(...params) as Row[];
   }
   private summary(row: Row, now: number) {
     const value = serialize(row);
-    const { registrationOrder, reportBody, agentName, agentSource, projectName, taskTitle, ...record } = value;
+    const { registrationOrder, reportBody, reportPrunedAt, agentName, agentSource, projectName, taskTitle, ...record } = value;
     void registrationOrder;
     const report = reportBody ? JSON.parse(reportBody as string) : null;
     return { ...this.runView(run.parse(record), now), agentName, agentSource, projectName, taskTitle,
-      message: report?.payload.message ?? report?.payload.summary ?? report?.payload.reason ?? null,
-      evidenceUrl: report?.payload.evidenceUrl ?? null };
+      message: report?.payload?.message ?? report?.payload?.summary ?? report?.payload?.reason ?? null,
+      evidenceUrl: report?.payload?.evidenceUrl ?? null, ...(reportPrunedAt ? {messagePrunedAt:reportPrunedAt} : {}) };
   }
   private trackingTasks(page: { items: Row[]; total: number; nextCursor: string | null }, now: number) {
     const ids = page.items.map(t => t.id);
@@ -1266,12 +1277,12 @@ export class ApplicationData {
         Object.assign(filters, { [key]: id }); clauses.push(`${column}=?`); params.push(id);
       }
     }
-    const source = `(SELECT 'event:'||e.event_id AS id,'report' AS kind,r.id AS run_id,r.project_id,r.agent_id,r.task_id,a.display_name AS agent_name,a.source AS agent_source,p.name AS project_name,t.title AS task_title,r.purpose,r.model,e.received_at AS created_at,e.occurred_at,e.body AS event_body,NULL AS reason
+    const source = `(SELECT 'event:'||e.event_id AS id,'report' AS kind,r.id AS run_id,r.project_id,r.agent_id,r.task_id,a.display_name AS agent_name,a.source AS agent_source,p.name AS project_name,t.title AS task_title,r.purpose,r.model,e.received_at AS created_at,e.occurred_at,e.body AS event_body,e.payload_pruned_at,NULL AS reason
       FROM run_events e JOIN runs r ON r.id=e.run_id JOIN agents a ON a.id=r.agent_id JOIN projects p ON p.id=r.project_id LEFT JOIN tasks t ON t.id=r.task_id WHERE e.type<>'run.heartbeat'
-      UNION ALL SELECT 'closure:'||c.id,'tracking_closed',r.id,r.project_id,r.agent_id,r.task_id,a.display_name,a.source,p.name,t.title,r.purpose,r.model,c.created_at,NULL,NULL,c.reason
+      UNION ALL SELECT 'closure:'||c.id,'tracking_closed',r.id,r.project_id,r.agent_id,r.task_id,a.display_name,a.source,p.name,t.title,r.purpose,r.model,c.created_at,NULL,NULL,NULL,c.reason
       FROM run_closures c JOIN runs r ON r.id=c.run_id JOIN agents a ON a.id=r.agent_id JOIN projects p ON p.id=r.project_id LEFT JOIN tasks t ON t.id=r.task_id)`;
     const page = this.page(source, clauses.join(" AND ") || "1", params, "activity", filters, limit, cursor);
-    return { ...page, items: page.items.map(({ createdAt, eventBody, ...value }) => ({ ...value, receivedAt: createdAt, event: eventBody ? JSON.parse(eventBody as string) : null })) };
+    return { ...page, items: page.items.map(({ createdAt, eventBody, payloadPrunedAt, ...value }) => ({ ...value, receivedAt: createdAt, event: eventBody ? this.eventView(eventBody as string,payloadPrunedAt as string|null) : null })) };
   }
   snapshot(query: ApplicationQuery, now: number): CommittedReply {
     if(query.kind==="github")return new GithubData(this.db).snapshot(query.input,now);
@@ -1417,7 +1428,7 @@ export class ApplicationData {
       } else if (query.kind === "events") {
         const value = this.run(query.id);
         const page = this.page(
-          "(SELECT event_id AS id,run_id,sequence,body FROM run_events)",
+          "(SELECT event_id AS id,run_id,sequence,body,payload_pruned_at FROM run_events)",
           "run_id=?",
           [value.id],
           "events",
@@ -1429,7 +1440,7 @@ export class ApplicationData {
         );
         data = {
           ...page,
-          items: page.items.map((value) => JSON.parse(value.body as string)),
+          items: page.items.map((value) => this.eventView(value.body as string,value.payloadPrunedAt as string|null)),
         };
       } else if (query.kind === "settings") data = this.settings();
       else if (query.kind === "project") data = this.one("projects", query.id);

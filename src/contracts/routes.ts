@@ -1,4 +1,4 @@
-import { historyExportQuery, historyLine } from "./history";
+import { historyExportQuery, historyLine, retentionPreviewInput, retentionPruneInput, retentionPreviewResponse, retentionPruneResponse } from "./history";
 import * as github from "./github";
 import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
 import type { SnapshotBody } from "../db/application";
@@ -107,6 +107,8 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  defineCommand({id:"previewRetention",method:"POST",path:"/retention/preview",access:"human",input:retentionPreviewInput,response:retentionPreviewResponse,status:200,command:input=>({kind:"retention.preview",input})}),
+  defineCommand({id:"pruneRetention",method:"POST",path:"/retention/prune",access:"human",input:retentionPruneInput,response:retentionPruneResponse,status:200,command:input=>({kind:"retention.prune",input})}),
   {id:"exportHistory",method:"GET",path:"/export",access:"human",input:historyExportQuery,response:historyLine,status:200,kind:"export",description:"Selected business history from one completed private snapshot. Omitted groups and cross-group references are intentionally incomplete; this is not a restorable backup. Missing completion means interrupted download. No continuation or resume."},
   defineQuery({id:"getGithubConnection",method:"GET",path:"/connections/github",access:"human",input:github.githubQuery,response:github.githubResponse,status:200,query:input=>({kind:"github",input})}),
   defineCommand({id:"replaceGithubRepositories",method:"PUT",path:"/connections/github/repositories",access:"human",input:github.githubRepositoriesInput,response:github.githubRepositoriesResponse,status:200,command:input=>({kind:"github.repositories",input})}),

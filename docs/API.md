@@ -515,3 +515,38 @@ claim a live authorized credential check.
 adapter/credential fixtures, original failure repairs, source attribution and the
 exact finite-run performance exception. Local reads remain browser-only and never
 perform remote refresh. Optional live GitHub verification was not executed.
+
+### Explicit history retention
+
+`POST /retention/preview` and `POST /retention/prune` require a paired browser,
+JSON, same-origin mutation checks, and an idempotency key. Preview accepts only
+`{cutoff}` as a UTC timestamp ending in `Z`, at or before the request time. It
+returns `previewId`, `cutoff`, `expiresAt`, `expectedGeneration`,
+`expectedVersion`, `candidateDigest`, per-kind `counts`, and per-kind `hasMore`.
+Each preview promises at most 1,000 eligible task-event payloads and 1,000 old
+change rows. Additional tranches require another preview. An unused preview
+expires after five minutes; at most 20 unexpired unused previews may be issued.
+An exact preview retry returns the original receipt, including after expiry.
+
+Prune accepts exactly `{previewId,expectedGeneration,expectedVersion,candidateDigest}`.
+An expired or missing preview returns `preview_expired`; changed state or
+eligibility returns `preview_changed`. A different concurrent prune key returns
+`retention_busy`. A completed, integrity-checked private recovery backup precedes
+the final atomic guard. Cancellation, backup failure, or a failed final guard
+creates no prune receipt. Completed recovery backups remain local even when
+finalization fails. No backup path appears in the response.
+
+Prune returns `previewId`, `applied`, `prunedAt`, `priorGeneration`, `generation`,
+`retentionVersion`, and `displayBodyBytesRemoved`. It atomically removes the
+bounded obsolete display bodies and changes, increments the retention version,
+and publishes one new generic invalidation under a new generation. Sessions
+remain valid. Original ACKs and request receipts retain their original bodies;
+exact prune retries make no additional backup or mutation. The response header
+carries the current generation even when a receipt body has an earlier one.
+Removed display bytes are not a promise of reclaimed SQLite or WAL disk space.
+
+Eligible unreferenced terminal-run `run.progress` and `run.heartbeat` records
+remain visible with their original identity, sequence, type, occurrence and
+receipt timestamps. Their read-only stub has `payload:null` and a nonnull
+`payloadPrunedAt`. A tracking summary whose latest message was pruned adds
+`messagePrunedAt` and returns `message:null`. Intact event shapes and accepted event inputs are unchanged.

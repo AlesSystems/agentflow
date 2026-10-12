@@ -322,6 +322,7 @@ export const runEvents = sqliteTable(
     type: text("type").notNull(),
     digest: text("digest").notNull(),
     body: text("body").notNull(),
+    payloadPrunedAt: integer("payload_pruned_at"),
     acknowledgement: text("acknowledgement").notNull(),
     occurredAt: integer("occurred_at").notNull(),
     receivedAt: integer("received_at").notNull(),
@@ -392,3 +393,7 @@ export const githubConnection = sqliteTable("github_connection", { singleton:int
 export const githubPullRequests = sqliteTable("github_pull_requests", {repository:text("repository").notNull(),number:integer("number").notNull(),url:text("url").notNull(),title:text("title").notNull(),state:text("state").notNull(),draft:integer("draft").notNull(),headSha:text("head_sha").notNull(),baseBranch:text("base_branch").notNull(),mergedAt:text("merged_at"),previousHeadSha:text("previous_head_sha"),fetchedAt:integer("fetched_at").notNull(),lastAttemptedAt:integer("last_attempted_at").notNull(),lastError:text("last_error")}, t=>[primaryKey({columns:[t.repository,t.number]})]);
 export const githubRefreshIntents = sqliteTable("github_refresh_intents", {principal:text("principal").notNull(),method:text("method").notNull(),path:text("path").notNull(),key:text("key").notNull(),digest:text("digest").notNull(),request:text("request").notNull(),generation:text("generation").notNull(),connectionVersion:integer("connection_version").notNull(),admittedAt:integer("admitted_at").notNull(),state:text("state").notNull(),completedAt:integer("completed_at"),result:text("result")},t=>[primaryKey({columns:[t.principal,t.method,t.path,t.key]})]);
 export const githubLookupAttempts = sqliteTable("github_lookup_attempts", {repository:text("repository").notNull(),number:integer("number").notNull(),attemptedAt:integer("attempted_at").notNull(),error:text("error")},t=>[primaryKey({columns:[t.repository,t.number]})]);
+
+export const retentionState=sqliteTable("retention_state",{singleton:integer("singleton").primaryKey(),version:integer("version").notNull()});
+export const retentionPreviews=sqliteTable("retention_previews",{id:text("id").primaryKey().notNull(),principal:text("principal").notNull(),cutoff:integer("cutoff").notNull(),expiresAt:integer("expires_at").notNull(),generation:text("generation").notNull(),version:integer("version").notNull(),digest:text("digest").notNull(),candidates:text("candidates").notNull(),issuedAt:integer("issued_at").notNull()});
+export const retentionConsumptions=sqliteTable("retention_consumptions",{previewId:text("preview_id").primaryKey().notNull().references(()=>retentionPreviews.id)});
