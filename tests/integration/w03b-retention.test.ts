@@ -249,3 +249,15 @@ it("labels an interrupted run's latest pruned tracking message with its prune ti
   expect(summary.data).toMatchObject({state:"interrupted",message:null,messagePrunedAt:retentionPrune.parse(reply.body.data).prunedAt});
  }finally{await runtime.close();f.close();}
 });
+it("rolls back selected payload removals and deleted changes when receipt insertion fails",async()=>{
+ const f=await fixture(),runtime=new HistoryRuntime(f.owned.store);try {
+  f.owned.store.createSession("synthetic-rollback-session",1000,Date.now()+100000);
+  const p=preview(f);expect(p.data.counts.eventPayloads).toBe(1);expect(p.data.counts.changes).toBeGreaterThan(0);
+  const tables=["run_events","changes","sqlite_sequence","instance_metadata","retention_state","retention_consumptions","sessions","receipts"];
+  const state=()=>Object.fromEntries(tables.map(table=>[table,f.db.prepare(`SELECT * FROM ${table}`).all()]));
+  const before=state();f.db.exec("CREATE TRIGGER synthetic_payload_failure BEFORE INSERT ON receipts WHEN NEW.path='prune' BEGIN SELECT RAISE(ABORT,'synthetic payload rollback'); END;");
+  await expect(runtime.prune(p.pruneInput,p.pruneContext,new AbortController().signal)).rejects.toThrow("synthetic payload rollback");
+  expect(state()).toEqual(before);
+  expect(readdirSync(join(f.owned.store.dataDir,"backups")).filter(name=>name.startsWith("retention-")&&name.endsWith(".sqlite"))).toHaveLength(1);
+ }finally{await runtime.close();f.close();}
+});
