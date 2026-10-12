@@ -1,3 +1,4 @@
+import { UsageData } from "./usage";
 import type { RetentionPreviewInput, RetentionPruneInput } from "../contracts/history";
 import { HistoryData } from "./history";
 import { GithubData } from "./github";
@@ -945,6 +946,7 @@ export class ApplicationData {
         Date.parse(input.occurredAt),
         context.now,
       );
+    if (input.type === "run.usage") new UsageData(this.db).accept(value.id,input.eventId,input.payload,context.now);
     if (input.type === "run.succeeded" && taskValue) {
       if (input.payload.artifactRef !== undefined) this.artifact(taskValue,input.payload.artifactRef,input.payload.displayUrl,value.id,"reporter",context.now);
       if (input.payload.decision !== undefined) {

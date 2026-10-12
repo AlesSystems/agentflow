@@ -105,11 +105,17 @@ export function validateMigrationSql(sql: string): void {
       i++;
       continue;
     }
-    if (is("DROP") && input[i+1]?.word && input[i+1].value === "TRIGGER") {
-      take("DROP");take("TRIGGER");
-      take("RUN_EVENTS_NO_UPDATE");
-      if(input[i]?.value!==";")reject();
-      i++;continue;
+    if (is("DROP")) {
+      take("DROP");
+      const kind = input[i]?.value;
+      if (!input[i]?.word || !["TABLE", "VIEW", "TRIGGER"].includes(kind)) reject();
+      i++;
+      const allowed = kind === "TABLE" ? "RUN_EVENTS" : kind === "VIEW" ? "RETENTION_ELIGIBLE_EVENTS" : "RUN_EVENTS_NO_UPDATE";
+      if (kind === "TRIGGER" && is("WORKFLOW_EVENTS_CROSS_KIND")) i++;
+      else take(allowed);
+      if (input[i]?.value !== ";") reject();
+      i++;
+      continue;
     }
     let header = i;
     if (input[header]?.value === "CREATE" && input[header].word) {

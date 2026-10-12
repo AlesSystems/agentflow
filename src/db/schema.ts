@@ -336,7 +336,7 @@ export const runEvents = sqliteTable(
     ),
     check(
       "run_events_type",
-      sql`${t.type} IN ('run.started','run.heartbeat','run.progress','run.succeeded','run.failed','run.cancelled')`,
+      sql`${t.type} IN ('run.started','run.heartbeat','run.progress','run.succeeded','run.failed','run.cancelled','run.usage')`,
     ),
     check("run_events_body", sql`json_valid(${t.body})`),
     check("run_events_acknowledgement", sql`json_valid(${t.acknowledgement})`),
@@ -397,3 +397,29 @@ export const githubLookupAttempts = sqliteTable("github_lookup_attempts", {repos
 export const retentionState=sqliteTable("retention_state",{singleton:integer("singleton").primaryKey(),version:integer("version").notNull()});
 export const retentionPreviews=sqliteTable("retention_previews",{id:text("id").primaryKey().notNull(),principal:text("principal").notNull(),cutoff:integer("cutoff").notNull(),expiresAt:integer("expires_at").notNull(),generation:text("generation").notNull(),version:integer("version").notNull(),digest:text("digest").notNull(),candidates:text("candidates").notNull(),issuedAt:integer("issued_at").notNull()});
 export const retentionConsumptions=sqliteTable("retention_consumptions",{previewId:text("preview_id").primaryKey().notNull().references(()=>retentionPreviews.id)});
+
+export const usageMeasurements = sqliteTable("usage_measurements", {
+ runId: text("run_id").notNull().references(() => runs.id),
+ usageId: text("usage_id").notNull(),
+ eventId: text("event_id").notNull().references(() => runEvents.eventId),
+ payloadDigest: text("payload_digest").notNull(),
+ source: text("source").notNull(),
+ model: text("model").notNull(),
+ inputTokens: integer("input_tokens"),
+ outputTokens: integer("output_tokens"),
+ billingBasis: text("billing_basis"),
+ measuredAt: integer("measured_at").notNull(),
+ firstReceivedAt: integer("first_received_at").notNull(),
+}, t => [
+ primaryKey({columns:[t.runId,t.usageId]}),
+ uniqueIndex("usage_event").on(t.eventId),
+ index("usage_receipt").on(t.firstReceivedAt,t.runId,t.usageId),
+ check("usage_id_length",sql`length(${t.usageId}) BETWEEN 1 AND 200`),
+ check("usage_source_length",sql`length(${t.source}) BETWEEN 1 AND 200`),
+ check("usage_model_length",sql`length(${t.model}) BETWEEN 1 AND 200`),
+ check("usage_input_tokens",sql`${t.inputTokens} IS NULL OR (typeof(${t.inputTokens})='integer' AND ${t.inputTokens} BETWEEN 0 AND 9007199254740991)`),
+ check("usage_output_tokens",sql`${t.outputTokens} IS NULL OR (typeof(${t.outputTokens})='integer' AND ${t.outputTokens} BETWEEN 0 AND 9007199254740991)`),
+ check("usage_billing_basis",sql`${t.billingBasis} IS NULL OR ${t.billingBasis} IN ('input_output_only','unrepresented')`),
+ check("usage_measured_at",sql`typeof(${t.measuredAt})='integer' AND ${t.measuredAt} BETWEEN -8640000000000000 AND 8640000000000000`),
+ check("usage_first_received_at",sql`typeof(${t.firstReceivedAt})='integer' AND ${t.firstReceivedAt} BETWEEN 0 AND 8640000000000000`),
+]);
