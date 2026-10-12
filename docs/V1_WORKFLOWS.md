@@ -286,3 +286,12 @@ Planned files: usage schemas/ledger/query, optional price settings, report CLI,
 usage view, integration/summary tests. Pass with unknown counts, duplicate logical
 measurements, conflicting usage IDs, restart, date bounds, mixed models/sources,
 partial prices, and preserved totals after payload retention. W04 owns release.
+
+W03c Tasks 1–2 implement the durable usage ledger, bounded `/usage` query and local
+immutable price snapshots. Coverage describes the project-wide started interval
+set even under source/model filters; report membership uses first receipt UTC.
+Known totals are exact strings with separate unknown counts. An optional selected
+quote estimates complete `input_output_only` reports, reports disjoint exclusions,
+and preserves each currency without conversion. Export v2 includes deduplicated
+usage and quotes. Real producer recovery, the Usage surface, package qualification
+and W04 remain subsequent gates; these backend contracts do not claim v1 release.

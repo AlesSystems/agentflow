@@ -581,3 +581,53 @@ receipt timestamps. Their read-only stub has `payload:null` and a nonnull
 [W03b qualified verification](implementation/W03b.md) records the selected-download,
 protected-retention, retry, generation, browser, and outbox contracts. Its single
 finite campaign passed; final whole-package review and integration remain pending.
+
+### Reported usage summaries and local prices
+
+`GET /usage` reads a coherent authenticated snapshot. Require `projectId`, UTC
+`from` and `to`; the positive interval is at most 31 days and selects the first
+accepted receipt in `[from,to)`. Optional exact `source` and `model` filters narrow
+reports. Project-wide coverage counts started runs that overlap the interval,
+including archived projects and attempts with no report. Queued, never-started
+runs do not contribute. `filteredReportCount` and `filteredRunsWithReports` describe
+the selected reports separately from `eligibleRuns`, `runsWithReports` and
+`runsWithoutReports`. Producer `measuredAt` never determines receipt membership.
+
+Known input, output and complete total token sums are exact decimal strings.
+Unknown report counts remain explicit; a report's `totalTokens` is null unless
+both counts are known. Source/model groups return at most 100 entries, with
+`totalGroups` and `groupsTruncated`. Overall totals include every filtered fact.
+Run details return at most `limit` entries (1–100, default 50), include attempts
+with no matching reports, and distinguish receipt bounds from measurement bounds.
+A continuation binds the whole query, order, database generation and durable
+change high-water. A changed binding or intervening mutation returns
+`cursor_invalid`; fetch a new first page.
+
+Human `POST /usage/price-snapshots` creates one immutable local quote with UUID
+`id`, name (1–200 characters), UTC `capturedAt`, optional nullable `effectiveAt`,
+and 1–20 entries. Each `(source,model)` pair is unique. Each entry has an uppercase
+three-letter currency and required nullable `inputPrice` and `outputPrice` per
+million tokens. Prices are nonnegative decimal strings with at most 12 whole and
+12 fractional digits; signs and exponent notation are rejected. The server adds
+`createdAt`. Reporter credentials cannot create prices. Exact receipt retries
+return the original body and status with the current generation header; changed
+key reuse and duplicate snapshot IDs conflict. Creation emits an existing settings
+invalidation without changing the timezone or settings version.
+
+`GET /usage/price-snapshots` lists immutable quotes with bounded keyset pages and
+no fixed total-history cap. Select one quote through `/usage?priceSnapshotId=...`.
+The estimate includes its full quote and separates currency totals. Exclusions
+are disjoint, in order: unknown input/output counts, unsupported or unknown
+billing basis, then missing or partial matching price. Only explicit
+`input_output_only` reports with both counts and prices contribute. Amounts are
+exact decimal strings with up to 18 fractional digits, aggregated without early
+rounding. There is no live price lookup, currency conversion or billing claim.
+
+Current history exports use schemaVersion 2 for both manifest and completion.
+The existing `attempts` selection adds `usageMeasurement` and
+`usagePriceSnapshot`; the four selection groups and other projections stay intact.
+Usage facts are deduplicated by `(runId,usageId)` and expose nullable counts,
+derived totals and provenance. Logical digests, receipts, paths and credentials
+are excluded. Usage facts and immutable quotes survive protected retention and
+backup restore. Historical v1 fixtures are decoded explicitly as v1; mixed manifest
+and completion versions fail validation.
