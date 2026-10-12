@@ -11,6 +11,50 @@ import { reportedWorkflow } from "../fixtures/w01-producer";
 const proof = process.env.W03B_TASK4_PROOF_DIR;
 test.use({ actionTimeout: 10000, navigationTimeout: 15000 });
 
+async function passiveReset(second: Page) {
+  const prepared = await command(second, "/retention/preview", { cutoff: new Date(Date.now() - 1).toISOString() });
+  expect(prepared.status).toBe(200);
+  const value = prepared.body.data;
+  const applied = await command(second, "/retention/prune", { previewId: value.previewId, expectedGeneration: value.expectedGeneration, expectedVersion: value.expectedVersion, candidateDigest: value.candidateDigest });
+  expect(applied.status).toBe(200);
+  return { prepared, applied };
+}
+function saveFocusProof(name: string, value: unknown) {
+  if (process.env.W03B_TASK4_FOCUS_PROOF_DIR) writeFileSync(join(process.env.W03B_TASK4_FOCUS_PROOF_DIR, name + ".json"), JSON.stringify(value, null, 2), { mode: 0o600 });
+}
+for (const control of ["Confirm prune", "Cancel preview"]) {
+  test(`passive generation reset recovers focused ${control}`, async ({ page, browser }) => {
+    const server = await launch(), other = await browser.newContext(), second = await other.newPage();
+    try {
+      await pairPage(page, server); await pairPage(second, server); await page.goto(server.url + "/settings");
+      await command(second, "/projects", { name: "Synthetic focus fact one" }); await command(second, "/projects", { name: "Synthetic focus fact two" });
+      const cutoff = new Date(Date.now() - 1).toISOString(); await preview(page, cutoff);
+      await page.getByRole("button", { name: control, exact: true }).focus(); await expect(page.getByRole("button", { name: control, exact: true })).toBeFocused();
+      const reset = await passiveReset(second);
+      await expect(page.getByRole("button", { name: "Cancel preview", exact: true })).toHaveCount(0);
+      const active = await page.evaluate(() => ({ tag: document.activeElement?.tagName, text: document.activeElement?.textContent }));
+      saveFocusProof(control === "Confirm prune" ? "confirm" : "cancel", { scope: "synthetic independently paired Chrome sessions; passive actual prune generation", control, cutoff, reset, active });
+      await expect(page.getByRole("button", { name: "Preview prune", exact: true })).toBeFocused();
+      await expect(page.getByLabel("UTC cutoff", { exact: true })).toHaveValue(cutoff);
+    } finally { await other.close(); await server.stop(); }
+  });
+}
+test("passive generation reset leaves history draft editing focused", async ({ page, browser }) => {
+  const server = await launch(), other = await browser.newContext(), second = await other.newPage();
+  try {
+    await pairPage(page, server); await pairPage(second, server); await page.goto(server.url + "/settings");
+    await command(second, "/projects", { name: "Synthetic retained focus fact one" }); await command(second, "/projects", { name: "Synthetic retained focus fact two" });
+    const cutoff = new Date(Date.now() - 1).toISOString(); await preview(page, cutoff);
+    const input = page.getByLabel("UTC cutoff", { exact: true }); await input.focus();
+    const reset = await passiveReset(second);
+    await expect(page.getByRole("button", { name: "Cancel preview", exact: true })).toHaveCount(0);
+    await expect(input).toBeFocused(); await expect(input).toHaveValue(cutoff);
+    await input.fill("1970-01-01T00:00:00.000Z"); await expect(input).toBeFocused();
+    const active = await input.evaluate(element => ({ tag: document.activeElement?.tagName, same: document.activeElement === element, value: (element as HTMLInputElement).value }));
+    saveFocusProof("draft", { scope: "synthetic independently paired Chrome sessions; no preview focus ownership", reset, active });
+  } finally { await other.close(); await server.stop(); }
+});
+
 test("unavailable export names download recovery and retains selected content", async ({ page }) => {
   const server = await launch();
   try {
