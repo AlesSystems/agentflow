@@ -2,12 +2,19 @@ import { distribution } from "./p07-protocol";
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
 import { createHash,randomUUID } from "node:crypto";
-import { chmodSync,copyFileSync,existsSync,lstatSync,mkdirSync,readFileSync } from "node:fs";
-import { join } from "node:path";
+import { chmodSync,copyFileSync,existsSync,lstatSync,mkdirSync,readFileSync,realpathSync } from "node:fs";
+import { join,resolve } from "node:path";
 import Database from "better-sqlite3";
 export type Declaration={id:string;source:"base"|"head";operation:string;cohort:"legacy"|"unique"|"duplicate"|"query"|"price";repetition:number;ordinal:number;warmup:boolean};
 export type Binding={fingerprint:string;fixture:string;generation:string;cursor:string};
 export type CampaignSample=Declaration&Binding&{status:number|null;dispatchMs:number|null;drainedMs:number|null;elapsedMs:number|null;failure:string|null;expectedFacts:unknown;facts:unknown};
+export function campaignOutputLayout(proof:string,create=false){
+ const validate=(path:string)=>{const stat=lstatSync(path,{throwIfNoEntry:false});assert(stat,"campaign output layout missing directory");assert(stat.isDirectory()&&!stat.isSymbolicLink()&&stat.uid===process.getuid!()&&(stat.mode&0o777)===0o700&&realpathSync(path)===resolve(path),"campaign output layout requires owned real mode700 directories");return {path,dev:stat.dev,ino:stat.ino,uid:stat.uid,mode:stat.mode&0o777};};
+ const root=validate(proof),directories=["fixtures","sql-copies"].map(name=>join(proof,name));
+ for(const path of directories)if(lstatSync(path,{throwIfNoEntry:false}))validate(path);
+ if(create)for(const path of directories)if(!lstatSync(path,{throwIfNoEntry:false}))mkdirSync(path,{mode:0o700});
+ return {root,directories:directories.map(validate)};
+}
 export function campaignDeclarations():Declaration[]{
  const rows:Declaration[]=[];
  for(let repetition=1;repetition<=3;repetition++){

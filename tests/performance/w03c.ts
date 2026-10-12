@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID,createHash } from "node:crypto";
-import { chmodSync,copyFileSync,existsSync,lstatSync,mkdirSync,readFileSync,writeFileSync } from "node:fs";
+import { chmodSync,copyFileSync,cpSync,existsSync,mkdirSync,readFileSync,writeFileSync } from "node:fs";
 import { join,isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { openOwnedStore as OpenOwnedStore } from "../../src/db";
@@ -8,7 +8,7 @@ import type { ApplicationCommand } from "../../src/db/application";
 import { eventInput } from "../../src/contracts/observations";
 import { priceSnapshotCreate,usageResponse } from "../../src/contracts/usage";
 import { canonicalDigest } from "../../src/domain/request-digest";
-import { campaignDeclarations,auditStoppedSql,reconcileCampaign,campaignSummary,bindNativeTimings,witnessAcceptance,runtimeShutdownAccepted,type CampaignSample,type Binding } from "../fixtures/w03c-campaign";
+import { campaignOutputLayout,campaignDeclarations,auditStoppedSql,reconcileCampaign,campaignSummary,bindNativeTimings,witnessAcceptance,runtimeShutdownAccepted,type CampaignSample,type Binding } from "../fixtures/w03c-campaign";
 import { physicalPins,runtimePins,verifyPins,validateExport } from "../fixtures/w03b-qualification";
 import { qualifiedService,finishCapture } from "../fixtures/w03a-qualification";
 import { boundedFetch,readBoundedText } from "../fixtures/w01-runtime";
@@ -16,7 +16,8 @@ import { captureJournal } from "../fixtures/w02-journal";
 import { distribution } from "../fixtures/p07-protocol";
 const options=Object.fromEntries(process.argv.slice(2).reduce<string[][]>((r,v,i,a)=>i%2===0?[...r,[v,a[i+1]]]:r,[]));
 const phase=options["--phase"],base=options["--base-root"],head=options["--head-root"],proof=options["--proof-dir"];
-assert(["prepare","run"].includes(phase));for(const p of [base,head,proof])assert(p&&isAbsolute(p));assert.equal(process.cwd(),head);assert.equal(lstatSync(proof).mode&0o777,0o700);
+assert(["prepare","refreeze","run"].includes(phase));for(const p of [base,head,proof])assert(p&&isAbsolute(p));assert.equal(process.cwd(),head);let outputLayout:ReturnType<typeof campaignOutputLayout>;
+try{outputLayout=campaignOutputLayout(proof,phase!=="run");}catch(error){console.log(JSON.stringify({kind:"outputLayoutRejected",declaredRequests:campaignDeclarations().length,servicesStarted:0,sampleAttempts:0}));throw error;}
 const hash=(p:string)=>createHash("sha256").update(readFileSync(p)).digest("hex");
 const save=(n:string,v:unknown)=>writeFileSync(join(proof,n),JSON.stringify(v,null,2)+"\n",{mode:0o600,flag:"wx"});
 const fingerprint=(p:ReturnType<typeof physicalPins>)=>createHash("sha256").update(JSON.stringify({source:p.source,build:p.build})).digest("hex");
@@ -25,8 +26,17 @@ type Prepared={source:{base:ReturnType<typeof physicalPins>;head:ReturnType<type
 const protocol={repetitions:3,warmups:10,existingMeasured:100,exportCompletionMeasured:10,usageQueryMeasured:100,uniqueUsageMeasured:100,logicalDuplicateUsageMeasured:100,priceMeasured:10,snapshotP95StrictBelowMs:250,newUsageIngestionP95StrictBelowMs:250,existingRegressionPercent:20,preparationTimingSamples:0,fixtureReset:"independent repetition directories; no per-request reset",legacy:{tasks:20,runs:20,oldEvents:60},usageAndPrices:"separate head-only fixtures",capacityStress:"separate correctness suite; no performance pooling"};
 const runtimeRoot=options["--runtime-root"];assert(runtimeRoot&&isAbsolute(runtimeRoot));
 async function open(source:string,dir:string){const {openOwnedStore}=await import(pathToFileURL(join(source,"src/db/index.ts")).href) as {openOwnedStore:typeof OpenOwnedStore};return openOwnedStore(dir);}
-if(phase==="prepare"){
- assert(!existsSync(join(proof,"prepared.json")),"prepare once");mkdirSync(join(proof,"fixtures"),{mode:0o700});mkdirSync(join(proof,"sql-copies"),{mode:0o700});const fixtures:Fixture[]=[];
+if(phase==="prepare"||phase==="refreeze"){
+ assert(!existsSync(join(proof,"prepared.json")),"prepare once");const fixtures:Fixture[]=[];
+ if(phase==="refreeze"){
+  const originalPath=options["--prepared-from"];assert(originalPath&&isAbsolute(originalPath));assert.equal(hash(originalPath),options["--prepared-sha"],"frozen original preparation required");const original=JSON.parse(readFileSync(originalPath,"utf8")) as Prepared;assert.equal(original.fixtures.length,18);assert.deepEqual(original.declarations,campaignDeclarations());assert.deepEqual(original.protocol,protocol);
+  for(const fixture of original.fixtures){
+   assert.equal(fixture.id,`${fixture.source}-${fixture.cohort}-${fixture.repetition}`);assert(!fixture.id.includes("/"));const before=runtimePins(fixture.dir);verifyPins(fixture.pins,before);assert(Object.values(before.files).every(file=>!Object.hasOwn(file,"link")),"original fixture links forbidden");const dir=join(proof,"fixtures",fixture.id);assert(!existsSync(dir));cpSync(fixture.dir,dir,{recursive:true,errorOnExist:true,force:false,preserveTimestamps:true});const copied=runtimePins(dir);verifyPins(before,runtimePins(fixture.dir));
+   const content=(pins:ReturnType<typeof runtimePins>)=>Object.fromEntries(Object.entries(pins.files).map(([name,file])=>[name,{mode:file.mode,sha256:file.sha256,link:file.link}]));assert.deepEqual(content(copied),content(before));const facts=auditStoppedSql(dir,join(proof,"sql-copies"));assert.equal(facts.integrity,"ok");assert.deepEqual(facts.foreignKeys,[]);assert.deepEqual(facts.rows,fixture.facts.rows);assert.deepEqual(facts.before,fixture.facts.before);verifyPins(before,runtimePins(fixture.dir));
+   save(fixture.id+"-copy-receipt.json",{originalPath,originalPreparedSHA:hash(originalPath),originalDir:fixture.dir,before,after:runtimePins(fixture.dir),copied,qualification:"Original frozen premeasurement fixture copied without opening original SQL; stopped audit opens a new copy only"});save(fixture.id+"-stopped.json",facts);fixtures.push({...fixture,dir,facts,pins:runtimePins(dir)});
+  }
+  assert.equal(hash(originalPath),options["--prepared-sha"]);
+ }else{
  for(let repetition=1;repetition<=3;repetition++)for(const cohort of ["legacy","query","unique","duplicate","price"]){
   for(const variant of cohort==="legacy"?["base","head"] as const:["head"] as const){
    const id=`${variant}-${cohort}-${repetition}`,dir=join(proof,"fixtures",id);mkdirSync(dir,{mode:0o700});const source=variant==="base"?base:head;
@@ -49,7 +59,8 @@ if(phase==="prepare"){
    const fixture={id,source:variant,repetition,cohort,dir,projectId,runId,activeRunId,generation:metadata.generation,cursor,priceId,from,to,facts,pins:runtimePins(dir)};save(id+"-stopped.json",facts);fixtures.push(fixture);
   }
  }
- const prepared:Prepared={source:{base:physicalPins(base),head:physicalPins(head)},node:runtimePins(runtimeRoot),fixtures,declarations:campaignDeclarations(),helperSHA:hash(join(head,"tests/fixtures/w03c-campaign.ts")),controllerSHA:hash(import.meta.filename),instrumentSHA:hash(join(head,"tests/fixtures/w03c-measure-server.ts")),protocol};save("prepared.json",prepared);save("readiness.json",{status:"STOPPED_READY_FOR_INDEPENDENT_REVIEW",servicesStarted:0,officialSamples:0,hiddenSamples:0,fixtures:fixtures.length,declaredRequests:prepared.declarations.length,protocol,preparedSHA:hash(join(proof,"prepared.json"))});
+ }
+ campaignOutputLayout(proof);const prepared:Prepared={source:{base:physicalPins(base),head:physicalPins(head)},node:runtimePins(runtimeRoot),fixtures,declarations:campaignDeclarations(),helperSHA:hash(join(head,"tests/fixtures/w03c-campaign.ts")),controllerSHA:hash(import.meta.filename),instrumentSHA:hash(join(head,"tests/fixtures/w03c-measure-server.ts")),protocol};save("prepared.json",prepared);save("readiness.json",{status:"STOPPED_READY_FOR_INDEPENDENT_REVIEW",phase,outputLayout,servicesStarted:0,officialSamples:0,hiddenSamples:0,fixtures:fixtures.length,declaredRequests:prepared.declarations.length,protocol,preparedSHA:hash(join(proof,"prepared.json"))});
 }else{
  assert(process.env.AGENTFLOW_W03C_QUIET_RELEASE,"Root explicit quiet release required before any campaign service/sample");const prepared=JSON.parse(readFileSync(join(proof,"prepared.json"),"utf8")) as Prepared,release=JSON.parse(readFileSync(process.env.AGENTFLOW_W03C_QUIET_RELEASE,"utf8"));assert.equal(release.authority,"ROOT_EXPLICIT_RELEASE");assert.equal(release.preparedSHA256,hash(join(proof,"prepared.json")));assert(!existsSync(join(proof,"capture.jsonl")),"one campaign only");
  assert(release.correctnessProof&&typeof release.correctnessProof.path==="string"&&typeof release.correctnessProof.sha256==="string","Root-qualified actual CLI/two-browser correctness packet required");assert.equal(hash(release.correctnessProof.path),release.correctnessProof.sha256);const correctness=JSON.parse(readFileSync(release.correctnessProof.path,"utf8"));assert(correctness&&typeof correctness==="object"&&correctness.authority==="ROOT_QUALIFIED_CORRECTNESS");assert.equal(correctness.helperSHA256,prepared.helperSHA);assert.deepEqual(correctness.sourceFingerprints,{base:fingerprint(prepared.source.base),head:fingerprint(prepared.source.head)});assert(Array.isArray(correctness.originals)&&correctness.originals.length>0&&correctness.originals.length<=100);for(const original of correctness.originals){assert(original&&typeof original.path==="string"&&typeof original.sha256==="string");assert.equal(hash(original.path),original.sha256);}assert(witnessAcceptance(correctness.witness).acceptance,"missing actual CLI ACK/UI generation resets/drained resources");verifyPins(prepared.source,{base:physicalPins(base),head:physicalPins(head)});verifyPins(prepared.node,runtimePins(runtimeRoot));assert.equal(prepared.helperSHA,hash(join(head,"tests/fixtures/w03c-campaign.ts")));assert.equal(prepared.controllerSHA,hash(import.meta.filename));assert.equal(prepared.instrumentSHA,hash(join(head,"tests/fixtures/w03c-measure-server.ts")));assert.deepEqual(prepared.protocol,protocol);assert.deepEqual(prepared.declarations,campaignDeclarations());for(const fixture of prepared.fixtures)verifyPins(fixture.pins,runtimePins(fixture.dir));
@@ -57,7 +68,7 @@ if(phase==="prepare"){
  await finishCapture(async()=>{
   for(let repetition=1;repetition<=3;repetition++)for(const cohort of ["legacy","query","unique","duplicate","price"]){for(const source of cohort==="legacy"?(repetition===2?["head","base"]:["base","head"]):["head"]){
    const fixture=prepared.fixtures.find(f=>f.id===`${source}-${cohort}-${repetition}`)!;let cursor=fixture.cursor;const binding:Binding={fingerprint:fingerprint(prepared.source[fixture.source]),fixture:fixture.id,generation:fixture.generation,cursor};let eventSequence=cohort==="duplicate"?3:2;const observed:CampaignSample[]=[];
-   await qualifiedService({cwd:source==="base"?base:head,dir:fixture.dir,nodeExecutable:join(runtimeRoot,"bin/node"),entry:join(head,"tests/fixtures/w03c-measure-server.ts"),extraEnv:{AGENTFLOW_W03C_MEASURE_SOURCE:source==="base"?base:head}},services,async(server,cookie)=>{
+   campaignOutputLayout(proof);await qualifiedService({cwd:source==="base"?base:head,dir:fixture.dir,nodeExecutable:join(runtimeRoot,"bin/node"),entry:join(head,"tests/fixtures/w03c-measure-server.ts"),extraEnv:{AGENTFLOW_W03C_MEASURE_SOURCE:source==="base"?base:head}},services,async(server,cookie)=>{
     for(const declaration of prepared.declarations.filter(d=>d.repetition===repetition&&d.source===source&&(cohort==="legacy"?d.cohort==="legacy":d.cohort===cohort))){
      let path="",input:unknown;let expectedFacts:unknown;
      if(declaration.operation==="tasks"){path=`/api/v1/tracking/tasks?projectId=${fixture.projectId}&limit=100`;expectedFacts={total:20};}
