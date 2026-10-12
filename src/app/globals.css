@@ -828,5 +828,11 @@ nav[aria-label="Project views"] a { min-height: 44px; min-width: 44px; display: 
 
 .github-settings .checkbox-label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .github-settings .checkbox-label input { margin: 0; }
+.history-settings .checkbox-label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.history-settings .checkbox-label input { margin: 0; }
+.history-settings p { max-width: 72ch; }
+.history-settings button { margin: 4px 8px 4px 0; }
+.retention-preview, .retention-recovery { margin-top: 24px; }
+.history-settings dd { overflow-wrap: anywhere; }
 .github-settings .paired-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 700px) { .github-settings .paired-fields { grid-template-columns: minmax(0, 1fr); } }

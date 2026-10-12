@@ -51,7 +51,7 @@ export class ApiClient {
     return parsed;
   }
   async command(command: FrozenCommand) {
-    await this.request(command.path, {
+    return this.request(command.path, {
       method: command.method,
       headers: {
         "Content-Type": "application/json",
