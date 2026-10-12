@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, and W03a are integrated through PRs #4–#13. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b is in planning, pending its exact-plan Astra medium gate before implementation. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, and W03a are integrated through PRs #4–#13. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b has an approved exact plan, implemented history contracts, and accepted qualification/campaign evidence. Its latest client-only generation repair is verified by focused native browser checks; independent re-review, integration, and guarded cleanup remain pending. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 

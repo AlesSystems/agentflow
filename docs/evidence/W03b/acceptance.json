@@ -461,7 +461,7 @@
       "sha256": "ded010a11f47aaee16a42b32113d22fa06b7772c32f7022ba1be69f4b3a4fcb5",
       "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
       "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
-      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "qualification": "Task 4 acceptance contains the later e958 focus-only repair. Unchanged a080 appearance capture does not demonstrate the additional 74e successful-export header repair.",
       "privacy": "Data Location masked during capture."
     },
     {
@@ -469,7 +469,7 @@
       "sha256": "7f113a9448e7ec994a6dc05d4b0d8bb5c86a08c3fd942d3ac1d0c23ecaa933ba",
       "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
       "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
-      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "qualification": "Task 4 acceptance contains the later e958 focus-only repair. Unchanged a080 appearance capture does not demonstrate the additional 74e successful-export header repair.",
       "privacy": "Data Location masked during capture."
     },
     {
@@ -477,7 +477,7 @@
       "sha256": "5e3b4e13e718f406db4f6fdfa5fcf099fb9a59fe53db2fdc136f10e95d3febde",
       "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
       "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
-      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "qualification": "Task 4 acceptance contains the later e958 focus-only repair. Unchanged a080 appearance capture does not demonstrate the additional 74e successful-export header repair.",
       "privacy": "Captured region excludes Data Location."
     },
     {
@@ -485,7 +485,7 @@
       "sha256": "4726c6f19495e80a4204a5154dd3caa960249b4b19a699e502c42cf33b959acb",
       "captureCommit": "a080211f9f8ca454d623f47a48c74960fe6ce6b7",
       "acceptedUiCommit": "e958a1128b204bac978f212466129f411dd7386e",
-      "qualification": "Later accepted change only repairs focus recovery; these original captures are unchanged.",
+      "qualification": "Task 4 acceptance contains the later e958 focus-only repair. Unchanged a080 appearance capture does not demonstrate the additional 74e successful-export header repair.",
       "privacy": "Data Location masked during capture."
     }
   ],
@@ -496,5 +496,33 @@
     "independentReduction": "9ff5ee89c02bc0db0aa85b190e194d77c9c55b6e59d7db57c4ddebd785462ee5",
     "independentPostSQL": "0de593a3678e5e354ec2ded7e9653fc64ea9623fa383b552c7bf3783e16fb7ff",
     "independentSourceTiming": "5def5fcd885e32564bbc585ac5515005ce3410498d6d72c024d35b3be09c75ca"
+  },
+  "clientRepair": {
+    "status": "functional-proof-accepted-by-Root; final scoped source reviews pending",
+    "sourceCommit": "74e0187db1c19ff50f5b564ae49ab829fe65a08d",
+    "regressionTestCommit": "90418f2bf47bcb11438218901ea4e475b6551585",
+    "productionBuildId": "xbj9fOu1kF9q4vKyZx-z9",
+    "compiledFiles": 453,
+    "nativeBrowserCasesPassed": 2,
+    "affectedBrowserCasesPassed": 8,
+    "typecheckExit": 0,
+    "lintExit": 0,
+    "changedBuildExit": 0,
+    "apiDatabaseNativeBackendInputsUnchanged": true,
+    "originalCampaignSourceUnchanged": true,
+    "newPerformanceCampaigns": 0,
+    "newClientPerformanceClaim": false,
+    "dependencyQualification": "Own qualified dependency copy, no install; authoritative 113 base inputs include corrected generated next-env.d.ts.",
+    "behavior": "Generation header checked before successful/error export body use; stale copy cancelled, current settings snapshot obtained, explicit retry required even when ApiClient is already current.",
+    "ancillaryFocusQualification": "Added export-feedback focus assertions failed twice; foreground hypothesis disproved. Visible recovery feedback/current snapshots/no old download/retry/cleanup pass. No feedback-focus pass or new focus behavior claimed.",
+    "priorFocusContracts": "Required Confirm/Cancel disappearance and outside-draft focus passed separately among eight affected cases.",
+    "originalFailuresRetained": true,
+    "newAppearanceCaptures": 0,
+    "evidenceSHA256": {
+      "repairReport": "85e5372cebd753841fdd40d3805bf9c1c7ba92279f90944bcddcd5496c28b747",
+      "sourceFreeze": "1996f361c8596ea03bad2922f07fa00a235c62970a1b925eb33532e433262bba",
+      "compiledArchive": "48caa185d9bf115b92a4031db01583b2cec829483bf2ed9fb6f1e4fc295e912a",
+      "independentRootAudit": "2e521eaa374fcff4b286f96760fa9ce3659686691d7e9222929e29119d83b330"
+    }
   }
 }

@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01, W02, and W03a integrated; W03b is in planning.** Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01, W02, and W03a integrated.** W03b has an approved plan, implemented history contracts, and accepted qualification/campaign evidence. Its latest client-only generation repair is verified by focused native browser checks; independent re-review, integration, and cleanup remain pending. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -74,7 +74,48 @@ Backup refuses an existing destination. Restore verifies the backup, preserves t
 
 An interrupted restore refuses startup. Run `npm run local -- restore repair` while stopped to finish the recorded replacement. Preserve the marker and damaged bundle if repair fails. Do not delete the database or lock file to make startup succeed.
 
-Verify with `npm run test:unit`, `npm run test:integration`, `npm run lint`, `npm run typecheck`, `npm run build`, and `npm run test:e2e`. Install the default test browser with `npx playwright install chromium`. On a host with supported Google Chrome installed, `AGENTFLOW_TEST_BROWSER=chrome npm run test:e2e` uses a fresh Playwright profile. It does not use your personal browser profile. [P01 evidence](docs/implementation/P01.md) records the exact tested configuration and limitations.
+Verify with `npm run test:unit`, `npm run lint`, `npm run typecheck`, `npm run build`, and `npm run test:e2e`. The full `npm run test:integration` also requires the historical prerequisites below; an ordinary checkout alone is insufficient. Install the default test browser with `npx playwright install chromium`. On a host with supported Google Chrome installed, `AGENTFLOW_TEST_BROWSER=chrome npm run test:e2e` uses a fresh Playwright profile. It does not use your personal browser profile. [P01 evidence](docs/implementation/P01.md) records the exact tested configuration and limitations.
+
+### Historical integration prerequisites
+
+The W03b upgrade contracts require `AGENTFLOW_W03B_HISTORICAL_ROOT` and a fresh,
+precreated owner-only `AGENTFLOW_W03B_UPGRADE_PROOF_DIR`. Missing required evidence
+blocks qualification. Do not skip mandatory suites or treat skipped inherited
+cases as acceptance.
+
+Use canonical, operator-owned directories outside the active application root.
+The historical root contains `runtime/bin/node` at qualified Node 24.15.0 and
+`sources/<package>` checkouts at these exact commits:
+
+| Package | Source commit |
+| --- | --- |
+| P01 | `a2e5170879602faff706e1aa2e5e7a1905d63b47` |
+| P04 | `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe` |
+| P07 | `dd26c4b00867e7680c3baf0cf2be39b60502aecf` |
+| W01 | `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168` |
+| W02 | `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361` |
+| W03a | `76fe748a3d642f8a5a6ea738af47a3bb640070d3` |
+
+Each checkout needs its own lock-correct dependencies and source-correct production
+build. Preserve Git metadata for source-pin checks. Follow the
+[isolated installation policy](docs/EXECUTION_POLICY.md) and
+[qualified W03b source evidence](docs/implementation/W03b.md); do not substitute
+latest-head builds or shared managed dependencies. Set the inherited prerequisites
+as well. These example paths are placeholders for directories you prepare:
+
+```sh
+export AGENTFLOW_W03B_HISTORICAL_ROOT=/absolute/operator-owned/history
+export AGENTFLOW_W03B_UPGRADE_PROOF_DIR=/absolute/operator-owned/proof/upgrade
+export AGENTFLOW_W01_BASE_SOURCE="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources/P07"
+export AGENTFLOW_W02_W01_SOURCE="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources/W01"
+export AGENTFLOW_P06_SMOKE_BASE_SOURCE="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources/P07"
+npm run test:integration
+```
+
+The last variable supplies a qualified baseline for bounded P06 helper controls;
+it is not historical P06 acceptance. Preserve original exits, complete streams,
+source/build pins, and synthetic data evidence. W04 contributor/release setup
+verification remains pending; this prerequisite description is not a new setup run.
 
 The app requires no cloud account, hosted database, Docker, or paid infrastructure. Package installation requires network access. Agent providers used by an external harness may have their own network requirements and costs.
 
@@ -129,5 +170,7 @@ The [W03a receipt](docs/implementation/W03a.md) records deterministic fixture
 verification, the rate-gate repair and two source-specific measured failures with
 separate scoped exceptions, plus a retained launcher setup failure. Live GitHub
 credential verification is unexecuted. Whole-package review, PR #13 integration, private archival, and guarded cleanup
-are complete. W03b awaits its plan gate; W03c and W04 remain unstarted. This is
-not a complete-v1 release.
+are complete. W03b has an approved plan, implemented contracts, and accepted
+qualification/campaign evidence. Its latest client generation repair has focused
+verification pending independent re-review. Integration and cleanup remain open;
+W03c and W04 remain unstarted. This is not a complete-v1 release.
