@@ -11,7 +11,12 @@ W03b qualified verification and one official campaign are accepted. Independent
 whole-package reviews and scoped repair re-review approved the candidate; PR #14
 integration, private archival, and guarded cleanup are complete.
 [Its receipt](implementation/W03b.md) retains the source qualifications. W03c
-planning is next; W03c implementation and W04 remain open.
+implementation and qualified verification are accepted, including its exact
+recorded regression disposition. PR #15 integrated reviewed head `ac229e5` at
+`e8dc6967d3964c672bd964a65584e403e11ce27a`; private archival and guarded cleanup
+are complete. [Its receipt](implementation/W03c.md) preserves the original results
+and qualifications. W04 planning and its Astra approval are next; full v1
+validation and source release remain open.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
@@ -287,11 +292,13 @@ usage view, integration/summary tests. Pass with unknown counts, duplicate logic
 measurements, conflicting usage IDs, restart, date bounds, mixed models/sources,
 partial prices, and preserved totals after payload retention. W04 owns release.
 
-W03c Tasks 1–2 implement the durable usage ledger, bounded `/usage` query and local
+W03c implements the durable usage ledger, bounded `/usage` query and local
 immutable price snapshots. Coverage describes the project-wide started interval
 set even under source/model filters; report membership uses first receipt UTC.
 Known totals are exact strings with separate unknown counts. An optional selected
 quote estimates complete `input_output_only` reports, reports disjoint exclusions,
 and preserves each currency without conversion. Export v2 includes deduplicated
-usage and quotes. Real producer recovery, the Usage surface, package qualification
-and W04 remain subsequent gates; these backend contracts do not claim v1 release.
+usage and quotes. Real producer recovery, the Usage page, package qualification,
+independent review, PR #15 integration, and guarded cleanup are complete.
+[The W03c receipt](implementation/W03c.md) records source-qualified evidence and
+limitations. W04 validation and v1 release remain open.

@@ -1,8 +1,10 @@
 # AgentFlow v1 roadmap
 
-Status: planned. On 2026-10-09 the operator changed the release target from v0.1
-to v1 and requested completion of all three phases in order from one implementation
-prompt. This PR records that scope and delivery plan. Implementation is unstarted.
+Status: P01–P07, W01, W02, and W03a–W03c are integrated. W03c merged through
+[PR #15](https://github.com/AlesSystems/agentflow/pull/15) at
+`e8dc6967d3964c672bd964a65584e403e11ce27a`; private archival and guarded cleanup
+are complete. The operator activated the ordered v1 run on 2026-10-09. W04
+planning, Astra approval, full v1 validation, and source release remain open.
 
 ## Release boundary
 
@@ -21,14 +23,15 @@ Work board uses the [lightly cartoonish design](DESIGN.md).
 Follow [PLAN.md](PLAN.md) and the [execution policy](docs/EXECUTION_POLICY.md).
 P07 is an internal integration checkpoint; it no longer publishes v0.1. Do not stop
 at a manual board, P07, or a graph-only demo and call the v1 objective complete.
-The [single starting prompt](docs/EXECUTION_POLICY.md#starting-the-future-run)
-activates the future implementation run. Saving this plan does not start it.
+The operator activated the implementation run using the
+[single starting prompt](docs/EXECUTION_POLICY.md#starting-the-future-run).
+Saving the plan alone did not supply that authority.
 
 ## Phase 1. Foundation
 
-- [ ] P01: local runtime, SQLite, local authentication, migration and recovery.
-- [ ] P02: project/task contracts, comments, versions, acceptance and history.
-- [ ] P03: Overview, projects, Work board, task detail, settings and pairing.
+- [x] P01: local runtime, SQLite, local authentication, migration and recovery.
+- [x] P02: project/task contracts, comments, versions, acceptance and history.
+- [x] P03: Overview, projects, Work board, task detail, settings and pairing.
 
 One project has Backlog, In progress, Review, and Completed. Preserve title,
 description, acceptance criteria, priority, tags, assignment, blocker, parent task,
@@ -38,10 +41,10 @@ safely. The design's desktop and narrow studies specify intent, not passing UI t
 
 ## Phase 2. Agent integration
 
-- [ ] P04: agent identities, attempts, ordered/idempotent event ingestion.
-- [ ] P05: SSE recovery, freshness, run timelines, Agents and Activity views.
-- [ ] P06: generic CLI hooks, durable outbox, executable producer walkthrough.
-- [ ] P07: production installation, load, recovery and security checkpoint.
+- [x] P04: agent identities, attempts, ordered/idempotent event ingestion.
+- [x] P05: SSE recovery, freshness, run timelines, Agents and Activity views.
+- [x] P06: generic CLI hooks, durable outbox, executable producer walkthrough.
+- [x] P07: production installation, load, recovery and security checkpoint.
 
 External tools start and coordinate agents. AgentFlow sees only explicit reports.
 An implementation success reaches Review, not Completed. Stale reports are
@@ -50,13 +53,13 @@ per task remains the v1 rule; parallel agents work on separate linked tasks.
 
 ## Phase 3. Workflow tracking and supporting tools
 
-- [ ] W01: versioned reported plans, workflow runs, graph/list view, node evidence,
+- [x] W01: versioned reported plans, workflow runs, graph/list view, node evidence,
   assignments, and optional reported skill metadata.
-- [ ] W02: same-project dependency DAGs, readiness explanations, revision/artifact
+- [x] W02: same-project dependency DAGs, readiness explanations, revision/artifact
   bound review decisions, and explicit rework rounds.
-- [ ] W03a: opt-in, read-only GitHub PR metadata synchronization for selected repos.
-- [ ] W03b: explicit export and retention controls, defaulting to retain all history.
-- [ ] W03c: reported usage summaries with unknown-data handling and attributable
+- [x] W03a: opt-in, read-only GitHub PR metadata synchronization for selected repos.
+- [x] W03b: explicit export and retention controls, defaulting to retain all history.
+- [x] W03c: reported usage summaries with unknown-data handling and attributable
   cost estimates only when a complete named price snapshot is available.
 
 The [Phase 3 contract](docs/V1_WORKFLOWS.md) defines the bounded implementation
