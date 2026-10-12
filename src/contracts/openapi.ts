@@ -12,7 +12,7 @@ import {
   responseExamples,
   detailContinuationExample,
 } from "./examples";
-import { taskDetailV1, taskDetailQueryV1 } from "./tasks";
+import { run, taskDetailV1, taskDetailQueryV1 } from "./tasks";
 import { envelope } from "./common";
 export const errorSchema = z.strictObject({
   error: z.strictObject({
@@ -40,6 +40,12 @@ function schema(value: z.ZodType, io: "input" | "output" = "output") {
   const { $schema, ...result } = z.toJSONSchema(value, {
     io,
     unrepresentable: "any",
+    override(context) {
+      if (io === "output" && context.zodSchema instanceof z.ZodObject
+        && context.zodSchema.shape.artifactRef === run.shape.artifactRef
+        && context.zodSchema.shape.reworkRound === run.shape.reworkRound)
+        context.jsonSchema.required = context.jsonSchema.required?.filter(key => key !== "artifactRef" && key !== "reworkRound");
+    },
   });
   void $schema;
   return result;

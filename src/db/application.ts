@@ -853,7 +853,8 @@ export class ApplicationData {
     return run.parse(value);
   }
   private runView(value: Run, now: number) {
-    return { ...value, freshness: observationFreshness(value, now) };
+    const { artifactRef, reworkRound, ...original } = value;
+    return { ...(artifactRef === null && reworkRound === null ? original : value), freshness: observationFreshness(value, now) };
   }
   private agentView(value: Row, now: number) {
     const { reporting: reported, ...identity } = value;
