@@ -12,17 +12,23 @@ export function usePageRows<T, S extends z.ZodType<{ snapshotCursor: string; gen
   const { api, generation, pair } = useWorkspace();
   const [extra, setExtra] = useState<T[]>([]), [next, setNext] = useState<string | null | undefined>(), [error, setError] = useState(""), [busy, setBusy] = useState(false);
   const [resetNotice, setResetNotice] = useState("");
+  const [recovery, setRecovery] = useState<{ prefix: string; updatedAt: number; snapshot: string | undefined } | null>(null);
+  const prefix = `${generation}:${path}:`;
   const scope = `${generation}:${path}:${query.dataUpdatedAt}:${query.data?.snapshotCursor ?? ""}`;
   const live = useRef(scope); useLayoutEffect(() => { live.current = scope; }, [scope]);
   const [captured, setCaptured] = useState(scope);
   if (captured !== scope) { setCaptured(scope); setExtra([]); setNext(undefined); setError(""); }
   const first = query.data ? select(query.data) : undefined;
+  const recovering = recovery?.prefix === prefix;
+  const fresh = recovering && query.isSuccess && query.data?.generation === api.generation && query.dataUpdatedAt > recovery.updatedAt && query.data?.snapshotCursor !== recovery.snapshot;
+  if (fresh) { setRecovery(null); setResetNotice("History changed. Pages were reset to a fresh snapshot. Your drafts are retained."); }
+  const blocked = recovering && !fresh;
   async function more() {
     const cursor = next === undefined ? first?.nextCursor : next;
-    if (!cursor || busy) return;
+    if (!cursor || busy || blocked) return;
     const original = live.current, snapshot = query.data?.snapshotCursor;
     setBusy(true); setError("");
-    const reset = () => { setExtra([]); setNext(undefined); setResetNotice("History changed. Pages were reset to a fresh snapshot. Your drafts are retained."); void query.refetch(); };
+    const reset = () => { setExtra([]); setNext(null); setRecovery({ prefix, updatedAt: query.dataUpdatedAt, snapshot }); setResetNotice("History changed. Pages were reset. Loading a fresh first page; your drafts are retained."); void query.refetch(); };
     try {
       const result = await api.read(`${path}${path.includes("?") ? "&" : "?"}cursor=${encodeURIComponent(cursor)}`, schema);
       if (original !== live.current || result.generation !== api.generation) return;
@@ -36,5 +42,5 @@ export function usePageRows<T, S extends z.ZodType<{ snapshotCursor: string; gen
   }
   const rows = [...(first?.items ?? []), ...extra];
   const items = identity ? [...new Map(rows.map(item => [identity(item), item])).values()] : rows;
-  return { query, items, next: next === undefined ? first?.nextCursor : next, error, resetNotice, busy, more };
+  return { query, items, next: blocked ? null : next === undefined ? first?.nextCursor : next, error, resetNotice, busy, more };
 }
