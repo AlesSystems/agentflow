@@ -582,6 +582,50 @@ receipt timestamps. Their read-only stub has `payload:null` and a nonnull
 protected-retention, retry, generation, browser, and outbox contracts. Its single
 finite campaign passed; final whole-package review and integration remain pending.
 
+### Report usage through the existing CLI
+
+The generic `report --type run.usage` command uses the same durable outbox and
+per-run sequence as other observations. Both nullable count fields are required.
+Counts are incremental deltas, not cumulative totals. A stable `usageId` identifies
+one logical measurement within one run. An exact queued envelope recovers its
+original ACK. A fresh envelope with the same logical payload receives a new ACK
+without adding another measurement. Changed logical reuse returns `409
+usage_conflict`; the CLI exits 3 and preserves pending bytes. A later report
+cannot bypass that rejected sequence. The allocation counter reserves a queued
+sequence before delivery; the acknowledged watermark advances only after a valid ACK.
+
+For a registered running attempt, save this synthetic payload as a private JSON file.
+Use the existing token-file and outbox configuration from the [CLI walkthrough](CLI.md).
+
+```json
+{
+  "usageId": "synthetic-measurement-1",
+  "source": "fixture",
+  "model": "model",
+  "measuredAt": "2026-01-01T00:00:00.000Z",
+  "inputTokens": null,
+  "outputTokens": 7,
+  "billingBasis": "input_output_only"
+}
+```
+
+```sh
+npm run agentflow -- report --run "$RUN_ID" --type run.usage --payload "$USAGE_FILE"
+npm run agentflow -- flush --run "$RUN_ID"
+```
+
+Exit 2 means the report remains queued for delivery. After service recovery, a new
+CLI process flushes the original bytes. Exit 3 means delivery needs repair; preserve
+the outbox rather than recreate, renumber, or edit pending reports. Restoring a backup
+that lacks an acknowledged prefix also blocks delivery. A retained historical ACK
+uses the restored instance's current generation header. Exact envelope retries remain
+valid after terminal state, but brand-new terminal usage is rejected.
+
+The [real CLI contract tests](../tests/integration/w03c-cli.test.ts) exercise downtime,
+lost ACKs, logical deduplication, conflicts, actual stopped backup restore, separate
+implementation/review/rework attempts, protected retention, and version 2 export.
+Their task records are synthetic observations and do not assert human acceptance.
+
 ### Reported usage summaries and local prices
 
 `GET /usage` reads a coherent authenticated snapshot. Require `projectId`, UTC
