@@ -18,13 +18,15 @@ images do not demonstrate its successful-export/header-recovery race.
 - [Native Chrome 200% history controls](history-native-200.png)
 - [Unavailable export recovery](export-unavailable.png)
 
-Qualification and the one official campaign are accepted. Final whole-package
-review, PR integration, and guarded cleanup remain pending. W03b is not yet marked
-complete, and this evidence does not establish W04 load or v1 release.
+Qualification and the one official campaign are accepted. Independent whole-package
+reviews and scoped repair re-review approved the final candidate. PR #14 integration,
+private archival, and guarded cleanup are complete, as recorded in the
+[receipt](../../implementation/W03b.md#verified-integration-and-guarded-cleanup).
+This evidence does not establish W04 load or v1 release.
 
 The original campaign remains at `caab7b2`, with unchanged backend inputs.
 `acceptance.json` separates that measured source/build from the prospective client
 repair and its build. Two native and eight affected browser cases passed; ancillary
 feedback-focus assertions failed twice and are disclosed without a focus-pass claim.
 Root accepted the functional header-recovery proof; final scoped source re-review
-remains pending.
+approved the repair. The measured JSON and original image bytes remain unchanged.

@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: P01–P07, W01, W02, and W03a passed acceptance, independent review, coordinator verification
+Status: P01–P07, W01, W02, W03a, and W03b passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. The latest client-only generation repair has focused verification and Root-accepted functional proof pending independent source re-review. Final whole-package review, PR integration, and guarded cleanup remain pending; W03c and W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. Whole-package reviews and scoped client repair re-review approved the exact candidate. PR #14 integrated W03b at `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`; private archival and guarded cleanup are complete. W03c planning is next; W03c implementation and W04 remain open.
 
 ## Package state
 
@@ -24,7 +24,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
 | W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
 | W03a | GitHub PR observation | Integrated; guarded cleanup complete; qualified measured exception retained | Reviewed `8f63d231ff63d8b77c51573fad9790be8ac78c9d`; merge `76fe748a3d642f8a5a6ea738af47a3bb640070d3`, PR #13; executable `1931221` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
-| W03b | Export/retention | Qualification/campaign accepted; client functional proof accepted, scoped source re-review and integration/cleanup pending | Measured `caab7b2f880be2f7086465ea00bcf223c220d4e2`; client repair `74e0187` | [Receipt](implementation/W03b.md), [allowlisted summary](evidence/W03b/acceptance.json) |
+| W03b | Export/retention | Integrated; private archival and guarded cleanup complete | Reviewed `7a43cad0b1a01c8007aacb124f7b12f451e789ab`; merge `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`, PR #14; measured `caab7b2`; client repair `74e0187` | [Receipt](implementation/W03b.md), [allowlisted summary](evidence/W03b/acceptance.json) |
 | W03c | Usage summaries | Not started | — | — |
 | W04 | Full v1 validation/release | Not started | — | — |
 
@@ -986,3 +986,36 @@ P3 documentation remains pending, followed by whole-package acceptance, integrat
 W03b boxes stay open. Four approved image bytes and their a080/e958 provenance
 remain unchanged. README now identifies mandatory historical integration inputs;
 W04 contributor/release setup verification is still pending.
+
+## Verified W03b integration and guarded cleanup
+
+[PR #14](https://github.com/AlesSystems/agentflow/pull/14) merged normally on
+2026-10-12 at 06:28:39 UTC. Reviewed head
+`7a43cad0b1a01c8007aacb124f7b12f451e789ab` and merge
+`6611e8e4ed8ec61d57be689a7cfd82ee75b9275e` share tree
+`dfc89cd0ff9f8ce4636892c9630e90013d9333c7`; Root verified ancestry, tree equality,
+and the clean primary fast-forward. Original whole-package reviews carried forward
+with scoped repair re-review: Standards receipt
+`3f91f08cc684ce740bb6531dc7075933a53df56bdadfa84333dba52916edd154` and Spec receipt
+`959c8f1f95db4c6c986923d45b17657c4d6062eb310c17a624504051df5a656c` approved
+with the P2/P3 findings resolved. No new whole-suite or performance run is claimed.
+The private integration receipt SHA-256 is
+`bc8dff5b3d9dc3e6fef44099bc1748a191f80b48757b9c2f3c63a2a3a3339095`.
+
+All six owned retired roots were archived and fully stream-verified by the worker
+and independently by Root: 376,156 members, 341,577 regular files, 23 hardlink
+aliases, and three unopened FIFOs. Root rechecked original file hashes and basic
+metadata before exact guarded quarantine and symlink-safe removal. Only after
+archive verification and the original-tree guard, removal required permission
+repair on 15,794 read-only owned historical directories. All six roots and their
+quarantines are gone; the completed package branch is removed locally and remotely.
+The primary and registered managed worktree were clean at the integrated commit,
+without managed dependency or build output. Approximately 4.38 GB of private
+archives remain preserved. Logical bytes and basic metadata are covered; extended
+attributes, ACLs, and physical sparse allocation are excluded. This is not a full
+Mac backup. Global caches, skills, and operator data were not removed.
+The private cleanup-completion receipt SHA-256 is
+`5b1ba4c8a354917aea8e83262f32b46cde1ad9ff06f9df6c179b7da04765177f`.
+
+W03b is complete. W03c planning and Astra medium approval precede its implementation;
+W04 validation and the v1 source release remain open.

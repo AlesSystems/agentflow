@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01, W02, and W03a integrated.** W03b has an approved plan, implemented history contracts, and accepted qualification/campaign evidence. Its latest client-only generation repair is verified by focused native browser checks; independent re-review, integration, and cleanup remain pending. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01, W02, W03a, and W03b integrated.** W03b passed qualified verification and independent review, including its client generation repair, and is integrated through PR #14. Private archival and guarded cleanup are complete; W03c and W04 remain open. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -170,7 +170,7 @@ The [W03a receipt](docs/implementation/W03a.md) records deterministic fixture
 verification, the rate-gate repair and two source-specific measured failures with
 separate scoped exceptions, plus a retained launcher setup failure. Live GitHub
 credential verification is unexecuted. Whole-package review, PR #13 integration, private archival, and guarded cleanup
-are complete. W03b has an approved plan, implemented contracts, and accepted
-qualification/campaign evidence. Its latest client generation repair has focused
-verification pending independent re-review. Integration and cleanup remain open;
-W03c and W04 remain unstarted. This is not a complete-v1 release.
+are complete. The [W03b receipt](docs/implementation/W03b.md) records qualified
+verification, independent review with scoped client repair re-review, PR #14
+integration, and completed private archival and guarded cleanup. W03c planning is
+next; W03c implementation and W04 remain open. This is not a complete-v1 release.

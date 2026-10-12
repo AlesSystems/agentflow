@@ -7,8 +7,11 @@ W03a implementation and qualified verification are accepted with one scoped
 relative-budget exception. Whole-package review, PR #13 integration, private
 archival, and guarded cleanup are complete.
 [Its receipt](implementation/W03a.md) preserves original failures and qualifications.
-W03b qualification and one official campaign are accepted. Final whole-package
-review, integration, and guarded cleanup remain pending. W03c and W04 remain unstarted.
+W03b qualified verification and one official campaign are accepted. Independent
+whole-package reviews and scoped repair re-review approved the candidate; PR #14
+integration, private archival, and guarded cleanup are complete.
+[Its receipt](implementation/W03b.md) retains the source qualifications. W03c
+planning is next; W03c implementation and W04 remain open.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
