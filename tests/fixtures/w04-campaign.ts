@@ -10,7 +10,7 @@ const resultSchema=z.object({samples:z.array(z.object({id,accepted:z.boolean(),f
 export type CampaignResult=z.infer<typeof resultSchema>;
 function unique(values:string[],label:string){assert.equal(new Set(values).size,values.length,`duplicate ${label}`);}
 export function validatePrepared(input:unknown){
- const value=prepared.parse(input);unique(value.intendedIds,"intended IDs");unique(value.declarations.map(r=>r.id),"sample IDs");assert.deepEqual(value.declarations.map(r=>r.id),value.intendedIds,"missing or wrong intended sample IDs");unique(value.fixtures.map(r=>r.id),"fixture IDs");
+ const value=prepared.parse(input);assert.equal(value.officialWorkloadComplete,false,"Task1 qualification cannot claim official protocol readiness");unique(value.intendedIds,"intended IDs");unique(value.declarations.map(r=>r.id),"sample IDs");assert.deepEqual(value.declarations.map(r=>r.id),value.intendedIds,"missing or wrong intended sample IDs");unique(value.fixtures.map(r=>r.id),"fixture IDs");
  for(const row of value.declarations)assert(value.fixtures.some(f=>f.id===row.fixture&&f.source===row.source),"unbound declaration fixture/source");
  assert(Object.keys(value.requiredResources).length>0,"required resource owners absent");
  for(const keys of Object.values(value.requiredResources))unique(keys,"resource keys");
