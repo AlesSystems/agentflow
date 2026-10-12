@@ -43,6 +43,8 @@ export class HistoryRuntime {
     if(this.closing)throw new HttpError(503,"unavailable");
     if(context.principal!=="operator")throw new Conflict("human_required");
     input=retentionPruneInput.parse(input);
+    const replay=this.store.historyReplayPrune(input,context);
+    if(replay)return replay;
     let work=this.pruneWork;
     if(work) {
       const prior=work.context;
@@ -56,7 +58,8 @@ export class HistoryRuntime {
       const controller=new AbortController();
       let resolve!:()=>void;const settled=new Promise<void>(value=>{resolve=value;});
       this.leases.set(controller,settled);
-      const result=(async()=>{
+      // Publish ownership before synchronous preparation can fail and settle.
+      const result=Promise.resolve().then(async()=>{
         try {
           controller.signal.throwIfAborted();
           const parent=secureDirectory(join(this.store.dataDir,"backups"));
@@ -64,7 +67,7 @@ export class HistoryRuntime {
           controller.signal.throwIfAborted();
           return this.store.historyCommitPrune(admission,Date.now());
         }finally {this.pruneWork=undefined;this.leases.delete(controller);resolve();}
-      })();
+      });
       work={context,controller,result};this.pruneWork=work;
     }
     const abort=()=>work.controller.abort();

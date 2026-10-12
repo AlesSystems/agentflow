@@ -132,6 +132,10 @@ export class HistoryData {
   if(this.digest(row.cutoff,generation,version,candidates)!==row.digest)throw new Conflict("preview_changed");
   return {row,candidates};
  }
+ replayPrune(input:RetentionPruneInput,context:CommandContext):CommittedReply|undefined {
+  this.human(context);retentionPruneInput.parse(input);
+  return this.replay(context);
+ }
  admitPrune(input:RetentionPruneInput,context:CommandContext):CommittedReply|PruneAdmission {
   this.human(context);input=retentionPruneInput.parse(input);
   return this.db.transaction(()=>{const replay=this.replay(context);if(replay)return replay;this.guard(input,context,context.now);return {input,context};}).immediate();

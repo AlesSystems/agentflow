@@ -84,6 +84,7 @@ export class Store {
     }
   }
   historyPreview(input:RetentionPreviewInput,context:CommandContext){return new HistoryData(this.db).preview(input,context);}
+  historyReplayPrune(input:RetentionPruneInput,context:CommandContext){return new HistoryData(this.db).replayPrune(input,context);}
   historyAdmitPrune(input:RetentionPruneInput,context:CommandContext){return new HistoryData(this.db).admitPrune(input,context);}
   historyCommitPrune(admission:import("./history").PruneAdmission,now:number){return new HistoryData(this.db).commitPrune(admission,now);}
   githubRepositories(input:GithubRepositoriesInput,context:CommandContext){return new GithubData(this.db).repositories(input,context);}
