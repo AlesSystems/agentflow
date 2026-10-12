@@ -338,3 +338,10 @@ Received time must precede the chosen cutoff. The newest change row and the
 change allocator are retained, and the new invalidation advances beyond the
 pre-prune high-water cursor. Generation renewal here preserves sessions;
 restore continues to revoke them. Retain-all remains the default.
+
+History export reads selected DTO projections from an isolated, integrity-checked
+SQLite copy. Its manifest counts and terminal completion counts refer to that copy,
+even when the live application advances. Sessions, credentials, request receipts,
+and configured secret paths are outside those projections. Opaque references and
+authored text remain selected content. A temporary export copy cannot replace the
+local recovery backup that precedes prune.

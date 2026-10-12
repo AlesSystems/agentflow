@@ -516,6 +516,31 @@ adapter/credential fixtures, original failure repairs, source attribution and th
 exact finite-run performance exception. Local reads remain browser-only and never
 perform remote refresh. Optional live GitHub verification was not executed.
 
+### Selected history export
+
+`GET /export?content=tasks,attempts,workflows,github&generation=<current generation>`
+requires a paired browser session. Select one or more groups in the displayed order.
+Duplicate, unknown, unordered, or extra query fields return `400`. A stale generation
+returns `409`. Reporter and pairing bearer credentials cannot download history.
+
+The response is a local JSON Lines attachment with `Cache-Control: no-store`.
+Its first line is a version-1 manifest with generation, snapshot cursor, creation
+time, selected groups, and per-record counts. Its final `complete` line repeats
+those counts. A download without that line is incomplete. An interruption requires
+a new export because v1 has no resume or import endpoint.
+
+The service creates an integrity-checked isolated SQLite snapshot before it streams
+at most 100 records per batch. Concurrent application writes do not enter that copy.
+The installation admits two concurrent exports, bounds pending encoded output to
+1 MiB, and closes stalled output after five seconds. Temporary snapshots are removed
+after completion, abort, and shutdown when their ownership remains verifiable.
+
+Selected projections exclude sessions, transport receipts, credentials, connection
+secrets, configured filesystem secret paths, and project repository paths. User text
+and opaque artifact references remain content and can contain private information.
+A download is not a recovery backup and does not guarantee that authored text contains
+no secrets. GitHub observations are included only when you select their group.
+
 ### Explicit history retention
 
 `POST /retention/preview` and `POST /retention/prune` require a paired browser,
