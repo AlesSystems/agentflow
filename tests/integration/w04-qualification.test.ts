@@ -52,3 +52,19 @@ for(const defect of ["file","symlink","wrong mode","reuse","non-owned"] as const
  else {mkdirSync(proof,{mode:0o700});if(defect==="wrong mode")chmodSync(proof,0o755);else writeFileSync(join(proof,"held"),"held");}
  const child=invoke("prepare",proof);expect(child.status).toBe(1);expect(JSON.parse(child.stdout.trim())).toMatchObject({kind:"preflightRejected",servicesStarted:0,serviceAttempts:0,sampleAttempts:0});
 });
+
+for(const defect of ["omitted prepared","null prepared","omitted result","null result","string accepted","string closed","string stdioClosed","all false strings","array resources","string counter","extra shutdown key"] as const)it(`actual controller rejects whole-record or malformed-result boundary: ${defect}`,()=>{
+ const input=controlInput();
+ if(defect==="omitted prepared")Reflect.deleteProperty(input,"prepared");
+ else if(defect==="null prepared")Reflect.set(input,"prepared",null);
+ else if(defect==="omitted result")Reflect.deleteProperty(input,"result");
+ else if(defect==="null result")Reflect.set(input,"result",null);
+ else if(defect==="string accepted")Reflect.set(input.result.samples[0],"accepted","false");
+ else if(defect==="string closed")Reflect.set(input.result.shutdown,"closed","false");
+ else if(defect==="string stdioClosed")Reflect.set(input.result.shutdown,"stdioClosed","false");
+ else if(defect==="all false strings"){Reflect.set(input.result.samples[0],"accepted","false");Reflect.set(input.result.shutdown,"closed","false");Reflect.set(input.result.shutdown,"stdioClosed","false");}
+ else if(defect==="array resources")Reflect.set(input.result,"resources",[]);
+ else if(defect==="string counter")Reflect.set(input.result.resources.service,"requests","0");
+ else Reflect.set(input.result.shutdown,"unexpected",true);
+ const p=root(),path=join(p,"input.json");writeFileSync(path,JSON.stringify(input),{mode:0o600});const child=invoke("control",root(),path);expect(child.status).toBe(1);expect(JSON.parse(child.stdout.trim())).toMatchObject({kind:"preflightRejected",servicesStarted:0,serviceAttempts:0,sampleAttempts:0});
+});
