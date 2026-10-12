@@ -1090,3 +1090,23 @@ Independent review of frozen stopped facts and Root's explicit quiet release
 precede official samples. Native instrumentation and compiled browser evidence
 remain separately qualified. Whole-package review, campaign audit, W03c
 integration and guarded cleanup, and W04 remain open. No release gate closes here.
+
+## W03c campaign delivery amendment
+
+The first released campaign stopped after 460 of 3,810 declared requests because
+the copied proof layout lacked its stopped-SQL audit destination. Its complete
+failed capture remains preserved and separate; it supplies no complete performance
+acceptance result. Astra approved a narrow output-layout repair and one future
+revised-helper campaign after fresh readiness review, independent Root audits,
+an idle gate, and a separate explicit Root release. Budgets remain unchanged.
+
+The behavioral RED at `f1d7852` precedes the helper repair at `16c625d`.
+The actual controller now rejects missing, file, symlink, and wrong-mode private
+destinations before release validation or service startup, retaining 3,810 intended
+requests and reporting zero service/sample attempts. Preparation and copied
+re-freeze share the same owned real-directory guard. Focused layout and existing
+campaign unit controls passed 39 tests; types and scoped lint passed. Original
+suite/build qualifications above remain composed evidence, not rerun results.
+New readiness uses exact copies of untouched original premeasurement fixtures.
+Readiness review, Root provenance/SQL/correctness rebinding, campaign release,
+whole-package review and integration, cleanup, and W04 remain open.
