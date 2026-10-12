@@ -1,30 +1,46 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { z } from "zod";
+import { ApiError } from "./api";
 import { useRead, useWorkspace } from "./provider";
-type Page<T> = { data: { items: T[]; nextCursor: string | null; total: number }; snapshotCursor: string; generation: string };
+type Rows<T> = { items: T[]; nextCursor: string | null; total: number };
+type Page<T> = { data: Rows<T>; snapshotCursor: string; generation: string };
 export function usePaged<T>(path: string, schema: z.ZodType<Page<T>>) {
+  return usePageRows(path, schema, value => value.data);
+}
+export function usePageRows<T, S extends z.ZodType<{ snapshotCursor: string; generation: string }>>(path: string, schema: S, select: (value: z.infer<S>) => Rows<T>, identity?: (item: T) => string) {
   const query = useRead(path, schema);
   const { api, generation, pair } = useWorkspace();
   const [extra, setExtra] = useState<T[]>([]), [next, setNext] = useState<string | null | undefined>(), [error, setError] = useState(""), [busy, setBusy] = useState(false);
-  const scope = `${generation}:${path}:${query.dataUpdatedAt}`;
-  const live = useRef(scope);
-  useEffect(() => { live.current = scope; }, [scope]);
+  const [resetNotice, setResetNotice] = useState("");
+  const [recovery, setRecovery] = useState<{ prefix: string; updatedAt: number; snapshot: string | undefined } | null>(null);
+  const prefix = `${generation}:${path}:`;
+  const scope = `${generation}:${path}:${query.dataUpdatedAt}:${query.data?.snapshotCursor ?? ""}`;
+  const live = useRef(scope); useLayoutEffect(() => { live.current = scope; }, [scope]);
   const [captured, setCaptured] = useState(scope);
   if (captured !== scope) { setCaptured(scope); setExtra([]); setNext(undefined); setError(""); }
+  const first = query.data ? select(query.data) : undefined;
+  const recovering = recovery?.prefix === prefix;
+  const fresh = recovering && query.isSuccess && query.data?.generation === api.generation && query.dataUpdatedAt > recovery.updatedAt && query.data?.snapshotCursor !== recovery.snapshot;
+  if (fresh) { setRecovery(null); setResetNotice("History changed. Pages were reset to a fresh snapshot. Your drafts are retained."); }
+  const blocked = recovering && !fresh;
   async function more() {
-    const cursor = next === undefined ? query.data?.data.nextCursor : next;
-    if (!cursor || busy) return;
-    const original = live.current;
+    const cursor = next === undefined ? first?.nextCursor : next;
+    if (!cursor || busy || blocked) return;
+    const original = live.current, snapshot = query.data?.snapshotCursor;
     setBusy(true); setError("");
+    const reset = () => { setExtra([]); setNext(null); setRecovery({ prefix, updatedAt: query.dataUpdatedAt, snapshot }); setResetNotice("History changed. Pages were reset. Loading a fresh first page; your drafts are retained."); void query.refetch(); };
     try {
       const result = await api.read(`${path}${path.includes("?") ? "&" : "?"}cursor=${encodeURIComponent(cursor)}`, schema);
-      if (original !== live.current || result.generation !== generation) return;
-      if (result.snapshotCursor !== query.data?.snapshotCursor) { void query.refetch(); return; }
-      setExtra(old => [...old, ...result.data.items]); setNext(result.data.nextCursor);
+      if (original !== live.current || result.generation !== api.generation) return;
+      if (result.snapshotCursor !== snapshot) { reset(); return; }
+      setExtra(old => [...old, ...select(result).items]); setNext(select(result).nextCursor);
     } catch (error) {
-      if (original === live.current) setError("Could not load this page. Retry load more.");
-      if (error instanceof Error && "status" in error && error.status === 401) pair();
+      if (error instanceof ApiError && [400, 409].includes(error.status) && error.code === "cursor_invalid" && live.current.startsWith(`${generation}:${path}:`)) reset();
+      else if (original === live.current) setError("Could not load this page. Retry load more.");
+      if (error instanceof ApiError && error.status === 401) pair();
     } finally { setBusy(false); }
   }
-  return { query, items: [...(query.data?.data.items ?? []), ...extra], next: next === undefined ? query.data?.data.nextCursor : next, error, busy, more };
+  const rows = [...(first?.items ?? []), ...extra];
+  const items = identity ? [...new Map(rows.map(item => [identity(item), item])).values()] : rows;
+  return { query, items, next: blocked ? null : next === undefined ? first?.nextCursor : next, error, resetNotice, busy, more };
 }

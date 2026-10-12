@@ -581,3 +581,103 @@ receipt timestamps. Their read-only stub has `payload:null` and a nonnull
 [W03b qualified verification](implementation/W03b.md) records the selected-download,
 protected-retention, retry, generation, browser, and outbox contracts. Its single
 finite campaign passed; final whole-package review and integration remain pending.
+
+### Report usage through the existing CLI
+
+The generic `report --type run.usage` command uses the same durable outbox and
+per-run sequence as other observations. Both nullable count fields are required.
+Counts are incremental deltas, not cumulative totals. A stable `usageId` identifies
+one logical measurement within one run. An exact queued envelope recovers its
+original ACK. A fresh envelope with the same logical payload receives a new ACK
+without adding another measurement. Changed logical reuse returns `409
+usage_conflict`; the CLI exits 3 and preserves pending bytes. A later report
+cannot bypass that rejected sequence. The allocation counter reserves a queued
+sequence before delivery; the acknowledged watermark advances only after a valid ACK.
+
+For a registered running attempt, save this synthetic payload as a private JSON file.
+Use the existing token-file and outbox configuration from the [CLI walkthrough](CLI.md).
+
+```json
+{
+  "usageId": "synthetic-measurement-1",
+  "source": "fixture",
+  "model": "model",
+  "measuredAt": "2026-01-01T00:00:00.000Z",
+  "inputTokens": null,
+  "outputTokens": 7,
+  "billingBasis": "input_output_only"
+}
+```
+
+```sh
+npm run agentflow -- report --run "$RUN_ID" --type run.usage --payload "$USAGE_FILE"
+npm run agentflow -- flush --run "$RUN_ID"
+```
+
+Exit 2 means the report remains queued for delivery. After service recovery, a new
+CLI process flushes the original bytes. Exit 3 means delivery needs repair; preserve
+the outbox rather than recreate, renumber, or edit pending reports. Restoring a backup
+that lacks an acknowledged prefix also blocks delivery. A retained historical ACK
+uses the restored instance's current generation header. Exact envelope retries remain
+valid after terminal state, but brand-new terminal usage is rejected.
+
+The [real CLI contract tests](../tests/integration/w03c-cli.test.ts) exercise downtime,
+lost ACKs, logical deduplication, conflicts, actual stopped backup restore, separate
+implementation/review/rework attempts, protected retention, and version 2 export.
+Their task records are synthetic observations and do not assert human acceptance.
+
+### Reported usage summaries and local prices
+
+`GET /usage` reads a coherent authenticated snapshot. Require `projectId`, UTC
+`from` and `to`; the positive interval is at most 31 days and selects the first
+accepted receipt in `[from,to)`. Optional exact `source` and `model` filters narrow
+reports. Project-wide coverage counts started runs that overlap the interval,
+including archived projects and attempts with no report. Queued, never-started
+runs do not contribute. `filteredReportCount` and `filteredRunsWithReports` describe
+the selected reports separately from `eligibleRuns`, `runsWithReports` and
+`runsWithoutReports`. Producer `measuredAt` never determines receipt membership.
+
+Known input, output and complete total token sums are exact decimal strings.
+Unknown report counts remain explicit; a report's `totalTokens` is null unless
+both counts are known. Source/model groups return at most 100 entries, with
+`totalGroups` and `groupsTruncated`. Overall totals include every filtered fact.
+Run details return at most `limit` entries (1–100, default 50), include attempts
+with no matching reports, and distinguish receipt bounds from measurement bounds.
+A continuation binds the whole query, order, database generation and durable
+change high-water. A changed binding or intervening mutation returns
+`cursor_invalid`; fetch a new first page.
+
+Human `POST /usage/price-snapshots` creates one immutable local quote with UUID
+`id`, name (1–200 characters), UTC `capturedAt`, optional nullable `effectiveAt`,
+and 1–20 entries. Each `(source,model)` pair is unique. Each entry has an uppercase
+three-letter currency and required nullable `inputPrice` and `outputPrice` per
+million tokens. Prices are nonnegative decimal strings with at most 12 whole and
+12 fractional digits; signs and exponent notation are rejected. The server adds
+`createdAt`. Reporter credentials cannot create prices. Exact receipt retries
+return the original body and status with the current generation header; changed
+key reuse and duplicate snapshot IDs conflict. Creation emits an existing settings
+invalidation without changing the timezone or settings version.
+
+`GET /usage/price-snapshots` lists immutable quotes with bounded keyset pages and
+no fixed total-history cap. Select one quote through `/usage?priceSnapshotId=...`.
+The estimate includes its full quote and separates currency totals. Exclusions
+are disjoint, in order: unknown input/output counts, unsupported or unknown
+billing basis, then missing or partial matching price. Only explicit
+`input_output_only` reports with both counts and prices contribute. Amounts are
+exact decimal strings with up to 18 fractional digits, aggregated without early
+rounding. There is no live price lookup, currency conversion or billing claim.
+
+Current history exports use schemaVersion 2 for both manifest and completion.
+The existing `attempts` selection adds `usageMeasurement` and
+`usagePriceSnapshot`; the four selection groups and other projections stay intact.
+Usage facts are deduplicated by `(runId,usageId)` and expose nullable counts,
+derived totals and provenance. Logical digests, receipts, paths and credentials
+are excluded. Usage facts and immutable quotes survive protected retention and
+backup restore. Historical v1 fixtures are decoded explicitly as v1; mixed manifest
+and completion versions fail validation.
+
+
+The [W03c qualification checkpoint](implementation/W03c.md) records the actual
+locked macOS install, source-qualified verification, finite campaign controls,
+and retained failures. Official W03c measurements remain gated by independent
+stopped-readiness review and Root's explicit quiet release.

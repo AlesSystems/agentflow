@@ -69,7 +69,7 @@ async function lines(content="tasks,attempts,workflows,github") {
  return {response,records,manifest,text};
 }
  const all=await lines();assert(all.text.includes("/opaque/retained-artifact"));assert.equal(all.manifest.counts.runEvent,3);assert.equal(all.manifest.counts.nodeObservation,1);
- proof.allCounts=all.manifest.counts;for(const count of Object.values(all.manifest.counts))assert((count ?? 0)>0);
+ proof.allCounts=all.manifest.counts;for(const [kind,count] of Object.entries(all.manifest.counts))assert(kind==="usageMeasurement"||kind==="usagePriceSnapshot" ? count===0 : (count ?? 0)>0);
  for(const group of ["tasks","attempts","workflows","github"] as const){const selected=await lines(group);assert.deepEqual(Object.keys(selected.manifest.counts),historyGroups[group]);}
  for(const query of ["content=","content=tasks,tasks","content=github,tasks","content=invalid","content=tasks&cursor=0","content=tasks&content=github","content=tasks&extra=x","content=tasks&__proto__=x"]){const response=await fetch(`${url}/api/v1/export?${query}&generation=${generation}`,{headers});assert.equal(response.status,400);assert.equal(response.headers.get("agentflow-generation"),generation);await response.text();}
  async function rawRejected(extra:string,status:number) {

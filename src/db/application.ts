@@ -1,3 +1,5 @@
+import type { UsageQuery, PriceSnapshotCreate, PageQuery } from "../contracts/usage";
+import { UsageData } from "./usage";
 import type { RetentionPreviewInput, RetentionPruneInput } from "../contracts/history";
 import { HistoryData } from "./history";
 import { GithubData } from "./github";
@@ -59,6 +61,7 @@ import {
 } from "../domain/runs";
 import { activityQuery } from "../contracts/tracking";
 export type ApplicationCommand =
+  | {kind:"usage.price.create";input:PriceSnapshotCreate}
   | {kind:"retention.preview";input:RetentionPreviewInput}
   | {kind:"retention.prune";input:RetentionPruneInput}
   | {kind:"github.repositories";input:GithubRepositoriesInput}
@@ -86,6 +89,8 @@ export type ApplicationCommand =
   | { kind: "comment.create"; id: string; input: z.infer<typeof commentInput> }
   | { kind: "settings.patch"; input: z.infer<typeof settingsPatch> };
 export type ApplicationQuery =
+  | {kind:"usage";input:UsageQuery}
+  | {kind:"usage.prices";input:PageQuery}
   | {kind:"github";input:GithubQuery}
   | { kind: "workflow.readiness"; id: string; revisionId: string }
   | { kind: "task.readiness"; id: string }
@@ -326,6 +331,7 @@ export class ApplicationData {
     command: ApplicationCommand,
     context: CommandContext,
   ): CommittedReply {
+    if(command.kind==="usage.price.create")return new UsageData(this.db).createPriceSnapshot(command.input,context);
     if(command.kind==="retention.preview")return new HistoryData(this.db).preview(command.input,context);
     if(command.kind==="retention.prune")throw new Conflict("retention_coordinator_required");
     if(command.kind==="github.repositories")return new GithubData(this.db).repositories(command.input,context);
@@ -945,6 +951,7 @@ export class ApplicationData {
         Date.parse(input.occurredAt),
         context.now,
       );
+    if (input.type === "run.usage") new UsageData(this.db).accept(value.id,input.eventId,input.payload,context.now);
     if (input.type === "run.succeeded" && taskValue) {
       if (input.payload.artifactRef !== undefined) this.artifact(taskValue,input.payload.artifactRef,input.payload.displayUrl,value.id,"reporter",context.now);
       if (input.payload.decision !== undefined) {
@@ -1259,7 +1266,7 @@ export class ApplicationData {
     void registrationOrder;
     const report = reportBody ? JSON.parse(reportBody as string) : null;
     return { ...this.runView(run.parse(record), now), agentName, agentSource, projectName, taskTitle,
-      message: report?.payload?.message ?? report?.payload?.summary ?? report?.payload?.reason ?? null,
+      message: report?.type === "run.usage" ? `Reported token usage · input ${report.payload.inputTokens === null ? "Unknown" : report.payload.inputTokens.toLocaleString("en-US")} · output ${report.payload.outputTokens === null ? "Unknown" : report.payload.outputTokens.toLocaleString("en-US")}` : report?.payload?.message ?? report?.payload?.summary ?? report?.payload?.reason ?? null,
       evidenceUrl: report?.payload?.evidenceUrl ?? null, ...(reportPrunedAt ? {messagePrunedAt:reportPrunedAt} : {}) };
   }
   private trackingTasks(page: { items: Row[]; total: number; nextCursor: string | null }, now: number) {
@@ -1288,7 +1295,9 @@ export class ApplicationData {
     if(query.kind==="github")return new GithubData(this.db).snapshot(query.input,now);
     return this.db.transaction(() => {
       let data: unknown;
-      if (query.kind === "workflow.readiness") {
+      if(query.kind==="usage") data=new UsageData(this.db).snapshot(query.input,now);
+      else if(query.kind==="usage.prices") data=new UsageData(this.db).priceSnapshots(query.input);
+      else if (query.kind === "workflow.readiness") {
         const workflow=this.one("workflows",query.id), revision=this.workflowRevision(query.revisionId);
         if (revision.workflowId !== workflow.id) throw new Conflict("resource_not_found");
         const ids=[...new Set(revision.nodes.flatMap(node=>node.taskId ? [node.taskId.toLowerCase()] : []))];

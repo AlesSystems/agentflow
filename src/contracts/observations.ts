@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { usagePayload } from "./usage";
 import { reviewTuple, artifactRef } from "./evidence";
 import {
   envelope,
@@ -86,6 +87,7 @@ const eventBase = {
     .pipe(timestamp),
 };
 export const eventInput = z.discriminatedUnion("type", [
+  z.strictObject({ ...eventBase, type: z.literal("run.usage"), payload: usagePayload }),
   z.strictObject({
     ...eventBase,
     type: z.literal("run.started"),

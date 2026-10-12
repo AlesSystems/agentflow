@@ -281,8 +281,8 @@ test("paired sessions preserve drafts and graph facts through normal and lost pr
     const saved = proof ? join(proof, "selected-history.jsonl") : join(server.dir, "selected-history.jsonl"); await download.saveAs(saved);
     const text = readFileSync(saved, "utf8"), lines = text.trim().split("\n").map(line => JSON.parse(line)), manifest = lines[0], complete = lines.at(-1);
     const retained = new Database(copy, { readonly: true });
-    const counts = { run: (retained.prepare("SELECT count(*) AS n FROM runs").get() as { n: number }).n, runEvent: (retained.prepare("SELECT count(*) AS n FROM run_events").get() as { n: number }).n }; retained.close();
-    expect(manifest.content).toEqual(["attempts"]); expect(manifest.generation).toBe(afterNormal.generation); expect(manifest.counts).toEqual(counts); expect(complete).toEqual({ kind: "complete", schemaVersion: 1, counts });
+    const counts = { run: (retained.prepare("SELECT count(*) AS n FROM runs").get() as { n: number }).n, runEvent: (retained.prepare("SELECT count(*) AS n FROM run_events").get() as { n: number }).n, usageMeasurement: (retained.prepare("SELECT count(*) AS n FROM usage_measurements").get() as { n: number }).n, usagePriceSnapshot: (retained.prepare("SELECT count(*) AS n FROM usage_price_snapshots").get() as { n: number }).n }; retained.close();
+    expect(manifest.content).toEqual(["attempts"]); expect(manifest.generation).toBe(afterNormal.generation); expect(manifest.counts).toEqual(counts); expect(complete).toEqual({ kind: "complete", schemaVersion: 2, counts });
     expect(lines.filter(line => line.kind === "run")).toHaveLength(counts.run); expect(lines.filter(line => line.kind === "runEvent")).toHaveLength(counts.runEvent);
     expect(lines.find(line => line.kind === "runEvent" && line.data.eventId === progressId).data).toMatchObject({ type: "run.progress", sequence: 2, payload: null, payloadPrunedAt: expect.any(String) });
     expect(text).not.toContain("Synthetic removable planning text"); expect(text).not.toContain(server.dir); expect(text).not.toContain(server.credentials().pairingToken);

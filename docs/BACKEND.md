@@ -351,3 +351,27 @@ local recovery backup that precedes prune.
 inspection after thirty synthetic prunes and their recovery backups. Original
 event identities, digests, ACKs, protected records, and request receipts remained
 unchanged. That finite evidence does not replace W04 load or release validation.
+
+### W03c summary and price storage
+
+`UsageData` reads the accepted usage ledger inside the existing application read
+transaction. Connection-local SQLite aggregate callbacks stream exact BigInt
+subtotals; token totals never use SQLite integer SUM or JavaScript Number sums.
+Group and run selections use bounded lookahead while overall totals cover the
+whole matching set. Detail cursors bind generation and the current durable change
+high-water, preventing mixed snapshots after an intervening mutation.
+
+Additive `0011_usage_prices.sql` follows the unchanged `0010_usage.sql` checksum.
+Schema 12 stores immutable named snapshots and declared entries. Update, delete,
+replacement and insertion of undeclared entries are rejected by triggers. Human
+creation, settings invalidation and the original command receipt commit in one
+transaction. This migration has no foreign-key-disable requirement. An upgrade
+from schema 11 runs it with enforcement on; an older pending batch containing
+0010 retains the reviewed temporary off window and final integrity and FK checks.
+
+History export v2 projects deduplicated measurements and full immutable quotes
+under `attempts`. Existing progress/heartbeat-only payload pruning preserves usage
+facts, quote entries, original event identities and ACKs. Restoration renews the
+generation while preserving the retained facts. Pricing remains local and exact;
+it adds no provider credential access, network lookup, polling owner or execution
+control.

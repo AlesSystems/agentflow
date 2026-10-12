@@ -1,11 +1,11 @@
 # AgentFlow v1 delivery ledger
 
-Status: P01–P07, W01, W02, and W03a passed acceptance, independent review, coordinator verification
+Status: P01–P07, W01, W02, W03a, and W03b passed acceptance, independent review, coordinator verification
 and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integrated
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. The latest client-only generation repair has focused verification and Root-accepted functional proof pending independent source re-review. Final whole-package review, PR integration, and guarded cleanup remain pending; W03c and W04 remain unstarted.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. Whole-package reviews and scoped client repair re-review approved the exact candidate. PR #14 integrated W03b at `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`; private archival and guarded cleanup are complete. W03c has an approved Astra medium plan and accepted Tasks 1–4. Whole-package source reviews at `fd44b95` found no actionable findings. The revised campaign completed all declared requests, but its raw acceptance remains false. Astra approved the six exact observations and Root accepted the campaign under that separate disposition. Final documentation review, integration, guarded cleanup, and W04 remain open.
 
 ## Package state
 
@@ -24,8 +24,8 @@ independent review of the candidate SHA, and verified integration all pass.
 | W01 | Reported workflow graph | Integrated | Reviewed `4e527a4b1fc31200eeda45a72a67d214b4b064ea`; merge `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`, PR #11 | [Receipt](implementation/W01.md), [synthetic summary](evidence/W01/acceptance.json) |
 | W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
 | W03a | GitHub PR observation | Integrated; guarded cleanup complete; qualified measured exception retained | Reviewed `8f63d231ff63d8b77c51573fad9790be8ac78c9d`; merge `76fe748a3d642f8a5a6ea738af47a3bb640070d3`, PR #13; executable `1931221` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
-| W03b | Export/retention | Qualification/campaign accepted; client functional proof accepted, scoped source re-review and integration/cleanup pending | Measured `caab7b2f880be2f7086465ea00bcf223c220d4e2`; client repair `74e0187` | [Receipt](implementation/W03b.md), [allowlisted summary](evidence/W03b/acceptance.json) |
-| W03c | Usage summaries | Not started | — | — |
+| W03b | Export/retention | Integrated; private archival and guarded cleanup complete | Reviewed `7a43cad0b1a01c8007aacb124f7b12f451e789ab`; merge `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`, PR #14; measured `caab7b2`; client repair `74e0187` | [Receipt](implementation/W03b.md), [allowlisted summary](evidence/W03b/acceptance.json) |
+| W03c | Usage summaries | Tasks 1–4 accepted; source reviews clear; campaign accepted under exact observations; delivery pending | Application `8fdff6c`; reviewed campaign candidate `fd44b95` | [Approved plan](superpowers/plans/2026-10-12-w03c-usage.md), [usage API](API.md#reported-usage-summaries-and-local-prices) |
 | W04 | Full v1 validation/release | Not started | — | — |
 
 ## Record after every package or interruption
@@ -986,3 +986,148 @@ P3 documentation remains pending, followed by whole-package acceptance, integrat
 W03b boxes stay open. Four approved image bytes and their a080/e958 provenance
 remain unchanged. README now identifies mandatory historical integration inputs;
 W04 contributor/release setup verification is still pending.
+
+## Verified W03b integration and guarded cleanup
+
+[PR #14](https://github.com/AlesSystems/agentflow/pull/14) merged normally on
+2026-10-12 at 06:28:39 UTC. Reviewed head
+`7a43cad0b1a01c8007aacb124f7b12f451e789ab` and merge
+`6611e8e4ed8ec61d57be689a7cfd82ee75b9275e` share tree
+`dfc89cd0ff9f8ce4636892c9630e90013d9333c7`; Root verified ancestry, tree equality,
+and the clean primary fast-forward. Original whole-package reviews carried forward
+with scoped repair re-review: Standards receipt
+`3f91f08cc684ce740bb6531dc7075933a53df56bdadfa84333dba52916edd154` and Spec receipt
+`959c8f1f95db4c6c986923d45b17657c4d6062eb310c17a624504051df5a656c` approved
+with the P2/P3 findings resolved. No new whole-suite or performance run is claimed.
+The private integration receipt SHA-256 is
+`bc8dff5b3d9dc3e6fef44099bc1748a191f80b48757b9c2f3c63a2a3a3339095`.
+
+All six owned retired roots were archived and fully stream-verified by the worker
+and independently by Root: 376,156 members, 341,577 regular files, 23 hardlink
+aliases, and three unopened FIFOs. Root rechecked original file hashes and basic
+metadata before exact guarded quarantine and symlink-safe removal. Only after
+archive verification and the original-tree guard, removal required permission
+repair on 15,794 read-only owned historical directories. All six roots and their
+quarantines are gone; the completed package branch is removed locally and remotely.
+The primary and registered managed worktree were clean at the integrated commit,
+without managed dependency or build output. Approximately 4.38 GB of private
+archives remain preserved. Logical bytes and basic metadata are covered; extended
+attributes, ACLs, and physical sparse allocation are excluded. This is not a full
+Mac backup. Global caches, skills, and operator data were not removed.
+The private cleanup-completion receipt SHA-256 is
+`5b1ba4c8a354917aea8e83262f32b46cde1ad9ff06f9df6c179b7da04765177f`.
+
+W03b is complete. W03c planning and Astra medium approval precede its implementation;
+W04 validation and the v1 source release remain open.
+
+
+## W03c producer verification checkpoint
+
+The exact plan at `c6b34` has SHA-256
+`8c0950094d764a1c02c6f09213b939abbbb829cb9208c42b35fbbf47ca757ccf`.
+Astra medium approved it under gate `ae1ab`. Coordinator acceptance covers Task 1
+at `46c9349` and Task 2 at `07bac1acd37030b666e07f9236b6d695edfa0337`,
+including both Task 2 findings repaired and approved by the same independent reviewer.
+
+Task 3 adds real CLI recovery proof and the recognized `usage_conflict` diagnostic.
+Its final focused CLI file passed five tests, with six synthetic fixture scenarios
+because restore covers retained ACKs and genuine prefix loss. Seventeen focused
+legacy report/restore/response tests, types, lint, a new scoped production build,
+and one rebuilt-native CLI smoke case passed. Initial fixture/setup expectations,
+the meaningful diagnostic RED, and types/lint failures remain in private evidence.
+The build retains the existing dynamic filesystem tracing warning.
+
+The original qualified 474-file Task 2 build remains archived. Task 3's new build
+is separately qualified to executable `2f510c0`; the API-only documentation at
+`75d81f9` changes no shipping input. Independent Task 3 review and coordinator
+verification of the new build/evidence remain pending. Task 4 UI, Task 5 full suites
+and campaign, W03c integration, and W04 remain open. No package checkbox or release
+gate closes at this checkpoint. The [frozen plan](superpowers/plans/2026-10-12-w03c-usage.md)
+and [producer contract](API.md#report-usage-through-the-existing-cli) own the next tasks.
+
+
+## W03c Usage surface checkpoint
+
+Coordinator acceptance of Task 3 is recorded at
+`6f389ceb29968e7eb274e1d7e07512e068de9693`. Task 4 adds the existing-world Usage
+surface, explicit UTC filters, project-wide reporting coverage, exact known
+subtotals, bounded group/run details, and optional immutable local rate snapshots.
+Pending price requests retain their original bytes and idempotency key.
+
+Task 4 implementation is `2841b94`, with focused browser coverage strengthened at
+`036e2e7`. Six synthetic production-browser journeys passed; the stronger paging
+and two-tab restore/usage checks, one existing tracking neighbor, and the actual
+latest-summary API projection passed separately. Typecheck, scoped lint and the
+production build passed. The native service returns `400 cursor_invalid` for the
+observed stale high-water cursor; the client resets this code at either 400 or
+409 while preserving drafts. No API status was changed.
+
+One appearance batch and one capture confirmation cover desktop, 375 px and
+actual Chrome 200% zoom, reduced motion, keyboard and scoped axe checks. A cropped
+initial native PNG is retained as a failed capture; the final native CDP capture
+qualifies its viewport at the document top. One detector pass reports eleven
+inherited CSS advisories. This is bounded evidence, not blanket accessibility
+conformance. Fresh finish/documentation, Task 4 specification/quality review,
+Task 5 qualification/campaign, W03c integration and cleanup, and W04 remain open.
+
+## W03c qualification and readiness gate
+
+Root accepted Tasks 1–4 through `8fdff6c`. Task 5 adds finite campaign controls,
+copied stopped upgrade audits, explicit accepted-registry recovery expectations,
+and native timing and resource identity checks through `b00f5b6`.
+
+The fresh locked install, production build, full unit suite, and full browser suite
+ran on the named macOS host. Full unit passed 252 tests. Full browser passed 90
+with two held visual-batch skips. The one full integration run passed 587, failed
+five, and skipped one. Scoped registry repairs passed 19 tests. Correct historical
+prerequisites then passed four tests across three files. Final focused campaign
+controls passed 33 tests. Types, lint, and OpenAPI check passed. The
+[qualification receipt](implementation/W03c.md) retains source qualifications,
+original failures, setup and stream limitations, and the precise composition.
+
+The controller declares three repetitions, 42 groups, and 3,810 requests.
+Independent review of frozen stopped facts and Root's explicit quiet release
+precede official samples. Native instrumentation and compiled browser evidence
+remain separately qualified. Whole-package review, campaign audit, W03c
+integration and guarded cleanup, and W04 remain open. No release gate closes here.
+
+## W03c campaign delivery amendment
+
+The first released campaign stopped after 460 of 3,810 declared requests because
+the copied proof layout lacked its stopped-SQL audit destination. Its complete
+failed capture remains preserved and separate; it supplies no complete performance
+acceptance result. Astra approved a narrow output-layout repair and one future
+revised-helper campaign after fresh readiness review, independent Root audits,
+an idle gate, and a separate explicit Root release. Budgets remain unchanged.
+
+The behavioral RED at `f1d7852` precedes the helper repair at `16c625d`.
+The actual controller now rejects missing, file, symlink, and wrong-mode private
+destinations before release validation or service startup, retaining 3,810 intended
+requests and reporting zero service/sample attempts. Preparation and copied
+re-freeze share the same owned real-directory guard. Focused layout and existing
+campaign unit controls passed 39 tests; types and scoped lint passed. Original
+suite/build qualifications above remain composed evidence, not rerun results.
+New readiness uses exact copies of untouched original premeasurement fixtures.
+Readiness review, Root provenance/SQL/correctness rebinding, campaign release,
+whole-package review and integration, cleanup, and W04 remain open.
+
+## W03c revised campaign and exact-source reviews
+
+[public campaign evidence](evidence/W03c/acceptance.json) preserves all 42 HTTP distributions, their measured samples, all 15 separate base/head comparisons, and the six relative failures. The revised campaign completed 3,810 declared requests with no missing or failed requests and no absolute-budget failure. Its original result remains `acceptance=false`, exit 1. The approved policy disposition is separate from that immutable result.
+
+The first campaign stopped at 460 of 3,810 requests because its proof layout lacked the stopped-SQL audit destination. Its original failure is retained, incomplete, and unpooled. The approved output-layout repair led to the separate revised campaign. No sample removal, pooling, or causal host-noise explanation applies.
+
+The six relative failures are `tasks-head-legacy-1`, `activity-head-legacy-1`, `activity-head-legacy-2`, `progress.ingest-head-legacy-2`, `export-head-legacy-2`, and `events-head-legacy-3`. Five add 0.803667–1.491459 ms at p95. The export comparison adds 7.639584 ms. Export and price each have ten measured requests per repetition; their p95 is the cohort maximum. These finite observations do not establish population throughput or W04 load acceptance. Exact-source analysis identifies possible structural costs but does not prove the causes of all six failures. HTTP stage and backup subcauses remain unknown.
+
+The root audit reconciled the raw journal, native timing, response facts, source/runtime pins, 18 closed services, and 7,476 captured SQL rows through 18 further stopped copies. Original database triplets remain held and unchanged. The worker audit created a zero-byte WAL and a 32,768-byte SHM after its pre-open copy hashes; its main database hashes remained unchanged. Wrapper counters cover native service instrumentation and exclude React and Next client cleanup.
+
+The original full suites remain composed evidence: 252 unit passes; 587 integration passes, five failures, and one skip; 19 focused registry repairs; four prerequisite cases; 90 browser passes and two held visual skips. The dedicated two-tab witness is separate. Helper controls passed 39 tests; types and lint passed. The previously qualified production build has the same 119 shipping inputs, with no new build and an inherited tracing warning.
+
+The three PNGs are unchanged approved repair captures, verified by SHA-256 before and after copying. Desktop is 1440×3848; narrow is 375×5133. Native Chrome 200% is a 1440×913 top viewport at 720 CSS pixels and DPR 2. Scoped axe, overflow, reduced-motion, and keyboard evidence qualify those checks only. The captures qualify accepted `8fdff6c` shipping code from the `6580696` repair build, with later test and documentation changes. No new appearance cycle, image edit, or capture ran.
+
+Named macOS 27.0 arm64 verification does not establish Linux or pristine-operating-system support. Optional live GitHub verification is unexecuted. Public evidence excludes credentials, raw headers, private paths, prompts, and task database contents.
+
+Astra verdict `APPROVED_EXACT_OBSERVATIONS` has SHA-256
+`bbf51e5623324e81e290788e8fda5f3257af29247f86a058359e5cade1763dea`. Root campaign acceptance has SHA-256
+`72707e370b2bbb89437b0e2235231c8251dc23b74b258c483c6089ea80bba0f7`. Both bind the recorded `fd44b95` candidate and unchanged raw result.
+The approval changes no budget and supplies no future measurement or regression waiver.

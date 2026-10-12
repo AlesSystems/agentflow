@@ -28,7 +28,7 @@ import {
 import { acquireInstance, type InstanceOwner } from "../server/instance";
 import { loadCredentials } from "../server/auth";
 
-export type Migration = Readonly<{ id: string; sql: string; sha256: string }>;
+export type Migration = Readonly<{ id: string; sql: string; sha256: string; requiresForeignKeysOff?: boolean }>;
 export type Metadata = { generation: string; schemaVersion: number };
 export type StoredSession = {
   id: string;
@@ -46,12 +46,14 @@ export const migrations: Migration[] = [
   "0007_task_evidence",
   "0008_github",
   "0009_history",
+  "0010_usage",
+  "0011_usage_prices",
 ].map((id) => {
   const sql = readFileSync(
     join(process.cwd(), "migrations", id + ".sql"),
     "utf8",
   );
-  return { id, sql, sha256: createHash("sha256").update(sql).digest("hex") };
+  return { id, sql, sha256: createHash("sha256").update(sql).digest("hex"), ...(id === "0010_usage" ? { requiresForeignKeysOff: true } : {}) };
 });
 export class Store {
   private db: Database.Database;
@@ -211,6 +213,7 @@ export class Store {
     return history.map((row) => row.id);
   }
   async migrate(registry = migrations) {
+    if (registry.some(migration => migration.requiresForeignKeysOff && migration.id !== "0010_usage")) throw new Error("UNTRUSTED_MIGRATION_OPTION");
     for (const migration of registry) validateMigrationSql(migration.sql);
     const applied = this.validateMigrations(registry);
     if (applied.length === registry.length) {
@@ -224,7 +227,13 @@ export class Store {
           `pre-migration-${randomUUID()}.sqlite`,
         ),
       );
-    this.db
+    const foreignKeysOff = registry.slice(applied.length).some(migration => migration.requiresForeignKeysOff);
+    try {
+      if (foreignKeysOff) {
+        this.db.pragma("foreign_keys = OFF");
+        if (this.db.pragma("foreign_keys", { simple: true }) !== 0) throw new Error("FOREIGN_KEYS_DISABLE_FAILED");
+      }
+      this.db
       .transaction(() => {
         this.db.exec(
           "CREATE TABLE IF NOT EXISTS migration_history (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at INTEGER NOT NULL)",
@@ -246,7 +255,19 @@ export class Store {
         this.integrity();
       })
       .immediate();
+    } finally {
+      if (foreignKeysOff) {
+        try {
+          this.db.pragma("foreign_keys = ON");
+          if (this.db.pragma("foreign_keys", { simple: true }) !== 1) throw new Error("FOREIGN_KEYS_ENABLE_FAILED");
+        } catch (error) {
+          this.close();
+          throw error;
+        }
+      }
+    }
   }
+
   async prepareHistoryExport(destination:string,input:HistoryExportInput,signal:AbortSignal) {
     await this.backup(destination,signal);
     signal.throwIfAborted();

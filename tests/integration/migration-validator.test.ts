@@ -200,3 +200,6 @@ it.each([
     );
   }
 });
+it.each(["DROP TABLE projects;","DROP VIEW arbitrary;","DROP TRIGGER arbitrary;","DROP TABLE main.run_events;","DROP TABLE \"run_events\";"])("rejects unrelated or ambiguous rebuild drop %s", async sql => {
+ const { validateMigrationSql }=await import("../../src/db/migration-sql");expect(()=>validateMigrationSql(sql)).toThrow("NONTRANSACTIONAL_MIGRATION");
+});

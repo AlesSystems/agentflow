@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { lstatSync,readFileSync,readdirSync,writeFileSync,readlinkSync } from "node:fs";
 import { join } from "node:path";
-import { historyLine,historyManifest,historyComplete } from "../../src/contracts/history";
+import { historyLine,historyManifest,historyComplete,historyManifestV1,historyCompleteV1,historyRecordV1 } from "../../src/contracts/history";
 import { distribution } from "./p07-protocol";
 import { reconcile,type CaptureSample } from "./w03a-qualification";
-export function validateExport(text:string){
+export function validateExport(text:string,expectedVersion:1|2=1){
  assert(text.endsWith("\n"),"truncated JSONL");
- const records=text.slice(0,-1).split("\n").map(line=>historyLine.parse(JSON.parse(line)));
- const manifest=historyManifest.parse(records[0]),complete=historyComplete.parse(records.at(-1));
+ const raw=text.slice(0,-1).split("\n").map(line=>JSON.parse(line));
+ const manifest=(expectedVersion===1?historyManifestV1:historyManifest).parse(raw[0]),complete=(expectedVersion===1?historyCompleteV1:historyComplete).parse(raw.at(-1));
+ const records=[manifest,...raw.slice(1,-1).map(row=>(expectedVersion===1?historyRecordV1:historyLine).parse(row)),complete];
  const actual=Object.fromEntries(Object.keys(manifest.counts).map(kind=>[kind,records.slice(1,-1).filter(row=>row.kind===kind).length]));
  assert.equal(records.slice(1,-1).length,Object.values(actual).reduce((a,b)=>a+b,0),"unexpected records");
  assert.deepEqual(actual,manifest.counts,"export counts mismatch");assert.deepEqual(complete.counts,manifest.counts,"completion counts mismatch");

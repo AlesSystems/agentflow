@@ -1,3 +1,4 @@
+import { totalTokens } from "../usage/decimal";
 import Database from "better-sqlite3";
 import type { z } from "zod";
 import { historyGroups, historyManifest, historyProjections, type HistoryExportInput, type HistoryExportSnapshot, type HistoryRecord, type HistoryRecordKind } from "../contracts/history";
@@ -17,6 +18,8 @@ const sources: {[K in HistoryRecordKind]:Source<K>} = {
   rework:{table:"task_reworks",keys:["id"],fields:["id","taskId","workRevision","reworkRound","reason","actor","createdAt"]},
   runClosure:{table:"run_closures",keys:["id"],fields:["id","runId","reason","actor","createdAt"]},
   workflowClosure:{table:"workflow_closures",keys:["id"],fields:["id","workflowRunId","reason","actor","createdAt"]},
+  usageMeasurement:{table:"usage_measurements",keys:["run_id","usage_id"],fields:["runId","usageId","source","model","inputTokens","outputTokens","billingBasis","measuredAt","firstReceivedAt","totalTokens"]},
+  usagePriceSnapshot:{table:"usage_price_snapshots",keys:["id"],fields:["id","name","capturedAt","effectiveAt","createdAt","entries"]},
   run:{table:"runs",keys:["id"],fields:["id","projectId","agentId","taskId","purpose","model","workRevision","artifactRef","reworkRound","state","lastSequence","lastReceivedAt","startedAt","endedAt","version","createdAt"]},
   runEvent:{table:"run_events",keys:["run_id","sequence"],fields:["schemaVersion","eventId","runId","sequence","type","occurredAt","receivedAt","payload"],body:true},
   workflow:{table:"workflows",keys:["id"],fields:["id","projectId","name","version","createdAt"]},
@@ -36,11 +39,12 @@ function projection(kind:HistoryRecordKind,row:Row):HistoryRecord {
   for (const field of source.fields) {
     if(body) {data[field]=body[field];continue;}
     const value=row[snake(field)];
-    data[field]=["tags","nodes","edges","repositories"].includes(field) ? JSON.parse(value as string) : ["enabled","draft","reviewRequired","verificationRequired"].includes(field) ? !!value : (field.endsWith("At") || field==="retryNotBefore") && value!==null && typeof value==="number" ? new Date(value).toISOString() : value;
+    data[field]=["tags","nodes","edges","repositories","entries"].includes(field) ? JSON.parse(value as string) : ["enabled","draft","reviewRequired","verificationRequired"].includes(field) ? !!value : (field.endsWith("At") || field==="retryNotBefore") && value!==null && typeof value==="number" ? new Date(value).toISOString() : value;
   }
   if(kind === "runEvent" && row.payload_pruned_at !== null && row.payload_pruned_at !== undefined) {
     data.payload=null;data.payloadPrunedAt=new Date(row.payload_pruned_at as number).toISOString();
   }
+  if(kind==="usageMeasurement")data.totalTokens=totalTokens(row.input_tokens as number|null,row.output_tokens as number|null);
   return {kind,data:historyProjections[kind].parse(data)} as HistoryRecord;
 }
 export function openHistoryExportSnapshot(path:string,input:HistoryExportInput,createdAt:number):HistoryExportSnapshot {
@@ -55,13 +59,13 @@ export function openHistoryExportSnapshot(path:string,input:HistoryExportInput,c
     const kinds=input.content.flatMap(group=>[...historyGroups[group]]) as HistoryRecordKind[];
     const counts:Record<string,number>={};
     for (const kind of kinds) counts[kind]=(db.prepare(`SELECT count(*) AS count FROM ${sources[kind].table}`).get() as {count:number}).count;
-    const manifest=historyManifest.parse({kind:"manifest",schemaVersion:1,generation:metadata.generation,snapshotCursor:cursor.cursor,createdAt:new Date(createdAt).toISOString(),content:input.content,counts});
+    const manifest=historyManifest.parse({kind:"manifest",schemaVersion:2,generation:metadata.generation,snapshotCursor:cursor.cursor,createdAt:new Date(createdAt).toISOString(),content:input.content,counts});
     let index=0;let last:unknown[]|undefined;let closed=false;
     return {manifest,nextBatch() {
       if(closed)throw new Error("EXPORT_CLOSED");
       while(index<kinds.length) {
         const kind=kinds[index];const source=sources[kind];const keys=source.keys;
-        const columns=[...new Set([...keys,...(source.body?["body"]:source.fields.map(snake))])];
+        const columns=[...new Set([...keys,...(source.body?["body"]:source.fields.filter(field=>field!=="totalTokens").map(snake))])];
         if(kind === "runEvent") columns.push(hasPrunedColumn ? "payload_pruned_at" : "NULL AS payload_pruned_at");
         const where=last ? `WHERE (${keys.join(",")}) > (${keys.map(()=>"?").join(",")})` : "";
         const rows=db.prepare(`SELECT ${columns.join(",")} FROM ${source.table} ${where} ORDER BY ${keys.join(",")} LIMIT 100`).all(...(last ?? [])) as Row[];

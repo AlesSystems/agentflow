@@ -1,0 +1,24 @@
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import { join } from "node:path";
+import type { startRuntime as StartRuntime } from "../../src/server/launcher";
+import type { readConfig as ReadConfig } from "../../src/server/config";
+const source=process.env.AGENTFLOW_W03C_MEASURE_SOURCE??process.cwd();
+const {startRuntime}=await import(pathToFileURL(join(source,"src/server/launcher.ts")).href) as {startRuntime:typeof StartRuntime};
+const {readConfig}=await import(pathToFileURL(join(source,"src/server/config.ts")).href) as {readConfig:typeof ReadConfig};
+const running=await startRuntime(readConfig(process.env,"production"));
+const store=running.owned.store,snapshot=store.snapshot.bind(store),command=store.command.bind(store),backup=store.backup.bind(store),prepare=store.prepareHistoryExport.bind(store);
+let queryOrdinal=0,commandOrdinal=0,exportOrdinal=0,backupLeases=0,readers=0;
+store.snapshot=(...args)=>{const ordinal=++queryOrdinal,at=performance.now();try{return snapshot(...args);}finally{console.log(JSON.stringify({kind:"queryTiming",ordinal,operation:args[0].kind,ms:performance.now()-at}));}};
+store.command=(...args)=>{const ordinal=++commandOrdinal,at=performance.now();try{return command(...args);}finally{console.log(JSON.stringify({kind:"commandTiming",ordinal,operation:args[0].kind,key:args[1].key,ms:performance.now()-at}));}};
+store.backup=async(...args)=>{backupLeases++;const at=performance.now();try{return await backup(...args);}finally{backupLeases--;console.log(JSON.stringify({kind:"backupTiming",destination:args[0],ms:performance.now()-at}));}};
+store.prepareHistoryExport=async(...args)=>{const ordinal=++exportOrdinal,at=performance.now(),result=await prepare(...args);console.log(JSON.stringify({kind:"exportPreparationTiming",ordinal,destination:args[0],ms:performance.now()-at}));readers++;const next=result.nextBatch.bind(result),close=result.close.bind(result);let batch=0,closed=false;result.nextBatch=()=>{const at=performance.now(),rows=next();console.log(JSON.stringify({kind:"exportBatchTiming",ordinal,batch:++batch,rows:rows.length,ms:performance.now()-at}));return rows;};result.close=()=>{if(!closed){close();closed=true;readers--;}};return result;};
+const descriptors=()=>execFileSync("/usr/sbin/lsof",["-nP","-p",String(process.pid),"-F","pfn"],{encoding:"utf8"});
+console.log(JSON.stringify({kind:"resourceBefore",descriptors:descriptors(),runtime:running.diagnostics(),history:running.history.diagnostics(),streams:running.streams.diagnostics()}));
+console.log("AgentFlow W03c measurement ready");
+for(const signal of ["SIGINT","SIGTERM"] as const)process.once(signal,()=>void running.shutdown().then(async()=>{
+ console.log(JSON.stringify({kind:"shutdownInitial",runtime:running.diagnostics(),streams:running.streams.diagnostics(),history:running.history.diagnostics()}));
+ const settlementStarted=performance.now(),deadline=Date.now()+1000;
+ do{await new Promise<void>(resolve=>setImmediate(resolve));}while(running.diagnostics().sockets>0&&Date.now()<deadline);
+ console.log(JSON.stringify({kind:"shutdown",history:running.history.diagnostics(),runtime:running.diagnostics(),streams:running.streams.diagnostics(),backupLeases,readers,settlementMs:performance.now()-settlementStarted,activeResources:process.getActiveResourcesInfo(),descriptors:descriptors()}));process.exit(running.diagnostics().sockets===0?0:1);
+}));

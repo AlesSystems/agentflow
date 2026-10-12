@@ -4,7 +4,7 @@ import { mkdtempSync,realpathSync,readFileSync,writeFileSync,readdirSync,lstatSy
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { expect,it } from "vitest";
-import Database from "better-sqlite3";
+import { auditStoppedSql } from "../fixtures/w03c-campaign";
 import { freePort,launch } from "../fixtures/server";
 import { openOwnedStore,migrations } from "../../src/db";
 const pins={P01:"a2e5170879602faff706e1aa2e5e7a1905d63b47",P04:"d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe",P07:"dd26c4b00867e7680c3baf0cf2be39b60502aecf",W01:"e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168",W02:"1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361",W03a:"76fe748a3d642f8a5a6ea738af47a3bb640070d3"};
@@ -14,10 +14,12 @@ function physical(root:string){
 async function command(node:string,cwd:string,args:string[],env:NodeJS.ProcessEnv){
  const child=spawn(node,args,{cwd,env,stdio:["ignore","pipe","pipe"]});let stdout="",stderr="";child.stdout.on("data",chunk=>stdout+=chunk);child.stderr.on("data",chunk=>stderr+=chunk);const exit=await new Promise<number|null>((resolve,reject)=>{child.once("error",reject);child.once("close",resolve);});return {node,cwd,args,environment:env,exit,stdout,stderr};
 }
-function snapshot(dir:string){const db=new Database(join(dir,"agentflow.sqlite"),{readonly:true});try{
- const tables=(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as {name:string}[]).map(r=>r.name);
- return {integrity:db.pragma("integrity_check",{simple:true}),foreignKeys:db.pragma("foreign_key_check"),rows:Object.fromEntries(tables.map(t=>[t,db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all()]))};
-}finally{db.close();}}
+function snapshot(dir:string){
+ const proof=mkdtempSync(join(realpathSync(tmpdir()),"w03b-stopped-audit-"));
+ const result=auditStoppedSql(dir,proof);
+ if(process.env.AGENTFLOW_W03B_UPGRADE_PROOF_DIR)writeFileSync(join(process.env.AGENTFLOW_W03B_UPGRADE_PROOF_DIR,`copied-audit-${randomUUID()}.json`),JSON.stringify(result,null,2),{mode:0o600});
+ return result;
+}
 for(const [phase,pin] of Object.entries(pins))it(`upgrades actual ${phase} source API/local-command fixture preserving prior migration and original receipts`,async()=>{
  const historical=process.env.AGENTFLOW_W03B_HISTORICAL_ROOT,proof=process.env.AGENTFLOW_W03B_UPGRADE_PROOF_DIR;
  if(!historical||!proof)throw new Error("Actual historical source and private upgrade proof prerequisites required");

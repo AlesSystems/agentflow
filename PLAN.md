@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, and W03a are integrated through PRs #4–#13. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b has an approved exact plan, implemented history contracts, and accepted qualification/campaign evidence. Its latest client-only generation repair is verified by focused native browser checks; independent re-review, integration, and guarded cleanup remain pending. Package boxes remain unchecked until reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, W03a, and W03b are integrated through PRs #4–#14. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b passed its approved exact plan, qualified verification, and independent whole-package reviews with scoped repair re-review. PR #14 integrated the reviewed candidate; private archival and guarded cleanup are complete. [Its receipt](docs/implementation/W03b.md) preserves source qualifications. W03c implementation and exact-source reviews are accepted, with a separately approved campaign disposition. Its final documentation review, integration, and guarded cleanup remain open. W03c and W04 package boxes remain open until their reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -226,10 +226,10 @@ or be represented as successful live GitHub verification.
 Depends on W03a. Proposed files: `src/history/`, export/retention API commands,
 settings panels, migrations, and snapshot/restore/cursor regression tests.
 
-- [ ] Implement versioned export with explicit content selection and no credentials.
-- [ ] Implement the contract's default-retain-all policy, preview and explicit
+- [x] Implement versioned export with explicit content selection and no credentials.
+- [x] Implement the contract's default-retain-all policy, preview and explicit
   human prune action, backup/recovery, and protected-record constraints.
-- [ ] Prove cursor/generation recovery, retry safety, multi-tab refresh, and
+- [x] Prove cursor/generation recovery, retry safety, multi-tab refresh, and
   retention behavior with active attempts and current acceptance evidence.
 
 Pass when export counts match the snapshot, pruning cannot remove protected facts,

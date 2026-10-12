@@ -48,3 +48,8 @@ it("rejects one slow measured preview that fast warmups and JIT previews would h
  for(const defect of ["absent ID","wrong warmup"]){const broken=structuredClone(metrics),declared=structuredClone(declarations);if(defect==="absent ID")broken[0].records[10].requestId="absent";else declared.find(row=>row.id==="prune-preview-1-0")!.warmup=true;const invalid=reduceTimings(declared,broken);expect(invalid.acceptance).toBe(false);expect(invalid.classificationFailures.length).toBeGreaterThan(0);expect(invalid.expectedPreviewRequests).toBe(90);expect(invalid.observedPreviewTimings).toBe(90);expect(invalid.rawPreviewTimings).toHaveLength(90);retainControl("preview-cohort-"+defect,{declarations:declared,metrics:broken,result:invalid});}
  retainControl("preview-timing-cohort",{declarations,metrics,result});
 });
+it("decodes explicitly selected historical v1 and current v2 exports without mixed versions",()=>{
+ const head=complete.replaceAll('"schemaVersion":1','"schemaVersion":2').replaceAll('"runEvent":0','"runEvent":0,"usageMeasurement":0,"usagePriceSnapshot":0');
+ expect(validateExport(head,2).counts).toEqual({run:0,runEvent:0,usageMeasurement:0,usagePriceSnapshot:0});
+ expect(()=>validateExport(head,1)).toThrow();expect(()=>validateExport(complete,2)).toThrow();expect(()=>validateExport(head.replace('"kind":"complete","schemaVersion":2','"kind":"complete","schemaVersion":1'),2)).toThrow();
+});
