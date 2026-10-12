@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01, W02, W03a, and W03b integrated.** W03b passed qualified verification and independent review, including its client generation repair, and is integrated through PR #14. Private archival and guarded cleanup are complete. W03c implementation, exact-source reviews, and the separately approved campaign disposition are accepted; its documentation review, integration, and cleanup remain open. W04 remains open. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01, W02, W03a, W03b, and W03c integrated.** W03b passed qualified verification and independent review, including its client generation repair, and is integrated through PR #14. Private archival and guarded cleanup are complete. W03c is integrated through PR #15 with its exact-observation campaign disposition, private archival, and guarded cleanup complete. W04 remains open. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -178,7 +178,8 @@ locked install and source-qualified checks. Exact-source package reviews found n
 revised campaign completed all 3,810 requests and passed absolute budgets, but
 its raw acceptance remains false for six relative regressions. Their exact
 Astra disposition is approved and Root accepted the campaign. Final documentation
-review, W03c integration and cleanup, and W04 remain open. The complete-v1 release gate remains open.
+review, PR #15 integration, private archival, and guarded cleanup are complete.
+W04 planning and its Astra gate remain open. The complete-v1 release gate remains open.
 
 
 ### Reported usage and local estimates

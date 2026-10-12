@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, W03a, and W03b are integrated through PRs #4–#14. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b passed its approved exact plan, qualified verification, and independent whole-package reviews with scoped repair re-review. PR #14 integrated the reviewed candidate; private archival and guarded cleanup are complete. [Its receipt](docs/implementation/W03b.md) preserves source qualifications. W03c implementation and exact-source reviews are accepted, with a separately approved campaign disposition. Its final documentation review, integration, and guarded cleanup remain open. W03c and W04 package boxes remain open until their reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, W03a, and W03b are integrated through PRs #4–#14. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b passed its approved exact plan, qualified verification, and independent whole-package reviews with scoped repair re-review. PR #14 integrated the reviewed candidate; private archival and guarded cleanup are complete. [Its receipt](docs/implementation/W03b.md) preserves source qualifications. W03c is integrated through PR #15, with reviewed campaign disposition and completed private archival and guarded cleanup. [Its receipt](docs/implementation/W03c.md) preserves the original results and qualifications. W04 planning and Astra approval are next; W04 remains open. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -241,10 +241,10 @@ Run destructive scenarios only in synthetic isolated test directories.
 Depends on W03b. Proposed files: `src/usage/`, report/query schemas, usage view,
 price-snapshot handling, and aggregation/replay/timezone tests.
 
-- [ ] Implement explicit usage reporting, bounded snapshot summaries, filters,
+- [x] Implement explicit usage reporting, bounded snapshot summaries, filters,
   coverage labels, and optional estimates under the Phase 3 contract.
-- [ ] Preserve unknown values and source/model/time provenance; deduplicate retries.
-- [ ] Test absent/partial usage, mixed models/currencies, rework, outbox replay,
+- [x] Preserve unknown values and source/model/time provenance; deduplicate retries.
+- [x] Test absent/partial usage, mixed models/currencies, rework, outbox replay,
   timezone boundaries, and retention/export reconciliation.
 
 Pass when repeated reports never inflate totals, missing data is never zero, and
