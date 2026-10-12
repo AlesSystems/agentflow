@@ -16,4 +16,9 @@ store.prepareHistoryExport=async(...args)=>{const ordinal=++exportOrdinal,at=per
 const descriptors=()=>execFileSync("/usr/sbin/lsof",["-nP","-p",String(process.pid),"-F","pfn"],{encoding:"utf8"});
 console.log(JSON.stringify({kind:"resourceBefore",descriptors:descriptors(),runtime:running.diagnostics(),history:running.history.diagnostics(),streams:running.streams.diagnostics()}));
 console.log("AgentFlow W03c measurement ready");
-for(const signal of ["SIGINT","SIGTERM"] as const)process.once(signal,()=>void running.shutdown().then(()=>{console.log(JSON.stringify({kind:"shutdown",history:running.history.diagnostics(),runtime:running.diagnostics(),streams:running.streams.diagnostics(),backupLeases,readers,activeResources:process.getActiveResourcesInfo(),descriptors:descriptors()}));process.exit(0);}));
+for(const signal of ["SIGINT","SIGTERM"] as const)process.once(signal,()=>void running.shutdown().then(async()=>{
+ console.log(JSON.stringify({kind:"shutdownInitial",runtime:running.diagnostics(),streams:running.streams.diagnostics(),history:running.history.diagnostics()}));
+ const settlementStarted=performance.now(),deadline=Date.now()+1000;
+ do{await new Promise<void>(resolve=>setImmediate(resolve));}while(running.diagnostics().sockets>0&&Date.now()<deadline);
+ console.log(JSON.stringify({kind:"shutdown",history:running.history.diagnostics(),runtime:running.diagnostics(),streams:running.streams.diagnostics(),backupLeases,readers,settlementMs:performance.now()-settlementStarted,activeResources:process.getActiveResourcesInfo(),descriptors:descriptors()}));process.exit(running.diagnostics().sockets===0?0:1);
+}));

@@ -23,3 +23,18 @@ it("rejects missing native CLI ACK, absent UI reset, and killed-service shutdown
  const missing=witnessAcceptance({...value,cli:{...value.cli,acks:[]}});expect(missing).toMatchObject({acceptance:false,cliValid:false,expectedAcks:1,observedAcks:0});
  const proof=process.env.AGENTFLOW_W03C_CONTROL_PROOF_DIR;if(proof)writeFileSync(join(proof,"native-witness-controls.json"),JSON.stringify({facts,services,value,actual,missing},null,2),{mode:0o600,flag:"wx"});
 });
+
+it("captures actual idle launcher shutdown counters with no operation timing samples",async()=>{
+ const services:unknown[]=[];let dir="";const proof=process.env.AGENTFLOW_W03C_CONTROL_PROOF_DIR??mkdtempSync(join(tmpdir(),"w03c-idle-proof-"));
+ await qualifiedService({cwd:process.cwd(),entry:"tests/fixtures/w03c-measure-server.ts"},services,async server=>{dir=server.dir;}).finally(()=>writeFileSync(join(proof,"idle-native-service-original.json"),JSON.stringify({services,dir},null,2),{mode:0o600,flag:"wx"}));
+ const service=services[0] as {closed:boolean;exitCode:number|null;signalCode:string|null;stdout:string};
+ expect(service).toMatchObject({closed:true,exitCode:0,signalCode:null});
+ const records=service.stdout.split("\n").filter(line=>line.startsWith("{")).map(line=>JSON.parse(line));
+ expect(records.filter(row=>String(row.kind).endsWith("Timing"))).toEqual([]);
+ writeFileSync(join(proof,"idle-native-observations.json"),JSON.stringify(records,null,2),{mode:0o600,flag:"wx"});
+ const shutdown=records.find(row=>row.kind==="shutdown");expect(shutdown.runtime).toEqual({requests:0,sockets:0,activeSockets:0});expect(shutdown.history.leases).toBe(0);
+ for(const key of ["leases","bytes","blocked","timers","listeners"])expect(shutdown.streams[key]).toBe(0);
+ expect(shutdown.backupLeases).toBe(0);expect(shutdown.readers).toBe(0);expect(shutdown.descriptors).not.toContain(join(dir,"agentflow.sqlite"));
+ const copies=join(proof,"idle-sql-copies");mkdirSync(copies,{mode:0o700});const facts=auditStoppedSql(dir,copies);
+ writeFileSync(join(proof,"idle-native-resources.json"),JSON.stringify({qualification:"Production launcher/native HTTP service plus test wrapper instrumentation, idle work. Does not prove browser React tracking resources. No operation timing rows.",services,records,dir,facts},null,2),{mode:0o600,flag:"wx"});
+});

@@ -44,7 +44,7 @@ export function witnessAcceptance(value:CorrectnessWitness){
  const {cli,ui,shutdown}=value;
  const cliValid=cli.declared.length>0&&cli.exitCode===0&&cli.pending===0&&new Set(cli.declared.map(row=>row.eventId)).size===cli.declared.length&&cli.acks.length===cli.declared.length&&new Set(cli.acks.map(row=>row.eventId)).size===cli.acks.length&&cli.declared.every(row=>cli.acks.some(ack=>ack.eventId===row.eventId&&ack.acceptedSequence===row.sequence));
  const uiValid=ui.generation!==ui.priorGeneration&&ui.tabs.length===2&&ui.tabs.every(tab=>tab.generation===ui.generation&&tab.resetObserved);
- const shutdownValid=shutdown.closed&&shutdown.stdioClosed&&shutdown.exitCode===0&&shutdown.signalCode===null&&shutdown.runtime!==null&&Object.values(shutdown.runtime).every(n=>n===0)&&shutdown.history?.leases===0&&shutdown.streams!==null&&Object.values(shutdown.streams).every(n=>n===0);
+ const shutdownValid=shutdown.closed&&shutdown.stdioClosed&&shutdown.exitCode===0&&shutdown.signalCode===null&&shutdown.runtime?.requests===0&&shutdown.runtime?.sockets===0&&shutdown.runtime?.activeSockets===0&&shutdown.history?.leases===0&&shutdown.streams?.leases===0&&shutdown.streams?.bytes===0&&shutdown.streams?.blocked===0&&shutdown.streams?.timers===0&&shutdown.streams?.listeners===0;
  return {acceptance:cliValid&&uiValid&&shutdownValid,expectedAcks:cli.declared.length,observedAcks:cli.acks.length,expectedTabs:2,observedTabs:ui.tabs.length,cliValid,uiValid,shutdownValid};
 }
 export function campaignSummary(declared:Declaration[],samples:CampaignSample[]){
