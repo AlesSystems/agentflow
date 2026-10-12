@@ -35,7 +35,7 @@ async function main(){
  }
  const inputPath=process.env.AGENTFLOW_W04_CONTROL_INPUT;
  if(inputPath){
-  const input=privateJSON(inputPath);intended=Array.isArray(input.prepared?.declarations)?input.prepared.declarations.length:null;
+  const input=privateJSON(inputPath);intended=Array.isArray(input.prepared?.intendedIds)?input.prepared.intendedIds.length:null;
   verifySourceBinding(input.bindings.base,bindings.base);verifySourceBinding(input.bindings.head,bindings.head);
   if(input.prepared){const prepared=validatePrepared(input.prepared);intended=prepared.intended;assert.deepEqual(prepared.value.sources,{base:bindings.base.fingerprint,head:bindings.head.fingerprint});assert.deepEqual(prepared.value.builds,{base:sha256(JSON.stringify(bindings.base.compiled)),head:sha256(JSON.stringify(bindings.head.compiled))});assert.equal(prepared.value.runtimeSHA256,bindings.head.runtime.nodeSHA256);assert.equal(prepared.value.helperSHA256,fileSHA256(import.meta.filename));if(input.result)assert(validateResult(prepared.value,input.result as CampaignResult).acceptance,"result/correctness/resource/shutdown rejected");}
   save("control-result.json",{acceptance:true,intended,...counters,officialSamples:0});console.log(JSON.stringify({kind:"controlValidated",intended,...counters,officialSamples:0}));return;
