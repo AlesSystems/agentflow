@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { lstatSync,mkdirSync,readFileSync,writeFileSync } from "node:fs";
 import { join,isAbsolute } from "node:path";
 import { captureSourceBinding,fileSHA256,ownedDirectory,sha256,validateOutputRoot,verifySourceBinding,type SourceBinding } from "../fixtures/w04-qualification";
-import { validatePrepared,validateResult,type CampaignResult } from "../fixtures/w04-campaign";
+import { validatePrepared,validateResult } from "../fixtures/w04-campaign";
 import { qualifiedService } from "../fixtures/w03a-qualification";
 const counters={servicesStarted:0,serviceAttempts:0,sampleAttempts:0};
 let intended:number|null=null;
@@ -37,7 +37,7 @@ async function main(){
  if(inputPath){
   const input=privateJSON(inputPath);intended=Array.isArray(input.prepared?.intendedIds)?input.prepared.intendedIds.length:null;
   verifySourceBinding(input.bindings.base,bindings.base);verifySourceBinding(input.bindings.head,bindings.head);
-  if(input.prepared){const prepared=validatePrepared(input.prepared);intended=prepared.intended;assert.deepEqual(prepared.value.sources,{base:bindings.base.fingerprint,head:bindings.head.fingerprint});assert.deepEqual(prepared.value.builds,{base:sha256(JSON.stringify(bindings.base.compiled)),head:sha256(JSON.stringify(bindings.head.compiled))});assert.equal(prepared.value.runtimeSHA256,bindings.head.runtime.nodeSHA256);assert.equal(prepared.value.helperSHA256,fileSHA256(import.meta.filename));if(input.result)assert(validateResult(prepared.value,input.result as CampaignResult).acceptance,"result/correctness/resource/shutdown rejected");}
+  const prepared=validatePrepared(input.prepared);intended=prepared.intended;assert.deepEqual(prepared.value.sources,{base:bindings.base.fingerprint,head:bindings.head.fingerprint});assert.deepEqual(prepared.value.builds,{base:sha256(JSON.stringify(bindings.base.compiled)),head:sha256(JSON.stringify(bindings.head.compiled))});assert.equal(prepared.value.runtimeSHA256,bindings.head.runtime.nodeSHA256);assert.equal(prepared.value.helperSHA256,fileSHA256(import.meta.filename));assert(validateResult(prepared.value,input.result).acceptance,"result/correctness/resource/shutdown rejected");
   save("control-result.json",{acceptance:true,intended,...counters,officialSamples:0});console.log(JSON.stringify({kind:"controlValidated",intended,...counters,officialSamples:0}));return;
  }
  const dir=join(proof,"service-fixture");mkdirSync(dir,{mode:0o700});ownedDirectory(dir,true);const services:unknown[]=[];let failure:unknown;
