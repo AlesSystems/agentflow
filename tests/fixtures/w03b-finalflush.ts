@@ -18,6 +18,8 @@ let failed=false;
 for(const mode of ["deadline","closing","closingDuringEnd","closingBeforeEnd","callerAbort"]){
  const dir=mkdtempSync(join(realpathSync(tmpdir()),"w03b-finalflush-"));const owned=await openOwnedStore(dir);const port=await freePort();const history=new HistoryRuntime(owned.store);
  publishRuntime(readConfig({...process.env,AGENTFLOW_DATA_DIR:dir,PORT:String(port)},"production"),owned,undefined,history);
+ let readerClosed=false;
+ const prepare=owned.store.prepareHistoryExport.bind(owned.store);owned.store.prepareHistoryExport=async(...args)=>{const snapshot=await prepare(...args);const close=snapshot.close.bind(snapshot);snapshot.close=()=>{close();assert.throws(()=>snapshot.nextBatch(),/EXPORT_CLOSED/);readerClosed=true;};return snapshot;};
  const secret=randomBytes(32).toString("hex");owned.store.createSession(hashSecret(secret),Date.now(),Date.now()+60000);
  const db=new Database(join(dir,"agentflow.sqlite"));
  const project=randomUUID(),task=randomUUID();const now=Date.now();
@@ -41,8 +43,8 @@ for(const mode of ["deadline","closing","closingDuringEnd","closingBeforeEnd","c
   assert(lastWrite && completeQueued,"last complete write must be true and queued");assert(!finished,"controlled end boundary must not emit finish");
   const at=performance.now();if(mode==="closing")history.beginClosing();if(mode==="callerAbort")socket.destroy();
   const released=await until(()=>settled && history.diagnostics().leases===0,mode==="deadline"?5500:500);
-  const observation={fault:"native end suppressed",mode,ended,lastWrite,completeQueued,pendingAtEnd,finished,released,elapsedMs:performance.now()-at,diagnostics:history.diagnostics(),copies:readdirSync(join(dir,"exports")),listeners:response?{finish:response.listenerCount("finish"),close:response.listenerCount("close"),drain:response.listenerCount("drain")}:null,listenersBefore};
-  console.log(JSON.stringify(observation));assert(released,"final flush did not settle and release lease");assert.deepEqual(observation.copies,[]);assert(response?.destroyed);
+  const observation={fault:"native end suppressed",mode,ended,lastWrite,completeQueued,pendingAtEnd,finished,released,elapsedMs:performance.now()-at,readerClosed,diagnostics:history.diagnostics(),copies:readdirSync(join(dir,"exports")),listeners:response?{finish:response.listenerCount("finish"),close:response.listenerCount("close"),drain:response.listenerCount("drain")}:null,listenersBefore};
+  console.log(JSON.stringify(observation));assert(released,"final flush did not settle and release lease");assert.deepEqual(observation.copies,[]);assert(readerClosed);assert(response?.destroyed);
   assert.equal(response.listenerCount("finish"),listenersBefore!.finish+1); // Fixture's un-fired observation listener remains.
   assert.equal(response.listenerCount("close"),listenersBefore!.close);assert.equal(response.listenerCount("drain"),listenersBefore!.drain);
   assert.equal(owned.store.pragmas().busy_timeout,250);owned.store.revokeAll();

@@ -86,9 +86,26 @@ export class HistoryRuntime {
       for(;;){check();const batch=snapshot.nextBatch();if(!batch.length)break;for(const record of batch)await write(record);await yieldTurn();}
       await write({kind:"complete",schemaVersion:1,counts:snapshot.manifest.counts});
       await new Promise<void>((resolve,reject)=> {
-        const finish=()=>{response.off("close",closed);resolve();};
-        const closed=()=>{response.off("finish",finish);reject(new Error("EXPORT_ABORTED"));};
-        response.once("finish",finish);response.once("close",closed);response.end();
+        let settled=false;
+        const settle=(error?:Error)=> {
+          if(settled)return;
+          settled=true;clearTimeout(timer);
+          response.off("finish",finish);response.off("close",closed);
+          controller.signal.removeEventListener("abort",cancel);
+          if(error){response.destroy();reject(error);}else resolve();
+        };
+        const finish=()=>settle();
+        const closed=()=>settle(new Error("EXPORT_ABORTED"));
+        const cancel=()=>settle(new Error("EXPORT_ABORTED"));
+        const timer=setTimeout(()=>{this.stalledCloses++;controller.abort();},5000);
+        response.once("finish",finish);response.once("close",closed);
+        controller.signal.addEventListener("abort",cancel,{once:true});
+        if(controller.signal.aborted)cancel();
+        else if(response.destroyed)closed();
+        else {
+          try {response.end();}
+          catch(error){settle(error instanceof Error ? error : new Error("EXPORT_ABORTED"));}
+        }
       });
     }catch {
       if(response.headersSent)response.destroy();
