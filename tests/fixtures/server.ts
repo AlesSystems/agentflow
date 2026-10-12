@@ -25,6 +25,7 @@ export async function launch(
     plain?: boolean;
     stdin?: boolean;
     cwd?: string;
+    nodeExecutable?: string;
     entry?: string;
     nodeArgs?: string[];
     extraEnv?: Record<string, string>;
@@ -37,7 +38,7 @@ export async function launch(
   const port = options.port || (await freePort());
   const cwd = options.cwd || process.cwd();
   const child = spawn(
-    process.execPath,
+    options.nodeExecutable ?? process.execPath,
     options.plain
       ? [
           "node_modules/next/dist/bin/next",

@@ -1,0 +1,44 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { lstatSync,readFileSync,readdirSync,writeFileSync,readlinkSync } from "node:fs";
+import { join } from "node:path";
+import { historyLine,historyManifest,historyComplete } from "../../src/contracts/history";
+import { reconcile,type CaptureSample } from "./w03a-qualification";
+export function validateExport(text:string){
+ assert(text.endsWith("\n"),"truncated JSONL");
+ const records=text.slice(0,-1).split("\n").map(line=>historyLine.parse(JSON.parse(line)));
+ const manifest=historyManifest.parse(records[0]),complete=historyComplete.parse(records.at(-1));
+ const actual=Object.fromEntries(Object.keys(manifest.counts).map(kind=>[kind,records.slice(1,-1).filter(row=>row.kind===kind).length]));
+ assert.equal(records.slice(1,-1).length,Object.values(actual).reduce((a,b)=>a+b,0),"unexpected records");
+ assert.deepEqual(actual,manifest.counts,"export counts mismatch");assert.deepEqual(complete.counts,manifest.counts,"completion counts mismatch");
+ return {generation:manifest.generation,counts:actual,bytes:Buffer.byteLength(text),records:records.length};
+}
+export function verifyPins(expected:unknown,actual:unknown){assert.deepEqual(actual,expected,"frozen source/build changed");}
+export function physicalPins(root:string){
+ const source:Record<string,string>={},build:Record<string,string>={};
+ const walk=(dir:string,prefix:string,target:Record<string,string>)=>{for(const name of readdirSync(dir).sort()){if(["node_modules",".git",".superpowers"].includes(name))continue;const path=join(dir,name),key=prefix+name,stat=lstatSync(path);if(stat.isDirectory())walk(path,key+"/",target);else if(stat.isFile())target[key]=createHash("sha256").update(readFileSync(path)).digest("hex");}};
+ for(const name of readdirSync(root).sort()){if(["node_modules",".git",".superpowers"].includes(name))continue;const path=join(root,name),stat=lstatSync(path);if(name===".next"){walk(path,"",build);continue;}if(stat.isDirectory())walk(path,name+"/",source);else if(stat.isFile())source[name]=createHash("sha256").update(readFileSync(path)).digest("hex");}
+ return {source,build,node:process.execPath,nodeSHA256:createHash("sha256").update(readFileSync(process.execPath)).digest("hex")};
+}
+export async function qualifyRequests(declarations:{id:string;warmup:boolean}[],work:(id:string)=>Promise<Omit<CaptureSample,"id"|"warmup"|"confirmed"|"failure">>,save:(row:CaptureSample)=>void=()=>{}){
+ const samples:CaptureSample[]=[];let primary:string|null=null;
+ for(const declaration of declarations){const row:CaptureSample={...declaration,status:null,elapsedMs:null,failure:null,confirmed:false,text:null,generation:null,dispatchMs:performance.now(),drainedMs:null};samples.push(row);
+  try{Object.assign(row,await work(row.id));row.confirmed=true;}catch(error){row.failure=String(error);primary=String(error);}finally{row.drainedMs??=performance.now();row.elapsedMs??=row.drainedMs-row.dispatchMs;save(row);}if(primary!==null)break;
+ }
+ const result=reconcile(declarations,samples,primary,[]);return {...result,acceptance:result.valid,samples};
+}
+export function validateRecovery(observation:{priorGeneration:string;generation:string;resetText:string;originalReceipt:unknown;retryReceipt:unknown;retryGeneration:string}){
+ assert.notEqual(observation.generation,observation.priorGeneration,"generation did not renew");
+ assert.match(observation.resetText,/event: reset\n/,"missing visible reset");
+ assert(observation.resetText.includes(observation.generation),"reset generation mismatch");
+ assert.deepEqual(observation.retryReceipt,observation.originalReceipt,"lost original receipt");
+ assert.equal(observation.retryGeneration,observation.generation,"retry response current generation mismatch");
+}
+
+export function retainControl(name:string,observations:unknown){const root=process.env.AGENTFLOW_W03B_CONTROL_PROOF_DIR;if(root){assert.equal(lstatSync(root).mode&0o777,0o700);writeFileSync(join(root,name.replaceAll(" ","-")+".json"),JSON.stringify(observations,null,2)+"\n",{mode:0o600,flag:"wx"});}}
+
+export function runtimePins(root:string){
+ const files:Record<string,{sha256?:string;link?:string;dev:number;ino:number;uid:number;mode:number;size:number}>={};
+ const walk=(dir:string,prefix="")=>{for(const name of readdirSync(dir).sort()){const path=join(dir,name),key=prefix+name,stat=lstatSync(path);files[key]={dev:stat.dev,ino:stat.ino,uid:stat.uid,mode:stat.mode&0o777,size:stat.size,...(stat.isFile()?{sha256:createHash("sha256").update(readFileSync(path)).digest("hex")}:stat.isSymbolicLink()?{link:readlinkSync(path)}:{})};if(stat.isDirectory())walk(path,key+"/");}};
+ walk(root);const stat=lstatSync(root);return {root,identity:{dev:stat.dev,ino:stat.ino,uid:stat.uid,mode:stat.mode&0o777},files};
+}
