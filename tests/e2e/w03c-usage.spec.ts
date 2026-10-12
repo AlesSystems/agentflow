@@ -108,6 +108,7 @@ test("named_estimate_discloses_scope_and_exclusions", async ({ page }) => {
     await expect(page.getByText("Price snapshot saved. Select it explicitly to estimate.", { exact: true })).toBeVisible();
     await page.getByRole("combobox", { name: "Price snapshot", exact: true }).selectOption({ label: "Synthetic local rates" });
     await expect(page.getByRole("heading", { name: "Local estimate", exact: true })).toBeVisible();
+    expect(await page.locator("#groups-heading").evaluate(groups => Boolean(groups.compareDocumentPosition(document.querySelector("#estimate-heading")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
     await expect(page.getByText("USD 5.000000000001", { exact: true })).toBeVisible();
     await expect(page.getByText("1 included report · 1 unknown counts · 2 unsupported billing basis · 1 missing or partial price", { exact: true })).toBeVisible();
     await expect(page.getByText("Estimate only. This is not a bill.", { exact: true })).toBeVisible();
@@ -189,11 +190,60 @@ test("offline and restore retain usage and price drafts through pairing", async 
   } finally { await page.context().setOffline(false); await other.close(); await f.finish(); }
 });
 
+test("rejected continuation waits for a successful replacement first page", async ({ page, browser }) => {
+  const f=await fixture(page,"blocked-continuation",52),other=await browser.newContext(),second=await other.newPage();
+  let release:()=>void=()=>{},began:()=>void=()=>{};const started=new Promise<void>(resolve=>{began=resolve});let mode:"held"|"failed"|"healthy"="held";
+  try {
+    await pairPage(second,f.server);await page.route("**/api/v1/changes/stream?**",route=>route.abort());await f.open();
+    await page.getByLabel("Snapshot name",{exact:true}).fill("Retained recovery draft");
+    await page.route("**/api/v1/usage?**",async route=>{
+      if(new URL(route.request().url()).searchParams.has("cursor")||mode==="healthy")return route.continue();
+      const native=await route.fetch();began();if(mode==="held")await new Promise<void>(resolve=>{release=resolve});
+      if(mode==="failed")return route.abort("failed");return route.fulfill({response:native});
+    });
+    await command(second,"/projects",{name:"Synthetic blocked high-water change"});await page.getByRole("button",{name:"Load more eligible runs",exact:true}).click();await started;
+    await expect(page.getByRole("button",{name:"Load more eligible runs",exact:true})).toHaveCount(0);
+    await expect(page.getByText("Showing 50 of 52 eligible runs",{exact:true})).toBeVisible();await expect(page.getByLabel("Snapshot name",{exact:true})).toHaveValue("Retained recovery draft");
+    mode="failed";release();await expect(page.locator(".error").filter({hasText:"Could not refresh this view"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Load more eligible runs",exact:true})).toHaveCount(0);
+    const continuations=()=>f.browserRequests.filter(x=>new URL((x as {url:string}).url).searchParams.has("cursor"));expect(continuations()).toHaveLength(1);
+    mode="healthy";await page.locator(".error").filter({hasText:"Could not refresh this view"}).getByRole("button",{name:"Retry refresh",exact:true}).click();
+    await expect(page.getByRole("button",{name:"Load more eligible runs",exact:true})).toBeVisible();await page.getByRole("button",{name:"Load more eligible runs",exact:true}).click();await expect(page.getByText("Showing 52 of 52 eligible runs",{exact:true})).toBeVisible();
+    expect(continuations()).toHaveLength(2);expect((continuations()[1] as {url:string}).url).not.toBe((continuations()[0] as {url:string}).url);
+  } finally {release();await page.unroute("**/api/v1/usage?**");await other.close();await f.finish();}
+});
+test("page-two project and price selections retain their labels across refresh and generation", async ({ page, browser }) => {
+  test.setTimeout(60000);const f=await fixture(page,"retained-selection",1),other=await browser.newContext(),second=await other.newPage();
+  try {
+    await pairPage(second,f.server);await f.event(f.runs[0],"run.usage",f.usage("selection",3,7));
+    for(let i=0;i<50;i++)expect((await command(second,"/projects",{name:"Synthetic newer project "+i})).status).toBe(201);
+    const priceId=randomUUID();const input=(id:string,name:string)=>({id,name,capturedAt:new Date().toISOString(),entries:[{source:"fixture",model:"model",currency:"USD",inputPrice:"1",outputPrice:"2"}]});
+    expect((await command(second,"/usage/price-snapshots",input(priceId,"Synthetic retained older price"))).status).toBe(201);
+    for(let i=0;i<50;i++)expect((await command(second,"/usage/price-snapshots",input(randomUUID(),"Synthetic newer price "+i))).status).toBe(201);
+    await page.goto(f.server.url+"/usage");await page.getByRole("button",{name:"Load more projects",exact:true}).click();await page.getByRole("combobox",{name:"Project",exact:true}).selectOption(f.projectId);
+    await page.getByLabel("From UTC",{exact:true}).fill(f.from);await page.getByLabel("To UTC",{exact:true}).fill(f.to);await page.getByRole("button",{name:"Apply usage filters",exact:true}).click();
+    await page.getByRole("button",{name:"Load more price snapshots",exact:true}).click();await page.getByRole("combobox",{name:"Price snapshot",exact:true}).selectOption(priceId);await expect(page.getByRole("heading",{name:"Local estimate",exact:true})).toBeVisible();
+    await page.getByLabel("Snapshot name",{exact:true}).fill("Unsaved selection draft");await command(second,"/projects",{name:"Synthetic selection refresh"});
+    await expect(page.getByText("Showing 50 of 52 projects, including archived projects.",{exact:true})).toBeVisible();
+    const project=page.getByRole("combobox",{name:"Project",exact:true}),price=page.getByRole("combobox",{name:"Price snapshot",exact:true});
+    await expect(project).toHaveValue(f.projectId);await expect(project.locator("option:checked")).toHaveText(/Synthetic usage project/);await expect(price).toHaveValue(priceId);await expect(price.locator("option:checked")).toHaveText(/Synthetic retained older price/);
+    const preview=await command(second,"/retention/preview",{cutoff:new Date(Date.now()-1).toISOString()}),v=preview.body.data;expect(preview.status).toBe(200);expect((await command(second,"/retention/prune",{previewId:v.previewId,expectedGeneration:v.expectedGeneration,expectedVersion:v.expectedVersion,candidateDigest:v.candidateDigest})).status).toBe(200);
+    await expect(project).toHaveValue(f.projectId);await expect(project.locator("option:checked")).toHaveText(/Synthetic usage project/);await expect(price).toHaveValue(priceId);await expect(price.locator("option:checked")).toHaveText(/Synthetic retained older price/);
+    await expect(page.getByRole("heading",{name:"Local estimate",exact:true})).toBeVisible();await expect(page.getByText("USD 0.000017",{exact:true})).toBeVisible();await expect(page.getByLabel("Snapshot name",{exact:true})).toHaveValue("Unsaved selection draft");
+    const reads=f.browserRequests.filter(x=>(x as {method:string}).method==="GET"&&new URL((x as {url:string}).url).pathname.endsWith("/usage"));expect(new URL((reads.at(-1) as {url:string}).url).searchParams.get("projectId")).toBe(f.projectId);expect(new URL((reads.at(-1) as {url:string}).url).searchParams.get("priceSnapshotId")).toBe(priceId);
+  } finally {await other.close();await f.finish();}
+});
+
  test("usage appearance batch", async ({ page }) => {
   test.skip(!process.env.W03C_TASK4_APPEARANCE, "Appearance is a single explicitly released batch.");
   const f = await fixture(page, "appearance", 3);
   try {
     await f.event(f.runs[0], "run.usage", f.usage("complete", 12345, 67)); await f.event(f.runs[1], "run.usage", f.usage("partial", null, 7)); await f.open();
+    let capturePrice: string | null = null;
+    if (process.env.W03C_TASK4_CAPTURE_ESTIMATE) {
+      const created=await command(page,"/usage/price-snapshots",{id:randomUUID(),name:"Synthetic capture rates",capturedAt:new Date().toISOString(),entries:[{source:"fixture",model:"model",currency:"USD",inputPrice:"1",outputPrice:"2"}]});expect(created.status).toBe(201);capturePrice=created.body.data.id;
+      await page.getByRole("combobox",{name:"Price snapshot",exact:true}).selectOption(capturePrice!);await expect(page.getByRole("heading",{name:"Local estimate",exact:true})).toBeVisible();
+    }
     await page.emulateMedia({ reducedMotion: "reduce" });
     const captures: unknown[] = [];
     for (const [name, width, height] of [["desktop",1440,1000],["narrow",375,812]] as const) {
@@ -209,7 +259,7 @@ test("offline and restore retain usage and price drafts through pairing", async 
     try {
       await pairPage(zoomPage,f.server);const before=await zoomPage.evaluate(()=>({width:innerWidth,dpr:devicePixelRatio}));
       await zoomPage.goto("chrome://settings/appearance");await zoomPage.locator("select#zoomLevel").selectOption("2");await zoomPage.goto(f.server.url+"/usage");await zoomPage.emulateMedia({reducedMotion:"reduce"});
-      await zoomPage.getByRole("combobox",{name:"Project",exact:true}).selectOption(f.projectId);await zoomPage.getByLabel("From UTC",{exact:true}).fill(f.from);await zoomPage.getByLabel("To UTC",{exact:true}).fill(f.to);await zoomPage.getByRole("button",{name:"Apply usage filters"}).focus();await zoomPage.keyboard.press("Enter");await expect(zoomPage.getByRole("heading",{name:"Reporting coverage",exact:true})).toBeVisible();
+      await zoomPage.getByRole("combobox",{name:"Project",exact:true}).selectOption(f.projectId);await zoomPage.getByLabel("From UTC",{exact:true}).fill(f.from);await zoomPage.getByLabel("To UTC",{exact:true}).fill(f.to);await zoomPage.getByRole("button",{name:"Apply usage filters"}).focus();await zoomPage.keyboard.press("Enter");await expect(zoomPage.getByRole("heading",{name:"Reporting coverage",exact:true})).toBeVisible();if(capturePrice){await zoomPage.getByRole("combobox",{name:"Price snapshot",exact:true}).selectOption(capturePrice);await expect(zoomPage.getByRole("heading",{name:"Local estimate",exact:true})).toBeVisible();}
       const after=await zoomPage.evaluate(()=>({width:innerWidth,dpr:devicePixelRatio,cssZoom:getComputedStyle(document.body).zoom,motion:matchMedia("(prefers-reduced-motion: reduce)").matches}));expect(after.width).toBeLessThan(before.width*.6);expect(after.dpr).toBeGreaterThan(before.dpr*1.9);expect(after.cssZoom).toBe("1");
       expect(await zoomPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);const result=await new AxeBuilder({page:zoomPage}).include("#main-content").analyze();expect(result.violations).toEqual([]);
       await zoomPage.evaluate(()=>scrollTo(0,0));const path=join(proof!,"native-200-"+process.env.W03C_TASK4_APPEARANCE+".png");const cdp=await context.newCDPSession(zoomPage);const metrics=await cdp.send("Page.getLayoutMetrics");const shot=await cdp.send("Page.captureScreenshot",{format:"png",fromSurface:true,captureBeyondViewport:false});const bytes=Buffer.from(shot.data,"base64");expect(bytes.readUInt32BE(16)).toBe(metrics.layoutViewport.clientWidth);writeFileSync(path,bytes,{mode:0o600});await cdp.detach();captures.push({name:"native-200",profile,before,after,path,axe:result.violations,metrics,captureScope:"Actual native browser viewport at document top; original bytes",width:bytes.readUInt32BE(16),height:bytes.readUInt32BE(20)});
