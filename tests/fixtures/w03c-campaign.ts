@@ -54,3 +54,17 @@ export function campaignSummary(declared:Declaration[],samples:CampaignSample[])
  const regressions=groups.filter(g=>{if(g.source!=="head"||g.cohort!=="legacy")return false;const base=groups.find(b=>b.source==="base"&&b.operation===g.operation&&b.repetition===g.repetition);return !!g.distribution&&!!base?.distribution&&g.distribution.p95Ms>base.distribution.p95Ms*1.2;}).map(g=>g.id);
  return {acceptance:groups.every(g=>g.distribution!==null)&&!budgetFailures.length&&!regressions.length,groups,budgetFailures,regressions,qualification:"HTTP completion only; native SQL/export scheduler timings are separate; each regression requires Root exact-source explanation and Astra approval"};
 }
+export function bindNativeTimings(records:Record<string,unknown>[],requests:{id:string;operation:string;key:string|null}[]):Record<string,unknown>[]{
+ const queries=requests.filter(r=>["tasks","events","activity","usage.query"].includes(r.operation)),commands=requests.filter(r=>r.key!==null),exports=requests.filter(r=>r.operation==="export"),timings=records.filter(r=>String(r.kind).endsWith("Timing"));
+ assert.equal(timings.filter(r=>r.kind==="queryTiming").length,queries.length);assert.equal(timings.filter(r=>r.kind==="commandTiming").length,commands.length);assert.equal(timings.filter(r=>r.kind==="exportPreparationTiming").length,exports.length);assert.equal(timings.filter(r=>r.kind==="backupTiming").length,exports.length);
+ const preparations=timings.filter(r=>r.kind==="exportPreparationTiming");
+ for(let ordinal=1;ordinal<=exports.length;ordinal++){assert.equal(preparations.filter(r=>r.ordinal===ordinal).length,1);const batches=timings.filter(r=>r.kind==="exportBatchTiming"&&r.ordinal===ordinal);assert(batches.length);assert.deepEqual(batches.map(r=>r.batch),batches.map((_,i)=>i+1));assert.equal(batches.at(-1)!.rows,0);assert(batches.every((r,i)=>Number.isInteger(r.rows)&&Number(r.rows)>=0&&Number(r.rows)<=100&&(i===batches.length-1||Number(r.rows)>0)));}
+ const operation:Record<string,string>={tasks:"tracking.tasks",events:"events",activity:"activity","usage.query":"usage"};
+ return timings.map(row=>{assert(typeof row.ms==="number"&&Number.isFinite(row.ms)&&row.ms>=0);let request;
+  if(row.kind==="queryTiming"){assert(Number.isInteger(row.ordinal));request=queries[Number(row.ordinal)-1];assert(request&&operation[request.operation]===row.operation);assert.equal(timings.filter(r=>r.kind==="queryTiming"&&r.ordinal===row.ordinal).length,1);}
+  else if(row.kind==="commandTiming"){request=commands.find(r=>r.key===row.key);assert.equal(timings.filter(r=>r.kind==="commandTiming"&&r.key===row.key).length,1);}
+  else if(row.kind==="exportPreparationTiming"||row.kind==="exportBatchTiming")request=exports[Number(row.ordinal)-1];
+  else if(row.kind==="backupTiming"){const preparation=preparations.find(r=>r.destination===row.destination);request=preparation&&exports[Number(preparation.ordinal)-1];assert.equal(timings.filter(r=>r.kind==="backupTiming"&&r.destination===row.destination).length,1);}
+  assert(request,"native timing has no original request identity");return {...row,requestId:request.id};
+ });
+}
