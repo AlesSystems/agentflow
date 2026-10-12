@@ -137,3 +137,8 @@ it("mirrors W02 evidence constraints and indexed immutable tuples",async()=>{
  }
  expect(getTableConfig(taskArtifacts).indexes.some(i=>i.config.name==="task_artifacts_tuple"&&i.config.unique)).toBe(true);
 });
+it("mirrors usage ledger checks and widened event types",async()=>{
+ const {usageMeasurements,runEvents}=await import("../../src/db/schema");const sql=readFileSync("migrations/0010_usage.sql","utf8"),dialect=new SQLiteSyncDialect(),start=sql.indexOf("CREATE TABLE usage_measurements (");
+ expect(getTableConfig(usageMeasurements).checks.map(c=>normalize(dialect.sqlToQuery(c.value).sql)).sort()).toEqual(checks(sql.slice(start,sql.indexOf(";",start))).map(normalize).sort());
+ const config=getTableConfig(runEvents),type=config.checks.find(c=>c.name==="run_events_type")!;expect(normalize(dialect.sqlToQuery(type.value).sql)).toContain("'run.usage'");
+});
