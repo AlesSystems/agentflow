@@ -1044,3 +1044,28 @@ verification of the new build/evidence remain pending. Task 4 UI, Task 5 full su
 and campaign, W03c integration, and W04 remain open. No package checkbox or release
 gate closes at this checkpoint. The [frozen plan](superpowers/plans/2026-10-12-w03c-usage.md)
 and [producer contract](API.md#report-usage-through-the-existing-cli) own the next tasks.
+
+
+## W03c Usage surface checkpoint
+
+Coordinator acceptance of Task 3 is recorded at
+`6f389ceb29968e7eb274e1d7e07512e068de9693`. Task 4 adds the existing-world Usage
+surface, explicit UTC filters, project-wide reporting coverage, exact known
+subtotals, bounded group/run details, and optional immutable local rate snapshots.
+Pending price requests retain their original bytes and idempotency key.
+
+Task 4 implementation is `2841b94`, with focused browser coverage strengthened at
+`036e2e7`. Six synthetic production-browser journeys passed; the stronger paging
+and two-tab restore/usage checks, one existing tracking neighbor, and the actual
+latest-summary API projection passed separately. Typecheck, scoped lint and the
+production build passed. The native service returns `400 cursor_invalid` for the
+observed stale high-water cursor; the client resets this code at either 400 or
+409 while preserving drafts. No API status was changed.
+
+One appearance batch and one capture confirmation cover desktop, 375 px and
+actual Chrome 200% zoom, reduced motion, keyboard and scoped axe checks. A cropped
+initial native PNG is retained as a failed capture; the final native CDP capture
+qualifies its viewport at the document top. One detector pass reports eleven
+inherited CSS advisories. This is bounded evidence, not blanket accessibility
+conformance. Fresh finish/documentation, Task 4 specification/quality review,
+Task 5 qualification/campaign, W03c integration and cleanup, and W04 remain open.
