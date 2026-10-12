@@ -1266,7 +1266,7 @@ export class ApplicationData {
     void registrationOrder;
     const report = reportBody ? JSON.parse(reportBody as string) : null;
     return { ...this.runView(run.parse(record), now), agentName, agentSource, projectName, taskTitle,
-      message: report?.payload?.message ?? report?.payload?.summary ?? report?.payload?.reason ?? null,
+      message: report?.type === "run.usage" ? `Reported token usage · input ${report.payload.inputTokens === null ? "Unknown" : report.payload.inputTokens.toLocaleString("en-US")} · output ${report.payload.outputTokens === null ? "Unknown" : report.payload.outputTokens.toLocaleString("en-US")}` : report?.payload?.message ?? report?.payload?.summary ?? report?.payload?.reason ?? null,
       evidenceUrl: report?.payload?.evidenceUrl ?? null, ...(reportPrunedAt ? {messagePrunedAt:reportPrunedAt} : {}) };
   }
   private trackingTasks(page: { items: Row[]; total: number; nextCursor: string | null }, now: number) {

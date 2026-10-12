@@ -13,6 +13,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Link href="/projects">Projects</Link>
         <Link href="/agents">Agents</Link>
         <Link href="/activity">Activity</Link>
+        <Link href="/usage">Usage</Link>
         <Link href="/settings">Settings</Link>
         <div className="rail-bottom">
           <SignOut />
