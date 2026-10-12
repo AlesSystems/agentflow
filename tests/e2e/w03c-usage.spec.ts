@@ -173,21 +173,45 @@ test("usage groups are bounded and overall subtotals include overflow", async ({
 });
 test("offline and restore retain usage and price drafts through pairing", async ({ page, browser }) => {
   const f = await fixture(page,"restore",1), other=await browser.newContext(), second=await other.newPage();
+  const witness: { priorGeneration?: string; generation?: string; tabs: { identity: string; before?: unknown; after?: unknown; resetObserved: boolean }[] } = {
+    tabs: [{ identity: "first independently paired context", resetObserved: false }, { identity: "second independently paired context", resetObserved: false }],
+  };
+  const saveWitness = () => { if (proof) writeFileSync(join(proof, "two-tab-restore-current-generation.json"), JSON.stringify(witness, null, 2), { mode: 0o600 }); };
+  const waitRead = (tab: Page, generation?: string) => tab.waitForResponse(response => {
+    const url = new URL(response.url()), header = response.headers()["agentflow-generation"];
+    return url.pathname === "/api/v1/usage" && !url.searchParams.has("cursor") && !url.searchParams.has("model") && url.searchParams.get("projectId") === f.projectId && response.request().method() === "GET" && response.status() === 200 && Boolean(header) && (!generation || header !== generation);
+  }, { timeout: 20000 }).then(snapshot);
+  const snapshot = async (response: import("@playwright/test").Response) => ({ url: response.url(), status: response.status(), headerGeneration: response.headers()["agentflow-generation"], body: await response.json() });
+  const openSecond = async () => {
+    await second.goto(f.server.url + "/usage"); await second.getByRole("combobox", { name: "Project", exact: true }).selectOption(f.projectId);
+    await second.getByLabel("From UTC", { exact: true }).fill(f.from); await second.getByLabel("To UTC", { exact: true }).fill(f.to);
+    await second.getByRole("button", { name: "Apply usage filters" }).click();
+  };
   try {
-    await pairPage(second,f.server); await f.event(f.runs[0],"run.usage",f.usage("initial",3,7)); await f.open();
+    await pairPage(second,f.server); await f.event(f.runs[0],"run.usage",f.usage("initial",3,7)); const beforeReads = [waitRead(page), waitRead(second)]; await f.open(); await openSecond();
+    const before = await Promise.all(beforeReads);
+    witness.tabs.forEach((tab, i) => { tab.before = before[i]; }); witness.priorGeneration = before[0].headerGeneration; saveWitness();
+    for (const read of before) { expect(read.headerGeneration).toBe(witness.priorGeneration); expect(read.body.generation).toBe(witness.priorGeneration); }
+    await expect(second.getByTestId("usage-totals")).toContainText("10 tokens from complete reports only");
     await page.getByLabel("Snapshot name",{exact:true}).fill("Retained restore draft"); await page.getByLabel("Reported model",{exact:true}).fill("unsaved model");
     await page.context().setOffline(true); await page.getByRole("button",{name:"Apply usage filters"}).click();
     await expect(page.getByLabel("Snapshot name",{exact:true})).toHaveValue("Retained restore draft"); await page.context().setOffline(false);
+    const afterReads = [waitRead(page, witness.priorGeneration), waitRead(second, witness.priorGeneration)];
     await f.restored(); await page.getByRole("button",{name:"Apply usage filters"}).click();
     const modal=page.getByRole("dialog",{name:"Pair again to keep editing",exact:true}); await expect(modal).toBeVisible();
     await modal.getByLabel("Pairing token",{exact:true}).fill(f.server.credentials().pairingToken); await modal.getByRole("button",{name:"Pair this browser",exact:true}).click(); await expect(modal).toHaveCount(0);
     await expect(page.getByLabel("Snapshot name",{exact:true})).toHaveValue("Retained restore draft"); await expect(page.getByLabel("Reported model",{exact:true})).toHaveValue("unsaved model");
     await page.getByLabel("Reported model",{exact:true}).fill(""); await page.getByRole("button",{name:"Apply usage filters"}).click(); await expect(page.getByText("1 of 1 eligible runs reported usage",{exact:true})).toBeVisible();
-    await pairPage(second,f.server); await second.goto(f.server.url+"/usage"); await second.getByRole("combobox",{name:"Project",exact:true}).selectOption(f.projectId); await second.getByLabel("From UTC",{exact:true}).fill(f.from); await second.getByLabel("To UTC",{exact:true}).fill(f.to); await second.getByRole("button",{name:"Apply usage filters"}).click();
+    await pairPage(second,f.server); await openSecond();
+    const after = await Promise.all(afterReads);
+    witness.tabs.forEach((tab, i) => { tab.after = after[i]; }); witness.generation = after[0].headerGeneration; saveWitness();
+    expect(witness.generation).not.toBe(witness.priorGeneration);
+    for (const read of after) { expect(read.headerGeneration).toBe(witness.generation); expect(read.body.generation).toBe(witness.generation); }
     await expect(second.getByTestId("usage-totals")).toContainText("10 tokens from complete reports only"); await expect(page.getByTestId("usage-totals")).toContainText("10 tokens from complete reports only");
     await page.getByLabel("Snapshot name",{exact:true}).focus();await f.event(f.runs[0],"run.usage",f.usage("after-restore",2,3));
     await expect(second.getByTestId("usage-totals")).toContainText("15 tokens from complete reports only");await expect(page.getByTestId("usage-totals")).toContainText("15 tokens from complete reports only");await expect(page.getByLabel("Snapshot name",{exact:true})).toBeFocused();await expect(page.getByLabel("Snapshot name",{exact:true})).toHaveValue("Retained restore draft");
-  } finally { await page.context().setOffline(false); await other.close(); await f.finish(); }
+    witness.tabs.forEach(tab => { tab.resetObserved = true; }); saveWitness();
+  } finally { saveWitness(); await page.context().setOffline(false); await other.close(); await f.finish(); }
 });
 
 test("rejected continuation waits for a successful replacement first page", async ({ page, browser }) => {
