@@ -39,7 +39,7 @@ export function auditStoppedSql(dir:string,proof:string){
  finally{db.close();assert.deepEqual(hashes(dir),before,"protected original SQLite changed during copied audit");}
  return {before,after:hashes(dir),copied,copy,integrity,foreignKeys,rows,identities};
 }
-export function runtimeShutdownAccepted(runtime:unknown){return runtime!==null&&typeof runtime==="object"&&Object.values(runtime).every(value=>value===0);}
+export function runtimeShutdownAccepted(runtime:unknown){return runtime!==null&&typeof runtime==="object"&&!Array.isArray(runtime)&&["requests","sockets","activeSockets"].every(key=>Object.hasOwn(runtime,key)&&(runtime as Record<string,unknown>)[key]===0);}
 export type CorrectnessWitness={cli:{exitCode:number|null;pending:number;declared:{eventId:string;sequence:number}[];acks:{eventId:string;acceptedSequence:number}[]};ui:{priorGeneration:string;generation:string;tabs:{generation:string;resetObserved:boolean}[]};shutdown:{closed:boolean;stdioClosed:boolean;exitCode:number|null;signalCode:string|null;runtime:{requests:number;sockets:number;activeSockets:number}|null;history:{leases:number}|null;streams:{leases:number;bytes:number;blocked:number;timers:number;listeners:number}|null}};
 export function witnessAcceptance(value:CorrectnessWitness){
  const {cli,ui,shutdown}=value;
