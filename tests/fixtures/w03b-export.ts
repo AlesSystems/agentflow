@@ -91,9 +91,9 @@ async function lines(content="tasks,attempts,workflows,github") {
  assert.equal(stopped[0].generation,generation);assert.equal(stopped[0].snapshotCursor,before);assert(!stopped.some(line=>line.data?.name==="written after copy"));
  assert.notEqual(running.owned.store.changeBatch("0").maximum,before);assert.notEqual(running.owned.store.metadata().generation,generation);
  db.prepare("UPDATE instance_metadata SET generation=?").run(generation);
- // Real stopped-copy retained stub without production migration or mutation.
+ // Reader-only marked stub in a synthetic stopped copy.
  const stubDir=mkdtempSync(join(realpathSync(tmpdir()),"w03b-stub-"));const stub=join(stubDir,"copy.sqlite");await running.owned.store.backup(stub);
- const copy=new Database(stub);copy.exec("DROP TRIGGER run_events_no_update; ALTER TABLE run_events ADD COLUMN payload_pruned_at INTEGER");copy.prepare("UPDATE run_events SET payload_pruned_at=? WHERE type='run.progress'").run(Date.now());copy.close();
+ const copy=new Database(stub);copy.exec("DROP TRIGGER run_events_no_update");copy.prepare("UPDATE run_events SET body=json_set(body,'$.payload',NULL),payload_pruned_at=? WHERE type='run.progress'").run(Date.now());copy.close();
  const snapshot=openHistoryExportSnapshot(stub,{content:["attempts"],generation},Date.now());let batch;let found=false;
  while((batch=snapshot.nextBatch()).length){assert(batch.length<=100);for(const record of batch)if(record.kind==="runEvent" && record.data.type==="run.progress"){assert.equal(record.data.payload,null);assert("payloadPrunedAt" in record.data);found=true;}}
  snapshot.close();assert(found);
