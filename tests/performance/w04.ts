@@ -6,7 +6,7 @@ import { validatePrepared,validateResult,type CampaignResult } from "../fixtures
 import { qualifiedService } from "../fixtures/w03a-qualification";
 const counters={servicesStarted:0,serviceAttempts:0,sampleAttempts:0};
 let intended:number|null=null;
-const helpers=["tests/fixtures/server.ts","tests/fixtures/w01-runtime.ts","tests/fixtures/w03a-qualification.ts","tests/fixtures/w04-qualification.ts","tests/fixtures/w04-campaign.ts","tests/performance/w04.ts"];
+const helpers=["tests/fixtures/server.ts","tests/fixtures/w01-runtime.ts","tests/fixtures/p06-proxy.ts","tests/fixtures/p07-proof-errors.ts","tests/fixtures/p07-warm-error.ts","tests/fixtures/w03a-qualification.ts","tests/fixtures/w04-qualification.ts","tests/fixtures/w04-campaign.ts","tests/performance/w04.ts"];
 function privateJSON(path:string){assert(isAbsolute(path));const s=lstatSync(path);assert(s.isFile()&&!s.isSymbolicLink()&&s.uid===process.getuid!()&&(s.mode&0o777)===0o600,"private regular input required");return JSON.parse(readFileSync(path,"utf8"));}
 function options(args:string[]){
  assert.equal(args.length,10,"five option pairs required");const allowed=["--phase","--base-root","--head-root","--proof-dir","--runtime-root"],result:Record<string,string>={};
