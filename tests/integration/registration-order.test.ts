@@ -305,8 +305,10 @@ it("restart VACUUM and reverse insertion rebuild preserve latest queries and ret
       )
       .all() as { type: string; name: string; sql: string }[];
     const table = schema.find((row) => row.type === "table")!;
+    const dependencies=db.prepare("SELECT type,name,sql FROM sqlite_schema WHERE name IN ('run_events_no_update','retention_eligible_events') ORDER BY type,name").all() as {type:string;name:string;sql:string}[];
     db.pragma("foreign_keys=OFF");
     db.transaction(() => {
+      for(const row of [...dependencies].sort((a,b)=>a.type===b.type?0:a.type==="trigger"?-1:1))db.exec(`DROP ${row.type} ${row.name}`);
       db.exec(
         table.sql.replace(/^CREATE TABLE runs/i, "CREATE TABLE runs_rebuild"),
       );
@@ -320,8 +322,11 @@ it("restart VACUUM and reverse insertion rebuild preserve latest queries and ret
       );
       for (const row of schema.filter((row) => row.type !== "table"))
         db.exec(row.sql);
+      for(const row of [...dependencies].sort((a,b)=>a.type===b.type?0:a.type==="view"?-1:1))db.exec(row.sql);
     }).immediate();
     db.pragma("foreign_keys=ON");
+    expect(db.prepare("SELECT type,name,sql FROM sqlite_schema WHERE name IN ('run_events_no_update','retention_eligible_events') ORDER BY type,name").all()).toEqual(dependencies);
+    expect(db.prepare("SELECT count(*) n FROM retention_eligible_events").get()).toEqual({n:0});
     expect(db.prepare("SELECT id FROM runs ORDER BY rowid").all()).toEqual([
       { id: "10000000-0000-4000-8000-000000000004" },
       { id: failedId },
