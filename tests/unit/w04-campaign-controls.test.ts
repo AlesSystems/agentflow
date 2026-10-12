@@ -20,3 +20,8 @@ for(const defect of ["missing ID","duplicate ID","missing CLI","missing two tabs
  else expect(validateResult(p,r)).toMatchObject({intended:1,acceptance:false});
 });
 it("rejects an omitted declaration against the separately frozen intended IDs",()=>{const p=prepared();p.intendedIds.push("head-tasks-1-1");p.declarations.push({...p.declarations[0],id:"head-tasks-1-1"});expect(validatePrepared(p)).toMatchObject({intended:2});p.declarations.pop();expect(()=>validatePrepared(p)).toThrow(/missing or wrong intended sample IDs/);});
+
+it("rejects official readiness when no finite workload protocol or stopped-copy facts exist",()=>{
+ const p=prepared();p.officialWorkloadComplete=true;
+ expect(()=>validatePrepared(p)).toThrow(/official|protocol|stopped/i);
+});
