@@ -51,8 +51,11 @@ it("lost_ack_and_fresh_envelope_have_distinct_identities", async () => {
     for (const wire of wires) { expect(wire.body).toBe(JSON.stringify(original.body)); expect(wire.reply.body).toEqual(wires[0].reply.body); }
     const fresh = JSON.parse((await report(f, "run.usage", payload)).stdout); expect(fresh.acceptedSequence).toBe(3); expect(fresh.eventId).not.toBe(ack.eventId);
     expect((await f.summary()).data).toMatchObject({ filteredReportCount: 1, knownTotalTokens: "10" });
+    const receivedAt = JSON.parse(wires[0].reply.body.toString()).data.receivedAt;
+    const laterFrom = new Date(Date.parse(receivedAt) + 1).toISOString(), laterTo = new Date(Date.now() + 86400000).toISOString();
+    expect((await f.request(`/usage?projectId=${f.projectId}&from=${laterFrom}&to=${laterTo}`)).body.data).toMatchObject({ filteredReportCount: 0, knownTotalTokens: "0", eligibleRuns: 1, runsWithoutReports: 1 });
     await f.stop(); const facts = f.copiedSql("deduplicated"); expect(facts.usage).toHaveLength(1); expect(facts.events.filter(e => e.type === "run.usage")).toHaveLength(2);
-    expect(facts.usage[0]).toMatchObject({ event_id: ack.eventId, usage_id: "once" });
+    expect(facts.usage[0]).toMatchObject({ event_id: ack.eventId, usage_id: "once", first_received_at: Date.parse(receivedAt) });
     for (const event of facts.events.filter(e => e.type === "run.usage")) expect(JSON.parse(event.acknowledgement).data).toMatchObject({ eventId: event.event_id, acceptedSequence: event.sequence });
   } finally { await proxy!.close(); await f.finish({ wires }); }
 }, 60000);
@@ -63,6 +66,8 @@ it("changed_usage_blocks_delivery_without_advancing", async () => {
     await f.stop(); const before = f.copiedSql("before-conflict"); await f.start();
     const rejected = await report(f, "run.usage", reportedUsage("stable", 4, 7), 3); expect(rejected.stderr).toContain("usage_conflict");
     const pending = f.pending(), state = f.state(); expect(pending).toHaveLength(1); expect(JSON.parse(state.toString())).toMatchObject({ allocatedThrough: 3, acknowledgedThrough: 2 });
+    const rejectedBody = JSON.parse(pending[0].bytes.toString()).body;
+    const conflict = await f.request(`/runs/${f.runId}/events`, rejectedBody); expect(conflict.status).toBe(409); expect(conflict.body.error.code).toBe("usage_conflict");
     const retry = await flush(f, 3); expect(retry.stderr).toContain("usage_conflict"); expect(f.state()).toEqual(state); expect(f.pending()[0].bytes).toEqual(pending[0].bytes);
     await report(f, "run.usage", reportedUsage("later"), 3); expect(f.pending()).toHaveLength(2); expect(f.pending()[0].bytes).toEqual(pending[0].bytes);
     expect(JSON.parse(f.state().toString())).toMatchObject({ allocatedThrough: 4, acknowledgedThrough: 2 });
@@ -118,7 +123,7 @@ it("rework_and_terminal_replay_preserve_totals", async () => {
     const fresh = await f.request(`/runs/${f.runId}/events`, { ...eventBody, eventId: randomUUID(), sequence: 5, payload: reportedUsage("new-terminal") }); expect(fresh.status).toBe(409);
     const summary = await f.summary(); expect(summary.data).toMatchObject({ eligibleRuns: 3, runsWithReports: 3, runsWithoutReports: 0, filteredReportCount: 3, knownInputTokens: "6", knownOutputTokens: "19", knownTotalTokens: "20", unknownInputReports: 1, unknownTotalReports: 1 });
     expect(summary.data.runDetails.find(r => r.runId === reworkId)).toMatchObject({ purpose: "implementation", matchingReportCount: 1 });
-    const preview = (await f.request("/retention/preview", { cutoff: new Date().toISOString() }, true)).body.data; expect(preview.counts.eventPayloads).toBe(1);
+    const preview = (await f.request("/retention/preview", { cutoff: new Date().toISOString() }, true)).body.data; expect(preview.counts.eventPayloads).toBe(0);
     expect((await f.request("/retention/prune", { previewId: preview.previewId, expectedGeneration: preview.expectedGeneration, expectedVersion: preview.expectedVersion, candidateDigest: preview.candidateDigest }, true)).status).toBe(200);
     expect((await f.summary()).data.knownTotalTokens).toBe("20");
     const foundation = await f.request("/foundation");

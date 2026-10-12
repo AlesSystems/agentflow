@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, lstatSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { launch, pair } from "./server";
@@ -13,9 +13,10 @@ export async function usageCliFixture(name: string, delivery?: (server: Awaited<
   chmodSync(root, 0o700);
   const data = join(root, "data"), outbox = join(root, "outbox"), proof = join(root, "copies");
   for (const path of [data, proof]) mkdirSync(path, { mode: 0o700 });
+  const identities = Object.fromEntries([root, data, proof].map(path => { const s = lstatSync(path); return [path, { uid: s.uid, device: s.dev, inode: s.ino, mode: s.mode & 0o777 }]; }));
   const commands: unknown[] = [], services: unknown[] = [], requests: unknown[] = [], copies: unknown[] = [];
   let server: Awaited<ReturnType<typeof launch>>, closed: Promise<void>, serviceCapture: { argv: string[]; pid: number | undefined; stdout: Buffer[]; stderr: Buffer[] };
-  let stopped = true, cookie = "", port: number | undefined, deliveryPort: number, index = 0;
+  let stopped = true, cookie = "", port: number | undefined, index = 0;
   async function start() {
     server = await launch({ dir: data, port, bounds, onChild(child) {
       serviceCapture = { argv: child.spawnargs, pid: child.pid, stdout: [], stderr: [] };
@@ -31,7 +32,7 @@ export async function usageCliFixture(name: string, delivery?: (server: Awaited<
     services.push({ ...serviceCapture, stdout: undefined, stderr: undefined, stdoutBase64: Buffer.concat(serviceCapture.stdout).toString("base64"), stderrBase64: Buffer.concat(serviceCapture.stderr).toString("base64"), cwd: process.cwd(), node: process.execPath, exit: server.child.exitCode, signal: server.child.signalCode, stdioClosed: server.child.stdio.every(s => !s || typeof s === "number" || s.destroyed) });
   }
   function file(value: unknown) { const path = join(root, `input-${index++}.json`); writeFileSync(path, JSON.stringify(value), { mode: 0o600 }); return path; }
-  await start(); deliveryPort = delivery ? await delivery(server!) : port!;
+  await start(); const deliveryPort = delivery ? await delivery(server!) : port!;
   const token = join(root, "token"); writeFileSync(token, server!.credentials().reporterToken, { mode: 0o600 });
   async function command(args: string[], local = false, selectedPort = deliveryPort) {
     const argv = ["--import", "tsx", local ? "src/cli/local.ts" : "src/cli/main.ts", ...args];
@@ -73,14 +74,15 @@ export async function usageCliFixture(name: string, delivery?: (server: Awaited<
     const before = original(); for (const suffix of Object.keys(before)) { copyFileSync(join(data, "agentflow.sqlite" + suffix), join(destination, "agentflow.sqlite" + suffix)); chmodSync(join(destination, "agentflow.sqlite" + suffix), 0o600); }
     const db = new Database(join(destination, "agentflow.sqlite"), { readonly: true });
     let facts;
-    try { facts = { integrity: db.pragma("integrity_check"), foreignKeys: db.pragma("foreign_key_check"), usage: db.prepare("SELECT * FROM usage_measurements ORDER BY run_id,usage_id").all(), events: db.prepare<{},{ event_id: string; run_id: string; sequence: number; type: string; digest: string; acknowledgement: string }>("SELECT event_id,run_id,sequence,type,digest,acknowledgement FROM run_events ORDER BY run_id,sequence").all({}), runs: db.prepare("SELECT id,purpose,state,last_sequence,work_revision,rework_round FROM runs ORDER BY registration_order").all(), tasks: db.prepare("SELECT id,status,work_revision,rework_round FROM tasks").all() }; }
+    try { facts = { integrity: db.pragma("integrity_check"), foreignKeys: db.pragma("foreign_key_check"), usage: db.prepare("SELECT * FROM usage_measurements ORDER BY run_id,usage_id").all(), events: db.prepare<[],{ event_id: string; run_id: string; sequence: number; type: string; digest: string; acknowledgement: string }>("SELECT event_id,run_id,sequence,type,digest,acknowledgement FROM run_events ORDER BY run_id,sequence").all(), runs: db.prepare("SELECT id,purpose,state,last_sequence,work_revision,rework_round FROM runs ORDER BY registration_order").all(), tasks: db.prepare("SELECT id,status,work_revision,rework_round FROM tasks").all() }; }
     finally { db.close(); }
+    if (JSON.stringify(facts.integrity) !== JSON.stringify([{ integrity_check: "ok" }]) || !Array.isArray(facts.foreignKeys) || facts.foreignKeys.length) throw new Error("copied database integrity failed");
     const after = original(); if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("original triplet changed during copied SQL inspection");
     copies.push({ label, before, after, destination, facts }); return facts;
   }
   async function finish(extra: unknown = null) {
     await stop(); const facts = copiedSql("final");
-    const output = { name, root, projectId, taskId, agentId, runId, commands, services, requests, copies, extra, facts };
+    const output = { name, root, identities, projectId, taskId, agentId, runId, commands, services, requests, copies, extra, facts };
     if (process.env.AGENTFLOW_W03C_CLI_PROOF_DIR) writeFileSync(join(process.env.AGENTFLOW_W03C_CLI_PROOF_DIR, `${name}-${randomUUID()}.json`), JSON.stringify(output, null, 2), { mode: 0o600 });
     return facts;
   }
