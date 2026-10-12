@@ -109,6 +109,8 @@ it("rolls failed migration DDL and history back without serving", async () => {
     "0007_task_evidence",
     "0008_github",
     "0009_history",
+    "0010_usage",
+    "0011_usage_prices",
   ]);
   reopened.close();
 });
@@ -264,6 +266,8 @@ it("applies an existing fixture pending migration and restarts unchanged", async
     "0007_task_evidence",
     "0008_github",
     "0009_history",
+    "0010_usage",
+    "0011_usage_prices",
     "9999_fixture",
   ]);
   upgraded.close();
