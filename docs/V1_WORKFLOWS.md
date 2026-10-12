@@ -254,7 +254,8 @@ and real SQLite, API, browser, and outbox recovery tests.
 [Qualified verification](implementation/W03b.md) records aborted export, concurrent
 writes, expired previews, protected evidence, exact retries, outbox recovery,
 two-tab reset, restart, and backup/restore. Its finite performance campaign is
-accepted; final review and integration remain open.
+accepted; final review, integration, private archival, and guarded cleanup are
+complete, as recorded in [the receipt](implementation/W03b.md#verified-integration-and-guarded-cleanup).
 
 ## W03c. Reported usage and optional estimates
 
