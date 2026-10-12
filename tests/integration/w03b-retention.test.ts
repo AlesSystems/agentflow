@@ -261,3 +261,43 @@ it("rolls back selected payload removals and deleted changes when receipt insert
   expect(readdirSync(join(f.owned.store.dataDir,"backups")).filter(name=>name.startsWith("retention-")&&name.endsWith(".sqlite"))).toHaveLength(1);
  }finally{await runtime.close();f.close();}
 });
+
+import { mkdirSync, unlinkSync } from "node:fs";
+it("recovers original and new prune intents after an actual synchronous backup-directory failure",async()=>{
+ for(const retry of ["original","new"]){
+  const f=await fixture(),runtime=new HistoryRuntime(f.owned.store);try {
+   const p=preview(f),backupPath=join(f.owned.store.dataDir,"backups");
+   const {writeFileSync}=await import("node:fs");writeFileSync(backupPath,"Synthetic non-directory fault",{mode:0o600});
+   const tables=["run_events","changes","sqlite_sequence","instance_metadata","retention_state","retention_consumptions","sessions","receipts"];
+   const state=()=>Object.fromEntries(tables.map(table=>[table,f.db.prepare(`SELECT * FROM ${table}`).all()]));const before=state();
+   const backup=vi.spyOn(f.owned.store,"backup");
+   await expect(runtime.prune(p.pruneInput,p.pruneContext,new AbortController().signal)).rejects.toThrow("INVALID_DIRECTORY");
+   expect(runtime.diagnostics().leases).toBe(0);expect(state()).toEqual(before);expect(backup).toHaveBeenCalledTimes(0);
+   unlinkSync(backupPath);mkdirSync(backupPath,{mode:0o700});
+   const ctx=retry==="original"?p.pruneContext:{...p.pruneContext,key:randomUUID()};
+   const reply=await runtime.prune(p.pruneInput,ctx,new AbortController().signal);
+   expect(retentionPrune.parse(reply.body.data).applied.eventPayloads).toBe(1);expect(backup).toHaveBeenCalledTimes(1);expect(runtime.diagnostics().leases).toBe(0);
+   expect(f.db.prepare("SELECT count(*) n FROM receipts WHERE path='prune'").get()).toEqual({n:1});backup.mockRestore();
+  }finally{await runtime.close();f.close();}
+ }
+});
+it("replays committed A before busy B while rejecting changed A, reporter A and new uncommitted C",async()=>{
+ const f=await fixture(),runtime=new HistoryRuntime(f.owned.store);let release:()=>void=()=>{};try {
+  const a=preview(f),original=await runtime.prune(a.pruneInput,a.pruneContext,new AbortController().signal);
+  const b=preview(f),actual=f.owned.store.backup.bind(f.owned.store);let backed!:()=>void;
+  const finished=new Promise<void>(resolve=>{backed=resolve;}),hold=new Promise<void>(resolve=>{release=resolve;});
+  const backup=vi.spyOn(f.owned.store,"backup").mockImplementation(async(...args)=>{const result=await actual(...args);backed();await hold;return result;});
+  const controller=new AbortController();const pending=runtime.prune(b.pruneInput,b.pruneContext,controller.signal);const settlement=Promise.allSettled([pending]);await finished;
+  const tables=["run_events","changes","sqlite_sequence","instance_metadata","retention_state","retention_consumptions","sessions","receipts"];
+  const state=()=>Object.fromEntries(tables.map(table=>[table,f.db.prepare(`SELECT * FROM ${table}`).all()]));const before=state();
+  expect(await runtime.prune(a.pruneInput,a.pruneContext,new AbortController().signal)).toEqual(original);
+  const changed={...a.pruneInput,candidateDigest:"0".repeat(64)};
+  await expect(runtime.prune(changed,{...a.pruneContext,digest:canonicalDigest(changed)},new AbortController().signal)).rejects.toThrow("idempotency_conflict");
+  await expect(runtime.prune(a.pruneInput,{...a.pruneContext,principal:"reporter"},new AbortController().signal)).rejects.toThrow("human_required");
+  const invalid={...b.pruneInput,previewId:randomUUID()},c=context("prune",invalid);
+  const admission=vi.spyOn(f.owned.store,"historyAdmitPrune");
+  await expect(runtime.prune(invalid,c,new AbortController().signal)).rejects.toThrow("retention_busy");expect(admission).not.toHaveBeenCalled();
+  expect(backup).toHaveBeenCalledTimes(1);expect(state()).toEqual(before);expect(f.db.prepare("SELECT count(*) n FROM receipts WHERE path='prune' AND key=?").get(c.key)).toEqual({n:0});admission.mockRestore();
+  controller.abort();release();expect((await settlement)[0].status).toBe("rejected");backup.mockRestore();expect(runtime.diagnostics().leases).toBe(0);
+ }finally{release();await runtime.close();f.close();}
+});
