@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "../client/provider";
@@ -21,6 +21,12 @@ export function HistorySettings() {
   const [busy, setBusy] = useState<"export" | "preview" | "prune" | null>(null);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
+  const previewButton = useRef<HTMLButtonElement>(null);
+  const previewElement = useRef<HTMLDivElement | null>(null);
+  const retainPreviewFocus = useCallback((element: HTMLDivElement | null) => {
+    if (!element && previewElement.current?.contains(document.activeElement)) previewButton.current?.focus();
+    previewElement.current = element;
+  }, []);
   const preview = retention.kind === "preview" && retention.data.expectedGeneration === generation && retention.data.cutoff === cutoff ? retention.data : null;
   function inform(text: string, error = false) {
     setNotice({ text, error });
@@ -113,9 +119,9 @@ export function HistorySettings() {
       <p>AgentFlow makes a local safety backup before pruning. Keep a separate local backup for recovery; stop AgentFlow before restoring. Display-body savings can be modest and do not measure reclaimed disk blocks.</p>
       <label>UTC cutoff<input value={cutoff} placeholder="2026-01-01T00:00:00.000Z" disabled={busy !== null} onChange={event => { setCutoff(event.target.value); if (retention.kind !== "pending") setRetention({ kind: "idle" }); }} /></label>
       <p className="metadata">Eligible records must be received before this explicit UTC time. Each preview is bounded to 1,000 payloads and 1,000 replay changes, and expires after five minutes.</p>
-      {retention.kind !== "pending" && <button disabled={busy !== null} onClick={() => void prepare()}>{busy === "preview" ? "Preparing preview…" : "Preview prune"}</button>}
+      {retention.kind !== "pending" && <button ref={previewButton} disabled={busy !== null} onClick={() => void prepare()}>{busy === "preview" ? "Preparing preview…" : "Preview prune"}</button>}
       {retention.kind === "preview" && !preview && <p role="status">Workspace changed. Prepare another preview. Your cutoff is retained.</p>}
-      {preview && <div className="retention-preview">
+      {preview && <div ref={retainPreviewFocus} className="retention-preview">
         <h3>Prune preview</h3>
         <p>Cutoff: <time dateTime={preview.cutoff}>{preview.cutoff}</time></p>
         <dl><dt>Eligible event payloads in this batch</dt><dd>{preview.counts.eventPayloads} · {preview.hasMore.eventPayloads ? "More eligible payloads remain" : "No further eligible payloads"}</dd><dt>Eligible replay changes in this batch</dt><dd>{preview.counts.changes} · {preview.hasMore.changes ? "More eligible changes remain" : "No further eligible changes"}</dd><dt>Preview expires (UTC)</dt><dd><time dateTime={preview.expiresAt}>{preview.expiresAt}</time></dd></dl>
