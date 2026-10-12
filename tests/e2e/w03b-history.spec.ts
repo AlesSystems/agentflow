@@ -29,6 +29,7 @@ for (const control of ["Confirm prune", "Cancel preview"]) {
       await pairPage(page, server); await pairPage(second, server); await page.goto(server.url + "/settings");
       await command(second, "/projects", { name: "Synthetic focus fact one" }); await command(second, "/projects", { name: "Synthetic focus fact two" });
       const cutoff = new Date(Date.now() - 1).toISOString(); await preview(page, cutoff);
+      await expect(page.getByText("Preview ready. Review the counts before confirming.", { exact: true })).toBeFocused();
       await page.getByRole("button", { name: control, exact: true }).focus(); await expect(page.getByRole("button", { name: control, exact: true })).toBeFocused();
       const reset = await passiveReset(second);
       await expect(page.getByRole("button", { name: "Cancel preview", exact: true })).toHaveCount(0);
@@ -45,6 +46,7 @@ test("passive generation reset leaves history draft editing focused", async ({ p
     await pairPage(page, server); await pairPage(second, server); await page.goto(server.url + "/settings");
     await command(second, "/projects", { name: "Synthetic retained focus fact one" }); await command(second, "/projects", { name: "Synthetic retained focus fact two" });
     const cutoff = new Date(Date.now() - 1).toISOString(); await preview(page, cutoff);
+    await expect(page.getByText("Preview ready. Review the counts before confirming.", { exact: true })).toBeFocused();
     const input = page.getByLabel("UTC cutoff", { exact: true }); await input.focus();
     const reset = await passiveReset(second);
     await expect(page.getByRole("button", { name: "Cancel preview", exact: true })).toHaveCount(0);
