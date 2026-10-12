@@ -5,7 +5,7 @@ and integration. [PR #4](https://github.com/AlesSystems/agentflow/pull/4) integr
 P01 at `a2e5170879602faff706e1aa2e5e7a1905d63b47`.
 [PR #5](https://github.com/AlesSystems/agentflow/pull/5) integrated P02 at
 `f0b3cf2b6588d7d5028757e4ad316b74dff6eb3c`. [PR #6](https://github.com/AlesSystems/agentflow/pull/6) integrated P03 at
-`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. Whole-package reviews and scoped client repair re-review approved the exact candidate. PR #14 integrated W03b at `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`; private archival and guarded cleanup are complete. W03c planning is next; W03c implementation and W04 remain open.
+`cf44dd9103c091c10c9608468e5956e506c6705c`. [PR #7](https://github.com/AlesSystems/agentflow/pull/7) integrated P04 at `d84a455ff167ecfdc7ef1afc1c6e4a1983cae1fe`. [PR #8](https://github.com/AlesSystems/agentflow/pull/8) integrated P05 at `787865132d89a9b03f613942f64945887bc13f95`. [PR #9](https://github.com/AlesSystems/agentflow/pull/9) integrated P06 at `36f6d1bc4699c706e3f57a17cfcc85a1576c648b`. [PR #10](https://github.com/AlesSystems/agentflow/pull/10) integrated P07 at `dd26c4b00867e7680c3baf0cf2be39b60502aecf`. [PR #11](https://github.com/AlesSystems/agentflow/pull/11) integrated W01 at `e5bf6da0e22a64b40fc5817fb1d3a4d237bdb168`. [PR #12](https://github.com/AlesSystems/agentflow/pull/12) integrated W02 at `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`; guarded cleanup is complete. W03a implementation and qualified verification are accepted, including its exact scoped performance exception. PR #13 integrated W03a at `76fe748a3d642f8a5a6ea738af47a3bb640070d3`; private archival and guarded cleanup are complete. W03b qualification and its single official campaign are accepted. Whole-package reviews and scoped client repair re-review approved the exact candidate. PR #14 integrated W03b at `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`; private archival and guarded cleanup are complete. W03c has an approved Astra medium plan. Tasks 1 and 2 are accepted; Task 3 verification is complete pending independent review and coordinator audit. UI, campaign, package integration, and W04 remain open.
 
 ## Package state
 
@@ -25,7 +25,7 @@ independent review of the candidate SHA, and verified integration all pass.
 | W02 | Dependencies/review/rework | Integrated | Reviewed `cc3344bcf2fd210ae1536c28f73f508c0e6a6c37`; merge `1ce0c52ab9fedab0b8a61eb8c15131c2d8e69361`, PR #12; executable `8b76bed` | [Receipt](implementation/W02.md), [synthetic summary](evidence/W02/acceptance.json) |
 | W03a | GitHub PR observation | Integrated; guarded cleanup complete; qualified measured exception retained | Reviewed `8f63d231ff63d8b77c51573fad9790be8ac78c9d`; merge `76fe748a3d642f8a5a6ea738af47a3bb640070d3`, PR #13; executable `1931221` | [Receipt](implementation/W03a.md), [allowlisted evidence](evidence/W03a/acceptance.json) |
 | W03b | Export/retention | Integrated; private archival and guarded cleanup complete | Reviewed `7a43cad0b1a01c8007aacb124f7b12f451e789ab`; merge `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e`, PR #14; measured `caab7b2`; client repair `74e0187` | [Receipt](implementation/W03b.md), [allowlisted summary](evidence/W03b/acceptance.json) |
-| W03c | Usage summaries | Not started | — | — |
+| W03c | Usage summaries | Astra plan approved; Tasks 1–2 accepted; Task 3 verified pending review/audit | Task 1 `46c9349`; Task 2 `07bac1a`; Task 3 executable `2f510c0`, API documentation `75d81f9` | [Approved plan](superpowers/plans/2026-10-12-w03c-usage.md), [usage API](API.md#reported-usage-summaries-and-local-prices) |
 | W04 | Full v1 validation/release | Not started | — | — |
 
 ## Record after every package or interruption
@@ -1019,3 +1019,28 @@ The private cleanup-completion receipt SHA-256 is
 
 W03b is complete. W03c planning and Astra medium approval precede its implementation;
 W04 validation and the v1 source release remain open.
+
+
+## W03c producer verification checkpoint
+
+The exact plan at `c6b34` has SHA-256
+`8c0950094d764a1c02c6f09213b939abbbb829cb9208c42b35fbbf47ca757ccf`.
+Astra medium approved it under gate `ae1ab`. Coordinator acceptance covers Task 1
+at `46c9349` and Task 2 at `07bac1acd37030b666e07f9236b6d695edfa0337`,
+including both Task 2 findings repaired and approved by the same independent reviewer.
+
+Task 3 adds real CLI recovery proof and the recognized `usage_conflict` diagnostic.
+Its final focused CLI file passed five tests, with six synthetic fixture scenarios
+because restore covers retained ACKs and genuine prefix loss. Seventeen focused
+legacy report/restore/response tests, types, lint, a new scoped production build,
+and one rebuilt-native CLI smoke case passed. Initial fixture/setup expectations,
+the meaningful diagnostic RED, and types/lint failures remain in private evidence.
+The build retains the existing dynamic filesystem tracing warning.
+
+The original qualified 474-file Task 2 build remains archived. Task 3's new build
+is separately qualified to executable `2f510c0`; the API-only documentation at
+`75d81f9` changes no shipping input. Independent Task 3 review and coordinator
+verification of the new build/evidence remain pending. Task 4 UI, Task 5 full suites
+and campaign, W03c integration, and W04 remain open. No package checkbox or release
+gate closes at this checkpoint. The [frozen plan](superpowers/plans/2026-10-12-w03c-usage.md)
+and [producer contract](API.md#report-usage-through-the-existing-cli) own the next tasks.
