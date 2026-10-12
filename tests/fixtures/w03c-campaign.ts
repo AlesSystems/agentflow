@@ -39,12 +39,13 @@ export function auditStoppedSql(dir:string,proof:string){
  finally{db.close();assert.deepEqual(hashes(dir),before,"protected original SQLite changed during copied audit");}
  return {before,after:hashes(dir),copied,copy,integrity,foreignKeys,rows,identities};
 }
+export function runtimeShutdownAccepted(runtime:unknown){return runtime!==null&&typeof runtime==="object"&&Object.values(runtime).every(value=>value===0);}
 export type CorrectnessWitness={cli:{exitCode:number|null;pending:number;declared:{eventId:string;sequence:number}[];acks:{eventId:string;acceptedSequence:number}[]};ui:{priorGeneration:string;generation:string;tabs:{generation:string;resetObserved:boolean}[]};shutdown:{closed:boolean;stdioClosed:boolean;exitCode:number|null;signalCode:string|null;runtime:{requests:number;sockets:number;activeSockets:number}|null;history:{leases:number}|null;streams:{leases:number;bytes:number;blocked:number;timers:number;listeners:number}|null}};
 export function witnessAcceptance(value:CorrectnessWitness){
  const {cli,ui,shutdown}=value;
  const cliValid=cli.declared.length>0&&cli.exitCode===0&&cli.pending===0&&new Set(cli.declared.map(row=>row.eventId)).size===cli.declared.length&&cli.acks.length===cli.declared.length&&new Set(cli.acks.map(row=>row.eventId)).size===cli.acks.length&&cli.declared.every(row=>cli.acks.some(ack=>ack.eventId===row.eventId&&ack.acceptedSequence===row.sequence));
  const uiValid=ui.generation!==ui.priorGeneration&&ui.tabs.length===2&&ui.tabs.every(tab=>tab.generation===ui.generation&&tab.resetObserved);
- const shutdownValid=shutdown.closed&&shutdown.stdioClosed&&shutdown.exitCode===0&&shutdown.signalCode===null&&shutdown.runtime?.requests===0&&shutdown.runtime?.sockets===0&&shutdown.runtime?.activeSockets===0&&shutdown.history?.leases===0&&shutdown.streams?.leases===0&&shutdown.streams?.bytes===0&&shutdown.streams?.blocked===0&&shutdown.streams?.timers===0&&shutdown.streams?.listeners===0;
+ const shutdownValid=shutdown.closed&&shutdown.stdioClosed&&shutdown.exitCode===0&&shutdown.signalCode===null&&runtimeShutdownAccepted(shutdown.runtime)&&shutdown.history?.leases===0&&shutdown.streams?.leases===0&&shutdown.streams?.bytes===0&&shutdown.streams?.blocked===0&&shutdown.streams?.timers===0&&shutdown.streams?.listeners===0;
  return {acceptance:cliValid&&uiValid&&shutdownValid,expectedAcks:cli.declared.length,observedAcks:cli.acks.length,expectedTabs:2,observedTabs:ui.tabs.length,cliValid,uiValid,shutdownValid};
 }
 export function campaignSummary(declared:Declaration[],samples:CampaignSample[]){
