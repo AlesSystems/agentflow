@@ -41,5 +41,10 @@ it("rejects one slow measured preview that fast warmups and JIT previews would h
  expect(result.acceptance).toBe(false);
  expect(result.budgetFailures).toContainEqual(expect.objectContaining({round:1,kind:"previewTransactionTiming",cohort:"measured-preview",observed:10,distribution:expect.objectContaining({p95Ms:300})}));
  expect(result.summaries.filter(row=>row.kind==="previewTransactionTiming"&&row.round===1).map(row=>({cohort:row.cohort,count:row.observed}))).toEqual([{cohort:"measured-preview",count:10},{cohort:"jit-preview",count:10},{cohort:"warmup-preview",count:10}]);
+ expect(result.expectedPreviewRequests).toBe(90);expect(result.observedPreviewTimings).toBe(90);expect(result.rawPreviewTimings).toHaveLength(90);
+ const fast=structuredClone(metrics);fast[0].records[10].ms=1;
+ const warmSlow=structuredClone(fast);warmSlow[0].records[0].ms=300;expect(reduceTimings(declarations,warmSlow).acceptance).toBe(true);
+ const jitSlow=structuredClone(fast);jitSlow[1].records[0].ms=300;expect(reduceTimings(declarations,jitSlow).budgetFailures).toContainEqual(expect.objectContaining({round:1,cohort:"jit-preview",distribution:expect.objectContaining({p95Ms:300})}));
+ for(const defect of ["absent ID","wrong warmup"]){const broken=structuredClone(metrics),declared=structuredClone(declarations);if(defect==="absent ID")broken[0].records[10].requestId="absent";else declared.find(row=>row.id==="prune-preview-1-0")!.warmup=true;const invalid=reduceTimings(declared,broken);expect(invalid.acceptance).toBe(false);expect(invalid.classificationFailures.length).toBeGreaterThan(0);expect(invalid.expectedPreviewRequests).toBe(90);expect(invalid.observedPreviewTimings).toBe(90);expect(invalid.rawPreviewTimings).toHaveLength(90);retainControl("preview-cohort-"+defect,{declarations:declared,metrics:broken,result:invalid});}
  retainControl("preview-timing-cohort",{declarations,metrics,result});
 });

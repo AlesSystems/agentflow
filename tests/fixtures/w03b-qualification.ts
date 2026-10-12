@@ -62,8 +62,23 @@ export function bindTimings(records:Record<string,unknown>[],requests:Record<str
  });
 }
 
-export function reduceTimings(_declarations:{id:string;warmup:boolean}[],serviceMetrics:{fixtureId:string;records:Record<string,unknown>[]}[]){
- const summaries=Array.from({length:3},(_,i)=>{const round=i+1;return ["previewTransactionTiming","exportPreparationTiming","exportBatchTiming","transactionTiming","backupTiming"].map(kind=>{const rows=serviceMetrics.filter(group=>group.fixtureId.startsWith(`preview-${round}`)||group.fixtureId.startsWith(`export-${round}`)||group.fixtureId.startsWith(`prune-${round}-`)).flatMap(group=>group.records).filter(row=>row.kind===kind);return {round,kind,cohort:"pooled",observed:rows.length,distribution:rows.length?distribution(rows.map(row=>Number(kind==="exportPreparationTiming"?row.residualMs:row.ms))):null};});}).flat();
- const budgetFailures=summaries.filter(row=>["previewTransactionTiming","exportPreparationTiming","exportBatchTiming"].includes(row.kind)&&row.distribution&&row.distribution.p95Ms>=250);
- return {summaries,budgetFailures,acceptance:!budgetFailures.length};
+export const previewTimingCohorts=["measured-preview","jit-preview","warmup-preview"] as const;
+export function reduceTimings(declarations:{id:string;warmup:boolean}[],serviceMetrics:{fixtureId:string;records:Record<string,unknown>[]}[]){
+ const wanted=new Map(declarations.map(row=>[row.id,row])),classificationFailures:string[]=[];
+ const rawPreviewTimings=serviceMetrics.flatMap(group=>group.records.filter(row=>row.kind==="previewTransactionTiming").map(row=>({fixtureId:group.fixtureId,...row})));
+ const classified:{round:number;cohort:typeof previewTimingCohorts[number];row:Record<string,unknown>}[]=[];
+ for(const group of serviceMetrics)for(const row of group.records.filter(row=>row.kind==="previewTransactionTiming")){
+  const declaration=wanted.get(String(row.requestId)),match=/^(preview|prune-preview)-([1-3])-(\d+)$/.exec(String(row.requestId));
+  if(!declaration||!match){classificationFailures.push("missing preview declaration "+String(row.requestId));continue;}
+  const round=Number(match[2]),index=Number(match[3]),jit=match[1]==="prune-preview";
+  if(jit?(declaration.warmup||index>=10||group.fixtureId!==`prune-${round}-${index+1}`):(index>=20||declaration.warmup!==(index<10)||group.fixtureId!==`preview-${round}`)){classificationFailures.push("misclassified preview timing "+declaration.id);continue;}
+  classified.push({round,cohort:jit?"jit-preview":declaration.warmup?"warmup-preview":"measured-preview",row});
+ }
+ const summaries=Array.from({length:3},(_,i)=>{const round=i+1;
+  const preview=previewTimingCohorts.map(cohort=>{const rows=classified.filter(row=>row.round===round&&row.cohort===cohort).map(row=>row.row);if(rows.length!==10||new Set(rows.map(row=>row.requestId)).size!==10)classificationFailures.push(`preview cohort incomplete ${round} ${cohort}`);return {round,kind:"previewTransactionTiming",cohort,observed:rows.length,requestIds:rows.map(row=>row.requestId),distribution:rows.length?distribution(rows.map(row=>Number(row.ms))):null};});
+  const other=["exportPreparationTiming","exportBatchTiming","transactionTiming","backupTiming"].map(kind=>{const rows=serviceMetrics.filter(group=>group.fixtureId.startsWith(`preview-${round}`)||group.fixtureId.startsWith(`export-${round}`)||group.fixtureId.startsWith(`prune-${round}-`)).flatMap(group=>group.records).filter(row=>row.kind===kind);return {round,kind,cohort:"all",observed:rows.length,requestIds:rows.map(row=>row.requestId),distribution:rows.length?distribution(rows.map(row=>Number(kind==="exportPreparationTiming"?row.residualMs:row.ms))):null};});
+  return [...preview,...other];
+ }).flat();
+ const budgetFailures=summaries.filter(row=>(row.kind==="previewTransactionTiming"&&row.cohort!=="warmup-preview"||["exportPreparationTiming","exportBatchTiming"].includes(row.kind))&&row.distribution&&row.distribution.p95Ms>=250);
+ return {summaries,budgetFailures,classificationFailures,rawPreviewTimings,expectedPreviewRequests:declarations.filter(row=>/^(preview|prune-preview)-[1-3]-\d+$/.test(row.id)).length,observedPreviewTimings:rawPreviewTimings.length,acceptance:!classificationFailures.length&&!budgetFailures.length};
 }
