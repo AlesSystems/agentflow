@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01, W02, W03a, and W03b integrated.** W03b passed qualified verification and independent review, including its client generation repair, and is integrated through PR #14. Private archival and guarded cleanup are complete; W03c and W04 remain open. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01, W02, W03a, and W03b integrated.** W03b passed qualified verification and independent review, including its client generation repair, and is integrated through PR #14. Private archival and guarded cleanup are complete. W03c implementation, exact-source reviews, and the separately approved campaign disposition are accepted; its documentation review, integration, and cleanup remain open. W04 remains open. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
 
 ## Product direction
 
@@ -174,8 +174,11 @@ are complete. The [W03b receipt](docs/implementation/W03b.md) records qualified
 verification, independent review with scoped client repair re-review, PR #14
 integration, and completed private archival and guarded cleanup. W03c reported usage, producer recovery, and the Usage page are implemented. The
 [W03c qualification checkpoint](docs/implementation/W03c.md) records the fresh
-locked install and source-qualified checks. Campaign review, W03c integration
-and cleanup, and W04 remain open. The complete-v1 release gate remains open.
+locked install and source-qualified checks. Exact-source package reviews found no actionable findings at `fd44b95`. The
+revised campaign completed all 3,810 requests and passed absolute budgets, but
+its raw acceptance remains false for six relative regressions. Their exact
+Astra disposition is approved and Root accepted the campaign. Final documentation
+review, W03c integration and cleanup, and W04 remain open. The complete-v1 release gate remains open.
 
 
 ### Reported usage and local estimates
