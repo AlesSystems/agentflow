@@ -19,7 +19,7 @@ let bindings:{base:SourceBinding;head:SourceBinding};
 function invoke(phase:string,proof:string,input?:string){
  const base=process.env.AGENTFLOW_W04_BASE_SOURCE,runtime=process.env.AGENTFLOW_W04_RUNTIME_ROOT;expect(base,"qualified Phase2 source required").toBeTypeOf("string");expect(runtime,"owned runtime required").toBeTypeOf("string");
  const child=spawnSync(process.execPath,["--import","tsx","tests/performance/w04.ts","--phase",phase,"--base-root",base!,"--head-root",process.cwd(),"--proof-dir",proof,"--runtime-root",runtime!],{cwd:process.cwd(),env:{...process.env,AGENTFLOW_W04_CONTROL_INPUT:input??""},encoding:"utf8",timeout:30000});
- const parent=join(proof,"..");writeFileSync(join(parent,proof.split("/").at(-1)+"-original.json"),JSON.stringify({argv:child.spawnargs,status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error?String(child.error):null}),{mode:0o600,flag:"wx"});return child;
+ const parent=root();writeFileSync(join(parent,"invocation-original.json"),JSON.stringify({argv:[process.execPath,"--import","tsx","tests/performance/w04.ts","--phase",phase,"--base-root",base,"--head-root",process.cwd(),"--proof-dir",proof,"--runtime-root",runtime],status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error?String(child.error):null}),{mode:0o600,flag:"wx"});return child;
 }
 beforeAll(()=>{const proof=root(),child=invoke("prepare",proof);expect(child.status,child.stderr).toBe(0);expect(JSON.parse(child.stdout.trim())).toMatchObject({kind:"preparedSources",servicesStarted:0,serviceAttempts:0,sampleAttempts:0,officialReady:false,operationTimingRows:0});bindings=JSON.parse(readFileSync(join(proof,"source-bindings.json"),"utf8"));expect(bindings.base.commit).toBe("dd26c4b00867e7680c3baf0cf2be39b60502aecf");});
 function controlInput(){
@@ -42,4 +42,13 @@ for(const defect of ["source","build","runtime","helper","missing ID","duplicate
  else if(defect==="resource keys")input.result.resources.browser={};
  else input.result.shutdown.exitCode=1;
  const p=root(),path=join(p,"input.json");writeFileSync(path,JSON.stringify(input),{mode:0o600});const child=invoke("control",root(),path);expect(child.status).toBe(1);expect(JSON.parse(child.stdout.trim())).toMatchObject({kind:"preflightRejected",intended:1,servicesStarted:0,serviceAttempts:0,sampleAttempts:0});
+});
+
+for(const defect of ["file","symlink","wrong mode","reuse","non-owned"] as const)it(`actual controller rejects ${defect} output before service/sample attempts`,()=>{
+ const parent=root();let proof=join(parent,"output");
+ if(defect==="file")writeFileSync(proof,"held");
+ else if(defect==="symlink")symlinkSync(parent,proof);
+ else if(defect==="non-owned")proof="/private/tmp";
+ else {mkdirSync(proof,{mode:0o700});if(defect==="wrong mode")chmodSync(proof,0o755);else writeFileSync(join(proof,"held"),"held");}
+ const child=invoke("prepare",proof);expect(child.status).toBe(1);expect(JSON.parse(child.stdout.trim())).toMatchObject({kind:"preflightRejected",servicesStarted:0,serviceAttempts:0,sampleAttempts:0});
 });
