@@ -172,5 +172,18 @@ separate scoped exceptions, plus a retained launcher setup failure. Live GitHub
 credential verification is unexecuted. Whole-package review, PR #13 integration, private archival, and guarded cleanup
 are complete. The [W03b receipt](docs/implementation/W03b.md) records qualified
 verification, independent review with scoped client repair re-review, PR #14
-integration, and completed private archival and guarded cleanup. W03c planning is
-next; W03c implementation and W04 remain open. This is not a complete-v1 release.
+integration, and completed private archival and guarded cleanup. W03c reported usage, producer recovery, and the Usage page are implemented. The
+[W03c qualification checkpoint](docs/implementation/W03c.md) records the fresh
+locked install and source-qualified checks. Campaign review, W03c integration
+and cleanup, and W04 remain open. The complete-v1 release gate remains open.
+
+
+### Reported usage and local estimates
+
+Usage selects a project and an explicit UTC receipt interval. Known token
+subtotals remain separate from unknown counts and runs without reports. Optional
+named local price snapshots disclose included and excluded reports and keep
+currencies separate. Estimates describe the selected reported facts and local
+quote; they are not bills or complete provider coverage. Current history exports
+use schemaVersion 2 and retain these coverage limits. See the
+[reported usage contract](docs/API.md#reported-usage-summaries-and-local-prices).

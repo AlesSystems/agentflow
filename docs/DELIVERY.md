@@ -1069,3 +1069,24 @@ qualifies its viewport at the document top. One detector pass reports eleven
 inherited CSS advisories. This is bounded evidence, not blanket accessibility
 conformance. Fresh finish/documentation, Task 4 specification/quality review,
 Task 5 qualification/campaign, W03c integration and cleanup, and W04 remain open.
+
+## W03c qualification and readiness gate
+
+Root accepted Tasks 1–4 through `8fdff6c`. Task 5 adds finite campaign controls,
+copied stopped upgrade audits, explicit accepted-registry recovery expectations,
+and native timing and resource identity checks through `b00f5b6`.
+
+The fresh locked install, production build, full unit suite, and full browser suite
+ran on the named macOS host. Full unit passed 252 tests. Full browser passed 90
+with two held visual-batch skips. The one full integration run passed 587, failed
+five, and skipped one. Scoped registry repairs passed 19 tests. Correct historical
+prerequisites then passed four tests across three files. Final focused campaign
+controls passed 33 tests. Types, lint, and OpenAPI check passed. The
+[qualification receipt](implementation/W03c.md) retains source qualifications,
+original failures, setup and stream limitations, and the precise composition.
+
+The controller declares three repetitions, 42 groups, and 3,810 requests.
+Independent review of frozen stopped facts and Root's explicit quiet release
+precede official samples. Native instrumentation and compiled browser evidence
+remain separately qualified. Whole-package review, campaign audit, W03c
+integration and guarded cleanup, and W04 remain open. No release gate closes here.

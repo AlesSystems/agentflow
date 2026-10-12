@@ -675,3 +675,9 @@ derived totals and provenance. Logical digests, receipts, paths and credentials
 are excluded. Usage facts and immutable quotes survive protected retention and
 backup restore. Historical v1 fixtures are decoded explicitly as v1; mixed manifest
 and completion versions fail validation.
+
+
+The [W03c qualification checkpoint](implementation/W03c.md) records the actual
+locked macOS install, source-qualified verification, finite campaign controls,
+and retained failures. Official W03c measurements remain gated by independent
+stopped-readiness review and Root's explicit quiet release.
