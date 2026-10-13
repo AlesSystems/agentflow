@@ -227,7 +227,8 @@ revised campaign completed all 3,810 requests and passed absolute budgets, but
 its raw acceptance remains false for six relative regressions. Their exact
 Astra disposition is approved and Root accepted the campaign. Final documentation
 review, PR #15 integration, private archival, and guarded cleanup are complete.
-W04 planning and its Astra gate remain open. The complete-v1 release gate remains open.
+W04 Tasks 1–4 are Root-accepted under the separate exact 14-group disposition.
+Whole-candidate reviews, W04 integration and source publication remain open.
 
 
 ### Reported usage and local estimates
