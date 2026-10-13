@@ -51,4 +51,4 @@ it("rehashes complete frozen outbox and token members before any service",()=>{c
 it("rejects added empty directories and unsupported frozen links",()=>{const root=mkdtempSync(join(tmpdir(),"w04-members-control-"));writeFileSync(join(root,"held"),"synthetic",{mode:0o600});const frozen=artifactInventory(root);mkdirSync(join(root,"added"),{mode:0o700});expect(()=>validateFrozenArtifacts(root,frozen)).toThrow(/frozen/);symlinkSync("held",join(root,"unsupported"));expect(()=>artifactInventory(root)).toThrow(/unsupported/);});
 
 import {stoppedCursor} from "../fixtures/w04-campaign";
-it("binds the actual stopped changes.cursor column rather than an absent id",()=>{expect(stoppedCursor([{cursor:1},{cursor:19}])).toBe("19");expect(stoppedCursor([])).toBe("0");});
+it("binds the actual stopped changes.cursor column rather than an absent id",()=>{expect(stoppedCursor([{cursor:1},{cursor:19}])).toBe("19");expect(stoppedCursor([])).toBe("0");expect(()=>stoppedCursor([{id:1}])).toThrow(/cursor/);});

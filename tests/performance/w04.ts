@@ -3,7 +3,7 @@ import {execFileSync} from "node:child_process";
 import { realpathSync,lstatSync,mkdirSync,readFileSync,writeFileSync } from "node:fs";
 import { join,isAbsolute,dirname } from "node:path";
 import { captureSourceBinding,fileSHA256,sha256,validateOutputRoot,verifySourceBinding,type SourceBinding } from "../fixtures/w04-qualification";
-import { reconcileFinite,validateWitnesses,validateW04Prepared,type W04PreparedCampaign,type FiniteDeclaration,validatePrepared,validateResult } from "../fixtures/w04-campaign";
+import { stoppedCursor,reconcileFinite,validateWitnesses,validateW04Prepared,type W04PreparedCampaign,type FiniteDeclaration,validatePrepared,validateResult } from "../fixtures/w04-campaign";
 import { qualifiedService } from "../fixtures/w03a-qualification";
 const counters={servicesStarted:0,serviceAttempts:0,sampleAttempts:0};
 let intended:number|null=null;
@@ -62,7 +62,7 @@ async function prepareCampaign(proof:string,base:string,head:string,runtime:stri
  const output=join(proof,"official");mkdirSync(output,{mode:0o700});const identity=validateOutputRoot(output);
  const bindFixture=async(value:{id:string;source:"base"|"head";dir:string;audit:ReturnType<typeof stoppedAudit>},cohort:W04PreparedCampaign["fixtures"][number]["cohort"],facts:unknown)=>{
   const auditPath=join(proof,value.id+"-frozen-audit.json"),pinPath=join(proof,value.id+"-frozen-pins.json"),factPath=join(proof,value.id+"-frozen-facts.json");privateSave(proof,value.id+"-frozen-audit.json",value.audit);privateSave(proof,value.id+"-frozen-pins.json",value.audit.after);privateSave(proof,value.id+"-frozen-facts.json",facts);
-  const metadata=value.audit.rows.instance_metadata[0];fixtures.push({id:value.id,source:value.source,dir:value.dir,generation:String(metadata.generation),schema:Number(metadata.schema_version),cursor:String(Math.max(0,...value.audit.rows.changes.map(r=>Number(r.id)))),cohort,facts:reference(factPath),originalPins:reference(pinPath),audit:reference(auditPath),setup:reference(factPath)});let port=await freePort();for(let attempt=0;ports.has(port)&&attempt<20;attempt++)port=await freePort();assert(!ports.has(port),"unique prepared port allocation failed");ports.add(port);templates[value.id]={facts,port,destination:join(output,value.id)};
+  const metadata=value.audit.rows.instance_metadata[0];fixtures.push({id:value.id,source:value.source,dir:value.dir,generation:String(metadata.generation),schema:Number(metadata.schema_version),cursor:stoppedCursor(value.audit.rows.changes),cohort,facts:reference(factPath),originalPins:reference(pinPath),audit:reference(auditPath),setup:reference(factPath)});let port=await freePort();for(let attempt=0;ports.has(port)&&attempt<20;attempt++)port=await freePort();assert(!ports.has(port),"unique prepared port allocation failed");ports.add(port);templates[value.id]={facts,port,destination:join(output,value.id)};
  };
  for(let repetition=1;repetition<=3;repetition++){
   const load=await prepareLoad(proof,repetition);const startEvents=load.facts.runs.map(runId=>({schemaVersion:1,eventId:randomUUID(),runId,sequence:1,type:"run.started",occurredAt:"2026-10-12T00:00:00.000Z",payload:{}})),terminalEvents=load.facts.runs.map(runId=>({schemaVersion:1,eventId:randomUUID(),runId,sequence:702,type:"run.succeeded",occurredAt:"2026-10-12T00:00:00.000Z",payload:{summary:"Synthetic W04 load terminal outside timing"}}));
