@@ -24,7 +24,7 @@ test("two real tabs observe the external CLI producer, downtime replay, Review, 
     }
     producer.advance(); await next("running");
     for (const tab of [page, second]) {
-      await expect(tab.getByText("running · Fresh report", { exact: true })).toBeVisible();
+      await expect(tab.locator(".task-card").getByText("running · Fresh report", { exact: true })).toBeVisible();
       await tab.goto(server.url + `/runs/${ids.implementationId}`);
       await expect(tab.getByText("3 · run.progress", { exact: true })).toBeVisible();
       expect(tab.url()).toBe(server.url + `/runs/${ids.implementationId}`);

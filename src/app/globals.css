@@ -15,7 +15,7 @@
   --rule: #cfc4b2;
   --faint: #efeae0;
   --clay: #b4472a;
-  --clay-hi: #c4532f;
+  --clay-hi: #bd4e2b;
   --clay-lo: #a33f24;
   --clay-deep: #93371f;
   --clay-tint: #f6e1d6;
@@ -596,7 +596,7 @@ nav[aria-label="Project views"] a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   max-width: 100%;
   padding: 6px 12px;
   border: 2px solid var(--attention);
@@ -1232,7 +1232,7 @@ h2.accepted-stamp {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 10px;
   border-radius: 6px;
   color: var(--ink);
@@ -1520,7 +1520,7 @@ h2.accepted-stamp {
   overflow: hidden;
 }
 .workflow-view button {
-  min-height: 40px;
+  min-height: 44px;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -1872,20 +1872,17 @@ h2.accepted-stamp {
 }
 @keyframes pop-in {
   from {
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 6px)) scale(0.98);
+    transform: translate(-50%, calc(-50% + 8px)) scale(0.98);
   }
 }
 @keyframes menu-in {
   from {
-    opacity: 0;
     transform: translateY(-4px);
   }
 }
 @keyframes slide-in {
   from {
-    transform: translateX(24px);
-    opacity: 0;
+    transform: translateX(32px);
   }
 }
 @media (prefers-reduced-motion: no-preference) {

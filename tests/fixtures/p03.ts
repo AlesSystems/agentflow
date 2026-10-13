@@ -10,8 +10,9 @@ export async function pairPage(
     .getByLabel("Pairing token", { exact: true })
     .fill(server.credentials().pairingToken);
   await page.getByRole("button", { name: "Pair this browser" }).click();
+  await expect(page).not.toHaveURL(/\/pair$/);
   await expect(
-    page.getByRole("heading", { name: "Overview", exact: true }),
+    page.getByRole("navigation", { name: "Main navigation" }),
   ).toBeVisible();
 }
 export async function command(

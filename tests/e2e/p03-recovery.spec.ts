@@ -510,7 +510,11 @@ test("project metadata editing, archive confirmation and unarchive use persisten
   const server = await launch();
   try {
     const f = await fixture(page, server);
-    await page.getByRole("link", { name: "Projects", exact: true }).click();
+    await page
+      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("button")
+      .click();
+    await page.getByRole("menuitem", { name: "All projects", exact: true }).click();
     await page
       .getByRole("button", { name: "Edit project", exact: true })
       .click();
@@ -795,7 +799,7 @@ test("generation reset clears accumulated comment pages while retaining a commen
   }
 });
 
-test("Overview authoritative refresh clears obsolete loaded attention pages", async ({
+test("dashboard authoritative refresh clears obsolete attention items", async ({
   page,
 }) => {
   const server = await launch();
@@ -822,10 +826,11 @@ test("Overview authoritative refresh clears obsolete loaded attention pages", as
       return ids;
     }, f.project.id);
     await page.goto(server.url + "/");
+    await expect(page).toHaveURL(f.boardUrl);
     await page
       .getByRole("button", { name: "Load more attention items" })
       .click();
-    await expect(page.locator(".attention-row")).toHaveCount(51);
+    await expect(page.locator(".attention-chip")).toHaveCount(51);
     await page.evaluate(async (ids) => {
       for (const id of ids) {
         const response = await fetch(`/api/v1/tasks/${id}`, {
@@ -842,7 +847,7 @@ test("Overview authoritative refresh clears obsolete loaded attention pages", as
     await expect(
       page.getByRole("heading", { name: "Needs attention 0", exact: true }),
     ).toBeVisible({ timeout: 20000 });
-    await expect(page.locator(".attention-row")).toHaveCount(0);
+    await expect(page.locator(".attention-chip")).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Load more attention items" }),
     ).toHaveCount(0);

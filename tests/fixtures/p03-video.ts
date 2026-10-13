@@ -20,9 +20,8 @@ try {
     .fill(server.credentials().pairingToken);
   await page.getByRole("button", { name: "Pair this browser" }).click();
   await expect(
-    page.getByRole("heading", { name: "Overview", exact: true }),
+    page.getByRole("heading", { name: "Projects", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Projects", exact: true }).click();
   await page
     .getByRole("button", { name: "Create project", exact: true })
     .first()

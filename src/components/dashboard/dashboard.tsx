@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ReactFlow, Controls, Position, MarkerType, type Node, type Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useRead, QueryFeedback } from "../../client/provider";
+import { useRead, useWorkspace, QueryFeedback } from "../../client/provider";
 import { overviewResponse, projectResponse } from "../../contracts/responses";
 import { trackingAgentsResponse, trackingRunsResponse, activityResponse } from "../../contracts/tracking";
 import { usageResponse } from "../../contracts/usage";
@@ -81,12 +81,35 @@ export function Dashboard({ projectId, initialFilters }: { projectId: string; in
 function Attention({ projectId }: { projectId: string }) {
   const query = useRead("/overview?limit=50", overviewResponse, 15000);
   const data = query.data?.data;
-  const items = data?.attention.items.filter((item) => item.projectId === projectId) ?? [];
+  const { api, generation } = useWorkspace();
+  type Item = NonNullable<typeof data>["attention"]["items"][number];
+  const [extra, setExtra] = useState<{ snapshot?: string; items: Item[]; next?: string | null }>({ items: [] });
+  const [error, setError] = useState("");
+  const fresh = extra.snapshot === query.data?.snapshotCursor + generation;
+  const next = fresh && extra.next !== undefined ? extra.next : data?.attention.nextCursor;
+  const items = [...(data?.attention.items ?? []), ...(fresh ? extra.items : [])].filter(
+    (item, index, all) => item.projectId === projectId && all.findIndex((other) => other.id === item.id) === index,
+  );
+  async function more() {
+    if (!next || !query.data) return;
+    const snapshot = query.data.snapshotCursor + generation;
+    try {
+      const page = await api.read(`/overview?limit=50&cursor=${encodeURIComponent(next)}`, overviewResponse);
+      if (page.snapshotCursor + api.generation !== snapshot) {
+        void query.refetch();
+        return;
+      }
+      setExtra((old) => ({ snapshot, items: [...(old.snapshot === snapshot ? old.items : []), ...page.data.attention.items], next: page.data.attention.nextCursor }));
+      setError("");
+    } catch {
+      setError("Could not load more attention items. Retry this page.");
+    }
+  }
   return (
     <section className="attention-strip" aria-labelledby="attention-heading">
       <h2 id="attention-heading">
         Needs attention{" "}
-        <span className={`scribble-count ${items.length ? "" : "calm"}`}>{data ? items.length : "…"}</span>
+        <span className={`scribble-count ${items.length ? "" : "calm"}`}>{data ? `${items.length}${next ? "+" : ""}` : "…"}</span>
       </h2>
       <QueryFeedback error={query.error} loading={false} retry={() => void query.refetch()} />
       {items.map((item) => {
@@ -109,7 +132,13 @@ function Attention({ projectId }: { projectId: string }) {
           </span>
         );
       })}
-      {data && !items.length && <p className="attention-clear">No blocked tasks, failed runs, or stale reports in this project.</p>}
+      {data && !items.length && !next && <p className="attention-clear">No blocked tasks, failed runs, or stale reports in this project.</p>}
+      {next && (
+        <button className="secondary" onClick={() => void more()}>
+          Load more attention items
+        </button>
+      )}
+      {error && <p role="alert" className="error">{error}</p>}
       {data && (
         <p className="dash-summary">
           <span className="sr-only">Across active projects:</span>

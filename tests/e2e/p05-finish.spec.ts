@@ -65,6 +65,14 @@ test("keyboard follows tracking records filters pages messages and stale closure
     throw new Error("Keyboard target unreachable: " + label);
   }
   async function activate(locator: Locator, label: string, key = "Enter") { await tabTo(locator, label); await page.keyboard.press(key); steps.push({ step: label, activation: key }); }
+  async function navigate(name: string, label: string) {
+    await activate(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button"), label + " menu");
+    const item = page.getByRole("menuitem", { name, exact: true });
+    await expect(item).toBeVisible();
+    // Radix moves menu focus asynchronously; wait for each move before the next key.
+    for (let i = 0; i < 20 && !(await item.evaluate(el => el === document.activeElement)); i++) { const before = await page.evaluate(() => document.activeElement?.textContent); await page.keyboard.press("ArrowDown"); await page.waitForFunction(previous => document.activeElement?.textContent !== previous, before); }
+    await expect(item).toBeFocused(); await page.keyboard.press("Enter"); steps.push({ step: label, navigation: "ArrowDown", activation: "Enter" });
+  }
   async function type(locator: Locator, label: string, value: string) { await tabTo(locator, label); await page.keyboard.press("Meta+A"); await page.keyboard.insertText(value); steps.push({ step: label, input: "keyboard typing", value }); }
   try {
     const f = await fixture(page, server);
@@ -86,11 +94,11 @@ test("keyboard follows tracking records filters pages messages and stale closure
     const db = new Database(join(dir, "agentflow.sqlite")); db.prepare("UPDATE runs SET last_received_at=? WHERE id=?").run(Date.now() - 120000, activeId); db.close();
     server = await launch({ dir, port });
     await page.goto(server.url);
-    await activate(page.getByRole("link", { name: "Agents", exact: true }), "Agents navigation");
+    await navigate("Agents", "Agents navigation");
     await activate(page.getByRole("link", { name: agent.displayName, exact: true }), "Agent identity");
     await activate(page.getByRole("link", { name: `implementation · ${agent.displayName}`, exact: true }), "Reported attempt");
     await expect(page.locator(".run-detail .report-label")).toHaveText("running · Stale report · execution uncertain");
-    await activate(page.getByRole("link", { name: "Activity", exact: true }), "Activity navigation");
+    await navigate("Activity", "Activity navigation");
     await type(page.getByLabel("Task UUID", { exact: true }), "Activity task filter", f.task.id);
     await activate(page.getByRole("button", { name: "Apply filters", exact: true }), "Apply Activity filters");
     await expect(page).toHaveURL(new RegExp(`taskId=${f.task.id}`));

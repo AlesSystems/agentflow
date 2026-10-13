@@ -117,7 +117,7 @@ for (let run = 1; run <= 3; run++) {
         .fill(server.credentials().pairingToken);
       await page.getByRole("button", { name: "Pair this browser" }).click();
       await page
-        .getByRole("heading", { name: "Overview", exact: true })
+        .getByRole("navigation", { name: "Main navigation" })
         .waitFor();
       for (let load = 0; load < 6; load++) {
         const start = performance.now();

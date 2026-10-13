@@ -13,7 +13,7 @@ colors:
   rule: "#cfc4b2"
   faint: "#efeae0"
   clay: "#b4472a"
-  clay-hi: "#c4532f"
+  clay-hi: "#bd4e2b"
   clay-lo: "#a33f24"
   clay-deep: "#93371f"
   clay-tint: "#f6e1d6"
