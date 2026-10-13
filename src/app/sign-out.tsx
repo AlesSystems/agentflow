@@ -6,7 +6,7 @@ export default function SignOut() {
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   return (
-    <>
+    <div className="sign-out">
       <button
         disabled={busy}
         onClick={async () => {
@@ -37,6 +37,6 @@ export default function SignOut() {
       <p role="alert" className="error">
         {error}
       </p>
-    </>
+    </div>
   );
 }

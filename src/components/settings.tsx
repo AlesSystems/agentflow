@@ -29,7 +29,7 @@ export function Settings() {
         <>
           <section className="settings-section">
             <h2>Local day and timezone</h2>
-            <p>Overview uses this timezone to count today’s work.</p>
+            <p>The dashboard uses this timezone to count today’s work.</p>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();

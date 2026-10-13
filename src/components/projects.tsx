@@ -11,7 +11,7 @@ import { freezeCommand, type FrozenCommand } from "../client/commands";
 import { ApiError } from "../client/api";
 import { Modal } from "./ui/dialog";
 type Project = z.infer<typeof projectsResponse>["data"]["items"][number];
-export function Projects() {
+export function Projects({ initialCreate = false }: { initialCreate?: boolean }) {
   const [archived, setArchived] = useState(false),
     [cursor, setCursor] = useState<string | null>(null),
     [pages, setPages] = useState<Project[]>([]);
@@ -19,7 +19,7 @@ export function Projects() {
   const query = useRead(path, projectsResponse);
   const { api, pair, generation } = useWorkspace();
   const cache = useQueryClient();
-  const [editing, setEditing] = useState<Project | "new" | null>(null),
+  const [editing, setEditing] = useState<Project | "new" | null>(initialCreate ? "new" : null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [retry, setRetry] = useState<FrozenCommand | null>(null),
@@ -100,7 +100,7 @@ export function Projects() {
   return (
     <>
       <div className="page-heading">
-        <h1>Projects</h1><CodexLink />
+        <h1>Projects</h1>
         <button
           className="primary"
           onClick={() => {
@@ -111,6 +111,7 @@ export function Projects() {
           Create project
         </button>
       </div>
+      <CodexLink />
       <label className="inline">
         <input
           type="checkbox"

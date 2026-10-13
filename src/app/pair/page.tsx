@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { guard } from "../../server/runtime";
 import PairForm from "./form";
+import { BrandMark } from "../../components/ui/sketch";
 export const dynamic = "force-dynamic";
 export default async function PairPage() {
   try {
@@ -15,6 +16,10 @@ export default async function PairPage() {
   }
   return (
     <main id="main-content" className="pair-page">
+      <span className="brand">
+        <BrandMark />
+        AgentFlow
+      </span>
       <h1>Pair your browser</h1>
       <p>Connect this browser to your local AgentFlow workspace.</p>
       <PairForm />

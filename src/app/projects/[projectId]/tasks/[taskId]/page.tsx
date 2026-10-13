@@ -40,7 +40,7 @@ export default async function Page({
   );
   return data ? (
     <Workspace {...data}>
-      <Shell>
+      <Shell projectId={projectId}>
         <WorkflowReturn projectId={projectId} value={raw.workflowReturn}/>
         <TaskPage
           projectId={projectId}

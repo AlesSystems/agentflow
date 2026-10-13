@@ -4,7 +4,7 @@ import { projectResponse } from "../../../contracts/responses";
 import { boardQuery } from "../../../contracts/tasks";
 import { Workspace } from "../../../client/provider";
 import { Shell, NeedsPairing } from "../../../components/shell";
-import { Board } from "../../../components/board/board";
+import { Dashboard } from "../../../components/dashboard/dashboard";
 export const dynamic = "force-dynamic";
 export default async function Page({
   params,
@@ -36,8 +36,8 @@ export default async function Page({
   );
   return data ? (
     <Workspace {...data}>
-      <Shell>
-        <Board
+      <Shell projectId={projectId} wide>
+        <Dashboard
           projectId={projectId}
           initialFilters={search.size ? "?" + search.toString() : ""}
         />

@@ -62,12 +62,13 @@ hooks and workflow surfaces remain later gated packages. The v1 boundary is all 
 ## Brand Commitments
 
 Use the AgentFlow name. The implementation and visual design are original.
-Fizzy is a reference for a lightweight board experience, with no reused source
-or assets. Preserve the frontend plan's light neutral canvas, readable dark text,
-readable card outlines, one blue action accent, and offline system fonts. The user
-selected the Work board prototype and requested a slightly cartoonish Fizzy-like
-refinement on 2026-10-09: rounded colored lane tabs, bold titles, and small
-acceptance stamps. See [DESIGN.md](DESIGN.md) for extracted implementation values.
+On 2026-10-13 the user chose the "Sketchbook" direction from the AgentFlow
+redesign canvas: one dashboard per project, warm dotted paper, graphite ink,
+one clay action accent, hand-lettered headings (Kalam) and a clean sans for all
+data (Atkinson Hyperlegible). Both fonts are bundled locally under the SIL Open
+Font License. Lane tints, run labels and the "Human accepted" stamp always carry
+words. This supersedes the earlier blue-accent, system-font Work board. See
+[DESIGN.md](DESIGN.md) for the tokens and component recipes.
 
 ## Evidence on Hand
 
