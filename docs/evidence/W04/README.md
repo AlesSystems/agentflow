@@ -1,6 +1,6 @@
 # W04 public synthetic evidence
 
-This candidate publishes scalar summaries and exactly 10 UI04-approved original PNGs from source `741b58f`, qualified build `hSgNCwK5uvX3pzMJW3iYo`, Chrome 155. The raw campaign remains false/exit 1; Root accepted Task 4 only with the separate exact 14-group Astra disposition. Whole-candidate review, integration and release remain open.
+This page publishes scalar summaries and exactly 10 UI04-approved original PNGs from source `741b58f`, qualified build `hSgNCwK5uvX3pzMJW3iYo`, Chrome 155. The raw campaign remains false/exit 1; Root accepted Task 4 only with the separate exact 14-group Astra disposition. Whole-candidate reviews, integration and the v1.0.0 source release are complete; the receipt below records post-publication verification and cleanup. This status update follows the tagged target without changing its measured evidence.
 
 See [the receipt](../../implementation/W04.md), [scalar evidence](acceptance.json), and [image hashes/captions](media.json). Raw headers, tokens, databases, process/environment records, full original request distributions, all videos and private-path captures remain private. PNGs establish appearance; successful source-bound predicates establish behavior. Synthetic acceptance is not human attestation.
 
