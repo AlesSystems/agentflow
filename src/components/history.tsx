@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "../client/provider";
@@ -21,6 +21,7 @@ export function HistorySettings() {
   const [busy, setBusy] = useState<"export" | "preview" | "prune" | null>(null);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
+  useLayoutEffect(() => { if (notice) feedback.current?.focus(); }, [notice]);
   const previewButton = useRef<HTMLButtonElement>(null);
   const previewElement = useRef<HTMLDivElement | null>(null);
   const retainPreviewFocus = useCallback((element: HTMLDivElement | null) => {
@@ -30,7 +31,6 @@ export function HistorySettings() {
   const preview = retention.kind === "preview" && retention.data.expectedGeneration === generation && retention.data.cutoff === cutoff ? retention.data : null;
   function inform(text: string, error = false) {
     setNotice({ text, error });
-    requestAnimationFrame(() => feedback.current?.focus());
   }
   function failure(error: unknown, operation: "preview history" | "prune history" | "export history") {
     if (error instanceof ApiError && error.status === 401) pair();
