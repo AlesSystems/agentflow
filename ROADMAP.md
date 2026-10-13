@@ -3,8 +3,7 @@
 Status: P01–P07, W01, W02, and W03a–W03c are integrated. W03c merged through
 [PR #15](https://github.com/AlesSystems/agentflow/pull/15) at
 `e8dc6967d3964c672bd964a65584e403e11ce27a`; private archival and guarded cleanup
-are complete. The operator activated the ordered v1 run on 2026-10-09. W04
-planning, Astra approval, full v1 validation, and source release remain open.
+are complete. The operator activated the ordered v1 run on 2026-10-09. W04 Tasks 1–4 are Root-accepted, with the [receipt](docs/implementation/W04.md) preserving current verification and the separate exact 14-group campaign disposition. Task 5 docs/whole-candidate review, W04 integration and source release remain open.
 
 ## Release boundary
 
@@ -75,9 +74,9 @@ is distinct from dependencies. Review evidence never impersonates human acceptan
 
 - [ ] W04: finish all package gates and validate the integrated v1 journey on a
   fresh checkout with isolated data/outbox directories on the named macOS host.
-- [ ] Trace a branching workflow, failed attempt, retry, stale report, review,
+- [x] Trace a branching workflow, failed attempt, retry, stale report, review,
   rework, updated artifact, human acceptance, and reconnect across two browsers.
-- [ ] Verify GitHub opt-in/offline recovery, exports, safe retention/cursor reset,
+- [x] Verify GitHub opt-in/offline recovery, exports, safe retention/cursor reset,
   usage deduplication, and unknown-data displays.
 - [ ] Review the exact release commit and publish `v1.0.0` only under activated
   execution authority, with evidence and disclosed limitations.

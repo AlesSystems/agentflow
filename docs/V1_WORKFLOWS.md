@@ -15,8 +15,7 @@ implementation and qualified verification are accepted, including its exact
 recorded regression disposition. PR #15 integrated reviewed head `ac229e5` at
 `e8dc6967d3964c672bd964a65584e403e11ce27a`; private archival and guarded cleanup
 are complete. [Its receipt](implementation/W03c.md) preserves the original results
-and qualifications. W04 planning and its Astra approval are next; full v1
-validation and source release remain open.
+and qualifications. W04 Tasks 1–4 are Root-accepted, including current full validation and one raw false/exit 1 campaign under a separate exact 14-group disposition. [The W04 receipt](implementation/W04.md) records the qualified source/build and sparse-fixture limits. Whole-candidate reviews, integration and source release remain open.
 The operator activated the ordered v1 run
 on 2026-10-09; package-specific evidence determines completion. [PLAN.md](../PLAN.md) and
 [EXECUTION_POLICY.md](EXECUTION_POLICY.md) own activation, delivery, and release.
