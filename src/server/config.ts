@@ -3,6 +3,7 @@ import { isAbsolute, join } from "node:path";
 export type RuntimeConfig = Readonly<{
   dataDir: string;
   githubTokenFile?: string;
+  codexExecutable?: string;
   host: "127.0.0.1";
   port: number;
   mode: "development" | "production";
@@ -25,5 +26,8 @@ export function readConfig(
     env.AGENTFLOW_DATA_DIR ||
     join(homedir(), "Library", "Application Support", "AgentFlow");
   if (!isAbsolute(dataDir)) throw new Error("ABSOLUTE_DATA_DIR_REQUIRED");
-  return { dataDir, host: "127.0.0.1", port, mode, ...(env.AGENTFLOW_GITHUB_TOKEN_FILE ? {githubTokenFile:env.AGENTFLOW_GITHUB_TOKEN_FILE} : {}) };
+  const codexExecutable = env.AGENTFLOW_CODEX_EXECUTABLE;
+  if (codexExecutable && !isAbsolute(codexExecutable))
+    throw new Error("ABSOLUTE_CODEX_EXECUTABLE_REQUIRED");
+  return { dataDir, host: "127.0.0.1", port, mode, ...(env.AGENTFLOW_GITHUB_TOKEN_FILE ? {githubTokenFile:env.AGENTFLOW_GITHUB_TOKEN_FILE} : {}), ...(codexExecutable ? { codexExecutable } : {}) };
 }

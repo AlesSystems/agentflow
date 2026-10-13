@@ -839,3 +839,37 @@ nav[aria-label="Project views"] a { min-height: 44px; min-width: 44px; display: 
 
 .usage-price-entry { border-top: 1px solid var(--divider); padding: 16px 0; margin-top: 16px; }
 .usage-price-entry legend { font-weight: 700; padding-top: 16px; }
+
+.codex-page-heading, .codex-detail-heading, .codex-turn-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.codex-discovery { margin: 16px 0 24px; max-width: 75ch; }
+.codex-discovery span, .codex-connection { color: var(--muted); }
+.codex-workspace { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 32px; margin-top: 24px; }
+.codex-workspace > section { min-width: 0; }
+.codex-kind, .codex-filters label { display: grid; gap: 6px; }
+.codex-filters { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin: 12px 0 20px; }
+.codex-filters > label:first-child { flex: 1 1 180px; }
+.codex-filters .checkbox-label { display: flex; align-items: center; gap: 8px; width: 100%; }
+.codex-chat-list, .codex-agent-list { list-style: none; padding: 0; }
+.codex-chat-list li { margin-bottom: 8px; }
+.codex-chat-button { display: flex; flex-direction: column; align-items: start; text-align: left; width: 100%; gap: 8px; padding: 16px; border-radius: 12px; overflow-wrap: anywhere; }
+.codex-chat-button[aria-current="true"] { background: var(--progress); border-color: var(--action); }
+.codex-chat-meta { display: block; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.codex-detail { border-top: 1px solid var(--divider); padding-top: 16px; }
+.codex-detail h3 { margin-top: 28px; }
+.codex-agent-list li { padding: 12px 0; border-bottom: 1px solid var(--divider); }
+.codex-agent-list button { margin-bottom: 8px; text-align: left; overflow-wrap: anywhere; }
+.codex-turn { padding: 20px 0; border-top: 1px solid var(--divider); }
+.codex-turn-heading h3 { margin: 0; }
+.codex-text { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 75ch; }
+.codex-checklist { padding-left: 24px; }
+.codex-checklist li { margin: 10px 0; }
+.codex-checklist .report-label { margin-left: 12px; }
+.codex-turn details { margin-top: 16px; }
+.codex-turn summary { cursor: pointer; color: var(--action); }
+@media (max-width: 850px) { .codex-workspace { grid-template-columns: minmax(0, 1fr); gap: 24px; } }

@@ -10,7 +10,7 @@
   "packageManager": "npm@11.12.1",
   "scripts": {
     "dev": "NEXT_TELEMETRY_DISABLED=1 tsx src/server/launcher.ts --development",
-    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build --webpack",
     "start": "NEXT_TELEMETRY_DISABLED=1 tsx src/server/launcher.ts --production",
     "local": "tsx src/cli/local.ts",
     "lint": "eslint .",

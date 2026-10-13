@@ -301,3 +301,11 @@ Object.assign(responseExamples,{previewRetention:snapshot(retentionPreviewExampl
 const usagePriceExample={id:factId,name:"Synthetic local quote",capturedAt:time,effectiveAt:null,createdAt:time,entries:[{source:"fixture",model:"model",currency:"USD",inputPrice:"1",outputPrice:"2"}]};
 Object.assign(requestExamples,{getUsage:{projectId,from:time,to:"2026-10-10T00:00:00.000Z"},listUsagePrices:{},createUsagePriceSnapshot:{id:factId,name:usagePriceExample.name,capturedAt:time,entries:usagePriceExample.entries}});
 Object.assign(responseExamples,{getUsage:snapshot({projectId,from:time,to:"2026-10-10T00:00:00.000Z",source:null,model:null,eligibleRuns:0,runsWithReports:0,runsWithoutReports:0,filteredReportCount:0,filteredRunsWithReports:0,knownInputTokens:"0",knownOutputTokens:"0",knownTotalTokens:"0",unknownInputReports:0,unknownOutputReports:0,unknownTotalReports:0,groups:[],totalGroups:0,groupsTruncated:false,runDetails:[],totalRuns:0,nextCursor:null,estimate:null}),listUsagePrices:snapshot({items:[usagePriceExample],total:1,nextCursor:null}),createUsagePriceSnapshot:snapshot(usagePriceExample)});
+
+const codexConnectionExample = {state: "connected", observedAt: time, message: "Local stored history. Live desktop status is unavailable."};
+const codexChatExample = {id: taskId, title: "Synthetic Codex task", cwd: null, updatedAt: time, parentId: null, agentNickname: null, agentRole: null, model: null, status: "unknown", statusSource: "stored", archived: false};
+Object.assign(requestExamples, {listCodexChats: {}, getCodexChat: {}});
+Object.assign(responseExamples, {
+  listCodexChats: {connection: codexConnectionExample, data: [codexChatExample], nextCursor: null},
+  getCodexChat: {connection: codexConnectionExample, data: {chat: codexChatExample, turns: [], agents: [], nextTurnsCursor: null, nextAgentsCursor: null}},
+});

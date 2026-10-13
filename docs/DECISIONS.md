@@ -191,3 +191,12 @@ finite stalled termination, independent blocked-session validation and cleanup
 before Store closure. Framework fallback is unavailable, preserving a single
 safe delivery path. No dependency, migration, observer or acceptance authority
 changes. [Evidence and remaining gates](implementation/P05-transport.md).
+
+
+### Codex connector observation boundary
+
+The operator authorized automatic local Codex discovery after v1 release. A dedicated human-only Codex view reads existing chats, child agents and recorded request progress through a local app-server reader. This supersedes the earlier provider-adapter deferral for Codex only. The original v1.0.0 tag remains unchanged.
+
+Codex observations remain separate from manually managed AgentFlow tasks and acceptance evidence. A completed Codex turn describes a response lifecycle, not accepted engineering work. Missing structured task progress stays unknown. The dedicated reader cannot assert another Codex process is actively executing; the UI labels recorded observations and their timestamps.
+
+No remote or cloud-host discovery, inference, execution control, credential import or transcript persistence in AgentFlow is added. Browser sessions are required to read Codex content; reporter credentials cannot read it. Source reads use supported protocol operations with an explicit allowlist and bounded process lifetime. [The connector contract](implementation/CODEX_CONNECTOR.md) records design, acceptance and verification.

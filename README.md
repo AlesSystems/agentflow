@@ -15,6 +15,18 @@ An implementation run that succeeds moves its task to Review. Completed means a 
 
 The interaction goal is the lightweight board experience of [Fizzy](https://github.com/basecamp/fizzy), with an original implementation and visual design. No Fizzy source or assets are included.
 
+## See your existing Codex work
+
+Open **Codex** in AgentFlow's navigation. Your local Codex chats appear automatically without reporter tokens or per-chat registration. Search by title or project path, switch to child agents, or select archived chats. Select a chat to inspect recorded task requests, agent updates, turn outcomes and child agents. The page refreshes every five seconds while visible.
+
+The connector uses your installed local Codex app-server reader. It reads history and never starts, resumes or modifies Codex work. A finished turn is not human acceptance on the AgentFlow board. The reader cannot confirm another desktop process is currently running. Missing checklist percentages remain unknown. Remote-host and cloud-only chats are not included.
+
+Keep Codex installed on the same machine and pair your browser with AgentFlow. The connector prefers Codex's managed app-server executable and falls back to `codex` on PATH. To select another installed binary, set `AGENTFLOW_CODEX_EXECUTABLE` to its absolute path before starting AgentFlow. No API key or extra account login is required by AgentFlow.
+
+Only paired browser sessions can read Codex history. Reporter tokens cannot access it. Last successful observations remain visible during a temporary disconnect, labeled stale. The in-memory cache clears when AgentFlow restarts. Codex content is not imported into AgentFlow's business database or exports.
+
+The [connector contract and verification](docs/implementation/CODEX_CONNECTOR.md) describe source limits and tested behavior.
+
 ## Design documents
 
 | Document | Purpose |

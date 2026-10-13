@@ -1,4 +1,5 @@
 "use client";
+import { CodexLink } from "./codex";
 import Link from "next/link";
 import { useState } from "react";
 import { useRead, QueryFeedback, useWorkspace } from "../client/provider";
@@ -61,7 +62,7 @@ export function Overview() {
   return (
     <>
       <h1>Overview</h1>
-      <p className="intro">Your work, and what needs a closer look.</p>
+      <p className="intro">Your work, and what needs a closer look.</p><CodexLink />
       <QueryFeedback
         error={query.error}
         loading={query.isPending}

@@ -10,6 +10,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Link>
         <span className="local-label">Local workspace</span>
         <Link href="/">Overview</Link>
+        <Link href="/codex">Codex</Link>
         <Link href="/projects">Projects</Link>
         <Link href="/agents">Agents</Link>
         <Link href="/activity">Activity</Link>

@@ -1,4 +1,5 @@
 "use client";
+import { CodexLink } from "./codex";
 import Link from "next/link";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -99,7 +100,7 @@ export function Projects() {
   return (
     <>
       <div className="page-heading">
-        <h1>Projects</h1>
+        <h1>Projects</h1><CodexLink />
         <button
           className="primary"
           onClick={() => {
