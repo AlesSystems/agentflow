@@ -25,3 +25,19 @@ it("rejects official readiness when no finite workload protocol or stopped-copy 
  const p=prepared();p.officialWorkloadComplete=true;
  expect(()=>validatePrepared(p)).toThrow(/official|protocol|stopped/i);
 });
+
+import { dagEdges } from "../fixtures/w04-workflows";
+import { validateClosedResources } from "../fixtures/w04-resources";
+it("builds 200 distinct forward DAG edges for an actual bounded revision",()=>{
+ const nodes=Array.from({length:100},(_,i)=>({id:String(i)})),edges=dagEdges(nodes);
+ expect(edges.slice(0,3)).toEqual([{source:"0",target:"1"},{source:"1",target:"2"},{source:"2",target:"3"}]);
+ expect(edges).toHaveLength(200);expect(new Set(edges.map(e=>e.source+":"+e.target)).size).toBe(200);expect(edges.every(e=>Number(e.source)<Number(e.target))).toBe(true);
+ expect(()=>dagEdges(nodes.slice(0,99))).toThrow();
+});
+it("requires every declared service and browser resource instead of invented zeros",()=>{
+ const resources={service:{requests:0,activeSockets:0,leases:0,timers:0,exportCopies:0,locks:0,children:0},browser:{eventSources:0,timeouts:0,intervals:0,pages:0,contexts:0,processes:0}};
+ expect(()=>validateClosedResources(resources)).not.toThrow();Reflect.deleteProperty(resources.service,"locks");expect(()=>validateClosedResources(resources)).toThrow();expect(()=>validateClosedResources({service:{},browser:{}})).toThrow();
+});
+
+import {reconcileFinite,type FiniteDeclaration} from "../fixtures/w04-campaign";
+it("rejects wrong finite source bindings and preserves missing denominators",()=>{const row:FiniteDeclaration={id:"request-1",kind:"request",source:"head",operation:"tasks",endpoint:"/api/v1/tasks",method:"GET",repetition:1,fixture:"head-1",warmup:false,ordinal:10,key:"11111111-1111-4111-8111-111111111111",role:"reporter",expectedStatus:200};const sample={...row,accepted:true,failure:null,ms:2};expect(reconcileFinite([row],[sample])).toMatchObject({intended:1,accepted:1,complete:true});expect(reconcileFinite([row],[])).toMatchObject({intended:1,missing:[row.id],complete:false});expect(()=>reconcileFinite([row],[{...sample,source:"base"}])).toThrow(/mismatch/);expect(()=>reconcileFinite([row],[sample,sample])).toThrow(/duplicate/);});

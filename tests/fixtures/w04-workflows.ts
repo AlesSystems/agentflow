@@ -1,0 +1,56 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { qualifiedService } from "./w03a-qualification";
+import { canonicalDigest } from "../../src/domain/request-digest";
+import { stoppedAudit,privateSave } from "./w04-resources";
+export function dagEdges(nodes:{id:string}[]){
+ assert.equal(nodes.length,100);const edges:{source:string;target:string}[]=[];
+ for(let distance=1;edges.length<200;distance++)for(let from=0;from+distance<nodes.length&&edges.length<200;from++)edges.push({source:nodes[from].id,target:nodes[from+distance].id});
+ assert.equal(new Set(edges.map(e=>e.source+"/"+e.target)).size,200);return edges;
+}
+export async function prepareWorkflows(root:string,repetition:number,cwd:string,nodeExecutable:string,counters?:{serviceAttempts:number;servicesStarted:number}){
+ const id=`workflow-${repetition}`,dir=join(root,id);mkdirSync(dir,{mode:0o700});const services:unknown[]=[],setup:unknown[]=[],workflows:{id:string;revisionId:string;nodes:{id:string;label:string;taskId:string}[];edges:{source:string;target:string}[]}[]=[],taskIds:string[]=[],runIds:string[]=[];
+ let failure:unknown;let projectId="",agentId="",workflowRunId="",generation="",snapshotCursor="";
+ if(counters)counters.serviceAttempts++;try{await qualifiedService({cwd,dir,nodeExecutable},services,async(server)=>{
+  const headers={Authorization:"Bearer "+server.credentials().reporterToken,"Content-Type":"application/json"};
+  const call=async(path:string,input?:unknown)=>{await new Promise(resolve=>setTimeout(resolve,12));const key=randomUUID(),response=await fetch(server.url+"/api/v1"+path,{method:input?"POST":"GET",headers:{...headers,"Idempotency-Key":key},body:input?JSON.stringify(input):undefined,signal:AbortSignal.timeout(10000)}),text=await response.text();setup.push({path,key,input,digest:input?canonicalDigest(input):null,status:response.status,text,headers:[...response.headers]});assert.equal(response.status,input?201:200);const body=JSON.parse(text);generation=body.generation;snapshotCursor=body.snapshotCursor??snapshotCursor;return body.data;};
+  projectId=(await call("/projects",{name:`Synthetic W04 workflow cohort ${repetition}`})).id;
+  agentId=(await call("/agents",{displayName:"Synthetic workflow producer",source:"W04 public setup",defaultRole:"implementation"})).id;
+  for(let index=0;index<100;index++)taskIds.push((await call("/tasks",{projectId,title:`Synthetic node task ${index}`})).id);
+  for(let index=0;index<100;index++){
+   const workflowId=randomUUID(),revisionId=randomUUID(),nodes=taskIds.map((taskId,i)=>({id:randomUUID(),label:`Node ${i.toString().padStart(3,"0")}`,taskId})),edges=dagEdges(nodes);
+   await call("/workflows",{id:workflowId,projectId,name:`Synthetic workflow ${index.toString().padStart(3,"0")}`});await call(`/workflows/${workflowId}/revisions`,{id:revisionId,expectedWorkflowVersion:1,nodes,edges});workflows.push({id:workflowId,revisionId,nodes,edges});
+  }
+  for(let index=0;index<10;index++){const runId=randomUUID();await call("/runs",{id:runId,projectId,agentId,taskId:taskIds[index],purpose:"implementation",expectedTaskVersion:1});await call(`/runs/${runId}/events`,{schemaVersion:1,eventId:randomUUID(),runId,sequence:1,type:"run.started",occurredAt:new Date().toISOString(),payload:{}});runIds.push(runId);}
+  workflowRunId=randomUUID();await call("/workflow-runs",{id:workflowRunId,workflowId:workflows[0].id,planRevisionId:workflows[0].revisionId});await call(`/workflow-runs/${workflowRunId}/events`,{schemaVersion:1,eventId:randomUUID(),workflowRunId,sequence:1,type:"workflow.started",occurredAt:new Date().toISOString(),payload:{}});
+  await call(`/workflows?projectId=${projectId}&limit=50`);
+ });}catch(error){failure=error;}finally{if(counters)counters.servicesStarted+=services.filter(s=>(s as {pid:number|null}).pid!==null).length;privateSave(root,id+"-setup-originals.json",{services,setup,failure:failure===undefined?null:String(failure),operationTimingRows:[]});}if(failure!==undefined)throw failure;
+ const audit=stoppedAudit(dir,join(root,id+"-audit"),true);assert.equal(audit.rows.workflows.length,100);assert.equal(audit.rows.workflow_revisions.reduce((n,row)=>n+JSON.parse(String(row.nodes)).length,0),10000);assert.equal(audit.rows.workflow_revisions.reduce((n,row)=>n+JSON.parse(String(row.edges)).length,0),20000);
+ const markers=Array.from({length:10},(_,index)=>({schemaVersion:1,eventId:randomUUID(),workflowRunId,sequence:index+2,type:"workflow.node.reported",occurredAt:"2026-10-12T00:00:00.000Z",payload:{nodeId:workflows[0].nodes[index].id,runId:runIds[index],state:"running",reportedSkill:{name:`W04 marker ${index}`}}}));
+ const operations={list:`/api/v1/workflows?projectId=${projectId}&limit=50`,metadata:`/api/v1/workflows/${workflows[0].id}`,revision:`/api/v1/workflows/${workflows[0].id}/revisions/${workflows[0].revisionId}`,runSnapshot:`/api/v1/workflow-runs/${workflowRunId}/snapshot`};
+ const declarations=Object.entries(operations).flatMap(([operation,endpoint])=>Array.from({length:110},(_,ordinal)=>({id:`workflow-${operation}-${repetition}-${ordinal}`,source:"head" as const,operation:`workflow.${operation}`,endpoint,method:"GET" as const,repetition,fixture:id,warmup:ordinal<10,ordinal,key:randomUUID(),role:"reporter" as const,expectedStatus:200 as const})));
+ const value={id,source:"head",repetition,dir,projectId,agentId,workflows,workflowRunId,taskIds,runIds,markers,declarations,generation,snapshotCursor,services,setup,audit,operationTimingRows:[]};privateSave(root,id+"-prepared.json",value);return value;
+}
+
+import type {Page} from "@playwright/test";
+import {expect} from "@playwright/test";
+import {pairPage} from "./p03";
+import {ownedBrowser,browserProbes} from "./w04-resources";
+import {visibleFrames,distribution} from "./w01-capture";
+import type {FiniteDeclaration} from "./w04-campaign";
+export async function workflowDispatch(server:Awaited<ReturnType<typeof import("./server").launch>>,fixture:Awaited<ReturnType<typeof prepareWorkflows>>,rows:FiniteDeclaration[],save:(row:unknown)=>void){
+ const owner=await ownedBrowser(),contexts=[],pages:Page[]=[],captures:unknown[]=[],interactions:unknown[]=[];
+ try{
+  for(let tab=0;tab<2;tab++){const context=await owner.browser.newContext({viewport:{width:1440,height:1200}});contexts.push(context);await context.addInitScript({content:"globalThis.__name=(value)=>value;("+browserProbes.toString()+")();globalThis.w04LongTasks=[];globalThis.w04LongTaskCapability=PerformanceObserver.supportedEntryTypes.includes(\"longtask\");if(globalThis.w04LongTaskCapability){new PerformanceObserver(list=>globalThis.w04LongTasks.push(...list.getEntries().map(entry=>({startTime:entry.startTime,duration:entry.duration,name:entry.name})))).observe({type:\"longtask\",buffered:true});}"});const page=await context.newPage();await pairPage(page,server);await page.goto(server.url+`/projects/${fixture.projectId}/workflows?workflowId=${fixture.workflows[0].id}&revisionId=${fixture.workflows[0].revisionId}&workflowRunId=${fixture.workflowRunId}&view=${tab?"list":"graph"}`);await expect(page.getByText("Connected updates",{exact:true})).toBeVisible();await page.getByRole("combobox",{name:"Workflow attempt",exact:true}).selectOption(fixture.workflowRunId);pages.push(page);}
+  for(const [ordinal,marker]of fixture.markers.entries()){
+   for(const [tab,page]of pages.entries()){const locator=page.locator(tab?`button[data-node-id="${marker.payload.nodeId}"]`:`.react-flow__node[data-id="${marker.payload.nodeId}"]`);await locator.focus();await page.keyboard.press("Enter");await page.locator(".workflow-evidence").evaluate(e=>e.scrollIntoView({block:"start",behavior:"instant"}));}
+   const started=performance.now(),response=await fetch(server.url+`/api/v1/workflow-runs/${fixture.workflowRunId}/events`,{method:"POST",headers:{Authorization:"Bearer "+server.credentials().reporterToken,"Content-Type":"application/json"},body:JSON.stringify(marker)}),text=await response.text(),ack=JSON.parse(text);save({kind:"workflowMarkerRequest",eventId:marker.eventId,body:marker,status:response.status,text,dispatchMs:started,drainedMs:performance.now()});assert.equal(response.status,201);assert.equal(ack.data.eventId,marker.eventId);assert.equal(ack.data.acceptedSequence,marker.sequence);
+   for(const [tab,page]of pages.entries()){const identity={projectId:fixture.projectId,workflowId:fixture.workflows[0].id,revisionId:fixture.workflows[0].revisionId,workflowRunId:fixture.workflowRunId,nodeId:marker.payload.nodeId,eventId:marker.eventId},observation=await page.evaluate(visibleFrames,{identity,maxWaitMs:10000}),elapsedMs=performance.now()-started,id=rows.find(r=>r.kind==="workflowVisibility"&&r.ordinal===ordinal&&r.tab===tab)!.id,content=await page.locator(".workflow-evidence").innerText(),href=await page.getByRole("link",{name:"Open reported attempt",exact:true}).getAttribute("href");const row={id,...identity,tab,elapsedMs,observation,ack,content,href};captures.push(row);save({kind:"workflowVisibility",...row});assert.equal(observation.frames,2);assert(observation.exact&&observation.visible&&observation.hitTest);assert(content.includes(ack.data.receivedAt));assert(href?.includes(marker.payload.runId));}
+  }
+  for(const tab of [0,1]){const values=captures.filter(c=>(c as {tab:number}).tab===tab).map(c=>(c as {elapsedMs:number}).elapsedMs);assert(distribution(values).p95Ms<2000,"workflow visible p95 >=2s");}
+  for(const [tab,page]of pages.entries())for(let ordinal=0;ordinal<10;ordinal++){const started=performance.now(),actionSpans:{action:string;elapsedMs:number}[]=[],nodeId=fixture.workflows[0].nodes[ordinal].id,target=page.locator(tab?`button[data-node-id="${nodeId}"]`:`.react-flow__node[data-id="${nodeId}"]`);const selectionStarted=performance.now();await target.focus();await page.keyboard.press("Enter");await expect(page.locator(".workflow-evidence")).toHaveAttribute("data-node-id",nodeId);actionSpans.push({action:"keyboard.select",elapsedMs:performance.now()-selectionStarted});for(const view of [tab?"Graph":"List",tab?"List":"Graph"]){const switchStarted=performance.now();await page.getByRole("button",{name:view,exact:true}).focus();await page.keyboard.press("Enter");await expect(page.getByRole("button",{name:view,exact:true})).toHaveAttribute("aria-pressed","true");actionSpans.push({action:"keyboard.switch."+view,elapsedMs:performance.now()-switchStarted});}const row={id:rows.find(r=>r.kind==="interaction"&&r.tab===tab&&r.ordinal===ordinal)!.id,tab,ordinal,nodeId,actionSpans,longTasks:await page.evaluate(()=>({supported:Reflect.get(window,"w04LongTaskCapability"),entries:Reflect.get(window,"w04LongTasks")})),elapsedMs:performance.now()-started,selected:await page.locator(".workflow-evidence").getAttribute("data-node-id"),probe:await page.evaluate(()=>Reflect.get(window,"w04ResourceSnapshot")()),scope:"Keyboard selection and graph/list switches; observed duration recorded with no invented numerical budget"};interactions.push(row);save({kind:"interaction",...row});}
+  return {captures,interactions};
+ }finally{for(const context of contexts)await context.close();save({kind:"workflowBrowserClosed",pagesClosed:pages.every(p=>p.isClosed()),closure:await owner.close()});}
+}

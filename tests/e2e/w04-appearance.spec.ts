@@ -1,0 +1,35 @@
+import { test,expect,type Page,type BrowserContext } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+import { join } from "node:path";
+import { fixture,pairPage,command } from "../fixtures/p03";
+import { mkdirSync } from "node:fs";
+import { qualifiedService } from "../fixtures/w03a-qualification";
+import { ownedDirectory } from "../fixtures/w04-qualification";
+import { privateSave,stoppedAudit } from "../fixtures/w04-resources";
+test("fresh Work board, acceptance, conflict and pairing repair appearance with original recording",async({browser})=>{
+ test.setTimeout(120000);
+ const proof=process.env.AGENTFLOW_W04_APPEARANCE_PROOF_DIR;expect(typeof proof,"private appearance root required").toBe("string");ownedDirectory(proof!,true);
+ const dir=join(proof!,"data");mkdirSync(dir,{mode:0o700});const services:unknown[]=[],captures:unknown[]=[],commands:unknown[]=[];
+ const record={recording: {enabled:true,option:"BrowserContext recordVideo",path:null as string|null}};
+ const capture=async(target:Page,name:string)=>{
+  await target.evaluate(()=>scrollTo(0,0));const violations=(await new AxeBuilder({page:target}).include(await target.getByRole("dialog").count()?"[role=dialog]":"#main-content").analyze()).violations;expect(violations).toEqual([]);
+  const facts=await target.evaluate(()=>({url:location.pathname,width:innerWidth,height:innerHeight,dpr:devicePixelRatio,cssZoom:getComputedStyle(document.body).zoom,motion:matchMedia("(prefers-reduced-motion: reduce)").matches,overflow:document.documentElement.scrollWidth>innerWidth,active:{tag:document.activeElement?.tagName,text:document.activeElement?.textContent}}));expect(facts.overflow).toBe(false);
+  const path=join(proof!,name+".png");await target.screenshot({path,fullPage:true,animations:"disabled"});captures.push({name,path,facts,violations});
+ };
+ try{await qualifiedService({dir,cwd:process.cwd(),nodeExecutable:process.execPath},services,async server=>{
+ let context:BrowserContext|undefined,other:BrowserContext|undefined;
+ try{context=await browser.newContext({viewport:{width:1440,height:1000},recordVideo:{dir:proof!,size:{width:1440,height:1000}}});other=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage(),second=await other.newPage();
+  const f=await fixture(page,server);await pairPage(second,server);await page.goto(f.boardUrl);await second.goto(f.boardUrl);await expect(page.getByText("Connected updates",{exact:true})).toBeVisible();await capture(page,"work-board-desktop");
+  for(const p of [page,second])await p.getByRole("button",{name:f.task.title,exact:true}).click();
+  await page.getByLabel("Description",{exact:true}).fill("Synthetic first browser saved");await second.getByLabel("Description",{exact:true}).fill("Synthetic second browser draft");await page.getByRole("button",{name:"Save task",exact:true}).click();await expect(page.getByRole("status").filter({hasText:"Changes saved."})).toBeVisible();await second.getByRole("button",{name:"Save task",exact:true}).click();await expect(second.getByRole("heading",{name:"Current saved task"})).toBeVisible();await capture(second,"task-conflict");
+  await second.getByRole("button",{name:"Prepare reapply"}).click();await second.getByRole("button",{name:"Save task",exact:true}).click();await expect(second.getByRole("status").filter({hasText:"Changes saved."})).toBeVisible();await second.getByLabel("Description",{exact:true}).fill("Synthetic draft survives auth repair");await other!.clearCookies();await second.getByRole("button",{name:"Save task",exact:true}).click();await expect(second.getByRole("heading",{name:"Pair again to keep editing"})).toBeVisible();await capture(second,"pairing-repair");await second.getByLabel("Pairing token",{exact:true}).fill(server.credentials().pairingToken);await second.getByRole("button",{name:"Pair this browser"}).click();await expect(second.getByLabel("Description",{exact:true})).toHaveValue("Synthetic draft survives auth repair");await second.getByRole("button",{name:"Retry exact request"}).click();await expect(second.getByRole("status").filter({hasText:"Changes saved."})).toBeVisible();
+  await page.reload();await page.getByRole("button",{name:"Move task",exact:true}).last().click();await page.getByRole("menuitem",{name:"Review",exact:true}).click();await expect(page.locator(".task-context")).toContainText("Review");await page.getByRole("button",{name:"Move task",exact:true}).last().focus();await page.keyboard.press("Enter");await page.getByRole("menuitem",{name:"Completed",exact:true}).focus();await page.keyboard.press("Enter");await page.getByLabel("Acceptance evidence note",{exact:true}).fill("Synthetic browser fixture; no actual human attestation.");await capture(page,"synthetic-acceptance");await page.getByRole("button",{name:"Complete current revision"}).focus();await page.keyboard.press("Enter");await expect(page.locator(".task-context")).toContainText("Completed");
+  await page.setViewportSize({width:375,height:812});await page.emulateMedia({reducedMotion:"reduce"});await capture(page,"accepted-task-narrow");
+  await page.goto(f.boardUrl);await capture(page,"work-board-narrow");await page.context().setOffline(true);await expect(page.getByText("Connected updates",{exact:true})).not.toBeVisible();const disconnectedStatus=await page.locator(".connection-status").textContent().catch(()=>null);const newFact=await command(second,"/tasks",{projectId:f.project.id,title:"Synthetic disconnected fact"});commands.push({...newFact,disconnectedStatus});expect(newFact.status).toBe(201);await expect(page.getByRole("button",{name:"Synthetic disconnected fact",exact:true})).toHaveCount(0);await page.context().setOffline(false);await expect(page.getByText("Connected updates",{exact:true})).toBeVisible();await expect(page.getByRole("button",{name:"Synthetic disconnected fact",exact:true})).toBeVisible();
+  record.recording.path=await page.video()!.path();
+ }finally{await other?.close();await context?.close();}
+ });}finally{
+  privateSave(proof!,"appearance-originals.json",{services,captures,commands,browser:browser.version(),...record,scope:"Actual compiled Chrome synthetic appearance and keyboard journey; screenshots do not prove persistence",heldOtherCoverage:"Same full e2e invocation explicitly runs W01 graph/list, W02 evidence/native zoom, W03a disabled/offline/auth, W03b export/prune/reset/native zoom and W03c unknown/estimate/native zoom captures"});
+  const service=services[0] as {closed:boolean;exitCode:number|null};if(service?.closed&&service.exitCode===0)privateSave(proof!,"stopped-appearance-sql.json",stoppedAudit(dir,join(proof!,"stopped-sql"),true));
+ }
+});
