@@ -9,7 +9,8 @@ const timestamp = (value: unknown) => typeof value === "number" && Number.isFini
 const checklist = z.array(z.object({ step: z.string().min(1).max(2000), status: z.enum(["pending", "in_progress", "completed"]) })).max(200);
 export function normalizeChat(value: unknown, archived: boolean): CodexChat {
   const raw = object(value);
-  const legacy = object(object(object(raw.source).subAgent).thread_spawn);
+  const source = object(raw.source);
+  const legacy = object(object(source.subagent ?? source.subAgent).thread_spawn);
   return codexChat.parse({
     id: raw.id, title: text(raw.name) ?? text(raw.preview) ?? "Untitled Codex chat",
     cwd: text(raw.cwd, 4000), updatedAt: timestamp(raw.updatedAt), parentId: raw.parentThreadId ?? legacy.parent_thread_id ?? null,

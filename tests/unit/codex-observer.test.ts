@@ -46,4 +46,13 @@ describe("Codex history observer", () => {
       expect((await observer.list({ limit: 30, archived: "false", kind: "all" })).connection.message).toContain("partial");
     } finally { await observer.close(); }
   });
+  it("retains the partial warning when the final archived page exceeds the remaining capacity", async () => {
+    const observer = new CodexObserver({ ...options, args: [...options.args, "--overflow"], maxThreads: 4 });
+    try {
+      const result = await observer.list({ limit: 30, archived: "true", kind: "all" });
+      expect(result.data).toHaveLength(2);
+      expect(result.nextCursor).toBeNull();
+      expect(result.connection.message).toContain("partial");
+    } finally { await observer.close(); }
+  });
 });

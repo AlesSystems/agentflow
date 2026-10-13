@@ -41,7 +41,7 @@ export class CodexObserver {
           cursor = result.nextCursor;
           if (cursor && seen.has(cursor)) throw sourceError();
           if (cursor) seen.add(cursor);
-          if (chats.length >= maxThreads) { partial = !!cursor || archived === false; break; }
+          if (chats.length >= maxThreads) { partial = partial || !!cursor || archived === false; break; }
         } while (cursor);
         if (partial) break;
       }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { normalizeChat, normalizeTurn } from "../../src/integrations/codex/normalize";
 describe("Codex observations", () => {
-  it("recognizes persisted legacy children without claiming live activity", () => {
-    const chat = normalizeChat({ id: "child", name: "Agent", source: { subAgent: { thread_spawn: { parent_thread_id: "parent", agent_nickname: "Worker", agent_role: "worker" } } }, status: { type: "active" }, updatedAt: 1700000000 }, false);
+  it.each(["subagent", "subAgent"])("recognizes persisted %s children without claiming live activity", (sourceKey) => {
+    const chat = normalizeChat({ id: "child", name: "Agent", parentThreadId: null, source: { [sourceKey]: { thread_spawn: { parent_thread_id: "parent", agent_nickname: "Worker", agent_role: "worker" } } }, status: { type: "active" }, updatedAt: 1700000000 }, false);
     expect(chat).toMatchObject({ parentId: "parent", agentNickname: "Worker", agentRole: "worker", statusSource: "stored", status: "unknown" });
   });
   it("does not turn prose percentages or a completed turn into checklist acceptance", () => {

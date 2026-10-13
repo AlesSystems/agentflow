@@ -11,7 +11,8 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   if (method === "initialize") result = {};
   else if (method === "thread/list") {
     if (!params.useStateDbOnly || !params.sourceKinds.includes("subAgent")) throw new Error("unsafe listing");
-    result = params.archived ? { data: [child], nextCursor: null } : params.cursor ? { data: [chat("chat-b", 20)], nextCursor: null } : { data: [chat("chat-a", 10)], nextCursor: "page2" };
+    const archived = process.argv.includes("--overflow") ? [child, chat("archived-a", 40), chat("archived-b", 50)] : [child];
+    result = params.archived ? { data: archived, nextCursor: null } : params.cursor ? { data: [chat("chat-b", 20)], nextCursor: null } : { data: [chat("chat-a", 10)], nextCursor: "page2" };
   } else if (method === "thread/read") result = { thread: chat(params.threadId, 10) };
   else if (method === "thread/turns/list") result = { data: [{ id: "turn", status: "inProgress", items: [] }], nextCursor: null };
   else if (method === "thread/items/list") result = { data: [
