@@ -1,7 +1,7 @@
 "use client";
 import { CodexLink } from "./codex";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRead, useWorkspace, QueryFeedback } from "../client/provider";
 import { projectsResponse, projectResponse } from "../contracts/responses";
@@ -24,6 +24,9 @@ export function Projects({ initialCreate = false }: { initialCreate?: boolean })
     [busy, setBusy] = useState(false),
     [retry, setRetry] = useState<FrozenCommand | null>(null),
     [archive, setArchive] = useState<Project | null>(null);
+  useEffect(() => {
+    if (initialCreate) window.history.replaceState({}, "", "/projects");
+  }, [initialCreate]);
   const [current, setCurrent] = useState<Project | null>(null),
     [dirty, setDirty] = useState(false),
     [confirmClose, setConfirmClose] = useState(false);

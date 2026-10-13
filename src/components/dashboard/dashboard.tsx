@@ -19,7 +19,9 @@ import { graphLayout } from "../workflows/layout";
 type Panel = { kind: "run" | "agent"; id: string; title: string } | null;
 
 function clock(value: string) {
-  return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const date = new Date(value);
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return date.toDateString() === new Date().toDateString() ? time : `${date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
 }
 function excerpt(text: string, length = 140) {
   return text.length > length ? text.slice(0, length).trimEnd() + "…" : text;
@@ -27,6 +29,7 @@ function excerpt(text: string, length = 140) {
 function opensPanel(event: React.MouseEvent, open: () => void) {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
+  (event.currentTarget as HTMLElement).focus();
   open();
 }
 function SheetHead({ id, title, variant, children }: { id: string; title: string; variant: number; children?: React.ReactNode }) {
@@ -119,6 +122,7 @@ function Attention({ projectId }: { projectId: string }) {
             key={item.id}
             className="attention-chip"
             href={`/projects/${projectId}/tasks/${item.taskId}`}
+            aria-haspopup="dialog"
             onClick={(event) => {
               const card = document.getElementById(`card-${item.taskId}`);
               if (card?.getClientRects().length) opensPanel(event, () => card.click());
@@ -141,7 +145,7 @@ function Attention({ projectId }: { projectId: string }) {
       {error && <p role="alert" className="error">{error}</p>}
       {data && (
         <p className="dash-summary">
-          <span className="sr-only">Across active projects:</span>
+          <span>All active projects:</span>
           <span><b>{data.metrics.reportingAgents}</b> {data.metrics.reportingAgents === 1 ? "agent" : "agents"} reporting</span>
           <span><b>{data.metrics.awaitingReview}</b> awaiting review</span>
           <span><b>{data.metrics.failedRunsToday}</b> failed {data.metrics.failedRunsToday === 1 ? "run" : "runs"} today</span>
@@ -254,6 +258,7 @@ function PlanGraph({ projectId, workflowId, revisionId, plan, states }: { projec
         nodes={nodes}
         edges={edges}
         nodesFocusable
+        edgesFocusable={false}
         nodesDraggable={false}
         nodesConnectable={false}
         edgesReconnectable={false}
@@ -262,7 +267,7 @@ function PlanGraph({ projectId, workflowId, revisionId, plan, states }: { projec
         onNodeClick={(_, node) => inspect(node.id)}
         onKeyDown={(event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
-          const id = (event.target as HTMLElement).closest("[data-id]")?.getAttribute("data-id");
+          const id = (event.target as HTMLElement).closest(".react-flow__node[data-id]")?.getAttribute("data-id");
           if (id) {
             event.preventDefault();
             inspect(id);
@@ -288,14 +293,14 @@ function AgentsSheet({ onOpen }: { onOpen: (panel: Panel) => void }) {
       <SheetHead id="agents-heading" title="Agents" variant={2}>
         <Link className="view-all" href="/agents">View all</Link>
       </SheetHead>
-      <p className="metadata">Reported by your tools. AgentFlow only observes.</p>
+      <p className="metadata">Reported by your tools across all projects. AgentFlow only observes.</p>
       <QueryFeedback error={query.error} loading={query.isPending} retry={() => void query.refetch()} />
       {query.data && !agents.length && <EmptyNote title="No agents reported yet">Agents appear when an external producer registers them.</EmptyNote>}
       <ul className="feed scroll-list">
         {agents.map((agent) => (
           <li key={agent.id}>
             <div className="feed-top">
-              <a className="agent-name" href={`/agents/${agent.id}`} onClick={(event) => opensPanel(event, () => onOpen({ kind: "agent", id: agent.id, title: agent.displayName }))}>
+              <a className="agent-name" href={`/agents/${agent.id}`} aria-haspopup="dialog" onClick={(event) => opensPanel(event, () => onOpen({ kind: "agent", id: agent.id, title: agent.displayName }))}>
                 {agent.displayName}
               </a>
               {agent.staleActive > 0 && (
@@ -324,7 +329,6 @@ function RunsSheet({ projectId, onOpen }: { projectId: string; onOpen: (panel: P
     <section className="sheet span-5" aria-labelledby="runs-heading">
       <SheetHead id="runs-heading" title="Recent runs" variant={3}>
         {query.data && <span className="metadata">{query.data.data.total} registered</span>}
-        <Link className="view-all" href="/agents">View all</Link>
       </SheetHead>
       <QueryFeedback error={query.error} loading={query.isPending} retry={() => void query.refetch()} />
       {query.data && !runs.length && <EmptyNote title="No runs reported yet">Runs appear when your harness registers an attempt for a task.</EmptyNote>}
@@ -333,12 +337,13 @@ function RunsSheet({ projectId, onOpen }: { projectId: string; onOpen: (panel: P
           <li key={run.id}>
             <div className="feed-top">
               <ReportingLabel run={run} />
-              <a href={`/runs/${run.id}`} onClick={(event) => opensPanel(event, () => onOpen({ kind: "run", id: run.id, title: `${run.purpose} · ${run.agentName}` }))}>
+              <a href={`/runs/${run.id}`} aria-haspopup="dialog" onClick={(event) => opensPanel(event, () => onOpen({ kind: "run", id: run.id, title: `${run.purpose} · ${run.agentName}` }))}>
                 {run.taskTitle ?? "Project planning attempt"}
               </a>
             </div>
             <p className="metadata">
-              {run.purpose} · {run.agentName} · last report <time dateTime={run.lastReceivedAt}>{clock(run.lastReceivedAt)}</time>
+              {run.purpose} · {run.agentName} · {run.freshness.reporting === "no_report_received" ? "registered" : "last report"}{" "}
+              <time dateTime={run.lastReceivedAt}>{clock(run.lastReceivedAt)}</time>
             </p>
             {run.message && <p className="metadata break-word">{excerpt(run.message)}</p>}
           </li>
@@ -366,7 +371,7 @@ function ActivitySheet({ projectId, onOpen }: { projectId: string; onOpen: (pane
             <li key={item.id} className="feed-time">
               <time dateTime={item.receivedAt}>{clock(item.receivedAt)}</time>
               <span>
-                <a className="what" href={`/runs/${item.runId}`} onClick={(event) => opensPanel(event, () => onOpen({ kind: "run", id: item.runId, title: `${item.purpose} · ${item.agentName}` }))}>
+                <a className="what" href={`/runs/${item.runId}`} aria-haspopup="dialog" onClick={(event) => opensPanel(event, () => onOpen({ kind: "run", id: item.runId, title: `${item.purpose} · ${item.agentName}` }))}>
                   {item.kind === "tracking_closed" ? "Human closed tracking" : item.event!.type.replace("run.", "Reported ")}
                 </a>{" "}
                 · {item.agentName}
@@ -380,17 +385,19 @@ function ActivitySheet({ projectId, onOpen }: { projectId: string; onOpen: (pane
   );
 }
 
-function today() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-  return { from: start.toISOString(), to: end.toISOString() };
-}
 const tokens = (value: string) => BigInt(value).toLocaleString("en-US");
 function UsageSheet({ projectId }: { projectId: string }) {
-  const [day] = useState(today);
-  const query = useRead(`/usage?from=${encodeURIComponent(day.from)}&limit=50&projectId=${projectId}&to=${encodeURIComponent(day.to)}`, usageResponse);
+  const overview = useRead("/overview?limit=50", overviewResponse, 15000);
+  const day = overview.data?.data.day;
+  return day ? <UsageToday projectId={projectId} from={day.start} to={day.end} timezone={overview.data!.data.timezone} /> : (
+    <section className="sheet span-3" aria-labelledby="usage-heading">
+      <SheetHead id="usage-heading" title="Usage" variant={0} />
+      <QueryFeedback error={overview.error} loading={overview.isPending} retry={() => void overview.refetch()} />
+    </section>
+  );
+}
+function UsageToday({ projectId, from, to, timezone }: { projectId: string; from: string; to: string; timezone: string }) {
+  const query = useRead(`/usage?from=${encodeURIComponent(from)}&limit=50&projectId=${projectId}&to=${encodeURIComponent(to)}`, usageResponse);
   const value = query.data?.data;
   const largest = value?.groups.reduce((max, group) => (BigInt(group.knownTotalTokens) > max ? BigInt(group.knownTotalTokens) : max), BigInt(0)) ?? BigInt(0);
   return (
@@ -401,7 +408,7 @@ function UsageSheet({ projectId }: { projectId: string }) {
       <QueryFeedback error={query.error} loading={query.isPending} retry={() => void query.refetch()} />
       {value && (
         <>
-          <p className="metadata">Reported tokens · today, {Intl.DateTimeFormat().resolvedOptions().timeZone}</p>
+          <p className="metadata">Reported tokens · today, {timezone}</p>
           {value.filteredReportCount ? (
             <>
               <p className="usage-total">{tokens(value.knownTotalTokens)}</p>
@@ -424,7 +431,7 @@ function UsageSheet({ projectId }: { projectId: string }) {
                     <li key={JSON.stringify([group.source, group.model])}>
                       <span className="label">
                         <span>{group.source} · {group.model}</span>
-                        <b>{total ? tokens(group.knownTotalTokens) : "unknown"}</b>
+                        <b>{!total && group.unknownTotalReports ? "unknown" : tokens(group.knownTotalTokens)}</b>
                       </span>
                       <span className="bar" aria-hidden="true">
                         <i style={{ width: `${width}%` }} />
@@ -433,6 +440,7 @@ function UsageSheet({ projectId }: { projectId: string }) {
                   );
                 })}
               </ul>
+              {value.groupsTruncated && <p className="metadata">Showing the first {value.groups.length} of {value.totalGroups} source and model groups.</p>}
             </>
           ) : (
             <p>

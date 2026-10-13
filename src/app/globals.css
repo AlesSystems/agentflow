@@ -131,8 +131,7 @@ p {
   margin: 8px 0 16px;
   max-width: 75ch;
 }
-.metadata,
-.local-label {
+.metadata {
   font-size: 13px;
   line-height: 1.4;
   color: var(--graphite);
@@ -502,9 +501,6 @@ p.notice:empty,
   padding: 0 12px;
   font-size: 13px;
 }
-.workspace-main {
-  min-width: 0;
-}
 .page {
   max-width: 1200px;
   margin: 0 auto;
@@ -524,14 +520,6 @@ p.notice:empty,
 .page-heading h1 {
   margin: 4px 0;
 }
-.crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  margin-bottom: 8px;
-}
-.crumbs a,
-.project-back,
 nav[aria-label="Project views"] a {
   display: inline-flex;
   align-items: center;
@@ -843,9 +831,6 @@ nav[aria-label="Project views"] a {
   border-radius: var(--radius-field);
   background: var(--paper);
 }
-.estimate-note h4 {
-  margin: 0 0 4px;
-}
 .estimate-note p {
   margin: 0 0 4px;
 }
@@ -982,9 +967,9 @@ span.status-tab {
 }
 .drag-handle {
   flex: none;
-  width: 32px;
-  min-height: 32px;
-  height: 32px;
+  width: 40px;
+  min-height: 40px;
+  height: 40px;
   padding: 0;
   border: 1.5px dashed var(--pencil);
   border-radius: 8px;
@@ -1419,34 +1404,6 @@ h2.accepted-stamp {
 .project-row .actions {
   margin: 0;
 }
-.metrics {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 24px 0;
-  padding: 20px 0;
-  border-block: 1.5px dashed var(--rule);
-}
-.metrics > div {
-  flex: 1;
-  min-width: 160px;
-  padding: 0 20px;
-}
-.metrics dt {
-  color: var(--graphite);
-  font-weight: 400;
-}
-.metrics dd {
-  margin: 8px 0 0;
-  font-size: 30px;
-  font-weight: 700;
-}
-.attention-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1.5px dashed var(--rule);
-}
 .settings-section {
   max-width: 760px;
   padding: 8px 0 28px;
@@ -1547,7 +1504,7 @@ h2.accepted-stamp {
   min-height: 320px;
   margin: 14px 0 0;
 }
-.react-flow__node {
+.react-flow .react-flow__node {
   width: 230px;
   padding: 12px;
   color: var(--ink);
@@ -1558,12 +1515,12 @@ h2.accepted-stamp {
   border-radius: var(--wobble-sm);
   box-shadow: var(--paper-shadow);
 }
-.react-flow__node.selected,
-.react-flow__node.selected:focus-visible {
+.react-flow .react-flow__node.selected,
+.react-flow .react-flow__node.selected:focus-visible {
   box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--clay);
   outline: none;
 }
-.react-flow__node:focus-visible {
+.react-flow .react-flow__node:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
@@ -1575,13 +1532,13 @@ h2.accepted-stamp {
   stroke: var(--graphite);
   stroke-width: 1.6;
 }
-.react-flow__controls {
+.react-flow .react-flow__controls {
   box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.react-flow__controls-button {
+.react-flow .react-flow__controls-button {
   width: 44px;
   height: 44px;
   min-height: 44px;
@@ -1591,10 +1548,10 @@ h2.accepted-stamp {
   background: var(--card);
   box-shadow: none;
 }
-.react-flow__controls-button:hover {
+.react-flow .react-flow__controls-button:hover {
   background: var(--surface);
 }
-.react-flow__controls-button svg {
+.react-flow .react-flow__controls-button svg {
   max-width: 14px;
   max-height: 14px;
   fill: var(--ink);
@@ -1602,16 +1559,16 @@ h2.accepted-stamp {
 .react-flow__attribution {
   display: none;
 }
-.node-state-ok {
+.react-flow .node-state-ok {
   background: linear-gradient(180deg, var(--surface) 55%, #eef6ea);
 }
-.node-state-live {
+.react-flow .node-state-live {
   background: linear-gradient(180deg, var(--surface) 55%, #fdf3d6);
 }
-.node-state-fail {
+.react-flow .node-state-fail {
   background: linear-gradient(180deg, var(--surface) 55%, #fbe9e5);
 }
-.node-state-pending {
+.react-flow .node-state-pending {
   border-style: dashed;
   background: #fdfbf6;
 }
@@ -2015,10 +1972,6 @@ h2.accepted-stamp {
     align-items: start;
     flex-direction: column;
   }
-  .metrics > div {
-    flex-basis: 50%;
-    padding: 12px 0;
-  }
   .settings-section,
   .task-page {
     width: 100%;
@@ -2042,7 +1995,7 @@ h2.accepted-stamp {
   margin: 0 0 4px;
   font-size: 19px;
 }
-.flow-preview .react-flow__node {
+.flow-preview .react-flow .react-flow__node {
   padding: 6px 10px;
   display: flex;
   align-items: center;
@@ -2053,4 +2006,10 @@ h2.accepted-stamp {
 }
 .sheet .codex-discovery span {
   display: block;
+}
+button.primary:disabled,
+button.primary:disabled:hover {
+  background: var(--faint);
+  color: var(--graphite);
+  box-shadow: none;
 }
