@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01, W02 and W03a–W03c are integrated. W04 Tasks 1–4 are Root-accepted; its documentation candidate, whole-candidate reviews, integration and source release remain open.** [W04's receipt](docs/implementation/W04.md) preserves the one raw false/exit 1 campaign and separate exact 14-group disposition. Pairing, the Work board, durable CLI reports, workflow graph/list, prerequisite/rework evidence, GitHub observation, export/retention and usage are runnable. Agent execution remains outside AgentFlow. This is not a completed or published v1 release.
+**Status: all 13 v1 packages are integrated; [v1.0.0](https://github.com/AlesSystems/agentflow/releases/tag/v1.0.0) is published at `fbb77c7d35271fba514692dae3dbae151a262b87`.** [W04's receipt](docs/implementation/W04.md) preserves the one raw false/exit 1 campaign and separate exact 14-group disposition. Pairing, the Work board, durable CLI reports, workflow graph/list, prerequisite/rework evidence, GitHub observation, export/retention and usage are runnable. Agent execution remains outside AgentFlow. The tagged source has passed independent release review; post-publication evidence is recorded in the W04 receipt.
 
 ## Product direction
 
@@ -228,7 +228,7 @@ its raw acceptance remains false for six relative regressions. Their exact
 Astra disposition is approved and Root accepted the campaign. Final documentation
 review, PR #15 integration, private archival, and guarded cleanup are complete.
 W04 Tasks 1–4 are Root-accepted under the separate exact 14-group disposition.
-Whole-candidate reviews, W04 integration and source publication remain open.
+Whole-candidate reviews passed; PR #16 integrated W04, and the independently reviewed source release is published.
 
 
 ### Reported usage and local estimates
