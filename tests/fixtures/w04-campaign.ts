@@ -86,3 +86,5 @@ export function reconcileFinite(declarations:FiniteDeclaration[],samples:(Finite
  for(const row of samples){const expected=intended.get(row.id);assert(expected,"undeclared finite sample");for(const key of ["kind","source","fixture","operation","endpoint","method","repetition","warmup","ordinal"] as const)assert.deepEqual(row[key],expected[key],"observed declaration mismatch "+key);if(row.ms!==undefined)assert(Number.isFinite(row.ms)&&row.ms>=0,"invalid elapsed sample");}
  const missing=declarations.filter(r=>!samples.some(s=>s.id===r.id)).map(r=>r.id),failed=samples.filter(r=>!r.accepted||r.failure!==null).map(r=>r.id);return {intended:declarations.length,attempted:samples.length,accepted:samples.filter(r=>r.accepted&&r.failure===null).length,rejected:samples.filter(r=>!r.accepted).length,missing,failed,complete:!missing.length&&!failed.length};
 }
+
+export function stoppedCursor(rows:Record<string,unknown>[]){return String(Math.max(0,...rows.map(row=>Number(row.id))));}
