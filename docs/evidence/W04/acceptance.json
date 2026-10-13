@@ -1,9 +1,9 @@
 {
-  "status": "TASK4_ROOT_ACCEPTED_WITH_SEPARATE_14_GROUP_DISPOSITION_TASK5_DOCS_CANDIDATE",
+  "status": "V1_COMPLETE_POST_TAG_FACTUAL_CLOSURE",
   "version": "1.0.0",
-  "integrationComplete": false,
-  "releaseComplete": false,
-  "wholeCandidateReviewsComplete": false,
+  "integrationComplete": true,
+  "releaseComplete": true,
+  "wholeCandidateReviewsComplete": true,
   "source": {
     "candidateCommit": "741b58f0394155885af7748c0f15ec8634faaa75",
     "candidateTree": "b9993c7f653977d7379edd9f04e4ebe56f7b1552",
@@ -1715,11 +1715,95 @@
     "Original approved513line W04 plan bytes stay immutable; its historical unchecked boxes are not current executed-status truth.",
     "UI04 main video: nine sampled frames, not full playback; other four videos metadata-only and all remain private."
   ],
-  "openGates": [
-    "two exact whole-candidate Standards/Spec reviews",
-    "Root integration and exact integrated-release review",
-    "v1.0.0 tag and source publication",
-    "archive and guarded cleanup",
-    "manual app launch"
-  ]
+  "openGates": [],
+  "release": {
+    "target": "fbb77c7d35271fba514692dae3dbae151a262b87",
+    "tree": "3688c157844687c7e26ccf3d476b6930907a3a6d",
+    "tag": "v1.0.0",
+    "tagObject": "b2372e9169dbee7c4721ab19b15a11cce4cb1ef8",
+    "url": "https://github.com/AlesSystems/agentflow/releases/tag/v1.0.0",
+    "pullRequest": 16,
+    "reviewedCandidate": "092c9afdc70352fc800430a44c33aca71aa650ac",
+    "sourceArchiveSHA256": "e250046000562bd5801ce1bd4826ff0a5085cd3daba0c10b5eeab740ac660dd4",
+    "sourceBlobsVerified": 652,
+    "verificationSHA256": "f3277d8282f0e0ad2ef600eb85ae858a098e980eab127083194d883024b03f18",
+    "integratedReviewMD_SHA256": "53b02be4e69128ed050005f270898f7f9e32e99b7621c7ebc2851588eb0f6e66",
+    "qualification": "Post-tag factual documentation; tag remains at independently reviewed integrated target. Measured-source fields and raw campaign remain unchanged."
+  },
+  "manualInstallation": {
+    "installExit": 0,
+    "buildExit": 0,
+    "setupExit": 0,
+    "buildID": "JSZKD6KDxUGUYow4vmFVm",
+    "launchVerified": true,
+    "loopbackOnly": true,
+    "pairedBrowserOverview": true,
+    "freshEmptyWorkspace": true,
+    "launchReceiptSHA256": "dafaca94f4c2c1cc9b9b1fa394eacbc9ef3eecd8baf43b8365438145a90501f7",
+    "operatorManualAcceptanceClaimed": false,
+    "qualification": "New operator installation after publication; distinct from measured hSg. Two broad filesystem-tracing build warnings and 4 moderate/5 high install advisories retained."
+  },
+  "cleanup": {
+    "complete": true,
+    "receiptSHA256": "f08ba458dc96f34d47111755c857476be1e742bf5bc1917353329ec17658f881",
+    "guardedRemovalSHA256": "3589e9d42e152e23c4e25c6ac433484e0b7bfdb73f55accb775709a9d12f3fe6",
+    "totalMembers": 1569884,
+    "logicalRegularBytes": 56026296869,
+    "archiveBytes": 17852311037,
+    "allFiveOriginalAndQuarantineRootsAbsent": true,
+    "permissionRepairCount": 0,
+    "archives": [
+      {
+        "label": "Task1",
+        "members": 258067,
+        "regularBytes": 6395123087,
+        "archiveBytes": 2449340152,
+        "archiveSHA256": "f407b054b04a12fcb7c78d6b4df3f69caebaa276c7efd4ec502b5906324c9861",
+        "indexSHA256": "7dbd2ead0d0ba3fc52cc059afaa0e990d11ce6c890c3d275018aeec7eba9357c",
+        "independentVerificationSHA256": "f9afad2083e4725b73c540e1a04acbf8155f6c4de7ffbff8780c5c1fdcd27541"
+      },
+      {
+        "label": "Task1Repair",
+        "members": 67075,
+        "regularBytes": 1658874793,
+        "archiveBytes": 608419050,
+        "archiveSHA256": "dd5b7a95ed4376d3d25a3337906b4499550cb5feb8eca37d5bc08514844dcf24",
+        "indexSHA256": "17f291bffd6c4e3fd6d139569c0b48ba95e248d3376163833a777c858333d917",
+        "independentVerificationSHA256": "66bcda7d35f2853ba75dc01fa2ce1b99f2c54d3e888a2ddcaf0cd1df2f45413e"
+      },
+      {
+        "label": "Task2",
+        "members": 44425,
+        "regularBytes": 1318726481,
+        "archiveBytes": 374478853,
+        "archiveSHA256": "e0dd3555d8caf2904f30be909238c518c22c0b3dd411acae4055b80ef34b0a48",
+        "indexSHA256": "f791a12cf4f26dbadb54b5fe94900e155d2b404706cf925f084ce1b2469be586",
+        "independentVerificationSHA256": "1827f3a9371b691f4c1cc67429ac7271d62d808177131232a375c216e37baded"
+      },
+      {
+        "label": "Task3",
+        "members": 464601,
+        "regularBytes": 15574362851,
+        "archiveBytes": 6160285722,
+        "archiveSHA256": "b994d348e2371c860770795befa098695f8d281523da60801e3ee8eadfd8cd1c",
+        "indexSHA256": "9b506305cf07b8f61a16976b7f0eb57c2e5ed8028adb7e265da11d923f416618",
+        "independentVerificationSHA256": "27f41ce08ecfb1a2971f7f0e34e64771b04861d144899545a7d0b158d6b0de8a"
+      },
+      {
+        "label": "Task4",
+        "members": 735716,
+        "regularBytes": 31079209657,
+        "archiveBytes": 8259787260,
+        "archiveSHA256": "c9d8692666326b1e50b42f9cb467df3c9355c0ea919609a20201f2e3843da825",
+        "indexSHA256": "a22042af0e5456e8ef32c08e8deeb6fadcd681359b1489e32566b8e11bde1e58",
+        "independentVerificationSHA256": "4aaef075815f4d99584ab20fcd1378190d7766b04e5998e4a3e91ccad05908a7"
+      }
+    ],
+    "sddArchiveSHA256": "941b0ec3c054eadfd00f1086d0dfcdf7e9c3b882338ec902683ec838b6e29c64",
+    "sddVerificationSHA256": "c05354a86868c981a4a816e4d518aaf8608804e2140b9ca25123d63748d165b7",
+    "sddMembers": 332,
+    "originalSddRetained": true,
+    "supplementalArchiveSHA256": "fad89c6c5dadac2e98789de9c9a25240df0947fcfa8d0b865e5f3376e4704c8f",
+    "qualification": "Archives preserve bytes/membership/link topology/basic metadata; exclude xattrs/ACLs/physical sparse allocation. Operator launch verified, no operator acceptance claimed. Subsequent tracked docs closure is separate from immutable tagged target."
+  }
 }
