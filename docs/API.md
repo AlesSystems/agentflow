@@ -251,6 +251,14 @@ A single invocation retries for at most five seconds, then exits. Exit codes are
 
 A replay after database restoration validates the current run prefix against retained local allocated and acknowledged watermarks. A lost acknowledged prefix or externally advanced sequence blocks rather than inventing records. Missing entities require explicit re-registration where original IDs are supported, or intentional recreation and remapping where project/task creation generates IDs. A restore cannot guarantee observations acknowledged after the backup.
 
+Run views omit `artifactRef` and `reworkRound` together when both are null. Current
+parsers normalize their absence to null; a meaningful evidence tuple remains
+explicit. This preserves Phase 2 CLI generation reconciliation for retained runs
+and outbox prefixes. It does not establish compatibility of old strict clients
+with new task creation, general Phase 3 task/history views, or required review
+policies. Use the current CLI for those operations. Stored receipts and exact
+event acknowledgement bodies are unchanged.
+
 Global event flush selects the oldest immutable record and durably publishes the
 scheduler's existing successor cursor under one publication ownership before HTTP.
 Targeted and empty selection do not write the global cursor. Every actual acquisition

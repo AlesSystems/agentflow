@@ -75,3 +75,10 @@ AgentFlow observes externally started agents. A stale report means execution is
 uncertain. Success moves implementation work to Review; completion remains a
 browser human-session command. Automated checkpoint acceptance is synthetic test
 evidence and never a human attestation.
+
+
+## W04 qualification boundary
+
+[W04's receipt](implementation/W04.md) records the actual historical migration/backup/restore/prefix scenarios, current strict wire repair and retained legacy DTO limits. Protected prune preserves sessions and graph/gate/usage/ACK facts; restore changes generation and revokes sessions. The current helper reads inspected SQL only from stopped copies; inherited P07 originals were opened historically, so no blanket “never opened originals” claim applies.
+
+Complete contributor verification requires the qualified historical sources/runtime/builds and private W03b/W03c/W04 evidence roots in [README](../README.md#complete-w04-contributor-verification). These synthetic tests do not authorize repair of operator data, new campaigns or release. Keep the original database triplet, damaged bundles, receipts and failure streams until guarded archival is independently verified. No W04 archive/cleanup or new manual end-user installation has been completed at this candidate boundary.

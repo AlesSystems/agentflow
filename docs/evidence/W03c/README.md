@@ -1,6 +1,6 @@
 # W03c qualified evidence
 
-W03c remains open. The exact-source package reviews found no actionable findings at `fd44b9545d9e8fbff1f8b8486a96a3d3540f4f59`. Astra approved exactly the six recorded relative failures, and Root accepted the campaign under that separate disposition. Final documentation review, integration, and guarded cleanup remain pending. W04 and the v1 release are unexecuted.
+W03c is integrated through [PR #15](https://github.com/AlesSystems/agentflow/pull/15), with private archival and guarded cleanup complete. The exact-source package reviews found no actionable findings at `fd44b9545d9e8fbff1f8b8486a96a3d3540f4f59`. Astra approved exactly the six recorded relative failures, and Root accepted the campaign under that separate disposition. Final scoped documentation review and matching-head integration are complete. W04 and the v1 release are unexecuted.
 
 [acceptance.json](acceptance.json) preserves all 42 HTTP distributions, their measured samples, all 15 separate base/head comparisons, and the six relative failures. The revised campaign completed 3,810 declared requests with no missing or failed requests and no absolute-budget failure. Its original result remains `acceptance=false`, exit 1. The approved policy disposition is separate from that immutable result.
 

@@ -2,7 +2,7 @@
 
 AgentFlow is a local application for engineering tasks, agent activity, and review progress. It combines a simple Kanban board with execution history from your existing agent harness.
 
-**Status: P01–P07, W01, W02, W03a, and W03b integrated.** W03b passed qualified verification and independent review, including its client generation repair, and is integrated through PR #14. Private archival and guarded cleanup are complete. W03c implementation, exact-source reviews, and the separately approved campaign disposition are accepted; its documentation review, integration, and cleanup remain open. W04 remains open. Pairing, projects/tasks, comments, acceptance/reopen, backup and restore are runnable, with Agents, Activity, attempt history and native live updates. CLI reporting and durable flush are available. Workflow packages remain gated by PLAN.md.
+**Status: P01–P07, W01, W02 and W03a–W03c are integrated. W04 Tasks 1–4 are Root-accepted; its documentation candidate, whole-candidate reviews, integration and source release remain open.** [W04's receipt](docs/implementation/W04.md) preserves the one raw false/exit 1 campaign and separate exact 14-group disposition. Pairing, the Work board, durable CLI reports, workflow graph/list, prerequisite/rework evidence, GitHub observation, export/retention and usage are runnable. Agent execution remains outside AgentFlow. This is not a completed or published v1 release.
 
 ## Product direction
 
@@ -109,13 +109,61 @@ export AGENTFLOW_W03B_UPGRADE_PROOF_DIR=/absolute/operator-owned/proof/upgrade
 export AGENTFLOW_W01_BASE_SOURCE="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources/P07"
 export AGENTFLOW_W02_W01_SOURCE="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources/W01"
 export AGENTFLOW_P06_SMOKE_BASE_SOURCE="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources/P07"
-npm run test:integration
+# Set the remaining full-suite prerequisites below before test:integration.
 ```
 
 The last variable supplies a qualified baseline for bounded P06 helper controls;
 it is not historical P06 acceptance. Preserve original exits, complete streams,
-source/build pins, and synthetic data evidence. W04 contributor/release setup
-verification remains pending; this prerequisite description is not a new setup run.
+source/build pins, and synthetic data evidence. The current W04 suite used these prerequisites and the additions below; this description is not a new end-user setup run.
+
+### Complete W04 contributor verification
+
+The current full integration/browser packet requires the historical prerequisites above, plus the W03b source at `6611e8e4ed8ec61d57be689a7cfd82ee75b9275e` for W03c upgrade checks. W03c accepts its qualified archive with the original `proof/W03b-source-qualified.json` certificate; do not fabricate that record or substitute a current build. Qualified historical installations are copies, not fresh installs.
+
+W03b/W03c variables name the historical **parent** containing `runtime/`, `sources/` and `proof/`. W04's historical variable instead names its **sources subdirectory**, with W01/W02/W03a/W03b builds. W04 base is P07. Its controller requires qualified `current`, `baseline` and `runtime` siblings under one owned verification parent; the control temporary/proof roots must lie under that same parent. The head clone has its qualified dependencies/build, the baseline is exact P07, and the runtime has the owned Node/npm paths. Set required roots before importing fixtures, with data/proof/cache outside the active head clone; each proof root is precreated owned 0700. Values below are placeholders for prepared, independently qualified inputs:
+
+```sh
+export AGENTFLOW_W03C_HISTORICAL_ROOT="$AGENTFLOW_W03B_HISTORICAL_ROOT"
+export AGENTFLOW_W03C_UPGRADE_PROOF_DIR=/absolute/operator-owned/proof/usage-upgrade
+export AGENTFLOW_W04_HISTORICAL_ROOT="$AGENTFLOW_W03B_HISTORICAL_ROOT/sources"
+export W04_VERIFICATION_ROOT=/absolute/operator-owned/w04
+export AGENTFLOW_W04_BASE_SOURCE="$W04_VERIFICATION_ROOT/baseline"
+export AGENTFLOW_W04_RUNTIME_ROOT="$W04_VERIFICATION_ROOT/runtime"
+export PATH="$AGENTFLOW_W04_RUNTIME_ROOT/bin:$PATH"
+export TMPDIR="$W04_VERIFICATION_ROOT/tmp"
+export AGENTFLOW_W04_BROWSER_IDENTITY="$W04_VERIFICATION_ROOT/proof/actual-browser.json"
+export AGENTFLOW_W04_APPROVED_SOURCES="$W04_VERIFICATION_ROOT/proof/accepted-source-build.json"
+export AGENTFLOW_W04_APPROVED_SOURCES_SHA256='<exact-accepted-proof-sha256>'
+cd "$W04_VERIFICATION_ROOT/current"
+export AGENTFLOW_W04_JOURNEY_ROOT=/absolute/operator-owned/proof/journey
+export AGENTFLOW_W04_UPGRADE_ROOT=/absolute/operator-owned/proof/upgrade-current
+export AGENTFLOW_W04_APPEARANCE_PROOF_DIR=/absolute/operator-owned/proof/appearance
+export PLAYWRIGHT_BROWSERS_PATH=/absolute/operator-owned/browser-cache
+export AGENTFLOW_TEST_BROWSER=chrome
+npx playwright install ffmpeg
+```
+
+For the recorded zero-skip appearance packet, set these inherited hooks before the browser run as well. Precreate every proof/capture directory as private 0700; usage data is a fresh disjoint external directory. Values remain prepared-input placeholders:
+
+```sh
+export AGENTFLOW_W01_VISUAL_DIR=/absolute/operator-owned/proof/workflow-ui
+export AGENTFLOW_W02_EVIDENCE_DIR=/absolute/operator-owned/proof/acceptance-ui
+export AGENTFLOW_W03A_UI_EVIDENCE=/absolute/operator-owned/proof/github-ui
+export W03B_TASK4_PROOF_DIR=/absolute/operator-owned/proof/history-ui
+export W03B_TASK4_FOCUS_PROOF_DIR=/absolute/operator-owned/proof/history-focus
+export W03C_TASK4_APPEARANCE=contributor-verification
+export W03C_TASK4_DATA_DIR=/absolute/operator-owned/data/usage-ui
+export W03C_TASK4_PROOF_DIR=/absolute/operator-owned/proof/usage-ui
+export W03C_TASK4_CAPTURE_ESTIMATE=1
+npm run test:integration
+npm run test:e2e
+```
+
+The browser identity is a private 0600 JSON record of the actual executable path/SHA256/version. The source/build file is Root's real accepted `ROOT_W04_SOURCE_BUILD_REUSE` proof, with its exact hash and qualified input bindings; an invented placeholder record is rejected. Acquisition/qualification of those inputs precedes this snippet.
+
+Full qualification also records inherited visual-hook roots and the pinned ffmpeg capability required by the recorded appearance context, complete source/runtime/build/browser manifests, command census and original closures. See [W04 evidence](docs/implementation/W04.md#current-six-commands) and the fixture requirements for those private roots; default browser installation alone does not provide the recorded ffmpeg capability in a different cache. Mandatory missing prerequisites fail rather than count as a qualified pass. Historical source acquisition/restoration and installation must follow the [execution policy](docs/EXECUTION_POLICY.md), with complete original receipts.
+
+The performance controller has separate prepare/control/run gates. `run` requires Root's exact prepared array plus independent readiness/byte/SQL/all-idle receipts through `AGENTFLOW_W04_QUIET_RELEASE`; an ordinary checkout/test command is not new campaign authority. W04 accepted one campaign only. Linux, pristine-OS and live-account checks remain limits, and no new manual end-user installation/launch is claimed here.
 
 The app requires no cloud account, hosted database, Docker, or paid infrastructure. Package installation requires network access. Agent providers used by an external harness may have their own network requirements and costs.
 
@@ -178,7 +226,9 @@ locked install and source-qualified checks. Exact-source package reviews found n
 revised campaign completed all 3,810 requests and passed absolute budgets, but
 its raw acceptance remains false for six relative regressions. Their exact
 Astra disposition is approved and Root accepted the campaign. Final documentation
-review, W03c integration and cleanup, and W04 remain open. The complete-v1 release gate remains open.
+review, PR #15 integration, private archival, and guarded cleanup are complete.
+W04 Tasks 1–4 are Root-accepted under the separate exact 14-group disposition.
+Whole-candidate reviews, W04 integration and source publication remain open.
 
 
 ### Reported usage and local estimates

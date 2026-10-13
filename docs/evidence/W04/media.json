@@ -1,0 +1,69 @@
+{
+  "scope": "UI04 allowlisted original PNG bytes only;37 current PNGs reviewed, exactly10 copied. All videos, private-path images and reviewer derivatives remain private.",
+  "sourceCommit": "741b58f0394155885af7748c0f15ec8634faaa75",
+  "sourceTree": "b9993c7f653977d7379edd9f04e4ebe56f7b1552",
+  "buildId": "hSgNCwK5uvX3pzMJW3iYo",
+  "privateAllowlistSHA256": "fac92fde3a1d5337541b6ecfa8433939b45d288a1aede3acffa101c0fa180484",
+  "artifacts": [
+    {
+      "id": "N41",
+      "file": "N41-work-board-desktop.png",
+      "sha256": "d5432870f4a8cfbfd25f5d9f5966907fc78285a9a445eea4a9b8313f3a3a6a83",
+      "caption": "Synthetic Work board with desktop lanes."
+    },
+    {
+      "id": "N42",
+      "file": "N42-work-board-narrow.png",
+      "sha256": "0589ed5fac46bae2dc0584335786235e930eb72e1d23a58a9935f8867210e996",
+      "caption": "Synthetic Work board at 375px with one selected lane and stacked filters."
+    },
+    {
+      "id": "N40",
+      "file": "N40-task-conflict.png",
+      "sha256": "52502fa74e1156e154123837af43bd6b38fe34dc41fbd0204187391878edf92a",
+      "caption": "Saved task state and retained second-browser draft shown separately after conflict."
+    },
+    {
+      "id": "N38",
+      "file": "N38-pairing-repair.png",
+      "sha256": "f7ef18069467fad11cef55a34d2984ba2bcd0c46ba067fdb2a51a223b05f8ef6",
+      "caption": "In-app pairing repair preserves a synthetic task draft; token field is empty."
+    },
+    {
+      "id": "N39",
+      "file": "N39-synthetic-acceptance.png",
+      "sha256": "ddc40c1553f4cc72ec5f19115b552b4d5259ae7f45f6d8094eca7e50036101b8",
+      "caption": "Explicit current-revision acceptance requirements and a synthetic note; this is not human attestation."
+    },
+    {
+      "id": "N04",
+      "file": "N04-joined-tab-0.png",
+      "sha256": "795c04ab53aa9afcd85d6417edde0a7324454bc0444a0aafe68c8c93dff20554",
+      "caption": "First independently paired synthetic workflow tab, graph view. Appearance alone does not prove navigation."
+    },
+    {
+      "id": "N05",
+      "file": "N05-joined-tab-1.png",
+      "sha256": "dfb39c41cdb6abb53df6fb536b71d6bb099a3446fd8115a34b7d6e8be20d6c1a",
+      "caption": "Second independently paired synthetic workflow tab, equivalent list view."
+    },
+    {
+      "id": "N01",
+      "file": "N01-desktop-final3-e2e02.png",
+      "sha256": "e57e11c8835841e66dfbdb524c758a0391e39d915497cc71a8a9219517a10ba3",
+      "caption": "Synthetic usage coverage and named local estimate; unreported counts remain unknown and estimates are not bills."
+    },
+    {
+      "id": "N24",
+      "file": "N24-task-native-200-pr-unclipped.png",
+      "sha256": "024b5bf9a93738b4f80a5740ba15969114ab6edc25077bb6bb66b56da2652f3f",
+      "caption": "Synthetic cached PR observation at native 200% Chrome zoom, with visible refresh focus."
+    },
+    {
+      "id": "N27",
+      "file": "N27-history-native-200.png",
+      "sha256": "00a7e9898c9ec24e1a8977d617d0f60deea2a2594a0b3bfdfd09a0216a68ab6f",
+      "caption": "History controls and focused successful prune feedback at native 200% zoom; display-body savings are distinct from disk reclamation."
+    }
+  ]
+}

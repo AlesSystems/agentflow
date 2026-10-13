@@ -1,0 +1,1725 @@
+{
+  "status": "TASK4_ROOT_ACCEPTED_WITH_SEPARATE_14_GROUP_DISPOSITION_TASK5_DOCS_CANDIDATE",
+  "version": "1.0.0",
+  "integrationComplete": false,
+  "releaseComplete": false,
+  "wholeCandidateReviewsComplete": false,
+  "source": {
+    "candidateCommit": "741b58f0394155885af7748c0f15ec8634faaa75",
+    "candidateTree": "b9993c7f653977d7379edd9f04e4ebe56f7b1552",
+    "baselineCommit": "dd26c4b00867e7680c3baf0cf2be39b60502aecf",
+    "sourceBindingSHA256": "e81203806b1cac248bcddbed10468bf3ba767d0f9329e25becf84e752ef12ed4",
+    "shippingFiles": 124,
+    "helpers": 293,
+    "compiledFiles": 455,
+    "shippingManifestSHA256": "a1149c74564849cc9731c110d8027e2f235cbb10d2fe8ba13114a4fe3152e891",
+    "helperManifestSHA256": "6b388369441765d242ef94c52ae8e251168333c0a436482fdafe72944cd59b54",
+    "compiledManifestSHA256": "c7e7ffde4a1dabf9041e6ce724808056a1184cb36c4664f3cfc101607d506cb9",
+    "manifestHashConvention": "SHA256 of sorted-key compact JSON of the named file\u2192SHA256 map. This is a new public scalar aggregate, not a relabeled original file hash.",
+    "buildId": "hSgNCwK5uvX3pzMJW3iYo",
+    "baselineBuildId": "2CmA28UZV2E7vM503GGaw",
+    "literalBuildSource": "9ebf660 plus history.tsx overlay; Root gate03 matches current shipping. No build invocation at741 is claimed.",
+    "helperSHA256": "7e080895b9560275496172b6865b9245b29c8a13a9ef48514a1712fec04cb8a4"
+  },
+  "runtime": {
+    "host": "macOS 27.0 arm64",
+    "node": "24.15.0",
+    "npm": "11.12.1",
+    "abi": 137,
+    "sqlite": "3.53.4",
+    "chrome": "155.0.8059.40",
+    "datedTask1InstallAdvisories": {
+      "total": 9,
+      "moderate": 4,
+      "high": 5,
+      "qualification": "Original dated install output only; no new dependency/advisory scan or clean security claim."
+    }
+  },
+  "checks": [
+    {
+      "name": "test:unit",
+      "logicalCommand": "npm run test:unit -- --reporter=json --outputFile=<private-census.json>",
+      "originalInvocationSHA256": "07edaf28d12bb536d539ee7dc60b147c188ece57c3ec25261d520b33e7adfeb7",
+      "resultSHA256": "a48bf2a8d8da4aebd498888650bd9497e886e8015d7f65c8ab34efe1b12c101f",
+      "sourceBeforeSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "sourceAfterSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "exit": 0,
+      "pathQualification": "Original argv is retained privately; only absolute proof destinations are replaced by placeholders here.",
+      "passed": 282,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "files": 46
+    },
+    {
+      "name": "test:integration",
+      "logicalCommand": "npm run test:integration -- --reporter=json --outputFile=<private-census.json>",
+      "originalInvocationSHA256": "70cf175d74e63b4e315ce58ec31c2900e46eb05fffb6fdd68015d82dd0ed91a1",
+      "resultSHA256": "a519fb6e8423df741f5d906587daee97037d40e86f65d2d9487b06b734f30a39",
+      "sourceBeforeSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "sourceAfterSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "exit": 0,
+      "pathQualification": "Original argv is retained privately; only absolute proof destinations are replaced by placeholders here.",
+      "passed": 630,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "files": 110
+    },
+    {
+      "name": "test:e2e",
+      "logicalCommand": "npm run test:e2e -- --reporter=json --output <private-test-results>",
+      "originalInvocationSHA256": "c9ba5c741140ec055f7e1f91671f364560d959ab4f052639492b99518464da85",
+      "resultSHA256": "8df3a4829eb2c285381ed4d4b17f69474b2f407626992849e4892c7c07e14bbf",
+      "sourceBeforeSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "sourceAfterSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "exit": 0,
+      "pathQualification": "Original argv is retained privately; only absolute proof destinations are replaced by placeholders here.",
+      "passed": 94,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    {
+      "name": "lint",
+      "logicalCommand": "npm run lint",
+      "originalInvocationSHA256": "b74df2918edb339528daad96199d03554ddd68af235e5716d79eb7deedf11071",
+      "resultSHA256": "565a6ea79cd065957cd84ed64d6f5287fc97fa64c1e19ea8422e2c41aeab84cb",
+      "sourceBeforeSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "sourceAfterSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "exit": 0,
+      "pathQualification": "Original argv is retained privately; only absolute proof destinations are replaced by placeholders here."
+    },
+    {
+      "name": "typecheck",
+      "logicalCommand": "npm run typecheck",
+      "originalInvocationSHA256": "0fba311cc29a2f765596d53c0023413c4408aff141a1349b33989afdf6e8b86e",
+      "resultSHA256": "00f903b19b29ba3968fcb2dd0557d06a54d2fc2cc0f9168e70db75456f11d7bb",
+      "sourceBeforeSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "sourceAfterSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "exit": 0,
+      "pathQualification": "Original argv is retained privately; only absolute proof destinations are replaced by placeholders here."
+    },
+    {
+      "name": "openapi:check",
+      "logicalCommand": "npm run openapi:check",
+      "originalInvocationSHA256": "6bb14bc599c391907df035ec9c1d1d8212046cee22dce545ea9b899a62a09baa",
+      "resultSHA256": "a5e67389b2f5287b1a1d8cb8ba9542637eafee15f75d805c3d17bb4ba50b6b0a",
+      "sourceBeforeSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "sourceAfterSHA256": "7cdb4d3f24327f9fc26663df7d0776b488d6fda7d5769dfb8280e69db66027ad",
+      "exit": 0,
+      "pathQualification": "Original argv is retained privately; only absolute proof destinations are replaced by placeholders here."
+    }
+  ],
+  "campaign": {
+    "campaignsExecuted": 1,
+    "intended": 36937,
+    "attempted": 36937,
+    "acceptedRows": 36937,
+    "rejected": 0,
+    "missing": 0,
+    "failed": 0,
+    "rawAcceptance": false,
+    "rawExit": 1,
+    "rawResultSHA256": "4d236b270126d73e7f914343300904a4657868ae372d9d75c8fab22e538e65d4",
+    "preparedSHA256": "3dac5d8489c7b4d8788d4d5e5a69ae7d8416bba384bbbf446c7b82901283d615",
+    "kinds": {
+      "loadEvent": 21000,
+      "loadVisibility": 384,
+      "request": 12330,
+      "workflowVisibility": 60,
+      "interaction": 60,
+      "queuedEvent": 3000,
+      "flush": 3,
+      "sseCycle": 100
+    },
+    "directHTTPRequests": 33330,
+    "workflowMarkerPOSTsSeparate": 30,
+    "requestRows": 12330,
+    "requestWarmups": 1170,
+    "measuredRequestRows": 11160,
+    "fixtures": 19,
+    "closedServices": 19,
+    "rootAcceptanceSHA256": "28de9bd5c58eb783ba83bddfeffe190a5ca23eeb7151ce4b649a80ededd9f91a",
+    "AstraDispositionMD_SHA256": "7e2542663d4a72090333f2af3aaee6d65d1e45e7c181cd40cbb6a7d515737cc4",
+    "AstraDispositionJSON_SHA256": "985b219d529043f469ebc16a53c5badfd5ed8fae8efc9c9e2c6e16b1d029ef01",
+    "relativeRegressions": [
+      {
+        "repetition": 1,
+        "operation": "tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9478750000707805,
+          "maxMs": 2.168749999953434
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.0336670000106096,
+          "maxMs": 3.228499999968335
+        },
+        "changePercent": 55.74238592827436
+      },
+      {
+        "repetition": 1,
+        "operation": "detail",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.5013749999925494,
+          "maxMs": 1.5973750000121072
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.8556249999674037,
+          "maxMs": 2.0069160000421107
+        },
+        "changePercent": 23.595037880383796
+      },
+      {
+        "repetition": 1,
+        "operation": "board",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9545830000424758,
+          "maxMs": 2.3143340001115575
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.425249999971129,
+          "maxMs": 3.6772919999202713
+        },
+        "changePercent": 75.2419825557008
+      },
+      {
+        "repetition": 1,
+        "operation": "tracking.tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.071583000011742,
+          "maxMs": 3.3576249999459833
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.108790999976918,
+          "maxMs": 5.647999999928288
+        },
+        "changePercent": 50.06837765898333
+      },
+      {
+        "repetition": 1,
+        "operation": "tracking.board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.496000000042841,
+          "maxMs": 3.0591669999994338
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.8394170000683516,
+          "maxMs": 4.107250000000931
+        },
+        "changePercent": 53.82279647445725
+      },
+      {
+        "repetition": 2,
+        "operation": "tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.8855000000912696,
+          "maxMs": 2.072167000034824
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.150249999947846,
+          "maxMs": 3.2650410000933334
+        },
+        "changePercent": 67.07769821242933
+      },
+      {
+        "repetition": 2,
+        "operation": "detail",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.2937499999534339,
+          "maxMs": 1.6749169999966398
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.8932090000016615,
+          "maxMs": 2.256125000072643
+        },
+        "changePercent": 46.33499517447761
+      },
+      {
+        "repetition": 2,
+        "operation": "board",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9381249999860302,
+          "maxMs": 2.2180829999269918
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.304915999993682,
+          "maxMs": 4.021792000043206
+        },
+        "changePercent": 70.52130280644971
+      },
+      {
+        "repetition": 2,
+        "operation": "tracking.tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.8573330000508577,
+          "maxMs": 3.1914160000160336
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.2684590000426397,
+          "maxMs": 4.323958999942988
+        },
+        "changePercent": 75.97592892352327
+      },
+      {
+        "repetition": 2,
+        "operation": "tracking.board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.3486669999547303,
+          "maxMs": 2.6331670000217855
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.825708999997005,
+          "maxMs": 4.088833999936469
+        },
+        "changePercent": 62.888523578299704
+      },
+      {
+        "repetition": 3,
+        "operation": "tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.0080420000012964,
+          "maxMs": 2.6724160000449046
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.991709000081755,
+          "maxMs": 3.1019589999923483
+        },
+        "changePercent": 48.98637578695186
+      },
+      {
+        "repetition": 3,
+        "operation": "board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.0185830000555143,
+          "maxMs": 2.259792000055313
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.374792000046,
+          "maxMs": 3.807833000086248
+        },
+        "changePercent": 67.18618951775517
+      },
+      {
+        "repetition": 3,
+        "operation": "tracking.tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.075375000014901,
+          "maxMs": 2.943542000022717
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.1119160000234842,
+          "maxMs": 4.672000000020489
+        },
+        "changePercent": 49.94475697168659
+      },
+      {
+        "repetition": 3,
+        "operation": "tracking.board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.4766250000102445,
+          "maxMs": 2.934624999994412
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.7998330000555143,
+          "maxMs": 4.024458000087179
+        },
+        "changePercent": 53.42787059162353
+      }
+    ],
+    "pairedGroups": [
+      {
+        "repetition": 1,
+        "operation": "ingestion",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.2283339999848977,
+          "maxMs": 2.537000000011176
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.309417000040412,
+          "maxMs": 2.5536660000216216
+        },
+        "changePercent": 3.6387274105257106
+      },
+      {
+        "repetition": 1,
+        "operation": "tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9478750000707805,
+          "maxMs": 2.168749999953434
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.0336670000106096,
+          "maxMs": 3.228499999968335
+        },
+        "changePercent": 55.74238592827436
+      },
+      {
+        "repetition": 1,
+        "operation": "detail",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.5013749999925494,
+          "maxMs": 1.5973750000121072
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.8556249999674037,
+          "maxMs": 2.0069160000421107
+        },
+        "changePercent": 23.595037880383796
+      },
+      {
+        "repetition": 1,
+        "operation": "board",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9545830000424758,
+          "maxMs": 2.3143340001115575
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.425249999971129,
+          "maxMs": 3.6772919999202713
+        },
+        "changePercent": 75.2419825557008
+      },
+      {
+        "repetition": 1,
+        "operation": "overview",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.687333000008948,
+          "maxMs": 2.8321250000735745
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.579416999942623,
+          "maxMs": 2.7367919998941943
+        },
+        "changePercent": -4.015728607729885
+      },
+      {
+        "repetition": 1,
+        "operation": "tracking",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.2670829999260604,
+          "maxMs": 2.6519580000313
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.3749590000370517,
+          "maxMs": 2.5553749999962747
+        },
+        "changePercent": 4.758361300160141
+      },
+      {
+        "repetition": 1,
+        "operation": "events",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.4437919999472797,
+          "maxMs": 1.5852080000331625
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.412082999944687,
+          "maxMs": 1.571375000057742
+        },
+        "changePercent": -2.1962304822128575
+      },
+      {
+        "repetition": 1,
+        "operation": "activity",
+        "base": {
+          "count": 100,
+          "p95Ms": 4.192458999925293,
+          "maxMs": 5.239166000043042
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 4.401833000010811,
+          "maxMs": 4.824292000033893
+        },
+        "changePercent": 4.994061959562357
+      },
+      {
+        "repetition": 1,
+        "operation": "runs",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.6060419999994338,
+          "maxMs": 1.7183339999755844
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.6165839999448508,
+          "maxMs": 1.749415999976918
+        },
+        "changePercent": 0.6563962801359402
+      },
+      {
+        "repetition": 1,
+        "operation": "run",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.050374999991618,
+          "maxMs": 1.8281669999705628
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.0316660000244156,
+          "maxMs": 1.3307090000016615
+        },
+        "changePercent": -1.7811733873475566
+      },
+      {
+        "repetition": 1,
+        "operation": "tracking.run",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.019417000003159,
+          "maxMs": 1.1508339999709278
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.040500000002794,
+          "maxMs": 1.4639579999493435
+        },
+        "changePercent": 2.068142869853018
+      },
+      {
+        "repetition": 1,
+        "operation": "registration",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.074917000019923,
+          "maxMs": 3.868000000016764
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.294958999962546,
+          "maxMs": 4.716583000030369
+        },
+        "changePercent": 10.604857926389833
+      },
+      {
+        "repetition": 1,
+        "operation": "close",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.1363330000313,
+          "maxMs": 3.90708400006406
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.431374999927357,
+          "maxMs": 4.313624999951571
+        },
+        "changePercent": 13.810674641628173
+      },
+      {
+        "repetition": 1,
+        "operation": "tracking.tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.071583000011742,
+          "maxMs": 3.3576249999459833
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.108790999976918,
+          "maxMs": 5.647999999928288
+        },
+        "changePercent": 50.06837765898333
+      },
+      {
+        "repetition": 1,
+        "operation": "tracking.board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.496000000042841,
+          "maxMs": 3.0591669999994338
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.8394170000683516,
+          "maxMs": 4.107250000000931
+        },
+        "changePercent": 53.82279647445725
+      },
+      {
+        "repetition": 2,
+        "operation": "ingestion",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.121792000019923,
+          "maxMs": 4.523041000007652
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.195790999918245,
+          "maxMs": 3.955083000008017
+        },
+        "changePercent": 3.4875708786547888
+      },
+      {
+        "repetition": 2,
+        "operation": "tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.8855000000912696,
+          "maxMs": 2.072167000034824
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.150249999947846,
+          "maxMs": 3.2650410000933334
+        },
+        "changePercent": 67.07769821242933
+      },
+      {
+        "repetition": 2,
+        "operation": "detail",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.2937499999534339,
+          "maxMs": 1.6749169999966398
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.8932090000016615,
+          "maxMs": 2.256125000072643
+        },
+        "changePercent": 46.33499517447761
+      },
+      {
+        "repetition": 2,
+        "operation": "board",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9381249999860302,
+          "maxMs": 2.2180829999269918
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.304915999993682,
+          "maxMs": 4.021792000043206
+        },
+        "changePercent": 70.52130280644971
+      },
+      {
+        "repetition": 2,
+        "operation": "overview",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.351665999973193,
+          "maxMs": 2.7225409999955446
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.4340839999495074,
+          "maxMs": 2.6710420000599697
+        },
+        "changePercent": 3.5046643518787945
+      },
+      {
+        "repetition": 2,
+        "operation": "tracking",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.0916250000009313,
+          "maxMs": 2.385041000088677
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.336541000055149,
+          "maxMs": 2.7156669999239966
+        },
+        "changePercent": 11.709364730967975
+      },
+      {
+        "repetition": 2,
+        "operation": "events",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.2946249999804422,
+          "maxMs": 1.6182499999413267
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.381249999976717,
+          "maxMs": 1.6464999999152496
+        },
+        "changePercent": 6.691126773975742
+      },
+      {
+        "repetition": 2,
+        "operation": "activity",
+        "base": {
+          "count": 100,
+          "p95Ms": 4.142915999982506,
+          "maxMs": 4.454249999951571
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 4.21750000002794,
+          "maxMs": 4.587082999991253
+        },
+        "changePercent": 1.8002778730186408
+      },
+      {
+        "repetition": 2,
+        "operation": "runs",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.5406659999862313,
+          "maxMs": 1.9574169999687
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.694666999974288,
+          "maxMs": 2.698458999977447
+        },
+        "changePercent": 9.995742100457395
+      },
+      {
+        "repetition": 2,
+        "operation": "run",
+        "base": {
+          "count": 100,
+          "p95Ms": 0.927375000086613,
+          "maxMs": 1.5448340000584722
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.0700829999987036,
+          "maxMs": 1.2340420000255108
+        },
+        "changePercent": 15.388381172531318
+      },
+      {
+        "repetition": 2,
+        "operation": "tracking.run",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.0209170000161976,
+          "maxMs": 1.1855829999549314
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.1307919999817386,
+          "maxMs": 1.3108749999664724
+        },
+        "changePercent": 10.762383226432505
+      },
+      {
+        "repetition": 2,
+        "operation": "registration",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.868832999956794,
+          "maxMs": 2.078584000002593
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.9451249999692664,
+          "maxMs": 3.736040999996476
+        },
+        "changePercent": 4.082333735236698
+      },
+      {
+        "repetition": 2,
+        "operation": "close",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.130540999933146,
+          "maxMs": 3.9162500000093132
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.1373330000787973,
+          "maxMs": 4.987499999930151
+        },
+        "changePercent": 0.31879227603996974
+      },
+      {
+        "repetition": 2,
+        "operation": "tracking.tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.8573330000508577,
+          "maxMs": 3.1914160000160336
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.2684590000426397,
+          "maxMs": 4.323958999942988
+        },
+        "changePercent": 75.97592892352327
+      },
+      {
+        "repetition": 2,
+        "operation": "tracking.board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.3486669999547303,
+          "maxMs": 2.6331670000217855
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.825708999997005,
+          "maxMs": 4.088833999936469
+        },
+        "changePercent": 62.888523578299704
+      },
+      {
+        "repetition": 3,
+        "operation": "ingestion",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.2264579999027774,
+          "maxMs": 3.5495829998981208
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.3478749999776483,
+          "maxMs": 3.7541249999776483
+        },
+        "changePercent": 5.453370334413354
+      },
+      {
+        "repetition": 3,
+        "operation": "tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.0080420000012964,
+          "maxMs": 2.6724160000449046
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.991709000081755,
+          "maxMs": 3.1019589999923483
+        },
+        "changePercent": 48.98637578695186
+      },
+      {
+        "repetition": 3,
+        "operation": "detail",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.6024160000961274,
+          "maxMs": 2.809332999982871
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.909125000005588,
+          "maxMs": 2.103707999922335
+        },
+        "changePercent": 19.140410473376534
+      },
+      {
+        "repetition": 3,
+        "operation": "board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.0185830000555143,
+          "maxMs": 2.259792000055313
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.374792000046,
+          "maxMs": 3.807833000086248
+        },
+        "changePercent": 67.18618951775517
+      },
+      {
+        "repetition": 3,
+        "operation": "overview",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.537292000022717,
+          "maxMs": 2.695333000039682
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.472959000035189,
+          "maxMs": 2.631999999983236
+        },
+        "changePercent": -2.5354984758140464
+      },
+      {
+        "repetition": 3,
+        "operation": "tracking",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.243832999956794,
+          "maxMs": 3.872042000060901
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.3287080000154674,
+          "maxMs": 2.4951669999863952
+        },
+        "changePercent": 3.782589883485432
+      },
+      {
+        "repetition": 3,
+        "operation": "events",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.4084170000860468,
+          "maxMs": 1.5306669999845326
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.4379579999949783,
+          "maxMs": 1.6220830000238493
+        },
+        "changePercent": 2.097461185652172
+      },
+      {
+        "repetition": 3,
+        "operation": "activity",
+        "base": {
+          "count": 100,
+          "p95Ms": 4.096292000031099,
+          "maxMs": 4.34741699998267
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 4.299417000031099,
+          "maxMs": 4.553333000047132
+        },
+        "changePercent": 4.9587529404265585
+      },
+      {
+        "repetition": 3,
+        "operation": "runs",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.6369170000543818,
+          "maxMs": 2.0262080000247806
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.6485000000102445,
+          "maxMs": 2.2805840000510216
+        },
+        "changePercent": 0.7076107069251547
+      },
+      {
+        "repetition": 3,
+        "operation": "run",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.1112089999951422,
+          "maxMs": 1.2306249999674037
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.1328750000102445,
+          "maxMs": 1.251416000071913
+        },
+        "changePercent": 1.9497682267869632
+      },
+      {
+        "repetition": 3,
+        "operation": "tracking.run",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.1348749999888241,
+          "maxMs": 1.2371660000644624
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 1.2130829999223351,
+          "maxMs": 1.872417000005953
+        },
+        "changePercent": 6.8913316386634005
+      },
+      {
+        "repetition": 3,
+        "operation": "registration",
+        "base": {
+          "count": 100,
+          "p95Ms": 1.9707919999491423,
+          "maxMs": 3.842084000003524
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.194374999962747,
+          "maxMs": 4.320874999975786
+        },
+        "changePercent": 11.344829896781317
+      },
+      {
+        "repetition": 3,
+        "operation": "close",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.1432499999646097,
+          "maxMs": 4.501958000008017
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 2.4002500000642613,
+          "maxMs": 4.591040999977849
+        },
+        "changePercent": 11.991134963438487
+      },
+      {
+        "repetition": 3,
+        "operation": "tracking.tasks",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.075375000014901,
+          "maxMs": 2.943542000022717
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.1119160000234842,
+          "maxMs": 4.672000000020489
+        },
+        "changePercent": 49.94475697168659
+      },
+      {
+        "repetition": 3,
+        "operation": "tracking.board",
+        "base": {
+          "count": 100,
+          "p95Ms": 2.4766250000102445,
+          "maxMs": 2.934624999994412
+        },
+        "head": {
+          "count": 100,
+          "p95Ms": 3.7998330000555143,
+          "maxMs": 4.024458000087179
+        },
+        "changePercent": 53.42787059162353
+      }
+    ],
+    "headOnlyGroups": [
+      {
+        "fixture": "workflow-1",
+        "operation": "workflow.list",
+        "count": 100,
+        "p95Ms": 1.0589580000378191,
+        "maxMs": 2.172000000020489,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-1",
+        "operation": "workflow.metadata",
+        "count": 100,
+        "p95Ms": 0.6358329999493435,
+        "maxMs": 0.7279159999452531,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-1",
+        "operation": "workflow.revision",
+        "count": 100,
+        "p95Ms": 0.9799169999314472,
+        "maxMs": 2.5282090000109747,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-1",
+        "operation": "workflow.runSnapshot",
+        "count": 100,
+        "p95Ms": 0.8493749999906868,
+        "maxMs": 2.3800419999752194,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-1",
+        "operation": "usage.unique",
+        "count": 100,
+        "p95Ms": 4.542667000088841,
+        "maxMs": 9.840208999929018,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-1",
+        "operation": "usage.logicalDuplicate",
+        "count": 100,
+        "p95Ms": 4.776707999990322,
+        "maxMs": 8.286959000048228,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-1",
+        "operation": "price.create",
+        "count": 10,
+        "p95Ms": 3.884749999968335,
+        "maxMs": 3.884749999968335,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-1",
+        "operation": "usage.snapshot",
+        "count": 100,
+        "p95Ms": 2.21916700003203,
+        "maxMs": 5.543750000069849,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-1",
+        "operation": "export.v2",
+        "count": 10,
+        "p95Ms": 236.11154100007843,
+        "maxMs": 236.11154100007843,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-2",
+        "operation": "workflow.list",
+        "count": 100,
+        "p95Ms": 1.0510830000275746,
+        "maxMs": 2.294874999905005,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-2",
+        "operation": "workflow.metadata",
+        "count": 100,
+        "p95Ms": 0.6657910000067204,
+        "maxMs": 0.7609589999774471,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-2",
+        "operation": "workflow.revision",
+        "count": 100,
+        "p95Ms": 0.9457080001011491,
+        "maxMs": 1.5544159999117255,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-2",
+        "operation": "workflow.runSnapshot",
+        "count": 100,
+        "p95Ms": 0.8743330000434071,
+        "maxMs": 2.2507080000359565,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-2",
+        "operation": "usage.unique",
+        "count": 100,
+        "p95Ms": 4.959999999962747,
+        "maxMs": 11.077665999997407,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-2",
+        "operation": "usage.logicalDuplicate",
+        "count": 100,
+        "p95Ms": 4.549541000043973,
+        "maxMs": 8.60675000003539,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-2",
+        "operation": "price.create",
+        "count": 10,
+        "p95Ms": 3.570166999939829,
+        "maxMs": 3.570166999939829,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-2",
+        "operation": "usage.snapshot",
+        "count": 100,
+        "p95Ms": 2.380957999965176,
+        "maxMs": 5.084374999860302,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-2",
+        "operation": "export.v2",
+        "count": 10,
+        "p95Ms": 237.93283300008625,
+        "maxMs": 237.93283300008625,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-3",
+        "operation": "workflow.list",
+        "count": 100,
+        "p95Ms": 1.036375000141561,
+        "maxMs": 2.274332999950275,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-3",
+        "operation": "workflow.metadata",
+        "count": 100,
+        "p95Ms": 0.8102499998640269,
+        "maxMs": 1.110291999997571,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-3",
+        "operation": "workflow.revision",
+        "count": 100,
+        "p95Ms": 1.0983329999726266,
+        "maxMs": 1.4526659999974072,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "workflow-3",
+        "operation": "workflow.runSnapshot",
+        "count": 100,
+        "p95Ms": 1.1118340000975877,
+        "maxMs": 2.4231249999720603,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-3",
+        "operation": "usage.unique",
+        "count": 100,
+        "p95Ms": 3.821457999991253,
+        "maxMs": 6.479291999945417,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-3",
+        "operation": "usage.logicalDuplicate",
+        "count": 100,
+        "p95Ms": 3.95595799991861,
+        "maxMs": 8.311999999918044,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-3",
+        "operation": "price.create",
+        "count": 10,
+        "p95Ms": 3.5004169999156147,
+        "maxMs": 3.5004169999156147,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-3",
+        "operation": "usage.snapshot",
+        "count": 100,
+        "p95Ms": 5.219124999828637,
+        "maxMs": 9.856208000099286,
+        "baselineEquivalent": false
+      },
+      {
+        "fixture": "usage-3",
+        "operation": "export.v2",
+        "count": 10,
+        "p95Ms": 302.7271249999758,
+        "maxMs": 302.7271249999758,
+        "baselineEquivalent": false
+      }
+    ],
+    "loadHTTPGroups": [
+      {
+        "repetition": 1,
+        "phase": "sustained",
+        "http": {
+          "count": 6000,
+          "p95Ms": 24.495417000005546,
+          "maxMs": 41.05970800000068
+        }
+      },
+      {
+        "repetition": 1,
+        "phase": "burst",
+        "http": {
+          "count": 1000,
+          "p95Ms": 19.30295899999328,
+          "maxMs": 31.777333999983966
+        }
+      },
+      {
+        "repetition": 2,
+        "phase": "sustained",
+        "http": {
+          "count": 6000,
+          "p95Ms": 24.679583000019193,
+          "maxMs": 34.25479199999245
+        }
+      },
+      {
+        "repetition": 2,
+        "phase": "burst",
+        "http": {
+          "count": 1000,
+          "p95Ms": 18.001708000083454,
+          "maxMs": 29.632791999960318
+        }
+      },
+      {
+        "repetition": 3,
+        "phase": "sustained",
+        "http": {
+          "count": 6000,
+          "p95Ms": 25.58962500002235,
+          "maxMs": 37.694082999951206
+        }
+      },
+      {
+        "repetition": 3,
+        "phase": "burst",
+        "http": {
+          "count": 1000,
+          "p95Ms": 18.121707999962382,
+          "maxMs": 27.07358299999032
+        }
+      }
+    ],
+    "loadTabGroups": [
+      {
+        "repetition": 1,
+        "phase": "sustained",
+        "tab": 0,
+        "expected": 60,
+        "accepted": 60,
+        "confirmed": 60,
+        "count": 60,
+        "p95Ms": 525.1375829999997,
+        "maxMs": 553.8354579999577,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 1,
+        "phase": "sustained",
+        "tab": 1,
+        "expected": 60,
+        "accepted": 60,
+        "confirmed": 60,
+        "count": 60,
+        "p95Ms": 538.971332999994,
+        "maxMs": 569.8539579999997,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 1,
+        "phase": "burst",
+        "tab": 0,
+        "expected": 4,
+        "accepted": 4,
+        "confirmed": 4,
+        "count": 4,
+        "p95Ms": 516.107667000033,
+        "maxMs": 516.107667000033,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 1,
+        "phase": "burst",
+        "tab": 1,
+        "expected": 4,
+        "accepted": 4,
+        "confirmed": 4,
+        "count": 4,
+        "p95Ms": 525.9767920000013,
+        "maxMs": 525.9767920000013,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 2,
+        "phase": "sustained",
+        "tab": 0,
+        "expected": 60,
+        "accepted": 60,
+        "confirmed": 60,
+        "count": 60,
+        "p95Ms": 515.8890000000247,
+        "maxMs": 561.5026669999934,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 2,
+        "phase": "sustained",
+        "tab": 1,
+        "expected": 60,
+        "accepted": 60,
+        "confirmed": 60,
+        "count": 60,
+        "p95Ms": 449.77766699995846,
+        "maxMs": 587.6125830000383,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 2,
+        "phase": "burst",
+        "tab": 0,
+        "expected": 4,
+        "accepted": 4,
+        "confirmed": 4,
+        "count": 4,
+        "p95Ms": 351.74870799994096,
+        "maxMs": 351.74870799994096,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 2,
+        "phase": "burst",
+        "tab": 1,
+        "expected": 4,
+        "accepted": 4,
+        "confirmed": 4,
+        "count": 4,
+        "p95Ms": 421.6712080000434,
+        "maxMs": 421.6712080000434,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 3,
+        "phase": "sustained",
+        "tab": 0,
+        "expected": 60,
+        "accepted": 60,
+        "confirmed": 60,
+        "count": 60,
+        "p95Ms": 521.7945420000469,
+        "maxMs": 561.3917499999516,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 3,
+        "phase": "sustained",
+        "tab": 1,
+        "expected": 60,
+        "accepted": 60,
+        "confirmed": 60,
+        "count": 60,
+        "p95Ms": 515.5830829999177,
+        "maxMs": 590.5300000000279,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 3,
+        "phase": "burst",
+        "tab": 0,
+        "expected": 4,
+        "accepted": 4,
+        "confirmed": 4,
+        "count": 4,
+        "p95Ms": 558.4380419999361,
+        "maxMs": 558.4380419999361,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      },
+      {
+        "repetition": 3,
+        "phase": "burst",
+        "tab": 1,
+        "expected": 4,
+        "accepted": 4,
+        "confirmed": 4,
+        "count": 4,
+        "p95Ms": 258.3112499999115,
+        "maxMs": 258.3112499999115,
+        "missing": 0,
+        "wrong": 0,
+        "duplicate": 0,
+        "late": 0
+      }
+    ],
+    "workflowTabGroups": [
+      {
+        "repetition": 1,
+        "tab": 0,
+        "count": 10,
+        "p95Ms": 274.9963749999879,
+        "p95IsCohortMaximum": true
+      },
+      {
+        "repetition": 1,
+        "tab": 1,
+        "count": 10,
+        "p95Ms": 563.1221249999944,
+        "p95IsCohortMaximum": true
+      },
+      {
+        "repetition": 2,
+        "tab": 0,
+        "count": 10,
+        "p95Ms": 529.6793750000652,
+        "p95IsCohortMaximum": true
+      },
+      {
+        "repetition": 2,
+        "tab": 1,
+        "count": 10,
+        "p95Ms": 552.1486670000013,
+        "p95IsCohortMaximum": true
+      },
+      {
+        "repetition": 3,
+        "tab": 0,
+        "count": 10,
+        "p95Ms": 261.8318749999162,
+        "p95IsCohortMaximum": true
+      },
+      {
+        "repetition": 3,
+        "tab": 1,
+        "count": 10,
+        "p95Ms": 544.3172499998473,
+        "p95IsCohortMaximum": true
+      }
+    ],
+    "workflowInteractions": {
+      "sequences": 60,
+      "maxSequenceMs": 185.8247500001453,
+      "maxActionMs": 78.6290830001235,
+      "thresholdInvented": false,
+      "scope": "Actual per-action spans plus cumulative per-page long-task observation; no whole React/browser accounting."
+    },
+    "flush": [
+      {
+        "id": "flush-1",
+        "elapsed": 109546.9562090002,
+        "logicalEvents": 1000,
+        "attempts": 1031
+      },
+      {
+        "id": "flush-2",
+        "elapsed": 103361.05908299983,
+        "logicalEvents": 1000,
+        "attempts": 1031
+      },
+      {
+        "id": "flush-3",
+        "elapsed": 103337.99012500001,
+        "logicalEvents": 1000,
+        "attempts": 1034
+      }
+    ],
+    "heap": {
+      "cycles": 100,
+      "beforeUsedHeap": 84099888,
+      "afterUsedHeap": 84567640,
+      "ratio": 1.0055618623416003,
+      "limit": 1.2,
+      "collection": "3 explicit runtime GC calls, each followed by25ms, before and after"
+    },
+    "money": {
+      "uniqueUsageFactsPerCohort": 110,
+      "snapshotQueriesPerCohort": 110,
+      "estimatedUSD": 0.008127,
+      "included": 29,
+      "unknownCounts": 74,
+      "unsupportedBasis": 7,
+      "synthetic": true
+    },
+    "scope": "14 exact relative groups approved separately; raw result remains false/exit1. No resampling or borrowed prior waiver.",
+    "browserResourceScope": "Official campaign: two initial public document inventories plus owned context/Chrome destruction; reported zeros are closure-derived, not a late post-document zero snapshot. Separate current resource-control03 records actual route-teardown zero inventories."
+  },
+  "privateReceiptHashes": [
+    {
+      "label": "W04-root-source-build-reuse03.json",
+      "sha256": "7a0c152990d6f5c21c4372fa9c5ca164c93ad60f8ab8552d06da9db43dbc1f51"
+    },
+    {
+      "label": "W04-root-source-build-reuse-audit03.json",
+      "sha256": "3ba3b284aa78a62bafa054fcda5c741bb49d1aba6f1df7c83f4bf3dcaead2712"
+    },
+    {
+      "label": "W04-root-final-checks-audit03.json",
+      "sha256": "482a7dca59c10debfbe6831a88ecc0a4b4d339ac46131c16dcc4c177191866d9"
+    },
+    {
+      "label": "W04-root-current-resource-witness03.json",
+      "sha256": "b0a2f01e4a5972b70a4afb3e504fcbb239f2011df8647ac5ed316556459a4437"
+    },
+    {
+      "label": "W04-root-current-witness-sql-integration-reconcile03.json",
+      "sha256": "9bd1c20f55b75feede148986b0e83d0af9892dfebec460910ddba2bdaf16cb51"
+    },
+    {
+      "label": "W04-root-current-witness-sql-browser-reconcile03.json",
+      "sha256": "3a56349b113732916c3bebae6694665e22263ab7d7996888f6a371c2045d8d4f"
+    },
+    {
+      "label": "W04-root-refreeze-originals-after01.json",
+      "sha256": "b2dd57ffeefb90cb882cfef9a3b12dfa4d35624d8fb0e0d81617499b5ae56e42"
+    },
+    {
+      "label": "W04-root-all-idle01.json",
+      "sha256": "504faa63baa74698addff84efa001417f633fb2077084175fec8b2045b2f9ac2"
+    },
+    {
+      "label": "W04-root-quiet-release01.json",
+      "sha256": "cfbfa40536f8b83a3f559c45d9494e5effe517ff73dcb73d873481cac70094b7"
+    },
+    {
+      "label": "W04-root-official-finite-audit02.json",
+      "sha256": "e63c7aaaf3203dd9ff00d721ea09e78335b0577c3f2af49b7bf967e60a8dcdf0"
+    },
+    {
+      "label": "W04-root-official-semantics-audit01.json",
+      "sha256": "4e28a4bdc5a215cbbab2be8fd62d6a43ade2d48ad738b150073804dc5fd43c9f"
+    },
+    {
+      "label": "W04-root-money-watermarks-audit01.json",
+      "sha256": "cfc7480c3910d1e341b4de50cc40d9f1e87d2fbdef307cbc79a8415aedf80b37"
+    },
+    {
+      "label": "W04-root-official-closure-audit01.json",
+      "sha256": "0abb389ce8a15ad9c7f854f7f2f6b14be392735a30a5b42f9dc0dab81ad4c1e5"
+    },
+    {
+      "label": "W04-root-official-resource-audit01.json",
+      "sha256": "56cffbce7ab30be22e2d7a0cb550fc180d9acccab2d878d60fc52b9127b1d8a3"
+    },
+    {
+      "label": "W04-root-official-workflow-budget01.json",
+      "sha256": "13c446d48a7087f4e25094f83d595b7ea5a8cb0db08abb4f2d50fe5019e98a0c"
+    },
+    {
+      "label": "W04-root-official-visible-ack01.json",
+      "sha256": "5de34eecded7f04eb92580747231fa298de44b901d351c5cd2ec7fc0ca9454d9"
+    },
+    {
+      "label": "W04-root-official-workflow-ack02.json",
+      "sha256": "62da66cde307053712da5787a496a9ee5c953fdd37bf5ae306f519f062704da6"
+    },
+    {
+      "label": "postCampaignSQL",
+      "sha256": "63325c1439454357490fe064d345c025dc3b0b3c932617f395d60e7935ac780e"
+    },
+    {
+      "label": "preparedByteAudit",
+      "sha256": "c1fe63b041d6266bdd7ceb4434d32ee044e7c3488a3d71f17c3b245d96963316"
+    },
+    {
+      "label": "preparedFiniteAudit",
+      "sha256": "22865655cfd67569b5d6133cca0e0215a1bdaa65ef4c666d25c7ec9b6df95005"
+    },
+    {
+      "label": "preparedSQLAudit",
+      "sha256": "b3e90468345944fdb37814077e32378fc03693d36236cf7f9564e1a4b5b7ab62"
+    },
+    {
+      "label": "readiness",
+      "sha256": "7fac2590fe82eb1480d00526e9f9749f7fcde3dddc125be7eae40b4a2ad571fb"
+    },
+    {
+      "label": "UI04",
+      "sha256": "805feda04d57289a01a6fd62a7c6c787e54b87d5661e5a7a289ebeb7c8af6bba"
+    },
+    {
+      "label": "safePNG",
+      "sha256": "fac92fde3a1d5337541b6ecfa8433939b45d288a1aede3acffa101c0fa180484"
+    },
+    {
+      "label": "currentWitnesses",
+      "sha256": "051bf882f8b3804184404fdc778abcb4677293392e5ef45a025e2c67ade5f706"
+    },
+    {
+      "label": "actualIndependentReview",
+      "sha256": "7a04b4eadc7368265ac9750bc1e42cc8d829d1e76870635e2bf8e888de3c0f1b"
+    },
+    {
+      "label": "AstraMD",
+      "sha256": "7e2542663d4a72090333f2af3aaee6d65d1e45e7c181cd40cbb6a7d515737cc4"
+    },
+    {
+      "label": "AstraJSON",
+      "sha256": "985b219d529043f469ebc16a53c5badfd5ed8fae8efc9c9e2c6e16b1d029ef01"
+    },
+    {
+      "label": "prepared",
+      "sha256": "3dac5d8489c7b4d8788d4d5e5a69ae7d8416bba384bbbf446c7b82901283d615"
+    },
+    {
+      "label": "rawCampaign",
+      "sha256": "4d236b270126d73e7f914343300904a4657868ae372d9d75c8fab22e538e65d4"
+    },
+    {
+      "label": "workerExplanation",
+      "sha256": "bdb546089f2a861744ca48f3f702023f348939e0f850205e47925fda71b32c98"
+    }
+  ],
+  "limits": [
+    "Sparse comparisons: frozen1000backlog; preceding ingestion creates10in_progress; measured boards50backlog+10in_progress. No dependencies/artifacts/gate decisions; no dense-history or arbitrary-scale claim.",
+    "Chrome154 originals remain historical. Chrome155 full-six/browser/resource packet is fresh.",
+    "Public timer/EventSource probes exclude internalReact/Chromium; native heap is not browser heap.",
+    "No live GitHub account, Linux or pristineOS verification.",
+    "No new manual end-user install or app launch performed during Task5.",
+    "All private rawheaders, IDs, SQL, process/environment records, videos and private-path images remain outside public evidence.",
+    "Original approved513line W04 plan bytes stay immutable; its historical unchecked boxes are not current executed-status truth.",
+    "UI04 main video: nine sampled frames, not full playback; other four videos metadata-only and all remain private."
+  ],
+  "openGates": [
+    "two exact whole-candidate Standards/Spec reviews",
+    "Root integration and exact integrated-release review",
+    "v1.0.0 tag and source publication",
+    "archive and guarded cleanup",
+    "manual app launch"
+  ]
+}

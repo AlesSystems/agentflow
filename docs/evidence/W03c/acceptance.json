@@ -1,6 +1,6 @@
 {
   "package": "W03c",
-  "status": "Campaign accepted under exact Astra observations; final documentation review, integration and cleanup pending.",
+  "status": "Integrated through PR #15; private archival and guarded cleanup complete. W04 and v1 release remain open.",
   "measurementCandidate": "fd44b9545d9e8fbff1f8b8486a96a3d3540f4f59",
   "baseCandidate": "6611e8e4ed8ec61d57be689a7cfd82ee75b9275e",
   "acceptedApplicationThrough": "8fdff6c5fa63e0945b2bc7bfc2478a67d56dad15",
@@ -4552,5 +4552,19 @@
   },
   "planSHA256": "8c0950094d764a1c02c6f09213b939abbbb829cb9208c42b35fbbf47ca757ccf",
   "campaignAmendmentApprovalSHA256": "afb4a16dbc88afc494d82fb7cdb15af191dcbe03d33f89a83b1931f81ca2b43f",
-  "dedicatedTwoTabWitnessSHA256": "6582fc1ea8003f9d83a033782dc5ca70d68cd419242234854f0e2b4d0079026e"
+  "dedicatedTwoTabWitnessSHA256": "6582fc1ea8003f9d83a033782dc5ca70d68cd419242234854f0e2b4d0079026e",
+  "delivery": {
+    "reviewedHead": "ac229e54fde92caca84d685f4bc6743cf6bdf238",
+    "merge": "e8dc6967d3964c672bd964a65584e403e11ce27a",
+    "pullRequest": 15,
+    "mergedAt": "2026-10-12T15:13:47Z",
+    "integrationReceiptSHA256": "dfa90fe9fece5b76a58761dac8f7056bf556328b4fb9afb2ea863cb006577699",
+    "guardedCleanup": "complete",
+    "cleanupReceiptSHA256": "07199a8b73a11522f9f8e65c5fd0fe7b64a18b2f6d3ea06d2370a3baeaea42cd",
+    "predecessorEvidenceSHA256": "80f781ed91356a3aacb5c42ea8c787d89f499d68af1048bb113b4b3679c90bc0",
+    "originalCampaignMetricsUnchanged": true,
+    "ciPassClaimed": false,
+    "W04": "unexecuted",
+    "v1Release": "unexecuted"
+  }
 }

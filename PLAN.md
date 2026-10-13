@@ -1,6 +1,6 @@
 # Implement AgentFlow v1
 
-This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, W03a, and W03b are integrated through PRs #4–#14. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b passed its approved exact plan, qualified verification, and independent whole-package reviews with scoped repair re-review. PR #14 integrated the reviewed candidate; private archival and guarded cleanup are complete. [Its receipt](docs/implementation/W03b.md) preserves source qualifications. W03c implementation and exact-source reviews are accepted, with a separately approved campaign disposition. Its final documentation review, integration, and guarded cleanup remain open. W03c and W04 package boxes remain open until their reviewed integration. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
+This plan builds the local application described in [ROADMAP.md](ROADMAP.md). P01–P07, W01, W02, W03a, and W03b are integrated through PRs #4–#14. [The W02 receipt](docs/implementation/W02.md) records its reviewed integration, measured executable, evidence, and guarded cleanup. W03b passed its approved exact plan, qualified verification, and independent whole-package reviews with scoped repair re-review. PR #14 integrated the reviewed candidate; private archival and guarded cleanup are complete. [Its receipt](docs/implementation/W03b.md) preserves source qualifications. W03c is integrated through PR #15, with reviewed campaign disposition and completed private archival and guarded cleanup. [Its receipt](docs/implementation/W03c.md) preserves the original results and qualifications. The [approved W04 qualification and release plan](docs/superpowers/plans/2026-10-12-w04-v1-release.md) remains an immutable historical approval. Root accepted Tasks 1–4, including one complete raw false/exit 1 campaign under a separate exact 14-group Astra disposition. [The W04 receipt](docs/implementation/W04.md) and delivery ledger record executed gates; Task 5 docs/whole-candidate reviews, W04 integration and release remain open. P01–P07, W01–W02, W03a–W03c, and W04 are work-package identifiers, not GitHub PR numbers. All three phases are required for v1. See [the Phase 3 contract](docs/V1_WORKFLOWS.md).
 
 ## Use the plan
 
@@ -241,10 +241,10 @@ Run destructive scenarios only in synthetic isolated test directories.
 Depends on W03b. Proposed files: `src/usage/`, report/query schemas, usage view,
 price-snapshot handling, and aggregation/replay/timezone tests.
 
-- [ ] Implement explicit usage reporting, bounded snapshot summaries, filters,
+- [x] Implement explicit usage reporting, bounded snapshot summaries, filters,
   coverage labels, and optional estimates under the Phase 3 contract.
-- [ ] Preserve unknown values and source/model/time provenance; deduplicate retries.
-- [ ] Test absent/partial usage, mixed models/currencies, rework, outbox replay,
+- [x] Preserve unknown values and source/model/time provenance; deduplicate retries.
+- [x] Test absent/partial usage, mixed models/currencies, rework, outbox replay,
   timezone boundaries, and retention/export reconciliation.
 
 Pass when repeated reports never inflate totals, missing data is never zero, and
@@ -255,17 +255,17 @@ credentials or unrequested outbound pricing service is required for local use.
 
 Depends on W03c and every prior package gate. Proposed files include release
 walkthroughs, production load fixtures, upgrade/recovery scenarios, and release
-notes; runtime fixes require focused regression evidence.
+notes; runtime fixes require focused regression evidence. Tasks 1–4 are Root-accepted; the [receipt](docs/implementation/W04.md) distinguishes the fresh Task 1 installation, later qualified copies/build, current full packet and separate 14-group disposition. These checked validation gates do not mark whole-candidate review, integration or publication complete.
 
-- [ ] Run the full P07 suite again on the integrated v1 production build, using a
+- [x] Run the full P07 suite again on the integrated v1 production build, using a
   fresh checkout and isolated data/outbox directories on the named macOS host.
-- [ ] Upgrade a Phase 2 fixture through every Phase 3 migration; prove failed
+- [x] Upgrade a Phase 2 fixture through every Phase 3 migration; prove failed
   migration recovery, backup restore, generation renewal, and old outbox handling.
-- [ ] Complete the roadmap's branching/rework journey through real HTTP/CLI,
+- [x] Complete the roadmap's branching/rework journey through real HTTP/CLI,
   SQLite, graph/list, and two browser sessions with synthetic evidence.
-- [ ] Verify opt-in integration disconnect/offline behavior, exports, protected
+- [x] Verify opt-in integration disconnect/offline behavior, exports, protected
   retention, usage reconciliation, keyboard navigation, zoom, and narrow layout.
-- [ ] Retain P07 performance budgets; additionally test 100 workflows of 100 nodes
+- [x] Retain P07 performance budgets; additionally test 100 workflows of 100 nodes
   each, opening a 100-node graph with 200 edges and its equivalent list. On the
   named host, target snapshot p95 <250 ms and report-to-visible p95 <2 seconds.
   Measure at least three runs; record graph interaction stalls and resource cleanup.
@@ -281,7 +281,7 @@ in release limitations without misrepresenting fixture coverage as a live test.
 
 ## Performance acceptance targets
 
-These budgets passed at the P07 Phase 2 checkpoint on its source-qualified named-host fixtures. W04 must repeat them on integrated v1; that gate remains open. Adjust only through a recorded decision with measurements and user impact.
+These budgets passed at the P07 Phase 2 checkpoint on its source-qualified named-host fixtures. W04 repeated them on its qualified v1 candidate; Root accepted the exact 14 relative groups separately while retaining raw false/exit 1. Whole-candidate/integrated-release review and publication remain open. Adjust only through a recorded decision with measurements and user impact.
 
 Use a named machine, production build, 1,000 tasks, 10,000 stored run events, 10 producers on distinct tasks, and two browser tabs. Run 20 new events/second for five minutes, then a 100-event/second burst for ten seconds. Respect configured rate limits and record any expected `429` responses separately from accepted events. Producers emit valid ordered lifecycles.
 
