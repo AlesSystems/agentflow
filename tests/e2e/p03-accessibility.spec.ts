@@ -24,7 +24,10 @@ test("board, task, settings and narrow layouts retain accessible controls", asyn
     const f = await fixture(page, server);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(f.boardUrl);
-    const projectsTarget = await page.locator(".project-back").boundingBox();
+    const projectsTarget = await page
+      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("button")
+      .boundingBox();
     expect(projectsTarget?.height).toBeGreaterThanOrEqual(44);
     await axe(page);
     const contrast = await page.evaluate(() => {
@@ -56,7 +59,7 @@ test("board, task, settings and narrow layouts retain accessible controls", asyn
           element: document.querySelector(".primary")!,
           background: document.querySelector(".primary")!,
         },
-        ...[...document.querySelectorAll(".lane h2")].map((element) => ({
+        ...[...document.querySelectorAll(".lane h3")].map((element) => ({
           name: element.textContent,
           element,
           background: element,
@@ -64,14 +67,23 @@ test("board, task, settings and narrow layouts retain accessible controls", asyn
       ];
       return pairs.map((pair) => {
         const foreground = getComputedStyle(pair.element).color;
-        const background = getComputedStyle(pair.background).backgroundColor;
-        const a = lum(rgb(foreground)),
-          b = lum(rgb(background));
+        const style = getComputedStyle(pair.background);
+        // A transparent fill painted by a gradient is checked at every stop.
+        const background = /^rgba\(.*, 0\)$/.test(style.backgroundColor)
+          ? style.backgroundImage
+          : style.backgroundColor;
+        const stops = background.match(/rgba?\([^)]+\)/g) ?? [background];
+        const a = lum(rgb(foreground));
         return {
           name: pair.name,
           foreground,
           background,
-          ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+          ratio: Math.min(
+            ...stops.map((stop) => {
+              const b = lum(rgb(stop));
+              return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+            }),
+          ),
         };
       });
     });

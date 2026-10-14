@@ -1,4 +1,5 @@
 import { HistoryRuntime } from "../history/runtime";
+import type { CodexObserver } from "../integrations/codex/observer";
 import { GithubCoordinator } from "../integrations/github/coordinator";
 import type { openOwnedStore } from "../db";
 import type { RuntimeConfig } from "./config";
@@ -11,17 +12,19 @@ type Runtime = {
   identity: object;
   github: GithubCoordinator;
   history: HistoryRuntime;
+  codex?: CodexObserver;
 };
 const key = Symbol.for("agentflow.live-runtime");
 const globalRuntime = globalThis as typeof globalThis & {
   [key]: Runtime | undefined;
 };
-export function publishRuntime(config: RuntimeConfig, owned: Owned, github=new GithubCoordinator(owned.store,config.githubTokenFile), history?:HistoryRuntime) {
+export function publishRuntime(config: RuntimeConfig, owned: Owned, github=new GithubCoordinator(owned.store,config.githubTokenFile), history?:HistoryRuntime, codex?:CodexObserver) {
   if (globalRuntime[key]) throw new Error("RUNTIME_ALREADY_OWNED");
   globalRuntime[key] = {
     kind: "ready",
     github,
     history:history ?? new HistoryRuntime(owned.store),
+    codex,
     config,
     owned,
     identity: Object.freeze({}),
@@ -44,7 +47,7 @@ export function guard(headers: Headers) {
 }
 export function beginClosing() {
   const state = globalRuntime[key];
-  if (state) {state.kind = "closing";state.github.beginClosing();state.history.beginClosing();}
+  if (state) {state.kind = "closing";state.github.beginClosing();state.history.beginClosing();state.codex?.beginClosing();}
 }
 export function clearRuntime() {
   delete globalRuntime[key];

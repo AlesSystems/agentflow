@@ -1,4 +1,8 @@
 import { HistoryRuntime } from "../history/runtime";
+import { CodexObserver } from "../integrations/codex/observer";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { GithubCoordinator } from "../integrations/github/coordinator";
 import { createServer, type IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
@@ -37,6 +41,8 @@ export async function startRuntime(
   let app: Awaited<ReturnType<(typeof import("next"))["default"]>> | undefined;
   let server: ReturnType<typeof createServer> | undefined;
   const github=new GithubCoordinator(owned.store,config.githubTokenFile,hooks.githubTransport);
+  const managedCodex = join(homedir(), ".codex", "packages", "app-server-daemon", "current", "bin", "codex");
+  const codex = new CodexObserver({ executable: config.codexExecutable ?? (existsSync(managedCodex) ? managedCodex : "codex") });
   let history:HistoryRuntime|undefined;
   const mutationBudget = new MutationBudget();
   const streams = new ChangeStreams(owned.store, owned.credentials);
@@ -47,6 +53,7 @@ export async function startRuntime(
     if (shutdownPromise) return shutdownPromise;
     beginClosing();
     github.beginClosing();
+    codex.beginClosing();
     history?.beginClosing();
     streams.close();
     shutdownPromise = (async () => {
@@ -63,6 +70,7 @@ export async function startRuntime(
       }
       await Promise.allSettled([...requests]);
       await github.close();
+      await codex.close();
       await history?.close();
       await owned.store.drain();
       await app?.close();
@@ -83,7 +91,7 @@ export async function startRuntime(
       port: config.port,
     });
     await app.prepare();
-    publishRuntime(config, owned, github, historyOwner);
+    publishRuntime(config, owned, github, historyOwner, codex);
     const handler = app.getRequestHandler();
     async function dispatch(
       request: IncomingMessage,

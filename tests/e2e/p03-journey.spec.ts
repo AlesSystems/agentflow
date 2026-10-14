@@ -17,9 +17,8 @@ test("synthetic manual acceptance journey persists across a production restart",
       .fill(server.credentials().pairingToken);
     await page.getByRole("button", { name: "Pair this browser" }).click();
     await expect(
-      page.getByRole("heading", { name: "Overview", exact: true }),
+      page.getByRole("heading", { name: "Projects", exact: true }),
     ).toBeVisible();
-    await page.getByRole("link", { name: "Projects", exact: true }).click();
     await page
       .getByRole("button", { name: "Create project", exact: true })
       .first()
@@ -143,9 +142,8 @@ test("keyboard alone creates, edits, accepts, comments and reopens a synthetic t
     );
     await press(page.getByRole("button", { name: "Pair this browser" }));
     await expect(
-      page.getByRole("heading", { name: "Overview", exact: true }),
+      page.getByRole("heading", { name: "Projects", exact: true }),
     ).toBeVisible();
-    await press(page.getByRole("link", { name: "Projects", exact: true }));
     await press(
       page.getByRole("button", { name: "Create project", exact: true }).first(),
     );

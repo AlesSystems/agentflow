@@ -1,20 +1,23 @@
-import { pageData } from "../server/page-data";
-import { overviewResponse } from "../contracts/responses";
+import { redirect } from "next/navigation";
+import { pageData, firstActiveProjectId } from "../server/page-data";
+import { projectsResponse } from "../contracts/responses";
 import { Workspace } from "../client/provider";
 import { Shell, NeedsPairing } from "../components/shell";
-import { Overview } from "../components/overview";
+import { Projects } from "../components/projects";
 export const dynamic = "force-dynamic";
 export default async function Home() {
+  const projectId = await firstActiveProjectId();
+  if (projectId) redirect(`/projects/${projectId}`);
   const data = await pageData(
-    "/overview?limit=50",
-    { kind: "overview", input: { limit: 50 } },
-    overviewResponse,
+    "/projects?archived=false&limit=50",
+    { kind: "projects", input: { limit: 50, archived: "false" } },
+    projectsResponse,
   );
   if (!data) return <NeedsPairing />;
   return (
     <Workspace {...data}>
       <Shell>
-        <Overview />
+        <Projects />
       </Shell>
     </Workspace>
   );

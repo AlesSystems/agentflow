@@ -1,6 +1,7 @@
 "use client";
+import { CodexLink } from "./codex";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRead, useWorkspace, QueryFeedback } from "../client/provider";
 import { projectsResponse, projectResponse } from "../contracts/responses";
@@ -10,7 +11,7 @@ import { freezeCommand, type FrozenCommand } from "../client/commands";
 import { ApiError } from "../client/api";
 import { Modal } from "./ui/dialog";
 type Project = z.infer<typeof projectsResponse>["data"]["items"][number];
-export function Projects() {
+export function Projects({ initialCreate = false }: { initialCreate?: boolean }) {
   const [archived, setArchived] = useState(false),
     [cursor, setCursor] = useState<string | null>(null),
     [pages, setPages] = useState<Project[]>([]);
@@ -18,11 +19,14 @@ export function Projects() {
   const query = useRead(path, projectsResponse);
   const { api, pair, generation } = useWorkspace();
   const cache = useQueryClient();
-  const [editing, setEditing] = useState<Project | "new" | null>(null),
+  const [editing, setEditing] = useState<Project | "new" | null>(initialCreate ? "new" : null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [retry, setRetry] = useState<FrozenCommand | null>(null),
     [archive, setArchive] = useState<Project | null>(null);
+  useEffect(() => {
+    if (initialCreate) window.history.replaceState({}, "", "/projects");
+  }, [initialCreate]);
   const [current, setCurrent] = useState<Project | null>(null),
     [dirty, setDirty] = useState(false),
     [confirmClose, setConfirmClose] = useState(false);
@@ -110,6 +114,7 @@ export function Projects() {
           Create project
         </button>
       </div>
+      <CodexLink />
       <label className="inline">
         <input
           type="checkbox"

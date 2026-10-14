@@ -30,7 +30,7 @@ export default async function Page({
   );
   return data ? (
     <Workspace {...data}>
-      <Shell>
+      <Shell projectId={projectId}>
         <Workflows projectId={projectId} initial={selection} />
       </Shell>
     </Workspace>

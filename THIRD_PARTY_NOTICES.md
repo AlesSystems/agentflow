@@ -40,3 +40,13 @@ W01 adds @xyflow/react 12.12.0 and @xyflow/system under the MIT License.
 Their distributed LICENSE files and dependency notices are retained in the
 installed packages and included in the package notice inventory. React Flow
 is copyright (c) 2019-2025 webkid GmbH.
+
+## Bundled fonts
+
+`src/app/fonts/` bundles the Latin subsets of two fonts, taken from the
+Fontsource 5.3.0 packages. Both are licensed under the SIL Open Font License,
+Version 1.1; the full license texts ship beside the font files.
+
+- Kalam, copyright (c) 2014 Indian Type Foundry. See `src/app/fonts/Kalam-OFL.txt`.
+- Atkinson Hyperlegible, copyright 2020 Braille Institute of America, Inc. See
+  `src/app/fonts/AtkinsonHyperlegible-OFL.txt`.

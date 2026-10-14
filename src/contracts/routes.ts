@@ -1,4 +1,5 @@
 import * as usage from "./usage";
+import * as codex from "./codex";
 import { historyExportQuery, historyLine, retentionPreviewInput, retentionPruneInput, retentionPreviewResponse, retentionPruneResponse } from "./history";
 import * as github from "./github";
 import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
@@ -64,7 +65,8 @@ type ResourceEndpoint = EndpointBase & {
 };
 export type StreamEndpoint = EndpointBase & { kind: "stream" };
 export type ExportEndpoint = EndpointBase & { kind: "export" };
-export type Endpoint = ResourceEndpoint | StreamEndpoint | ExportEndpoint;
+export type ObservationEndpoint = EndpointBase & { kind: "observation"; observation: "codex.list" | "codex.detail" };
+export type Endpoint = ResourceEndpoint | StreamEndpoint | ExportEndpoint | ObservationEndpoint;
 function defineCommand<S extends z.ZodType>(
   definition: EndpointBase & {
     input: S;
@@ -108,6 +110,8 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
+  { id: "listCodexChats", method: "GET", path: "/connections/codex", access: "human", input: codex.codexListQuery, response: codex.codexListResponse, status: 200, kind: "observation", observation: "codex.list", description: "Read local Codex history without resuming chats. Runtime visibility and source limitations are explicit. Requires a human browser session." },
+  { id: "getCodexChat", method: "GET", path: "/connections/codex/{id}", access: "human", input: codex.codexDetailQuery, response: codex.codexDetailResponse, status: 200, kind: "observation", observation: "codex.detail", description: "Read recorded requests, updates and child agents. Turn completion is not human task acceptance. Missing checklist progress remains unknown." },
   defineQuery({id:"getUsage",method:"GET",path:"/usage",access:"read",input:usage.usageQuery,response:usage.usageResponse,status:200,query:input=>({kind:"usage",input})}),
   defineQuery({id:"listUsagePrices",method:"GET",path:"/usage/price-snapshots",access:"read",input:usage.priceSnapshotsQuery,response:usage.priceSnapshotsResponse,status:200,query:input=>({kind:"usage.prices",input})}),
   defineCommand({id:"createUsagePriceSnapshot",method:"POST",path:"/usage/price-snapshots",access:"human",input:usage.priceSnapshotCreate,response:usage.priceSnapshotResponse,status:201,command:input=>({kind:"usage.price.create",input})}),
@@ -421,7 +425,7 @@ export function matchEndpoint(method: string, pathname: string) {
     const pattern = endpoint.path.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (_, name: string) => { names.push(name); return "([^/]+)"; });
     const match = new RegExp("^/api/v1" + pattern + "/?$").exec(pathname);
     if (match) {
-      const params = Object.fromEntries(names.map((name, i) => [name, match[i + 1].toLowerCase()]));
+      const params = Object.fromEntries(names.map((name, i) => [name, endpoint.kind === "observation" ? match[i + 1] : match[i + 1].toLowerCase()]));
       return { endpoint, id: params.id, params, path: "/api/v1" + endpoint.path.replace(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (_, name: string) => params[name]) };
     }
   }

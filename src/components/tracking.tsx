@@ -1,4 +1,5 @@
 "use client";
+import { CodexLink } from "./codex";
 import Link from "next/link";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,9 +10,30 @@ import { ApiError } from "../client/api";
 import { trackingAgentsResponse, trackingRunsResponse, trackingRunResponse, activityResponse, type RunSummary } from "../contracts/tracking";
 import { type UsagePayload } from "../contracts/usage";
 import { agentResponse, eventsResponse, closeInput } from "../contracts/observations";
+type Tone = "ok" | "fail" | "live" | "stale" | "pending" | "neutral";
+export function reportTone(run: Pick<RunSummary, "state" | "freshness">): Tone {
+  if (run.freshness.reporting === "stale") return "stale";
+  if (run.state === "succeeded") return "ok";
+  if (run.state === "failed" || run.state === "interrupted") return "fail";
+  if (run.state === "running" && run.freshness.reporting === "fresh") return "live";
+  if (run.state === "cancelled") return "neutral";
+  return "pending";
+}
+const toneIcon: Record<Tone, React.ReactNode> = {
+  ok: <path d="M2.5 7.5l3 3 6-7" />,
+  fail: <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />,
+  live: <><circle cx="7" cy="7" r="5" /><path d="M7 2v5h5" fill="currentColor" /></>,
+  stale: <><circle cx="7" cy="7" r="5" /><path d="M7 4v3.5l2 1.5" /></>,
+  pending: <circle cx="7" cy="7" r="4.5" strokeDasharray="2.5 2" />,
+  neutral: <path d="M3 7h8" />,
+};
+export function StateIcon({ tone }: { tone: Tone }) {
+  return <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{toneIcon[tone]}</svg>;
+}
 export function ReportingLabel({ run }: { run: Pick<RunSummary, "state" | "freshness"> }) {
   const reporting = run.freshness.reporting;
-  return <span className={`report-label ${reporting === "stale" ? "report-stale" : ""}`}>{run.state} · {reporting === "no_report_received" ? "No report received" : reporting === "fresh" ? "Fresh report" : reporting === "stale" ? "Stale report · execution uncertain" : "Terminal record"}</span>;
+  const tone = reportTone(run);
+  return <span className={`report-label report-${tone}`}><StateIcon tone={tone} />{run.state} · {reporting === "no_report_received" ? "No report received" : reporting === "fresh" ? "Fresh report" : reporting === "stale" ? "Stale report · execution uncertain" : "Terminal record"}</span>;
 }
 export function LongText({ text }: { text: string }) {
   return text.length > 320 ? <details className="long-report"><summary>{text.slice(0, 160)}… <span>Read full message</span></summary><p className="preserve-lines">{text}</p></details> : <p className="preserve-lines">{text}</p>;
@@ -29,7 +51,7 @@ export function Agents() {
   const page = usePaged("/tracking/agents?limit=50", trackingAgentsResponse);
   const [filter, setFilter] = useState("all");
   const items = page.items.filter(agent => filter === "all" || (filter === "stale" ? agent.staleActive > 0 : filter === "queued" ? agent.queuedNoReport > 0 : agent.freshRunning > 0));
-  return <><h1>Agents</h1><p className="intro">Registered identities and the reports they send. Execution stays with your external harness.</p>
+  return <><h1>Agents</h1><CodexLink /><p className="intro">Registered identities and the reports they send. Execution stays with your external harness.</p>
     <label className="tracking-filter">Show loaded identities<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">All identities</option><option value="fresh">Fresh running reports</option><option value="queued">Queued without a report</option><option value="stale">Stale active reports</option></select></label>
     <QueryFeedback error={page.query.error} loading={page.query.isPending} retry={() => void page.query.refetch()} />
     <ul className="tracking-list">{items.map(agent => <li key={agent.id}><h2><Link href={`/agents/${agent.id}`}>{agent.displayName}</Link></h2><p className="metadata break-word">Source {agent.source} · Default role {agent.defaultRole}</p><p>{agent.freshRunning} fresh running · {agent.queuedNoReport} queued, no report · {agent.staleActive} stale active</p></li>)}</ul>

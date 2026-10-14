@@ -61,7 +61,7 @@ export default function PairForm({ onPaired }: { onPaired?: () => void } = {}) {
       <p id="pairing-error" role="alert" className="error">
         {error}
       </p>
-      <button disabled={busy}>{busy ? "Pairing…" : "Pair this browser"}</button>
+      <button className="primary" disabled={busy}>{busy ? "Pairing…" : "Pair this browser"}</button>
     </form>
   );
 }

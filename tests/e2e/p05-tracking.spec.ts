@@ -41,15 +41,15 @@ test("two production tabs converge and silence alone becomes stale while the bro
     const event = { schemaVersion: 1, eventId: randomUUID(), runId, sequence: 1, type: "run.started", occurredAt: new Date().toISOString(), payload: {} };
     const accepted = await producer(server, `/runs/${runId}/events`, event);
     const received = Date.parse(accepted.data.receivedAt);
-    await expect(page.getByText("running · Fresh report", { exact: true })).toBeVisible();
-    await expect(second.locator(".metrics > div").filter({ hasText: "Reporting agents" }).locator("dd")).toHaveText("1");
+    await expect(page.locator(".task-card").getByText("running · Fresh report", { exact: true })).toBeVisible();
+    await expect(second.locator(".dash-summary > span").filter({ hasText: "reporting" }).locator("b")).toHaveText("1");
     expect(Date.now() - received).toBeLessThan(2000);
     for (const tab of [page, second]) expect(await tab.evaluate(() => (window as unknown as { streamCounts: { open: number; peak: number } }).streamCounts)).toEqual({ open: 1, peak: 1 });
     // No write or navigation occurs during this real silence interval.
-    await expect(page.getByText("running · Stale report · execution uncertain", { exact: true })).toBeVisible({ timeout: 75000 });
+    await expect(page.locator(".task-card").getByText("running · Stale report · execution uncertain", { exact: true })).toBeVisible({ timeout: 75000 });
     expect(Date.now() - received).toBeGreaterThan(60000);
     expect(Date.now() - received).toBeLessThan(75000);
-    await expect(second.locator(".metrics > div").filter({ hasText: "Reporting agents" }).locator("dd")).toHaveText("0");
+    await expect(second.locator(".dash-summary > span").filter({ hasText: "reporting" }).locator("b")).toHaveText("0");
     await expect(page.getByText("Connected updates", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: f.task.title, exact: true }).click();
     await page.getByRole("button", { name: "implementation · Synthetic P05 producer", exact: true }).click();
@@ -152,7 +152,7 @@ test("local-day metrics roll over on the healthy visible tick and focus refreshe
     await command(page, `/tasks/${f.task.id}`, { expectedVersion: 1, status: "review" }, "PATCH");
     await command(page, `/tasks/${f.task.id}/complete`, { expectedVersion: 2, evidenceNote: "Synthetic day-boundary fixture" });
     await page.goto(server.url);
-    const completed = page.locator(".metrics > div").filter({ hasText: "Completed today" }).locator("dd");
+    const completed = page.locator(".dash-summary > span").filter({ hasText: "completed today" }).locator("b");
     await expect(completed).toHaveText("1");
     await expect(page.getByText("Connected updates", { exact: true })).toBeVisible();
     server.child.stdin!.write("2026-10-11T00:00:01.000Z\n");

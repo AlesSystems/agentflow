@@ -1,4 +1,5 @@
 import "server-only";
+import { codexId, codexListQuery, codexDetailQuery } from "../contracts/codex";
 import { taskCreationPreference } from "../contracts/task-registration";
 import { uuid } from "../contracts/common";
 import { canonicalDigest } from "../domain/request-digest";
@@ -18,7 +19,7 @@ export async function applicationApi(request: Request) {
     );
     currentGeneration=()=>state.owned.store.metadata().generation;
     if (!matched) throw new HttpError(404, "resource_not_found");
-    if (!Object.values(matched.params).every(validResourceId))
+    if (!Object.values(matched.params).every(value => matched.endpoint.kind === "observation" ? codexId.safeParse(value).success : validResourceId(value)))
       throw new HttpError(422, "validation_failed");
     const { endpoint, id, path } = matched;
     if (endpoint.kind === "stream" || endpoint.kind === "export") throw new HttpError(503, "unavailable");
@@ -43,6 +44,15 @@ export async function applicationApi(request: Request) {
         params[key] = value;
       }
       original = params;
+    }
+    if (endpoint.kind === "observation") {
+      if (!state.codex) throw new HttpError(503, "unavailable");
+      const input = endpoint.input.safeParse(original);
+      if (!input.success) throw new HttpError(400, "query_invalid");
+      const body = endpoint.observation === "codex.list"
+        ? await state.codex.list(codexListQuery.parse(input.data))
+        : await state.codex.detail(id!, codexDetailQuery.parse(input.data));
+      return json(endpoint.response.parse(body), 200, { "AgentFlow-Generation": currentGeneration() });
     }
     if (
       endpoint.eventIdentity &&

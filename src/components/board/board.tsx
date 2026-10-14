@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Scribble } from "../ui/sketch";
 import {
   DragDropProvider,
   useDraggable,
@@ -204,27 +204,30 @@ export function Board({
   }
 
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <Link className="metadata project-back" href="/projects">
-            Projects
-          </Link>
-          <nav aria-label="Project views"><Link href={`/projects/${projectId}`} aria-current="page">Board</Link> · <Link href={`/projects/${projectId}/workflows`}>Workflows</Link></nav>
-          <h1>{project.data?.data.name ?? "Work board"}</h1>
+    <section className="sheet" aria-labelledby="board-heading">
+      <div className="sheet-head">
+        <h2 id="board-heading" className="scribbled">
+          Work board
+          <Scribble />
+        </h2>
+        <p className="metadata">
+          {project.data?.data.name ?? "Project"} · a task completes only when a
+          human accepts it
+        </p>
+        <div className="sheet-head-end">
+          <button
+            ref={createRef}
+            className="primary"
+            disabled={archived}
+            onClick={() => {
+              setCreating(true);
+              setMessage("");
+              trigger.current = document.activeElement as HTMLElement;
+            }}
+          >
+            Create task
+          </button>
         </div>
-        <button
-          ref={createRef}
-          className="primary"
-          disabled={archived}
-          onClick={() => {
-            setCreating(true);
-            setMessage("");
-            trigger.current = document.activeElement as HTMLElement;
-          }}
-        >
-          Create task
-        </button>
       </div>
       {archived && (
         <p className="notice">
@@ -442,7 +445,7 @@ export function Board({
           <button onClick={finishClose}>Discard and leave</button>
         </div>
       </Modal>
-    </>
+    </section>
   );
 }
 type Column = ReturnType<typeof boardResponse.parse>["data"]["columns"][number];
@@ -504,10 +507,10 @@ function Lane({
       className={`lane ${active ? "selected-lane" : ""} ${isDropTarget ? "drop-target" : ""}`}
       aria-label={statusLabel[column.status]}
     >
-      <h2 className={`status-tab ${column.status}`}>
+      <h3 className={`status-tab ${column.status}`}>
         {statusLabel[column.status]}{" "}
         <span className="count">{column.total}</span>
-      </h2>
+      </h3>
       <div className="cards">
         {items.map((task) => (
           <Card
@@ -564,24 +567,47 @@ function Card({
       ref={dragRef}
       className={`task-card ${isDragging ? "dragging" : isDropping ? "dropping" : ""}`}
     >
-      <button
-        id={`card-${task.id}`}
-        className="card-title"
-        onClick={() => onOpen(task)}
-      >
-        {task.title}
-      </button>
-      <div className="card-meta">
+      <div className="card-top">
+        <button
+          id={`card-${task.id}`}
+          className="card-title"
+          onClick={() => onOpen(task)}
+        >
+          {task.title}
+        </button>
+        <button
+          ref={handleRef}
+          className="drag-handle"
+          disabled={archived || task.status === "completed"}
+          aria-label={`Drag ${task.title}`}
+          title="Drag between statuses"
+        >
+          <svg viewBox="0 0 12 16" width="12" height="16" aria-hidden="true" fill="currentColor">
+            {[3, 8, 13].flatMap((y) =>
+              [3, 9].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" />),
+            )}
+          </svg>
+        </button>
+      </div>
+      <p className="card-meta">
         <span className={`priority ${task.priority}`}>{task.priority}</span>
         {task.targetRole && <span>{task.targetRole}</span>}
-      </div>
-      <p className="metadata">{acceptanceLabel(task)}</p>
-      <p className="metadata">{task.latestAttempt ? <><ReportingLabel run={task.latestAttempt} /><br />{task.latestAttempt.agentName} · {task.latestAttempt.model ?? "Model not reported"}</> : "No registered attempts"}</p>
-      {task.assignedAgentId && (
-        <p className="metadata break-word">Assigned {task.assignedAgentId}</p>
+        <span>{acceptanceLabel(task)}</span>
+      </p>
+      {task.latestAttempt ? (
+        <p className="run-line metadata">
+          <ReportingLabel run={task.latestAttempt} />
+          <span>
+            {task.latestAttempt.agentName} · {task.latestAttempt.model ?? "Model not reported"}
+          </span>
+        </p>
+      ) : (
+        <p className="metadata">No registered attempts</p>
       )}
       {task.blockedReason && (
-        <p className="blocker">Blocked · {task.blockedReason}</p>
+        <p className="blocker">
+          <b>Blocked</b> · {task.blockedReason}
+        </p>
       )}
       {task.tags.length > 0 && (
         <div className="tags">
@@ -590,36 +616,20 @@ function Card({
           ))}
         </div>
       )}
-      {task.status === "completed" && (
-        <span className="accepted-stamp">Human accepted</span>
-      )}
       <div className="card-actions">
+        {task.status === "completed" && (
+          <span className="accepted-stamp">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2.5 7.5l3 3 6-7" />
+            </svg>
+            Human accepted
+          </span>
+        )}
         <StatusMenu
           task={task}
           disabled={archived}
           onMove={(status) => onMove(task, status)}
         />
-        <button
-          ref={handleRef}
-          className="drag-handle"
-          disabled={archived || task.status === "completed"}
-          aria-label={`Drag ${task.title}`}
-          title="Drag between statuses"
-        >
-          <svg
-            viewBox="0 0 20 20"
-            width="20"
-            height="20"
-            aria-hidden="true"
-            fill="currentColor"
-          >
-            {[5, 10, 15].flatMap((y) =>
-              [7, 13].map((x) => (
-                <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" />
-              )),
-            )}
-          </svg>
-        </button>
       </div>
     </article>
   );

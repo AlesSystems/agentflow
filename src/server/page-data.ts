@@ -6,6 +6,7 @@ import type { Store } from "../db";
 import type { ApplicationQuery } from "../db/application";
 import type { z } from "zod";
 import { QueryClient, dehydrate } from "@tanstack/react-query";
+import { projectsResponse } from "../contracts/responses";
 export function sharedStoreSnapshot<S extends z.ZodType>(
   store: Store,
   query: ApplicationQuery,
@@ -43,6 +44,17 @@ export async function pageData<S extends z.ZodType>(
       generation,
       hydration: dehydrate(cache),
     };
+  } catch {
+    return null;
+  }
+}
+export async function firstActiveProjectId() {
+  try {
+    const state = privateContext(new Headers(await headers()), "human");
+    const page = projectsResponse.parse(
+      state.owned.store.snapshot({ kind: "projects", input: { limit: 1, archived: "false" } }, Date.now()).body,
+    );
+    return page.data.items[0]?.id ?? null;
   } catch {
     return null;
   }
