@@ -124,9 +124,12 @@ describe("Claude transcript parsing", () => {
       u(5, `<bash-stdout>${S}</bash-stdout>`), u(6, `<bash-stderr>${S}</bash-stderr>`), u(7, `<local-command-stderr>${S}</local-command-stderr>`),
       u(8, `[Request interrupted by user for tool use] ${S}`), u(9, `<task-notification>${S}</task-notification>`),
       u(10, "human one", { origin: { kind: "human" } }),
+      u(11, `<agent-message from="worker">\n${S}\n</agent-message>`), u(12, `  <ci-monitor-event pr="1">${S}</ci-monitor-event>`),
+      u(13, `<create-pr-command>${S}</create-pr-command>`),
+      u(14, "<b>bold</b> is markup, not an envelope"),
     ];
     const turns = buildTurns(parseLines(input.join("\n")), { running: false });
-    expect(turns).toHaveLength(2);
+    expect(turns).toHaveLength(3);
     expect(JSON.stringify([turns, deriveIndexFields(parseLines(input.join("\n")))])).not.toContain(S);
   });
 

@@ -26,7 +26,9 @@ const iso = (value: unknown): string | null => {
 const blocks = (value: unknown): Rec[] => Array.isArray(value) ? value.map(object) : [];
 
 const skipPrefixes = ["<local-command-stdout>", "<local-command-caveat>", "<local-command-stderr>", "<task-notification>", "<bash-stdout>", "<bash-stderr>", "<system-reminder>", "[Request interrupted by user"];
-const skipped = (raw: string) => { const head = raw.trimStart(); return skipPrefixes.some((prefix) => head.startsWith(prefix)); };
+// Harness-injected records (agent messages, CI events, app actions) are one tag envelope: <x ...>...</x>.
+const envelope = (raw: string) => { const match = /^<([a-zA-Z][\w-]*)[\s>][\s\S]*<\/\1>$/.exec(raw.trim()); return !!match && match[1] !== "command-name" && match[1] !== "command-message"; };
+const skipped = (raw: string) => { const head = raw.trimStart(); return skipPrefixes.some((prefix) => head.startsWith(prefix)) || envelope(head); };
 const tag = (raw: string, name: string) => new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(raw)?.[1].trim() ?? "";
 /** Slash-command records become "/x args"; null when the text is not one. */
 function slashCommand(raw: string): string | null {
