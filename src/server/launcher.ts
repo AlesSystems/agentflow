@@ -1,5 +1,6 @@
 import { HistoryRuntime } from "../history/runtime";
 import { createCodexObserver } from "../integrations/codex/source";
+import { createClaudeObserver } from "../integrations/claude/source";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -42,7 +43,7 @@ export async function startRuntime(
   let server: ReturnType<typeof createServer> | undefined;
   const github=new GithubCoordinator(owned.store,config.githubTokenFile,hooks.githubTransport);
   const managedCodex = join(homedir(), ".codex", "packages", "app-server-daemon", "current", "bin", "codex");
-  const connectors = { codex: createCodexObserver({ executable: config.codexExecutable ?? (existsSync(managedCodex) ? managedCodex : "codex") }) };
+  const connectors = { codex: createCodexObserver({ executable: config.codexExecutable ?? (existsSync(managedCodex) ? managedCodex : "codex") }), claude: createClaudeObserver({ root: config.claudeDir }) };
   let history:HistoryRuntime|undefined;
   const mutationBudget = new MutationBudget();
   const streams = new ChangeStreams(owned.store, owned.credentials);

@@ -4,6 +4,7 @@ export type RuntimeConfig = Readonly<{
   dataDir: string;
   githubTokenFile?: string;
   codexExecutable?: string;
+  claudeDir: string;
   host: "127.0.0.1";
   port: number;
   mode: "development" | "production";
@@ -29,5 +30,10 @@ export function readConfig(
   const codexExecutable = env.AGENTFLOW_CODEX_EXECUTABLE;
   if (codexExecutable && !isAbsolute(codexExecutable))
     throw new Error("ABSOLUTE_CODEX_EXECUTABLE_REQUIRED");
-  return { dataDir, host: "127.0.0.1", port, mode, ...(env.AGENTFLOW_GITHUB_TOKEN_FILE ? {githubTokenFile:env.AGENTFLOW_GITHUB_TOKEN_FILE} : {}), ...(codexExecutable ? { codexExecutable } : {}) };
+  if (env.AGENTFLOW_CLAUDE_DIR && !isAbsolute(env.AGENTFLOW_CLAUDE_DIR))
+    throw new Error("ABSOLUTE_CLAUDE_DIR_REQUIRED");
+  const claudeDir =
+    env.AGENTFLOW_CLAUDE_DIR ||
+    (env.CLAUDE_CONFIG_DIR && isAbsolute(env.CLAUDE_CONFIG_DIR) ? env.CLAUDE_CONFIG_DIR : join(homedir(), ".claude"));
+  return { dataDir, claudeDir, host: "127.0.0.1", port, mode, ...(env.AGENTFLOW_GITHUB_TOKEN_FILE ? {githubTokenFile:env.AGENTFLOW_GITHUB_TOKEN_FILE} : {}), ...(codexExecutable ? { codexExecutable } : {}) };
 }

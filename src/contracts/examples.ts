@@ -309,3 +309,12 @@ Object.assign(responseExamples, {
   listCodexChats: {connection: codexConnectionExample, data: [codexChatExample], nextCursor: null},
   getCodexChat: {connection: codexConnectionExample, data: {chat: codexChatExample, turns: [], agents: [], nextTurnsCursor: null, nextAgentsCursor: null}},
 });
+
+const claudeChatExample = {id: "synthetic-claude-session", title: "Synthetic Claude session", cwd: "/work/synthetic", updatedAt: time, parentId: null, agentNickname: null, agentRole: null, model: "claude-synthetic", status: "running", statusSource: "live", archived: false};
+const claudeConnectionExample = {state: "connected", observedAt: time, message: "Local Claude Code transcripts. Running status comes from live Claude Code processes."};
+const claudeTurnExample = {id: "synthetic-turn", status: "completed", startedAt: time, completedAt: time, request: "Synthetic request", latestMessage: "Synthetic update", planText: null, tasks: [{text: "Synthetic task one", status: "completed"}, {text: "Synthetic task two", status: "pending"}], progress: {completed: 1, total: 2, percent: 50}};
+Object.assign(requestExamples, {listClaudeSessions: {}, getClaudeSession: {}});
+Object.assign(responseExamples, {
+  listClaudeSessions: {connection: claudeConnectionExample, data: [claudeChatExample], nextCursor: null},
+  getClaudeSession: {connection: claudeConnectionExample, data: {chat: claudeChatExample, turns: [claudeTurnExample], agents: [], nextTurnsCursor: null, nextAgentsCursor: null}},
+});

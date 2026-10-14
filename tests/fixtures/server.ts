@@ -59,6 +59,7 @@ export async function launch(
       cwd,
       env: {
         ...process.env,
+        AGENTFLOW_CLAUDE_DIR: join(dir, "no-claude-home"),
         ...options.extraEnv,
         NODE_ENV: "production",
         NEXT_TELEMETRY_DISABLED: "1",
