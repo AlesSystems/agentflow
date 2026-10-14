@@ -270,7 +270,7 @@ I/O uncertainty remains local 1. Turns retain their 500 ms bound inside the one
 five-second invocation budget. [The P06 receipt](implementation/P06.md) records
 actual producer and performance proof; P07 combined-load visibility stays separate.
 
-The harness must explicitly emit events. AgentFlow does not scrape Codex or Claude Code private state. Provider-specific adapters can follow after the generic integration has end-to-end evidence.
+The harness must explicitly emit events. Reporting never scrapes Codex or Claude Code private state. The separate human-only connector routes, `/connections/codex` and `/connections/claude`, read local history for display only; see [the Codex connector](implementation/CODEX_CONNECTOR.md) and [the Claude Code connector](implementation/CLAUDE_CONNECTOR.md).
 
 
 ## P02 serialized contracts

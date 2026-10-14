@@ -153,7 +153,8 @@ The project dashboard (`/projects/[projectId]`) is the home of the product. `/`
 redirects to the first active project, or shows Projects when none exist.
 
 1. **Top bar.** Brand, project switcher (projects, New project, and the
-   workspace pages: All projects, Agents, Activity, Usage, Codex chats),
+   workspace pages: All projects, Agents, Activity, Usage, Codex chats,
+   Claude sessions),
    connection status in words, Settings and Disconnect browser.
 2. **Needs attention.** Blocked tasks, failed runs and stale reports in this
    project as chips, with workspace-wide counts beside them.

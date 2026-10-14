@@ -200,3 +200,12 @@ The operator authorized automatic local Codex discovery after v1 release. A dedi
 Codex observations remain separate from manually managed AgentFlow tasks and acceptance evidence. A completed Codex turn describes a response lifecycle, not accepted engineering work. Missing structured task progress stays unknown. The dedicated reader cannot assert another Codex process is actively executing; the UI labels recorded observations and their timestamps.
 
 No remote or cloud-host discovery, inference, execution control, credential import or transcript persistence in AgentFlow is added. Browser sessions are required to read Codex content; reporter credentials cannot read it. Source reads use supported protocol operations with an explicit allowlist and bounded process lifetime. [The connector contract](implementation/CODEX_CONNECTOR.md) records design, acceptance and verification.
+
+### Claude Code connector observation boundary
+
+The operator authorized automatic local Claude Code discovery on 2026-10-14, accepting undocumented transcript storage as the source. Claude Code offers no supported history interface; `claude agents --json` lists only running sessions. This supersedes the earlier provider-adapter deferral for Claude Code only. The v1.0.0 tag remains unchanged.
+
+The connector reads append-only session transcripts under the Claude Code configuration directory, subagent transcripts beside them, and live process files for running status. The format may change between Claude Code releases. The reader parses tolerantly: unknown record types and unparseable lines are skipped, missing values stay unknown, and a source failure is labeled unavailable or stale rather than guessed. A synthetic fixture corpus pins the expected record shapes.
+
+Codex and Claude Code share one connector registry, route family and page. Each source supplies its own reader and copy. Observations stay separate from AgentFlow tasks and human acceptance. Recorded Claude task lists provide checklist progress; their absence stays unknown. No transcript content is persisted, exported or committed. The reader never opens session key files, prompt history, settings or credentials, and never writes to Claude Code state. Desktop-app metadata, a deep link into Claude and workflow phase progress are deferred. [The connector contract](implementation/CLAUDE_CONNECTOR.md) records design, acceptance and verification.
+
