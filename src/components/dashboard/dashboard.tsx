@@ -13,7 +13,7 @@ import { Board } from "../board/board";
 import { Modal } from "../ui/dialog";
 import { Scribble, EmptyNote } from "../ui/sketch";
 import { ReportingLabel, RunDetail, Attempts, StateIcon } from "../tracking";
-import { CodexLink } from "../codex";
+import { ConnectorLinks } from "../connector";
 import { graphLayout } from "../workflows/layout";
 
 type Panel = { kind: "run" | "agent"; id: string; title: string } | null;
@@ -317,7 +317,7 @@ function AgentsSheet({ onOpen }: { onOpen: (panel: Panel) => void }) {
           </li>
         ))}
       </ul>
-      <CodexLink />
+      <ConnectorLinks />
     </section>
   );
 }
