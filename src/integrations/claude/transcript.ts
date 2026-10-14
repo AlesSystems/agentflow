@@ -80,7 +80,9 @@ export function buildTurns(records: Rec[], options: TurnOptions): ConnectorTurn[
   const drafts: Draft[] = [];
   let turn: Draft | null = null;
   const replace = (items: [string, Task][]) => { list.clear(); for (const [id, task] of items) list.set(id, task); if (turn) turn.touched = true; };
+  const seen = new Set<string>();
   for (const record of records) {
+    if (typeof record.uuid === "string") { if (seen.has(record.uuid)) continue; seen.add(record.uuid); }
     const req = request(record, 4000);
     if (requestRaw(record) !== null && req !== null) {
       if (turn) turn.tasks = snapshot();
@@ -131,8 +133,12 @@ export function buildTurns(records: Rec[], options: TurnOptions): ConnectorTurn[
     }
   }
   if (turn) turn.tasks = snapshot();
-  return drafts.map((draft, index) => {
-    const inProgress = options.running && index === drafts.length - 1;
+  const ordered = drafts.map((draft, position) => ({ draft, position }))
+    .sort((a, b) => (a.draft.startedAt === null) !== (b.draft.startedAt === null) ? (a.draft.startedAt === null ? 1 : -1)
+      : a.draft.startedAt !== null && b.draft.startedAt !== null && a.draft.startedAt !== b.draft.startedAt ? (a.draft.startedAt < b.draft.startedAt ? -1 : 1) : a.position - b.position)
+    .map((entry) => entry.draft);
+  return ordered.map((draft, index) => {
+    const inProgress = options.running && index === ordered.length - 1;
     const tasks = draft.touched ? draft.tasks.map((task) => ({ text: task.subject, status: task.status })) : [];
     const completed = tasks.filter((task) => task.status === "completed").length;
     const latest = draft.last ? text(draft.texts.get(draft.last)!.join("\n"), 4000) : null;

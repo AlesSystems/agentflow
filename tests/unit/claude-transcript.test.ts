@@ -5,6 +5,14 @@ import { secretToken, sentinels, sessionALines } from "../fixtures/claude-home";
 const records = () => parseLines(sessionALines().join("\n"));
 const line = (o: Record<string, unknown>) => JSON.stringify(o);
 
+const replayLines = () => {
+  const ts = (i: number, ms = 0) => new Date(Date.UTC(2026, 1, 1, 0, 0, i, ms)).toISOString();
+  const req = (i: number) => JSON.stringify({ type: "user", uuid: `p${i}`, timestamp: ts(i), cwd: "/p", message: { role: "user", content: `req ${i}` } });
+  const reply = (i: number) => JSON.stringify({ type: "assistant", uuid: `a${i}`, timestamp: ts(i, 500), message: { id: `pm${i}`, content: [{ type: "text", text: `reply ${i}` }, { type: "tool_use", name: "TodoWrite", input: { todos: [{ content: `t${i}`, status: "pending" }] } }] } });
+  const pair = (i: number) => [req(i), reply(i)];
+  return [...Array.from({ length: 12 }, (_, i) => pair(i)).flat(), ...[0, 1, 2].flatMap(pair), ...[12, 13].flatMap(pair)];
+};
+
 describe("Claude transcript parsing", () => {
   it("drops partial and unparseable lines but keeps unknown record types", () => {
     const parsed = parseLines('{"type":"a"}\nnot json\n[1]\n{"type":"b"}\n{"type":"c","x');
@@ -27,6 +35,18 @@ describe("Claude transcript parsing", () => {
     expect(turns.map((x) => x.id)).toEqual(["u1", "u2", "u3"]);
     expect(turns[1]).toMatchObject({ request: "Second request\nwith two blocks", latestMessage: "Second reply", status: "recorded", planText: null, startedAt: "2026-01-01T00:00:16.000Z", completedAt: "2026-01-01T00:00:20.000Z" });
     expect(turns[0]).toMatchObject({ latestMessage: "Done with turn one", completedAt: "2026-01-01T00:00:14.000Z" });
+  });
+
+  it("ignores replayed records and orders turns chronologically", () => {
+    const turns = buildTurns(parseLines(replayLines().join("\n")), { running: true });
+    expect(turns.map((x) => x.id)).toEqual(Array.from({ length: 14 }, (_, i) => `p${i}`));
+    expect(new Set(turns.map((x) => x.id)).size).toBe(14);
+    expect(turns[0]).toMatchObject({ latestMessage: "reply 0", tasks: [{ text: "t0", status: "pending" }] });
+    expect(turns[13].status).toBe("inProgress");
+    expect(turns.slice(0, 13).every((x) => x.status === "recorded")).toBe(true);
+    const out = [replayLines()[2], replayLines()[0]].map((l) => l);
+    const sorted = buildTurns(parseLines([out[1], JSON.stringify({ type: "user", timestamp: "bad", message: { role: "user", content: "no ts" } }), replayLines()[2]].join("\n")), { running: false });
+    expect(sorted.map((x) => x.request)).toEqual(["req 0", "req 1", "no ts"]);
   });
 
   it("marks only the last turn inProgress when running", () => {

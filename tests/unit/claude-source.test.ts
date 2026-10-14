@@ -121,6 +121,25 @@ describe("Claude source reader", () => {
     await observer.close();
   });
 
+  it("returns unique turns, newest first, when a transcript replays earlier records", async () => {
+    const h = setup();
+    const ts = (i: number, ms = 0) => new Date(Date.UTC(2026, 1, 1, 0, 0, i, ms)).toISOString();
+    const pair = (i: number) => [
+      JSON.stringify({ type: "user", uuid: `p${i}`, timestamp: ts(i), cwd: "/p", message: { role: "user", content: `req ${i}` } }),
+      JSON.stringify({ type: "assistant", uuid: `a${i}`, timestamp: ts(i, 500), message: { id: `pm${i}`, content: [{ type: "text", text: `reply ${i}` }] } }),
+    ];
+    const lines = [...Array.from({ length: 12 }, (_, i) => pair(i)).flat(), ...[0, 1, 2].flatMap(pair), ...[12, 13].flatMap(pair)];
+    h.write("projects/-p/replay.jsonl", lines.join("\n") + "\n");
+    const observer = createClaudeObserver({ root: h.root, cacheTtlMs: 0 });
+    const first = await observer.detail("replay");
+    const second = await observer.detail("replay", { turnsCursor: first.data.nextTurnsCursor! });
+    const ids = [...first.data.turns, ...second.data.turns].map((x) => x.id);
+    expect(ids).toEqual(Array.from({ length: 14 }, (_, i) => `p${13 - i}`));
+    expect(second.data.nextTurnsCursor).toBeNull();
+    expect(first.data.turns[0].latestMessage).toBe("reply 13");
+    await observer.close();
+  });
+
   it("never leaks thinking, tool content, hidden files or secrets, and redacts request text", async () => {
     const h = setup();
     const observer = createClaudeObserver({ root: h.root, cacheTtlMs: 0 });
