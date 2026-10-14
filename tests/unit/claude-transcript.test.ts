@@ -10,7 +10,7 @@ describe("Claude transcript parsing", () => {
     const parsed = parseLines('{"type":"a"}\nnot json\n[1]\n{"type":"b"}\n{"type":"c","x');
     expect(parsed.map((r) => r.type)).toEqual(["a", "b"]);
     expect(parseLines('rest of line"}\n{"type":"a"}\n{"type":"b"}', { dropFirst: true }).map((r) => r.type)).toEqual(["a", "b"]);
-    expect(parseLines('{"type":"a"}\n{"type":"b"}\n{"type":"c"}', { maxLines: 2 })).toHaveLength(2);
+    expect(parseLines('{"type":"a"}\n{"type":"b"}\n{"type":"c"}', { maxLines: 2 }).map((r) => r.type)).toEqual(["b", "c"]);
     expect(records().some((r) => r.type === "weird-future-type")).toBe(true);
   });
 
@@ -55,8 +55,8 @@ describe("Claude transcript parsing", () => {
     expect(turns[1].progress).toBeNull();
     const deleted = [
       ...base.slice(0, 1),
-      line({ type: "assistant", timestamp: "2026-01-01T00:00:02.000Z", message: { id: "y", content: [{ type: "tool_use", name: "TaskCreate", input: { subject: "S" } }] } }),
-      line({ type: "user", uuid: "r", timestamp: "2026-01-01T00:00:02.500Z", toolUseResult: { task: { id: "9", subject: "S" } }, message: { role: "user", content: [{ type: "tool_result", content: "ok" }] } }),
+      line({ type: "assistant", timestamp: "2026-01-01T00:00:02.000Z", message: { id: "y", content: [{ type: "tool_use", id: "tc1", name: "TaskCreate", input: { subject: "S" } }] } }),
+      line({ type: "user", uuid: "r", timestamp: "2026-01-01T00:00:02.500Z", toolUseResult: { task: { id: "9", subject: "S" } }, message: { role: "user", content: [{ type: "tool_result", tool_use_id: "tc1", content: "ok" }] } }),
       line({ type: "assistant", timestamp: "2026-01-01T00:00:03.000Z", message: { id: "z", content: [{ type: "tool_use", name: "TaskUpdate", input: { taskId: "9", status: "deleted" } }] } }),
     ];
     expect(buildTurns(parseLines(deleted.join("\n")), { running: false })[0]).toMatchObject({ tasks: [], progress: null });
@@ -78,5 +78,59 @@ describe("Claude transcript parsing", () => {
     const out = JSON.stringify([buildTurns(records(), { running: true }), deriveIndexFields(records())]);
     for (const sentinel of [sentinels.thinking, sentinels.toolInput, sentinels.toolResult, sentinels.hook, secretToken]) expect(out).not.toContain(sentinel);
     expect(out).toContain("[redacted]");
+  });
+
+  const u = (n: number, content: unknown, extra: Record<string, unknown> = {}) => line({ type: "user", uuid: `x${n}`, timestamp: `2026-01-01T00:00:${String(n).padStart(2, "0")}.000Z`, message: { role: "user", content }, ...extra });
+  const a = (n: number, id: string, block: Record<string, unknown>) => line({ type: "assistant", timestamp: `2026-01-01T00:00:${String(n).padStart(2, "0")}.000Z`, message: { id, content: [block] } });
+
+  it("does not treat notifications, bash output or interrupts as requests", () => {
+    const S = "SENTINEL-NOTIFY-1";
+    const input = [
+      u(1, "real one"), a(2, "m1", { type: "text", text: "ok" }),
+      u(3, `<task-notification>${S}</task-notification>`, { origin: { kind: "task-notification" } }),
+      u(4, `${S} from agent`, { origin: { kind: "peer" } }),
+      u(5, `<bash-stdout>${S}</bash-stdout>`), u(6, `<bash-stderr>${S}</bash-stderr>`), u(7, `<local-command-stderr>${S}</local-command-stderr>`),
+      u(8, `[Request interrupted by user for tool use] ${S}`), u(9, `<task-notification>${S}</task-notification>`),
+      u(10, "human one", { origin: { kind: "human" } }),
+    ];
+    const turns = buildTurns(parseLines(input.join("\n")), { running: false });
+    expect(turns).toHaveLength(2);
+    expect(JSON.stringify([turns, deriveIndexFields(parseLines(input.join("\n")))])).not.toContain(S);
+  });
+
+  it("starts turns from queued prompt attachments with the same skip rules", () => {
+    const att = (n: number, attachment: Record<string, unknown>) => line({ type: "attachment", uuid: `q${n}`, timestamp: `2026-01-01T00:00:0${n}.000Z`, attachment });
+    const input = [u(1, "first"), att(2, { type: "queued_command", commandMode: "prompt", prompt: `queued ${secretToken}` }), att(3, { type: "queued_command", commandMode: "bash", prompt: "no" }), att(4, { type: "queued_command", commandMode: "prompt", prompt: "<task-notification>x</task-notification>" })];
+    const turns = buildTurns(parseLines(input.join("\n")), { running: false });
+    expect(turns.map((t) => t.id)).toEqual(["x1", "q2"]);
+    expect(turns[1].request).toBe("queued [redacted]");
+  });
+
+  it("pairs TaskCreate only by tool_use_id and handles numeric ids", () => {
+    const input = [
+      u(1, "go"),
+      a(2, "m1", { type: "tool_use", id: "tcFail", name: "TaskCreate", input: { subject: "S" } }),
+      u(3, [{ type: "tool_result", tool_use_id: "tcFail", is_error: true, content: "nope" }], { toolUseResult: "Error" }),
+      u(4, [{ type: "tool_result", tool_use_id: "tuGet", content: "x" }], { toolUseResult: { task: { id: "5", subject: "Fetched" } } }),
+      a(5, "m2", { type: "tool_use", id: "tcOk", name: "TaskCreate", input: { subject: "Real" } }),
+      u(6, [{ type: "tool_result", tool_use_id: "tcOk", content: "x" }], { toolUseResult: { task: { id: 7, subject: "Real" } } }),
+      a(7, "m3", { type: "tool_use", id: "tu", name: "TaskUpdate", input: { taskId: 7, status: "completed" } }),
+      line({ type: "attachment", timestamp: "2026-01-01T00:00:08.000Z", attachment: { type: "task_reminder", content: [{ id: 3, subject: "Num", status: "pending" }] } }),
+      a(9, "m4", { type: "tool_use", id: "tu2", name: "TaskUpdate", input: { taskId: 3, status: "completed" } }),
+    ];
+    const [turn] = buildTurns(parseLines(input.join("\n")), { running: false });
+    expect(turn.tasks).toEqual([{ text: "Num", status: "completed" }]);
+    const before = buildTurns(parseLines(input.slice(0, 7).join("\n")), { running: false })[0];
+    expect(before.tasks).toEqual([{ text: "Real", status: "completed" }]);
+  });
+
+  it("keeps the last maxLines lines", () => {
+    expect(parseLines('{"n":1}\n{"n":2}\n{"n":3}', { maxLines: 2 }).map((r) => r.n)).toEqual([2, 3]);
+  });
+
+  it("truncates agent name and model at 1000 characters", () => {
+    const fields = deriveIndexFields([{ type: "agent-name", agentName: "n ".repeat(750) }, { type: "assistant", message: { model: "m ".repeat(750) } }]);
+    expect(fields.agentName).toHaveLength(1000);
+    expect(fields.model).toHaveLength(1000);
   });
 });

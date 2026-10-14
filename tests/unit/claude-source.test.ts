@@ -1,5 +1,8 @@
 import * as realFs from "node:fs/promises";
-import { appendFileSync, utimesSync } from "node:fs";
+import { appendFileSync, mkdirSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClaudeObserver, type ClaudeFs } from "../../src/integrations/claude/source";
@@ -74,7 +77,12 @@ describe("Claude source reader", () => {
     await expect(new ClaudeSource({ root: h.root + "-missing" }).loadIndex()).rejects.toThrow();
     const observer = createClaudeObserver({ root: h.root + "-missing" });
     expect(await observer.list(all)).toMatchObject({ connection: { state: "unavailable" }, data: [] });
-    h.write("projects/.keep", "");
+    const empty = createClaudeHome();
+    rmSync(join(empty.root, "projects"), { recursive: true, force: true });
+    empty.write("projects/.keep", "");
+    const list = await createClaudeObserver({ root: empty.root, cacheTtlMs: 0 }).list(all);
+    expect(list).toMatchObject({ connection: { state: "connected" }, data: [] });
+    empty.cleanup();
   });
 
   it("returns turns newest first, pages with cursors and rejects invalid or foreign cursors", async () => {
@@ -134,6 +142,88 @@ describe("Claude source reader", () => {
       expect(path).not.toBe("history.jsonl");
       expect(allowed.some((re) => re.test(path)), path).toBe(true);
     }
+    await observer.close();
+  });
+
+  const rec = (o: Record<string, unknown>) => JSON.stringify(o);
+  const ts = (n: number) => new Date(Date.UTC(2026, 2, 1, 0, 0, n)).toISOString();
+
+  it("does not index a symlinked subagents directory pointing outside the root", async () => {
+    const h = setup();
+    const outside = mkdtempSync(join(tmpdir(), "outside-"));
+    try {
+      writeFileSync(join(outside, "agent-evil.jsonl"), rec({ type: "user", uuid: "e", timestamp: ts(1), message: { role: "user", content: "evil" } }) + "\n");
+      mkdirSync(join(h.root, "projects/-work-gamma/sess-g"), { recursive: true });
+      writeFileSync(join(h.root, "projects/-work-gamma/sess-g.jsonl"), rec({ type: "user", uuid: "g", timestamp: ts(1), message: { role: "user", content: "g" } }) + "\n");
+      symlinkSync(outside, join(h.root, "projects/-work-gamma/sess-g/subagents"));
+      const ids = (await new ClaudeSource({ root: h.root }).loadIndex()).chats.map((c) => c.id);
+      expect(ids).toContain("sess-g");
+      expect(ids).not.toContain("evil");
+    } finally { rmSync(outside, { recursive: true, force: true }); }
+  });
+
+  it("refuses to open a transcript symlinked outside the root", async () => {
+    const h = setup();
+    const outside = mkdtempSync(join(tmpdir(), "outside-"));
+    try {
+      writeFileSync(join(outside, "x.jsonl"), rec({ type: "user", uuid: "e", timestamp: ts(1), message: { role: "user", content: "SENTINEL-OUTSIDE" } }) + "\n");
+      symlinkSync(join(outside, "x.jsonl"), join(h.root, "projects/-work-beta/linked.jsonl"));
+      const out = JSON.stringify(await new ClaudeSource({ root: h.root }).loadIndex());
+      expect(out).not.toContain("SENTINEL-OUTSIDE");
+    } finally { rmSync(outside, { recursive: true, force: true }); }
+  });
+
+  it("keeps a subagent whose meta description exceeds 1000 characters", async () => {
+    const h = setup();
+    h.write("projects/-work-alpha/sess-a/subagents/agent-ag1.meta.json", JSON.stringify({ agentType: "Explore", description: "d ".repeat(750) }));
+    const list = await createClaudeObserver({ root: h.root, cacheTtlMs: 0 }).list(all);
+    expect(list.data.find((c) => c.id === "ag1")?.agentNickname).toHaveLength(1000);
+  });
+
+  it("uses the later of the tail timestamp and mtime for large files and extends the tail for huge last lines", async () => {
+    const h = setup();
+    const big = "x ".repeat(150_000);
+    const lines = [rec({ type: "user", uuid: "l1", timestamp: ts(1), cwd: "/big", message: { role: "user", content: "start" } }), rec({ type: "assistant", timestamp: ts(2), message: { id: "f", model: "filler", content: [{ type: "text", text: big }] } }), rec({ type: "assistant", timestamp: ts(3), message: { id: "z", model: "last-model", content: [{ type: "text", text: big }] } })];
+    const path = h.write("projects/-big/big.jsonl", lines.join("\n") + "\n");
+    const mtime = new Date("2026-06-01T00:00:00.000Z");
+    utimesSync(path, mtime, mtime);
+    const chat = (await new ClaudeSource({ root: h.root }).loadIndex()).chats.find((c) => c.id === "big")!;
+    expect(chat.model).toBe("last-model");
+    expect(chat.updatedAt).toBe(mtime.toISOString());
+  });
+
+  it("treats EPERM as not alive", async () => {
+    const h = setup();
+    const kill = process.kill;
+    process.kill = ((pid: number, signal?: number) => { if (pid === h.livePid && signal === 0) throw Object.assign(new Error("perm"), { code: "EPERM" }); return kill(pid, signal as never); }) as typeof process.kill;
+    try {
+      const chat = (await new ClaudeSource({ root: h.root }).loadIndex()).chats.find((c) => c.id === "sess-a");
+      expect(chat).toMatchObject({ status: "unknown", statusSource: "stored" });
+    } finally { process.kill = kill; }
+  });
+
+  it("keeps the stored cwd when a detail read is truncated", async () => {
+    const h = setup();
+    const filler = rec({ type: "assistant", timestamp: ts(2), cwd: "/changed", message: { id: "f", content: [{ type: "text", text: "y".repeat(1000) }] } });
+    const head = rec({ type: "user", uuid: "t1", timestamp: ts(1), cwd: "/orig", message: { role: "user", content: "start" } });
+    h.write("projects/-trunc/trunc.jsonl", head + "\n" + Array.from({ length: 17_500 }, () => filler).join("\n") + "\n");
+    const observer = createClaudeObserver({ root: h.root, cacheTtlMs: 0 });
+    expect((await observer.detail("trunc")).data.chat.cwd).toBe("/orig");
+    await observer.close();
+  });
+
+  it("does not reopen or re-parse an unchanged transcript on repeated detail reads", async () => {
+    const h = setup();
+    const { fs, opened } = spyFs(h.root);
+    const observer = createClaudeObserver({ root: h.root, cacheTtlMs: 0, fs });
+    await observer.detail("sess-b");
+    const count = () => opened.filter((p) => p.endsWith("sess-b.jsonl")).length;
+    const first = count();
+    await observer.detail("sess-b");
+    expect(count()).toBe(first);
+    appendFileSync(h.paths.b, rec({ type: "user", uuid: "b9", timestamp: ts(9), message: { role: "user", content: "again" } }) + "\n");
+    expect((await observer.detail("sess-b")).data.turns[0].request).toBe("again");
+    expect(count()).toBeGreaterThan(first);
     await observer.close();
   });
 });

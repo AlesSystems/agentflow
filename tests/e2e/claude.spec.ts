@@ -18,7 +18,7 @@ test("lists Claude sessions and subagents, shows checklist progress and refreshe
       } else {
         detailReads++;
         const selected = url.pathname.endsWith(child.id) ? child : session;
-        await route.fulfill({ json: { connection, data: { session: selected, agents: selected.parentId ? [] : [child], turns: [{ id: "synthetic-turn", status: "completed", startedAt: "2026-10-13T09:00:00.000Z", completedAt: "2026-10-13T10:00:00.000Z", request: "Build a synthetic connector", latestMessage: update, planText: null, tasks: [], progress: null }, { id: "synthetic-turn-2", status: "inProgress", startedAt: "2026-10-13T10:05:00.000Z", completedAt: null, request: "Synthetic checklist request", latestMessage: null, planText: null, tasks: [{ text: "Synthetic first step", status: "completed" }, { text: "Synthetic second step", status: "in_progress" }], progress: { completed: 1, total: 2, percent: 50 } }], nextTurnsCursor: null, nextAgentsCursor: null } } });
+        await route.fulfill({ json: { connection, data: { chat: selected, agents: selected.parentId ? [] : [child], turns: [{ id: "synthetic-turn", status: "recorded", startedAt: "2026-10-13T09:00:00.000Z", completedAt: "2026-10-13T10:00:00.000Z", request: "Build a synthetic connector", latestMessage: update, planText: null, tasks: [], progress: null }, { id: "synthetic-turn-2", status: "inProgress", startedAt: "2026-10-13T10:05:00.000Z", completedAt: null, request: "Synthetic checklist request", latestMessage: null, planText: null, tasks: [{ text: "Synthetic first step", status: "completed" }, { text: "Synthetic second step", status: "in_progress" }], progress: { completed: 1, total: 2, percent: 50 } }], nextTurnsCursor: null, nextAgentsCursor: null } } });
       }
     });
     await page.getByRole("link", { name: "View your Claude Code sessions, tasks, and subagents" }).click();
@@ -27,7 +27,10 @@ test("lists Claude sessions and subagents, shows checklist progress and refreshe
     await expect(page.getByText("Build a synthetic connector", { exact: true })).toBeVisible();
     await expect(page.getByText("Checklist progress is unknown. Claude recorded no task list for this turn.")).toBeVisible();
     await expect(page.getByText("1 of 2 checklist steps completed (50%).")).toBeVisible();
-    await expect(page.getByText("Live observation · running").first()).toBeVisible();
+    const detail = page.getByRole("region", { name: "Selected Claude session" });
+    await expect(detail.getByText("Live observation · running").first()).toBeVisible();
+    await expect(detail.getByText("recorded", { exact: true }).first()).toBeVisible();
+    await expect(detail.getByText("in progress", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Open in Claude" })).toHaveCount(0);
     await expect(page.getByRole("checkbox", { name: /Show archived/ })).toHaveCount(0);
     await expect(page.getByText("Synthetic initial update", { exact: true })).toBeVisible();
