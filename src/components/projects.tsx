@@ -1,5 +1,5 @@
 "use client";
-import { CodexLink } from "./codex";
+import { ConnectorLinks } from "./connector";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -114,7 +114,7 @@ export function Projects({ initialCreate = false }: { initialCreate?: boolean })
           Create project
         </button>
       </div>
-      <CodexLink />
+      <ConnectorLinks />
       <label className="inline">
         <input
           type="checkbox"

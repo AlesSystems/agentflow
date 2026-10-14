@@ -1,5 +1,5 @@
 import { historyLine } from "./history";
-import { codexId } from "./codex";
+import { connectorId } from "./connectors";
 import { historyExportExamples } from "./examples";
 import { taskRegistrationExample } from "./examples";
 import { taskRegistrationResponse } from "./task-registration";
@@ -159,7 +159,7 @@ export function openapiDocument() {
         in: "path",
         name: match[1],
         required: true,
-        schema: schema(endpoint.kind === "observation" ? codexId : uuid),
+        schema: schema(endpoint.kind === "observation" ? connectorId : uuid),
       });
     if (endpoint.kind === "command" && !endpoint.eventIdentity)
       parameters.push({

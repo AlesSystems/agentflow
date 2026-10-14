@@ -10,6 +10,7 @@ const workspace = [
   ["/activity", "Activity"],
   ["/usage", "Usage"],
   ["/codex", "Codex chats"],
+  ["/claude", "Claude sessions"],
 ] as const;
 export function ProjectSwitcher({ projectId }: { projectId?: string }) {
   const projects = useRead("/projects?archived=false&limit=50", projectsResponse);

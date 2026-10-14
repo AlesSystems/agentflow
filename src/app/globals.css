@@ -1657,60 +1657,60 @@ h2.accepted-stamp {
 }
 
 /* Codex */
-.codex-page-heading,
-.codex-detail-heading,
-.codex-turn-heading {
+.connector-page-heading,
+.connector-detail-heading,
+.connector-turn-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
 }
-.codex-discovery {
+.connector-discovery {
   margin: 16px 0 24px;
   max-width: 75ch;
 }
-.codex-discovery span,
-.codex-connection {
+.connector-discovery span,
+.connector-connection {
   color: var(--graphite);
 }
-.codex-workspace {
+.connector-workspace {
   display: grid;
   grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
   gap: 32px;
   margin-top: 24px;
 }
-.codex-workspace > section {
+.connector-workspace > section {
   min-width: 0;
 }
-.codex-kind,
-.codex-filters label {
+.connector-kind,
+.connector-filters label {
   display: grid;
   gap: 6px;
 }
-.codex-filters {
+.connector-filters {
   display: flex;
   gap: 12px;
   align-items: end;
   flex-wrap: wrap;
   margin: 12px 0 20px;
 }
-.codex-filters > label:first-child {
+.connector-filters > label:first-child {
   flex: 1 1 180px;
 }
-.codex-filters .checkbox-label {
+.connector-filters .checkbox-label {
   display: flex;
   width: 100%;
 }
-.codex-chat-list,
-.codex-agent-list {
+.connector-chat-list,
+.connector-agent-list {
   list-style: none;
   padding: 0;
 }
-.codex-chat-list li {
+.connector-chat-list li {
   margin-bottom: 10px;
 }
-.codex-chat-button {
+.connector-chat-button {
   display: flex;
   flex-direction: column;
   align-items: start;
@@ -1721,56 +1721,56 @@ h2.accepted-stamp {
   font-weight: 400;
   overflow-wrap: anywhere;
 }
-.codex-chat-button[aria-current="true"] {
+.connector-chat-button[aria-current="true"] {
   background: var(--clay-tint);
   border-color: var(--clay-deep);
 }
-.codex-chat-meta {
+.connector-chat-meta {
   display: block;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
-.codex-detail {
+.connector-detail {
   padding-top: 16px;
   border-top: 1.5px dashed var(--rule);
 }
-.codex-detail h3 {
+.connector-detail h3 {
   margin-top: 28px;
 }
-.codex-agent-list li {
+.connector-agent-list li {
   padding: 12px 0;
   border-bottom: 1.5px dashed var(--rule);
 }
-.codex-agent-list button {
+.connector-agent-list button {
   margin-bottom: 8px;
   text-align: left;
   overflow-wrap: anywhere;
 }
-.codex-turn {
+.connector-turn {
   padding: 20px 0;
   border-top: 1.5px dashed var(--rule);
 }
-.codex-turn-heading h3 {
+.connector-turn-heading h3 {
   margin: 0;
 }
-.codex-text {
+.connector-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   max-width: 75ch;
 }
-.codex-checklist {
+.connector-checklist {
   padding-left: 24px;
 }
-.codex-checklist li {
+.connector-checklist li {
   margin: 10px 0;
 }
-.codex-checklist .report-label {
+.connector-checklist .report-label {
   margin-left: 12px;
 }
-.codex-turn details {
+.connector-turn details {
   margin-top: 16px;
 }
-.codex-turn summary {
+.connector-turn summary {
   color: var(--clay-deep);
 }
 
@@ -1985,7 +1985,7 @@ h2.accepted-stamp {
   }
 }
 @media (max-width: 850px) {
-  .codex-workspace {
+  .connector-workspace {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
@@ -2000,11 +2000,11 @@ h2.accepted-stamp {
   display: flex;
   align-items: center;
 }
-.sheet .codex-discovery {
+.sheet .connector-discovery {
   margin: 14px 0 0;
   font-size: 13px;
 }
-.sheet .codex-discovery span {
+.sheet .connector-discovery span {
   display: block;
 }
 button.primary:disabled,

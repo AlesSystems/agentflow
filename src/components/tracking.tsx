@@ -1,5 +1,5 @@
 "use client";
-import { CodexLink } from "./codex";
+import { ConnectorLinks } from "./connector";
 import Link from "next/link";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,7 +51,7 @@ export function Agents() {
   const page = usePaged("/tracking/agents?limit=50", trackingAgentsResponse);
   const [filter, setFilter] = useState("all");
   const items = page.items.filter(agent => filter === "all" || (filter === "stale" ? agent.staleActive > 0 : filter === "queued" ? agent.queuedNoReport > 0 : agent.freshRunning > 0));
-  return <><h1>Agents</h1><CodexLink /><p className="intro">Registered identities and the reports they send. Execution stays with your external harness.</p>
+  return <><h1>Agents</h1><ConnectorLinks /><p className="intro">Registered identities and the reports they send. Execution stays with your external harness.</p>
     <label className="tracking-filter">Show loaded identities<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">All identities</option><option value="fresh">Fresh running reports</option><option value="queued">Queued without a report</option><option value="stale">Stale active reports</option></select></label>
     <QueryFeedback error={page.query.error} loading={page.query.isPending} retry={() => void page.query.refetch()} />
     <ul className="tracking-list">{items.map(agent => <li key={agent.id}><h2><Link href={`/agents/${agent.id}`}>{agent.displayName}</Link></h2><p className="metadata break-word">Source {agent.source} · Default role {agent.defaultRole}</p><p>{agent.freshRunning} fresh running · {agent.queuedNoReport} queued, no report · {agent.staleActive} stale active</p></li>)}</ul>

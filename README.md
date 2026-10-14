@@ -27,6 +27,14 @@ Only paired browser sessions can read Codex history. Reporter tokens cannot acce
 
 The [connector contract and verification](docs/implementation/CODEX_CONNECTOR.md) describe source limits and tested behavior.
 
+## See your Claude Code sessions
+
+Open **Claude sessions** in AgentFlow's navigation. Your local Claude Code sessions appear automatically, with their subagents and workflow agents. Search by title or project path, or switch to child agents. Select a session to inspect recorded requests, the latest replies, checklist progress where Claude recorded a task list, and subagents. A running session is labeled from Claude Code's live process files. The page refreshes every five seconds while visible.
+
+The connector reads Claude Code's local transcript files directly, because Claude Code has no supported history interface. The format is undocumented and can change between releases; unrecognized records are skipped and unknown values stay unknown. It never starts, resumes or modifies Claude Code work, and never opens session keys, prompt history, settings or credentials. It reads `~/.claude` by default, or `CLAUDE_CONFIG_DIR` when set. To select another directory, set `AGENTFLOW_CLAUDE_DIR` to its absolute path before starting AgentFlow.
+
+The same access rules as Codex apply. Only paired browser sessions can read Claude history, nothing is imported into AgentFlow's database or exports, and a finished turn is not human acceptance. The [connector contract and verification](docs/implementation/CLAUDE_CONNECTOR.md) describe source limits and tested behavior.
+
 ## Design documents
 
 | Document | Purpose |

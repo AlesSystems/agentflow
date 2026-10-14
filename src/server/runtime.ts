@@ -1,5 +1,6 @@
 import { HistoryRuntime } from "../history/runtime";
-import type { CodexObserver } from "../integrations/codex/observer";
+import type { ConnectorSource } from "../contracts/connectors";
+import type { ConnectorObserver } from "../integrations/connector/observer";
 import { GithubCoordinator } from "../integrations/github/coordinator";
 import type { openOwnedStore } from "../db";
 import type { RuntimeConfig } from "./config";
@@ -12,19 +13,19 @@ type Runtime = {
   identity: object;
   github: GithubCoordinator;
   history: HistoryRuntime;
-  codex?: CodexObserver;
+  connectors: Partial<Record<ConnectorSource, ConnectorObserver>>;
 };
 const key = Symbol.for("agentflow.live-runtime");
 const globalRuntime = globalThis as typeof globalThis & {
   [key]: Runtime | undefined;
 };
-export function publishRuntime(config: RuntimeConfig, owned: Owned, github=new GithubCoordinator(owned.store,config.githubTokenFile), history?:HistoryRuntime, codex?:CodexObserver) {
+export function publishRuntime(config: RuntimeConfig, owned: Owned, github=new GithubCoordinator(owned.store,config.githubTokenFile), history?:HistoryRuntime, connectors: Partial<Record<ConnectorSource, ConnectorObserver>> = {}) {
   if (globalRuntime[key]) throw new Error("RUNTIME_ALREADY_OWNED");
   globalRuntime[key] = {
     kind: "ready",
     github,
     history:history ?? new HistoryRuntime(owned.store),
-    codex,
+    connectors,
     config,
     owned,
     identity: Object.freeze({}),
@@ -47,7 +48,7 @@ export function guard(headers: Headers) {
 }
 export function beginClosing() {
   const state = globalRuntime[key];
-  if (state) {state.kind = "closing";state.github.beginClosing();state.history.beginClosing();state.codex?.beginClosing();}
+  if (state) {state.kind = "closing";state.github.beginClosing();state.history.beginClosing();for (const connector of Object.values(state.connectors)) connector?.beginClosing();}
 }
 export function clearRuntime() {
   delete globalRuntime[key];

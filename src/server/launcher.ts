@@ -1,5 +1,6 @@
 import { HistoryRuntime } from "../history/runtime";
-import { CodexObserver } from "../integrations/codex/observer";
+import { createCodexObserver } from "../integrations/codex/source";
+import { createClaudeObserver } from "../integrations/claude/source";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -42,7 +43,7 @@ export async function startRuntime(
   let server: ReturnType<typeof createServer> | undefined;
   const github=new GithubCoordinator(owned.store,config.githubTokenFile,hooks.githubTransport);
   const managedCodex = join(homedir(), ".codex", "packages", "app-server-daemon", "current", "bin", "codex");
-  const codex = new CodexObserver({ executable: config.codexExecutable ?? (existsSync(managedCodex) ? managedCodex : "codex") });
+  const connectors = { codex: createCodexObserver({ executable: config.codexExecutable ?? (existsSync(managedCodex) ? managedCodex : "codex") }), claude: createClaudeObserver({ root: config.claudeDir }) };
   let history:HistoryRuntime|undefined;
   const mutationBudget = new MutationBudget();
   const streams = new ChangeStreams(owned.store, owned.credentials);
@@ -53,7 +54,7 @@ export async function startRuntime(
     if (shutdownPromise) return shutdownPromise;
     beginClosing();
     github.beginClosing();
-    codex.beginClosing();
+    for (const connector of Object.values(connectors)) connector.beginClosing();
     history?.beginClosing();
     streams.close();
     shutdownPromise = (async () => {
@@ -70,7 +71,7 @@ export async function startRuntime(
       }
       await Promise.allSettled([...requests]);
       await github.close();
-      await codex.close();
+      await Promise.allSettled(Object.values(connectors).map((connector) => connector.close()));
       await history?.close();
       await owned.store.drain();
       await app?.close();
@@ -91,7 +92,7 @@ export async function startRuntime(
       port: config.port,
     });
     await app.prepare();
-    publishRuntime(config, owned, github, historyOwner, codex);
+    publishRuntime(config, owned, github, historyOwner, connectors);
     const handler = app.getRequestHandler();
     async function dispatch(
       request: IncomingMessage,
