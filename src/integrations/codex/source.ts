@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { ConnectorChat } from "../../contracts/connectors";
 import { ConnectorObserver, type ConnectorMessages, type ConnectorSourceReader, type SourceDetail, type SourceIndex } from "../connector/observer";
-import { normalizeChat, normalizeTurn, object } from "./normalize";
+import { normalizeChat, normalizeTurn } from "./normalize";
+import { object } from "../connector/text";
 import { CodexRpc, type CodexRpcOptions } from "./rpc";
 
 const sources = ["cli", "vscode", "exec", "appServer", "subAgent", "subAgentReview", "subAgentCompact", "subAgentThreadSpawn", "subAgentOther", "unknown"];

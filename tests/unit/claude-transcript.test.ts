@@ -21,8 +21,9 @@ describe("Claude transcript parsing", () => {
       u("\n<local-command-stdout>o</local-command-stdout>", "s2"),
       u("<command-name>/model</command-name>\n<command-message>model</command-message>\n<command-args>opus</command-args>", "c1"),
       u([{ type: "text", text: "<system-reminder>r</system-reminder>" }, { type: "text", text: "real ask" }], "r1"),
+      u("<system-reminder>a</system-reminder>\n<system-reminder>b</system-reminder>\nprefixed ask", "r2"),
     ].join("\n"));
-    expect(buildTurns(recs, { running: false }).map((t) => [t.id, t.request])).toEqual([["c1", "/model opus"], ["r1", "real ask"]]);
+    expect(buildTurns(recs, { running: false }).map((t) => [t.id, t.request])).toEqual([["c1", "/model opus"], ["r1", "real ask"], ["r2", "prefixed ask"]]);
     expect(deriveIndexFields(recs).firstRequest).toBe("real ask");
     expect(parseLines('{"type":"a"}', { maxLines: 0 })).toEqual([]);
   });

@@ -1,5 +1,5 @@
 import { connectorTurn, type ConnectorTurn } from "../../contracts/connectors";
-import { object, text } from "../codex/normalize";
+import { object, text } from "../connector/text";
 
 export type IndexFields = { cwd: string | null; customTitle: string | null; firstRequest: string | null; updatedAt: string | null; agentName: string | null; model: string | null };
 export type TurnOptions = { running: boolean };
@@ -25,7 +25,8 @@ const iso = (value: unknown): string | null => {
 };
 const blocks = (value: unknown): Rec[] => Array.isArray(value) ? value.map(object) : [];
 
-const skipPrefixes = ["<local-command-stdout>", "<local-command-caveat>", "<local-command-stderr>", "<task-notification>", "<bash-stdout>", "<bash-stderr>", "<system-reminder>", "[Request interrupted by user"];
+const skipPrefixes = ["<local-command-stdout>", "<local-command-caveat>", "<local-command-stderr>", "<task-notification>", "<bash-stdout>", "<bash-stderr>", "[Request interrupted by user"];
+const withoutReminders = (raw: string) => raw.replace(/^(?:\s*<system-reminder>[\s\S]*?<\/system-reminder>)+\s*/, "");
 // Harness-injected records (agent messages, CI events, app actions) are one tag envelope: <x ...>...</x>.
 const envelope = (raw: string) => { const match = /^<([a-zA-Z][\w-]*)[\s>][\s\S]*<\/\1>$/.exec(raw.trim()); return !!match && match[1] !== "command-name" && match[1] !== "command-message"; };
 const skipped = (raw: string) => { const head = raw.trimStart(); return skipPrefixes.some((prefix) => head.startsWith(prefix)) || envelope(head); };
@@ -40,8 +41,6 @@ function slashCommand(raw: string): string | null {
   return `${name.startsWith("/") ? name : "/" + name}${args ? " " + args : ""}`;
 }
 
-/** Raw (unredacted) request text, or null when the record is not a user request. */
-function requestRaw(record: Rec): string | null { return requestInfo(record)?.raw ?? null; }
 function requestInfo(record: Rec): { raw: string; command: boolean } | null {
   if (record.type === "attachment") {
     const attachment = object(record.attachment);
@@ -54,18 +53,17 @@ function requestInfo(record: Rec): { raw: string; command: boolean } | null {
   if (typeof kind === "string" && kind !== "human") return null;
   const content = object(record.message).content;
   let raw: string | null = null;
-  if (typeof content === "string") raw = content;
+  if (typeof content === "string") raw = withoutReminders(content);
   else if (Array.isArray(content)) {
     const parts = blocks(content);
     if (parts.some((b) => b.type === "tool_result")) return null;
-    const texts = parts.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text as string).filter((t) => !t.trimStart().startsWith("<system-reminder>"));
+    const texts = parts.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => withoutReminders(b.text as string)).filter(Boolean);
     raw = texts.length ? texts.join("\n") : null;
   }
   if (!raw || skipped(raw)) return null;
   const command = slashCommand(raw);
   return command === null ? { raw, command: false } : { raw: command, command: true };
 }
-const request = (record: Rec, limit: number) => { const raw = requestRaw(record); return raw === null ? null : text(raw, limit); };
 
 export function deriveIndexFields(records: Rec[]): IndexFields {
   const fields: IndexFields = { cwd: null, customTitle: null, firstRequest: null, updatedAt: null, agentName: null, model: null };
@@ -97,8 +95,9 @@ export function buildTurns(records: Rec[], options: TurnOptions): ConnectorTurn[
   const seen = new Set<string>();
   for (const record of records) {
     if (typeof record.uuid === "string") { if (seen.has(record.uuid)) continue; seen.add(record.uuid); }
-    const req = request(record, 4000);
-    if (requestRaw(record) !== null && req !== null) {
+    const info = requestInfo(record);
+    const req = info && text(info.raw, 4000);
+    if (req) {
       if (turn) turn.tasks = snapshot();
       const uuid = record.uuid;
       turn = { id: typeof uuid === "string" && /^[a-zA-Z0-9_-]{1,200}$/.test(uuid) ? uuid : `turn-${drafts.length + 1}`, startedAt: iso(record.timestamp), request: req, completedAt: null, texts: new Map(), last: null, touched: false, tasks: [] };

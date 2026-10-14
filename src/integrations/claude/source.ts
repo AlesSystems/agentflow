@@ -3,7 +3,7 @@ import * as nodeFs from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 import { connectorChat, connectorId, type ConnectorChat, type ConnectorTurn } from "../../contracts/connectors";
 import { ConnectorObserver, type ConnectorMessages, type ConnectorObserverOptions, type ConnectorSourceReader, type SourceDetail, type SourceIndex } from "../connector/observer";
-import { object, text } from "../codex/normalize";
+import { object, text } from "../connector/text";
 import { buildTurns, deriveIndexFields, parseLines } from "./transcript";
 
 export type ClaudeFs = { open: typeof nodeFs.open; readdir: typeof nodeFs.readdir; stat: typeof nodeFs.stat; realpath: typeof nodeFs.realpath };
@@ -77,8 +77,8 @@ export class ClaudeSource implements ConnectorSourceReader {
     const entries: Entry[] = []; let partial = false;
     // Entries are in readdir order, so when the cap is hit the kept subset is arbitrary, not newest-first.
     const add = (entry: Entry) => { if (entries.length >= max) { partial = true; return false; } entries.push(entry); return true; };
-    const agents = async (dir: string, parentId: string) => {
-      for (const file of await this.list(dir)) {
+    const agents = async (dir: string, parentId: string, listed?: Awaited<ReturnType<ClaudeSource["list"]>>) => {
+      for (const file of listed ?? await this.list(dir)) {
         const match = !file.isSymbolicLink() && file.isFile() && /^agent-(.+)\.jsonl$/.exec(file.name);
         if (!match) continue;
         if (!add({ path: join(dir, file.name), id: match[1], parentId, metaPath: join(dir, `agent-${match[1]}.meta.json`) })) return false;
@@ -94,8 +94,8 @@ export class ClaudeSource implements ConnectorSourceReader {
         else if (!child.isSymbolicLink() && child.isDirectory()) {
           const sub = join(dir, child.name, "subagents");
           if (!(await this.list(join(dir, child.name))).some((e) => e.name === "subagents" && !e.isSymbolicLink() && e.isDirectory())) continue;
-          if (!(await agents(sub, child.name))) break outer;
           const subEntries = await this.list(sub);
+          if (!(await agents(sub, child.name, subEntries))) break outer;
           if (!subEntries.some((e) => e.name === "workflows" && !e.isSymbolicLink() && e.isDirectory())) continue;
           for (const wf of await this.list(join(sub, "workflows"))) if (!wf.isSymbolicLink() && wf.isDirectory() && wf.name.startsWith("wf_") && !(await agents(join(sub, "workflows", wf.name), child.name))) break outer;
         }
