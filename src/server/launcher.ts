@@ -70,7 +70,7 @@ export async function startRuntime(
       }
       await Promise.allSettled([...requests]);
       await github.close();
-      await Promise.all(Object.values(connectors).map((connector) => connector.close()));
+      await Promise.allSettled(Object.values(connectors).map((connector) => connector.close()));
       await history?.close();
       await owned.store.drain();
       await app?.close();

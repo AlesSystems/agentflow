@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { connectorListQuery, connectorDetailQuery, connectorDetailResponse, type ConnectorChat, type ConnectorTurn, type ConnectorListQuery, type ConnectorDetailQuery, type ConnectorConnection } from "../../contracts/connectors";
+import { connectorChat, connectorTurn, connectorListQuery, connectorDetailQuery, connectorDetailResponse, type ConnectorChat, type ConnectorTurn, type ConnectorListQuery, type ConnectorDetailQuery, type ConnectorConnection } from "../../contracts/connectors";
 
 export type SourceIndex = { chats: ConnectorChat[]; partial: boolean };
 export type SourceDetail = { chat: ConnectorChat; turns: ConnectorTurn[]; nextTurnsCursor: string | null };
@@ -7,6 +7,7 @@ export type ConnectorMessages = { connected: string; partial: string; detail: st
 export interface ConnectorSourceReader {
   readonly messages: ConnectorMessages;
   loadIndex(): Promise<SourceIndex>;
+  /** The reader owns its turns cursor and must reject a cursor that is not scoped to `stored.id`. */
   readDetail(stored: ConnectorChat, turnsCursor: string | undefined): Promise<SourceDetail>;
   beginClosing(): void;
   close(): Promise<void>;
@@ -14,6 +15,8 @@ export interface ConnectorSourceReader {
 export type ConnectorObserverOptions = { cacheTtlMs?: number };
 type Detail = z.infer<typeof connectorDetailResponse>;
 type Index = SourceIndex & { observedAt: string };
+const MAX_CHATS = 10_000;
+const detailShape = z.strictObject({ chat: connectorChat, turns: z.array(connectorTurn).max(100), nextTurnsCursor: z.string().nullable() });
 const sourceError = () => new Error("Connector source unavailable");
 
 export class ConnectorObserver {
@@ -30,9 +33,11 @@ export class ConnectorObserver {
     if (this.loading) return this.loading;
     const loading = (async () => {
       const { chats, partial } = await this.source.loadIndex();
-      const unique = [...new Map(chats.map((chat) => [chat.id, chat])).values()];
+      const valid = chats.flatMap((chat) => { const parsed = connectorChat.safeParse(chat); return parsed.success ? [parsed.data] : []; });
+      const unique = [...new Map(valid.map((chat) => [chat.id, chat])).values()];
       unique.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "") || a.id.localeCompare(b.id));
-      const index = { chats: unique, observedAt: new Date().toISOString(), partial };
+      const truncated = unique.length > MAX_CHATS;
+      const index = { chats: truncated ? unique.slice(0, MAX_CHATS) : unique, observedAt: new Date().toISOString(), partial: partial || truncated };
       this.index = index; return index;
     })();
     this.loading = loading;
@@ -86,7 +91,7 @@ export class ConnectorObserver {
       const index = await this.load();
       const stored = index.chats.find((chat) => chat.id === id);
       if (!stored) throw sourceError();
-      const { chat, turns, nextTurnsCursor } = await this.source.readDetail(stored, query.turnsCursor);
+      const { chat, turns, nextTurnsCursor } = detailShape.parse(await this.source.readDetail(stored, query.turnsCursor));
       const agents = index.chats.filter((candidate) => candidate.parentId === id);
       const scope = "agents:" + id; const offset = this.offset(query.agentsCursor, scope);
       return { connection: { ...this.connection(index), message: this.source.messages.detail }, data: { chat, turns, agents: agents.slice(offset, offset + 30), nextTurnsCursor, nextAgentsCursor: offset + 30 < agents.length ? this.cursor(offset + 30, scope) : null } };
