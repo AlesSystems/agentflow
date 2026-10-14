@@ -14,6 +14,19 @@ const replayLines = () => {
 };
 
 describe("Claude transcript parsing", () => {
+  it("skips system reminders, trims, and renders slash commands without raw tags", () => {
+    const u = (content: unknown, uuid: string) => line({ type: "user", uuid, timestamp: "2026-01-01T00:00:01.000Z", message: { role: "user", content } });
+    const recs = parseLines([
+      u("  <system-reminder>x</system-reminder>", "s1"),
+      u("\n<local-command-stdout>o</local-command-stdout>", "s2"),
+      u("<command-name>/model</command-name>\n<command-message>model</command-message>\n<command-args>opus</command-args>", "c1"),
+      u([{ type: "text", text: "<system-reminder>r</system-reminder>" }, { type: "text", text: "real ask" }], "r1"),
+    ].join("\n"));
+    expect(buildTurns(recs, { running: false }).map((t) => [t.id, t.request])).toEqual([["c1", "/model opus"], ["r1", "real ask"]]);
+    expect(deriveIndexFields(recs).firstRequest).toBe("real ask");
+    expect(parseLines('{"type":"a"}', { maxLines: 0 })).toEqual([]);
+  });
+
   it("drops partial and unparseable lines but keeps unknown record types", () => {
     const parsed = parseLines('{"type":"a"}\nnot json\n[1]\n{"type":"b"}\n{"type":"c","x');
     expect(parsed.map((r) => r.type)).toEqual(["a", "b"]);
@@ -44,8 +57,7 @@ describe("Claude transcript parsing", () => {
     expect(turns[0]).toMatchObject({ latestMessage: "reply 0", tasks: [{ text: "t0", status: "pending" }] });
     expect(turns[13].status).toBe("inProgress");
     expect(turns.slice(0, 13).every((x) => x.status === "recorded")).toBe(true);
-    const out = [replayLines()[2], replayLines()[0]].map((l) => l);
-    const sorted = buildTurns(parseLines([out[1], JSON.stringify({ type: "user", timestamp: "bad", message: { role: "user", content: "no ts" } }), replayLines()[2]].join("\n")), { running: false });
+    const sorted = buildTurns(parseLines([replayLines()[0], JSON.stringify({ type: "user", timestamp: "bad", message: { role: "user", content: "no ts" } }), replayLines()[2]].join("\n")), { running: false });
     expect(sorted.map((x) => x.request)).toEqual(["req 0", "req 1", "no ts"]);
   });
 

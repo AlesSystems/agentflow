@@ -76,6 +76,11 @@ describe("ConnectorObserver", () => {
     await expect(new ConnectorObserver(tooMany.source).detail("a")).rejects.toThrow("Connector source unavailable");
   });
 
+  it("rejects a detail whose chat id differs from the requested id", async () => {
+    const f = fake(async () => ({ chats: [chat("a")], partial: false }), async () => ({ chat: chat("other"), turns: [], nextTurnsCursor: null }));
+    await expect(new ConnectorObserver(f.source, { cacheTtlMs: 0 }).detail("a", {})).rejects.toThrow("Connector source unavailable");
+  });
+
   it("paginates child agents at 30", async () => {
     const kids = Array.from({ length: 35 }, (_, i) => chat("k" + String(i).padStart(2, "0"), { parentId: "p" }));
     const observer = new ConnectorObserver(fake(async () => ({ chats: [chat("p"), ...kids], partial: false })).source, { cacheTtlMs: 60_000 });

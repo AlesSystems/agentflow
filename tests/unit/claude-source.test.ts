@@ -140,6 +140,19 @@ describe("Claude source reader", () => {
     await observer.close();
   });
 
+  it("keeps detail updatedAt in agreement with the list and refuses reads after closing", async () => {
+    const h = setup();
+    h.write("projects/-p/agree.jsonl", JSON.stringify({ type: "user", uuid: "g1", timestamp: "2020-01-01T00:00:00.000Z", cwd: "/p", message: { role: "user", content: "hi" } }) + "\n");
+    const observer = createClaudeObserver({ root: h.root, cacheTtlMs: 0 });
+    const listed = (await observer.list(all)).data.find((c) => c.id === "agree")!;
+    const detail = await observer.detail("agree");
+    expect(detail.data.chat.updatedAt).toBe(listed.updatedAt);
+    await observer.close();
+    const closed = createClaudeObserver({ root: h.root, cacheTtlMs: 0 });
+    await closed.close();
+    await expect(closed.detail("agree")).rejects.toThrow();
+  });
+
   it("never leaks thinking, tool content, hidden files or secrets, and redacts request text", async () => {
     const h = setup();
     const observer = createClaudeObserver({ root: h.root, cacheTtlMs: 0 });

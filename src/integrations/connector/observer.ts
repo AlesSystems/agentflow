@@ -92,6 +92,7 @@ export class ConnectorObserver {
       const stored = index.chats.find((chat) => chat.id === id);
       if (!stored) throw sourceError();
       const { chat, turns, nextTurnsCursor } = detailShape.parse(await this.source.readDetail(stored, query.turnsCursor));
+      if (chat.id !== id) throw sourceError();
       const agents = index.chats.filter((candidate) => candidate.parentId === id);
       const scope = "agents:" + id; const offset = this.offset(query.agentsCursor, scope);
       return { connection: { ...this.connection(index), message: this.source.messages.detail }, data: { chat, turns, agents: agents.slice(offset, offset + 30), nextTurnsCursor, nextAgentsCursor: offset + 30 < agents.length ? this.cursor(offset + 30, scope) : null } };

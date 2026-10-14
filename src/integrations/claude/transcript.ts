@@ -11,7 +11,7 @@ export function parseLines(raw: string, options: { dropFirst?: boolean; maxLines
   const lines = raw.split("\n");
   if (options.dropFirst) lines.shift();
   const out: Rec[] = [];
-  for (const line of options.maxLines === undefined ? lines : lines.slice(-options.maxLines)) {
+  for (const line of options.maxLines === undefined ? lines : options.maxLines > 0 ? lines.slice(-options.maxLines) : []) {
     if (!line.startsWith("{")) continue;
     try { const value: unknown = JSON.parse(line); if (value !== null && typeof value === "object" && !Array.isArray(value)) out.push(value as Rec); } catch { /* partial or corrupt line */ }
   }
@@ -25,16 +25,27 @@ const iso = (value: unknown): string | null => {
 };
 const blocks = (value: unknown): Rec[] => Array.isArray(value) ? value.map(object) : [];
 
-const skipPrefixes = ["<local-command-stdout>", "<local-command-caveat>", "<local-command-stderr>", "<task-notification>", "<bash-stdout>", "<bash-stderr>", "[Request interrupted by user"];
-const skipped = (raw: string) => skipPrefixes.some((prefix) => raw.startsWith(prefix));
+const skipPrefixes = ["<local-command-stdout>", "<local-command-caveat>", "<local-command-stderr>", "<task-notification>", "<bash-stdout>", "<bash-stderr>", "<system-reminder>", "[Request interrupted by user"];
+const skipped = (raw: string) => { const head = raw.trimStart(); return skipPrefixes.some((prefix) => head.startsWith(prefix)); };
+const tag = (raw: string, name: string) => new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(raw)?.[1].trim() ?? "";
+/** Slash-command records become "/x args"; null when the text is not one. */
+function slashCommand(raw: string): string | null {
+  const head = raw.trimStart();
+  if (!head.startsWith("<command-name>") && !head.startsWith("<command-message>")) return null;
+  const name = tag(head, "command-name");
+  if (!name) return null;
+  const args = tag(head, "command-args");
+  return `${name.startsWith("/") ? name : "/" + name}${args ? " " + args : ""}`;
+}
 
 /** Raw (unredacted) request text, or null when the record is not a user request. */
-function requestRaw(record: Rec): string | null {
+function requestRaw(record: Rec): string | null { return requestInfo(record)?.raw ?? null; }
+function requestInfo(record: Rec): { raw: string; command: boolean } | null {
   if (record.type === "attachment") {
     const attachment = object(record.attachment);
     const prompt = attachment.prompt;
     if (attachment.type !== "queued_command" || attachment.commandMode !== "prompt" || typeof prompt !== "string" || !prompt || skipped(prompt)) return null;
-    return prompt;
+    return { raw: prompt, command: false };
   }
   if (record.type !== "user" || record.isMeta || record.isCompactSummary || record.toolUseResult !== undefined) return null;
   const kind = object(record.origin).kind;
@@ -45,11 +56,12 @@ function requestRaw(record: Rec): string | null {
   else if (Array.isArray(content)) {
     const parts = blocks(content);
     if (parts.some((b) => b.type === "tool_result")) return null;
-    const texts = parts.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text as string);
+    const texts = parts.filter((b) => b.type === "text" && typeof b.text === "string").map((b) => b.text as string).filter((t) => !t.trimStart().startsWith("<system-reminder>"));
     raw = texts.length ? texts.join("\n") : null;
   }
   if (!raw || skipped(raw)) return null;
-  return raw;
+  const command = slashCommand(raw);
+  return command === null ? { raw, command: false } : { raw: command, command: true };
 }
 const request = (record: Rec, limit: number) => { const raw = requestRaw(record); return raw === null ? null : text(raw, limit); };
 
@@ -61,7 +73,7 @@ export function deriveIndexFields(records: Rec[]): IndexFields {
     if (record.type === "custom-title") fields.customTitle = text(record.customTitle) ?? fields.customTitle;
     else if (record.type === "agent-name") fields.agentName = text(record.agentName, 1000) ?? fields.agentName;
     else if (record.type === "assistant") { const model = object(record.message).model; if (typeof model === "string" && model !== "<synthetic>") fields.model = text(model, 1000) ?? fields.model; }
-    else if (fields.firstRequest === null) fields.firstRequest = request(record, 2000);
+    else if (fields.firstRequest === null) { const info = requestInfo(record); if (info && !info.command) fields.firstRequest = text(info.raw, 2000); }
   }
   return fields;
 }

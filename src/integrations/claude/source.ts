@@ -179,6 +179,7 @@ export class ClaudeSource implements ConnectorSourceReader {
   }
 
   async readDetail(stored: ConnectorChat, turnsCursor: string | undefined): Promise<SourceDetail> {
+    if (this.closing) throw sourceError();
     const scope = `turns:${stored.id}`;
     let offset = 0;
     if (turnsCursor) {
@@ -204,7 +205,7 @@ export class ClaudeSource implements ConnectorSourceReader {
       while (this.detailCache.size > MAX_DETAIL_CACHE) this.detailCache.delete(this.detailCache.keys().next().value!);
     }
     const { fields, truncated } = cached;
-    const chat = connectorChat.parse({ ...stored, title: fields.customTitle ?? (truncated ? null : fields.firstRequest) ?? stored.title, cwd: truncated ? stored.cwd : fields.cwd ?? stored.cwd, updatedAt: fields.updatedAt ?? stored.updatedAt, agentNickname: fields.agentName ?? stored.agentNickname, model: fields.model ?? stored.model });
+    const chat = connectorChat.parse({ ...stored, title: fields.customTitle ?? (truncated ? null : fields.firstRequest) ?? stored.title, cwd: truncated ? stored.cwd : fields.cwd ?? stored.cwd, updatedAt: updatedAt(fields.updatedAt, cached.mtimeMs, cached.size), agentNickname: fields.agentName ?? stored.agentNickname, model: fields.model ?? stored.model });
     const built = cached.turns.map((turn, i, all) => stored.status === "running" && i === all.length - 1 ? { ...turn, status: "inProgress" as const, completedAt: null } : turn);
     const turns = built.reverse();
     const next = offset + PAGE;
