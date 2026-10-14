@@ -2,12 +2,12 @@ import { headers } from "next/headers";
 import { privateContext } from "../../server/next-boundary";
 import { Workspace } from "../../client/provider";
 import { Shell, NeedsPairing } from "../../components/shell";
-import { codexId } from "../../contracts/codex";
+import { connectorId } from "../../contracts/connectors";
 import { Codex } from "../../components/codex";
 export const dynamic = "force-dynamic";
 export default async function Page({searchParams}: {searchParams: Promise<{chat?: string}>}) {
   const {chat} = await searchParams;
-  const initialSelected = codexId.safeParse(chat).success ? chat : null;
+  const initialSelected = connectorId.safeParse(chat).success ? chat : null;
   let data;
   try {
     const state = privateContext(new Headers(await headers()), "human");

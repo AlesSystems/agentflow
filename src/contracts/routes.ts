@@ -1,5 +1,6 @@
 import * as usage from "./usage";
-import * as codex from "./codex";
+import * as connectors from "./connectors";
+import type { ConnectorSource } from "./connectors";
 import { historyExportQuery, historyLine, retentionPreviewInput, retentionPruneInput, retentionPreviewResponse, retentionPruneResponse } from "./history";
 import * as github from "./github";
 import { taskRegistrationResponse, projectTaskRegistration } from "./task-registration";
@@ -65,7 +66,7 @@ type ResourceEndpoint = EndpointBase & {
 };
 export type StreamEndpoint = EndpointBase & { kind: "stream" };
 export type ExportEndpoint = EndpointBase & { kind: "export" };
-export type ObservationEndpoint = EndpointBase & { kind: "observation"; observation: "codex.list" | "codex.detail" };
+export type ObservationEndpoint = EndpointBase & { kind: "observation"; source: ConnectorSource; op: "list" | "detail" };
 export type Endpoint = ResourceEndpoint | StreamEndpoint | ExportEndpoint | ObservationEndpoint;
 function defineCommand<S extends z.ZodType>(
   definition: EndpointBase & {
@@ -110,8 +111,8 @@ function defineQuery<S extends z.ZodType>(
   };
 }
 export const endpoints: Endpoint[] = [
-  { id: "listCodexChats", method: "GET", path: "/connections/codex", access: "human", input: codex.codexListQuery, response: codex.codexListResponse, status: 200, kind: "observation", observation: "codex.list", description: "Read local Codex history without resuming chats. Runtime visibility and source limitations are explicit. Requires a human browser session." },
-  { id: "getCodexChat", method: "GET", path: "/connections/codex/{id}", access: "human", input: codex.codexDetailQuery, response: codex.codexDetailResponse, status: 200, kind: "observation", observation: "codex.detail", description: "Read recorded requests, updates and child agents. Turn completion is not human task acceptance. Missing checklist progress remains unknown." },
+  { id: "listCodexChats", method: "GET", path: "/connections/codex", access: "human", input: connectors.connectorListQuery, response: connectors.connectorListResponse, status: 200, kind: "observation", source: "codex", op: "list", description: "Read local Codex history without resuming chats. Runtime visibility and source limitations are explicit. Requires a human browser session." },
+  { id: "getCodexChat", method: "GET", path: "/connections/codex/{id}", access: "human", input: connectors.connectorDetailQuery, response: connectors.connectorDetailResponse, status: 200, kind: "observation", source: "codex", op: "detail", description: "Read recorded requests, updates and child agents. Turn completion is not human task acceptance. Missing checklist progress remains unknown." },
   defineQuery({id:"getUsage",method:"GET",path:"/usage",access:"read",input:usage.usageQuery,response:usage.usageResponse,status:200,query:input=>({kind:"usage",input})}),
   defineQuery({id:"listUsagePrices",method:"GET",path:"/usage/price-snapshots",access:"read",input:usage.priceSnapshotsQuery,response:usage.priceSnapshotsResponse,status:200,query:input=>({kind:"usage.prices",input})}),
   defineCommand({id:"createUsagePriceSnapshot",method:"POST",path:"/usage/price-snapshots",access:"human",input:usage.priceSnapshotCreate,response:usage.priceSnapshotResponse,status:201,command:input=>({kind:"usage.price.create",input})}),

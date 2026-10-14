@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useWorkspace, QueryFeedback } from "../client/provider";
 import { ApiError } from "../client/api";
-import { codexListResponse, codexDetailResponse, codexId, type CodexChat, type CodexConnection, type CodexTurn } from "../contracts/codex";
+import { connectorListResponse, connectorDetailResponse, connectorId, type ConnectorChat, type ConnectorConnection, type ConnectorTurn } from "../contracts/connectors";
 
 function firstById<T extends {id: string}>(items: T[]) {
   const found = new Map<string, T>();
@@ -14,20 +14,20 @@ function firstById<T extends {id: string}>(items: T[]) {
 function time(value: string | null) {
   return value ? new Date(value).toLocaleString() : "Time unavailable";
 }
-function Connection({ data }: { data?: CodexConnection }) {
+function Connection({ data }: { data?: ConnectorConnection }) {
   return <p className={data?.state === "stale" || data?.state === "unavailable" ? "notice codex-connection" : "metadata codex-connection"} role="status">
     {data?.state === "connected" ? "Codex connected" : data?.state === "stale" ? "Codex unavailable. Showing the last observations." : data?.state === "unavailable" ? "Codex connection unavailable" : "Connecting to Codex…"}
     {data?.observedAt && <> · Observed {time(data.observedAt)}</>}
     {data?.message && <>. {data.message}</>}
   </p>;
 }
-function ChatMetadata({ chat }: { chat: CodexChat }) {
+function ChatMetadata({ chat }: { chat: ConnectorChat }) {
   return <span className="metadata codex-chat-meta">{chat.statusSource === "stored" ? "Stored observation" : "Live observation"} · {chat.status}
     {chat.agentNickname && <> · {chat.agentNickname}</>}{chat.agentRole && <> · {chat.agentRole}</>}{chat.model && <> · {chat.model}</>}
     {chat.updatedAt && <> · {time(chat.updatedAt)}</>}
   </span>;
 }
-function Turn({ turn }: { turn: CodexTurn }) {
+function Turn({ turn }: { turn: ConnectorTurn }) {
   return <article className="codex-turn">
     <div className="codex-turn-heading"><h3>{turn.request ? "Task request" : "Recorded turn"}</h3><span className="report-label">{turn.status}</span></div>
     {turn.request ? <p className="codex-text">{turn.request}</p> : <p className="metadata">No task request was recorded for this turn.</p>}
@@ -48,7 +48,7 @@ export function Codex({initialSelected}: {initialSelected?: string | null}) {
   useEffect(() => {
     const update = () => setVisible(document.visibilityState === "visible");
     update(); document.addEventListener("visibilitychange", update);
-    const pop = () => { const id = new URLSearchParams(window.location.search).get("chat"); setSelected(id && codexId.safeParse(id).success ? id : null); };
+    const pop = () => { const id = new URLSearchParams(window.location.search).get("chat"); setSelected(id && connectorId.safeParse(id).success ? id : null); };
     window.addEventListener("popstate", pop);
     return () => { document.removeEventListener("visibilitychange", update); window.removeEventListener("popstate", pop); };
   }, []);
@@ -64,7 +64,7 @@ export function Codex({initialSelected}: {initialSelected?: string | null}) {
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ limit: "30", archived: String(archived), kind });
       if (search) params.set("search", search); if (pageParam) params.set("cursor", pageParam);
-      return api.read(`/connections/codex?${params}`, codexListResponse);
+      return api.read(`/connections/codex?${params}`, connectorListResponse);
     },
     getNextPageParam: page => page.nextCursor ?? undefined,
     refetchInterval: visible ? 5000 : false,
@@ -78,7 +78,7 @@ export function Codex({initialSelected}: {initialSelected?: string | null}) {
       const params = new URLSearchParams();
       if (pageParam.turnsCursor) params.set("turnsCursor", pageParam.turnsCursor);
       if (pageParam.agentsCursor) params.set("agentsCursor", pageParam.agentsCursor);
-      return api.read(`/connections/codex/${encodeURIComponent(selected!)}${params.size ? `?${params}` : ""}`, codexDetailResponse);
+      return api.read(`/connections/codex/${encodeURIComponent(selected!)}${params.size ? `?${params}` : ""}`, connectorDetailResponse);
     },
     getNextPageParam: (page, _pages, previous) => {
       const turnsCursor = previous.turnsDone ? null : page.data.nextTurnsCursor;
