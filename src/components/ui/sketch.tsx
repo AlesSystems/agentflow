@@ -1,3 +1,6 @@
+import Image from "next/image";
+import agentFlowLogo from "../../../docs/assets/agentflow-logo.png";
+
 const strokes = [
   "M2 6c30-4 60-3 95-1s70 2 101-2",
   "M2 5c40-3 90-3 130-1s50 2 66 0",
@@ -14,13 +17,7 @@ export function Scribble({ variant = 0 }: { variant?: number }) {
 }
 export function BrandMark({ size = 34 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true" fill="none" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 9.5c4-.4 8.2-.2 12 .3" />
-      <path d="M5.5 17c6.5-.5 13-.3 19 .2" />
-      <path d="M6 24.6c3.6-.3 7-.2 10.4.1" />
-      <path d="M23 12.5l6 4.8-6.2 4.6" />
-      <circle cx="20.5" cy="24.5" r="2.2" fill="var(--clay)" stroke="var(--clay)" />
-    </svg>
+    <Image src={agentFlowLogo} width={size} height={size} alt="" aria-hidden="true" />
   );
 }
 export function EmptyNote({ title, children }: { title: string; children: React.ReactNode }) {

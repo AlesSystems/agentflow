@@ -444,7 +444,7 @@ p.notice:empty,
 .brand:hover {
   color: var(--ink);
 }
-.brand svg {
+.brand img {
   flex: none;
 }
 .project-switch {
